@@ -31,18 +31,29 @@ export class LevelService implements OnStart {
 			}
 		}
 
-		Events.updateLevelUi.fire(player, data.level, data.experience, this.xpForLevel(data.level + 1));
+		Events.updateLevelUi.fire(
+			player,
+			data.level,
+			data.experience,
+			this.xpForLevel(data.level + 1),
+			data.skillPoints,
+		);
 		this.playerDataService.setProfile(player, playerProfile);
 	}
 
-	public getLevelData(player: Player): { level: number; xp: number; xpMax: number } {
+	public getLevelData(player: Player): { level: number; xp: number; xpMax: number; skillPoints: number } {
 		const playerProfile = this.playerDataService.getProfile(player);
-		if (!playerProfile) return { level: 1, xp: 0, xpMax: this.xpForLevel(2) };
+		if (!playerProfile) return { level: 1, xp: 0, xpMax: this.xpForLevel(2), skillPoints: 0 };
 
 		const level = playerProfile.Data.level;
 		const xpForNextLevel = this.xpForLevel(level + 1);
 
-		return { level: level, xp: playerProfile.Data.experience, xpMax: xpForNextLevel };
+		return {
+			level: level,
+			xp: playerProfile.Data.experience,
+			xpMax: xpForNextLevel,
+			skillPoints: playerProfile.Data.skillPoints,
+		};
 	}
 
 	onStart() {
@@ -68,6 +79,13 @@ export class LevelService implements OnStart {
 				luck: data.luck,
 				detection: data.detection,
 			});
+			Events.updateLevelUi.fire(
+				player,
+				data.level,
+				data.experience,
+				this.xpForLevel(data.level + 1),
+				data.skillPoints,
+			);
 		});
 
 		Functions.getSkills.setCallback((player: Player) => {

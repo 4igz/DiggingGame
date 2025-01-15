@@ -51,10 +51,15 @@ export class UiController implements OnStart {
 
 		this.registerUi(gameConstants.LUCKBAR_UI, React.createElement(LuckBar), { visible: false, paused: false });
 		this.registerUi(gameConstants.SIDEBAR_UI, React.createElement(Sidebar), { uiController: this });
-		this.registerUi(gameConstants.MAIN_UI, React.createElement(MainUi), { uiController: this, visible: false });
+		this.registerUi(
+			gameConstants.MAIN_UI,
+			React.createElement(MainUi),
+			{ uiController: this, visible: false },
+			true,
+		);
 		this.registerUi(gameConstants.TOOLBAR_UI, React.createElement(Toolbar), {});
 		this.registerUi(gameConstants.SELL_UI, React.createElement(Sell), { visible: false, uiController: this });
-		this.registerUi(gameConstants.COMPASS_UI, React.createElement(DistanceLabel), {});
+		this.registerUi(gameConstants.COMPASS_UI, React.createElement(DistanceLabel), {}, true);
 		this.registerUi(
 			gameConstants.SHOP_UI,
 			React.createElement(ShopComponent),
@@ -67,7 +72,7 @@ export class UiController implements OnStart {
 	public toggleUi(name: string, newProps: Partial<Record<string, unknown>> = {}) {
 		if (this.currentOpenUi !== undefined) {
 			if (this.diggingBarActive && name !== gameConstants.DIG_BAR_UI) {
-				Events.endDiggingClient(); // Also will send a endDigging event back.
+				Events.endDiggingClient();
 			}
 
 			if (this.currentOpenUi === name) {

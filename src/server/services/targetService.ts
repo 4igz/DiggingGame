@@ -159,7 +159,6 @@ export class TargetService implements OnStart, OnTick {
 			detector.Unequipped.Connect(() => {
 				if (this.getPlayerTarget(player) && !this.playerDiggingTargets.get(player)) {
 					this.endDigging(player);
-					print("Unequipped detector while ");
 				}
 			});
 		});

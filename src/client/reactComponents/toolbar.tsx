@@ -20,83 +20,132 @@ function spaceWords(input: string): string {
 }
 
 const ToolbarItemComponent: React.FC<ToolbarItemProps> = (props) => {
-	return (
-		<frame
-			BackgroundColor3={props.isEquipped ? Color3.fromRGB(255, 255, 255) : Color3.fromRGB(0, 0, 0)}
-			BackgroundTransparency={0.5}
+	<frame
+		BackgroundColor3={props.isEquipped ? Color3.fromRGB(255, 255, 255) : Color3.fromRGB(0, 0, 0)}
+		BackgroundTransparency={0.5}
+		BorderColor3={Color3.fromRGB(0, 0, 0)}
+		BorderSizePixel={0}
+		Size={UDim2.fromScale(0.25, 0.9)}
+		LayoutOrder={props.order}
+	>
+		<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+
+		<uicorner key={"UICorner"} />
+
+		<uistroke key={"UIStroke"} Thickness={3} />
+
+		<uigradient
+			key={"UIGradient"}
+			Color={
+				new ColorSequence([
+					new ColorSequenceKeypoint(0, Color3.fromRGB(0, 85, 127)),
+					new ColorSequenceKeypoint(1, Color3.fromRGB(0, 0, 0)),
+				])
+			}
+			Rotation={90}
+			Enabled={props.isEquipped}
+		/>
+
+		<textlabel
+			AnchorPoint={new Vector2(0, 1)}
+			BackgroundTransparency={1}
 			BorderColor3={Color3.fromRGB(0, 0, 0)}
 			BorderSizePixel={0}
-			Size={UDim2.fromScale(0.25, 0.9)}
+			FontFace={
+				new Font("rbxasset://fonts/families/ComicNeueAngular.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+			}
+			key={"ItemName"}
+			Position={UDim2.fromScale(0, 1)}
+			Size={UDim2.fromScale(1, 0.283)}
+			Text={spaceWords(props.itemName)}
+			TextColor3={Color3.fromRGB(255, 255, 255)}
+			TextScaled={true}
+			TextWrapped={true}
+		>
+			<uistroke key={"UIStroke"} Thickness={2} />
+		</textlabel>
+
+		<imagelabel
+			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+			BackgroundTransparency={1}
+			BorderColor3={Color3.fromRGB(0, 0, 0)}
+			BorderSizePixel={0}
+			key={"ItemImage"}
+			Size={UDim2.fromScale(1, 1)}
+			Image={props.icon}
+			ZIndex={-1}
+		/>
+
+		<textlabel
+			AnchorPoint={new Vector2(0.5, 0.5)}
+			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+			BackgroundTransparency={1}
+			BorderColor3={Color3.fromRGB(0, 0, 0)}
+			BorderSizePixel={0}
+			FontFace={
+				new Font("rbxasset://fonts/families/ComicNeueAngular.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+			}
+			key={"Order"}
+			Position={UDim2.fromScale(0.1, 0)}
+			Size={UDim2.fromScale(0.5, 0.4)}
+			Text={tostring(props.order)}
+			TextColor3={Color3.fromRGB(255, 255, 255)}
+			TextScaled={true}
+			TextWrapped={true}
+		>
+			<uistroke key={"UIStroke"} Thickness={3} />
+		</textlabel>
+	</frame>;
+
+	return (
+		<imagebutton
+			BackgroundColor3={Color3.fromRGB(117, 117, 117)}
+			BackgroundTransparency={1}
+			BorderColor3={Color3.fromRGB(0, 0, 0)}
+			BorderSizePixel={0}
+			key={"ToolBtn"}
+			ScaleType={Enum.ScaleType.Fit}
+			Selectable={false}
+			Size={UDim2.fromScale(0.0896, 1)}
 			LayoutOrder={props.order}
 		>
-			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-
-			<uicorner key={"UICorner"} />
-
-			<uistroke key={"UIStroke"} Thickness={3} />
-
-			<uigradient
-				key={"UIGradient"}
-				Color={
-					new ColorSequence([
-						new ColorSequenceKeypoint(0, Color3.fromRGB(0, 85, 127)),
-						new ColorSequenceKeypoint(1, Color3.fromRGB(0, 0, 0)),
-					])
-				}
-				Rotation={90}
-				Enabled={props.isEquipped}
-			/>
-
-			<textlabel
-				AnchorPoint={new Vector2(0, 1)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				FontFace={
-					new Font(
-						"rbxasset://fonts/families/ComicNeueAngular.json",
-						Enum.FontWeight.Bold,
-						Enum.FontStyle.Normal,
-					)
-				}
-				key={"ItemName"}
-				Position={UDim2.fromScale(0, 1)}
-				Size={UDim2.fromScale(1, 0.283)}
-				Text={spaceWords(props.itemName)}
-				TextColor3={Color3.fromRGB(255, 255, 255)}
-				TextScaled={true}
-				TextWrapped={true}
-			>
-				<uistroke key={"UIStroke"} Thickness={2} />
-			</textlabel>
+			<uicorner key={"UICorner"} CornerRadius={new UDim(0.08, 0)} />
 
 			<imagelabel
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				key={"ItemImage"}
-				Size={UDim2.fromScale(1, 1)}
-				Image={props.icon}
-				ZIndex={-1}
-			/>
-
-			<textlabel
 				AnchorPoint={new Vector2(0.5, 0.5)}
 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 				BackgroundTransparency={1}
 				BorderColor3={Color3.fromRGB(0, 0, 0)}
 				BorderSizePixel={0}
-				FontFace={
-					new Font(
-						"rbxasset://fonts/families/ComicNeueAngular.json",
-						Enum.FontWeight.Bold,
-						Enum.FontStyle.Normal,
-					)
-				}
-				key={"Order"}
-				Position={UDim2.fromScale(0.1, 0)}
-				Size={UDim2.fromScale(0.5, 0.4)}
+				Image={"rbxassetid://77410935702468"}
+				key={"Background"}
+				Position={UDim2.fromScale(0.5, 0.5)}
+				ScaleType={Enum.ScaleType.Fit}
+				Size={UDim2.fromScale(1, 1)}
+			>
+				<uigradient
+					key={"UIGradient"}
+					Color={
+						new ColorSequence([
+							new ColorSequenceKeypoint(0, Color3.fromRGB(20, 185, 255)),
+							new ColorSequenceKeypoint(0.716, Color3.fromRGB(18, 162, 224)),
+							new ColorSequenceKeypoint(1, Color3.fromRGB(0, 0, 0)),
+						])
+					}
+					Rotation={90}
+					Enabled={props.isEquipped}
+				/>
+			</imagelabel>
+
+			<textlabel
+				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+				BackgroundTransparency={1}
+				BorderColor3={Color3.fromRGB(0, 0, 0)}
+				BorderSizePixel={0}
+				FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+				key={"Number"}
+				Position={UDim2.fromScale(0.11, 0.11)}
+				Size={UDim2.fromScale(0.26, 0.31)}
 				Text={tostring(props.order)}
 				TextColor3={Color3.fromRGB(255, 255, 255)}
 				TextScaled={true}
@@ -104,16 +153,25 @@ const ToolbarItemComponent: React.FC<ToolbarItemProps> = (props) => {
 			>
 				<uistroke key={"UIStroke"} Thickness={3} />
 			</textlabel>
-		</frame>
+
+			<imagelabel
+				AnchorPoint={new Vector2(0.5, 0.5)}
+				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+				BackgroundTransparency={1}
+				BorderColor3={Color3.fromRGB(0, 0, 0)}
+				BorderSizePixel={0}
+				key={"Icon"}
+				Position={UDim2.fromScale(0.5, 0.48)}
+				ScaleType={Enum.ScaleType.Fit}
+				Size={UDim2.fromScale(0.7, 0.74)}
+				Image={props.icon}
+			/>
+		</imagebutton>
 	);
 };
 
 export const Toolbar = () => {
 	const [items, setItems] = React.useState<Array<ToolbarItemProps>>([]);
-
-	const updateToolbar = () => {
-		// Loop through backpack, character, and update the toolbar
-	};
 
 	const equipToolByOrder = (order: number) => {
 		const item = items.find((i) => i.order === order);

@@ -28,7 +28,7 @@ interface ServerToClientEvents {
 	targetDespawned(): void;
 	createWaypointVisualization: (targetPosition: Vector3, detectorName: string, isNearby: boolean) => void;
 	updateMoney: (money: string) => void;
-	updateLevelUi: (level: number, experience: number, nextLevelExperience: number) => void;
+	updateLevelUi: (level: number, experience: number, nextLevelExperience: number, skillPoints: number) => void;
 	updateInventory: (
 		inventoryType: ItemType,
 		inventory: [
@@ -45,7 +45,7 @@ interface ServerToClientEvents {
 
 interface ClientToServerFunctions {
 	getMoneyShortString: () => string;
-	getLevelData: () => { level: number; xp: number; xpMax: number };
+	getLevelData: () => { level: number; xp: number; xpMax: number; skillPoints: number };
 	getInventory: (inventoryType: ItemType) => [
 		{
 			equippedShovel: keyof typeof shovelConfig;

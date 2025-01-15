@@ -32,7 +32,7 @@ const lerpColor = (color1: Color3, color2: Color3, t: number) => {
 };
 
 export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
-	const [barProgress, setBarProgress] = useMotion(UDim2.fromScale(1, 0.5));
+	const [barProgress, setBarProgress] = useMotion(0.5);
 	const [rotation, setRotation] = useMotion(0);
 	const [cycle, setCycle] = useState(0);
 
@@ -91,7 +91,6 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 					if (tick() - lastDigTime >= gameConstants.DIG_TIME_SEC) {
 						progress += increment;
 						lastDigTime = tick();
-						// Signals.dig.Fire();
 					}
 
 					setRotation.spring(
@@ -114,10 +113,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 			});
 
 			hb = RunService.Heartbeat.Connect(() => {
-				setBarProgress.spring(
-					UDim2.fromScale(1, math.min(progress, target.maxProgress) / target.maxProgress),
-					springs.responsive,
-				);
+				setBarProgress.spring((target.maxProgress - progress) / target.maxProgress, springs.responsive);
 
 				setWarnStage(0);
 
@@ -165,25 +161,382 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				clickConnection?.Disconnect();
 			};
 		} else {
-			setBarProgress.immediate(UDim2.fromScale(1, 0));
+			setBarProgress.immediate(1);
 		}
 	}, [visible]);
+
+	// <frame
+	// 	AnchorPoint={new Vector2(0.5, 0.5)}
+	// 	BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+	// 	BorderColor3={Color3.fromRGB(0, 0, 0)}
+	// 	BorderSizePixel={0}
+	// 	key={"Bar"}
+	// 	Position={UDim2.fromScale(0.75, 0.5)}
+	// 	Rotation={rotation.map((r) => math.clamp(math.max(1, r) * (cycle * 4), -8, 8))}
+	// 	Size={scale.map((s) => UDim2.fromScale(0.04 * s, 0.65 * s))}
+	// 	Visible={visible}
+	// >
+	// 	<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
+
+	// 	<uistroke key={"UIStroke"} Thickness={3} Transparency={0.4} />
+
+	// 	<frame
+	// 		BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+	// 		BackgroundTransparency={1}
+	// 		BorderColor3={Color3.fromRGB(0, 0, 0)}
+	// 		BorderSizePixel={0}
+	// 		key={"Ruler"}
+	// 		Position={UDim2.fromScale(1.07, 0)}
+	// 		Size={UDim2.fromScale(3.16, 1)}
+	// 		ZIndex={0}
+	// 	>
+	// 		<uilistlayout
+	// 			key={"UIListLayout"}
+	// 			Padding={new UDim(0.15, 0)}
+	// 			SortOrder={Enum.SortOrder.LayoutOrder}
+	// 			VerticalAlignment={Enum.VerticalAlignment.Center}
+	// 		/>
+
+	// 		<frame
+	// 			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+	// 			BorderColor3={Color3.fromRGB(0, 0, 0)}
+	// 			BorderSizePixel={0}
+	// 			LayoutOrder={1}
+	// 			key={"Increment"}
+	// 			Size={UDim2.fromScale(0.159, 0.008)}
+	// 		>
+	// 			<textlabel
+	// 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+	// 				BackgroundTransparency={1}
+	// 				BorderColor3={Color3.fromRGB(0, 0, 0)}
+	// 				BorderSizePixel={0}
+	// 				FontFace={new Font("rbxasset://fonts/families/ComicNeueAngular.json")}
+	// 				key={"Amount"}
+	// 				Position={UDim2.fromScale(1.72, -4.27)}
+	// 				Size={UDim2.fromScale(3.04, 9.51)}
+	// 				Text={"4ft"}
+	// 				TextColor3={Color3.fromRGB(255, 255, 255)}
+	// 				TextScaled={true}
+	// 				TextWrapped={true}
+	// 				TextXAlignment={Enum.TextXAlignment.Left}
+	// 			/>
+	// 		</frame>
+
+	// 		<frame
+	// 			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+	// 			BorderColor3={Color3.fromRGB(0, 0, 0)}
+	// 			BorderSizePixel={0}
+	// 			LayoutOrder={2}
+	// 			key={"Increment"}
+	// 			Size={UDim2.fromScale(0.159, 0.008)}
+	// 		>
+	// 			<textlabel
+	// 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+	// 				BackgroundTransparency={1}
+	// 				BorderColor3={Color3.fromRGB(0, 0, 0)}
+	// 				BorderSizePixel={0}
+	// 				FontFace={new Font("rbxasset://fonts/families/ComicNeueAngular.json")}
+	// 				key={"Amount"}
+	// 				Position={UDim2.fromScale(1.72, -4.27)}
+	// 				Size={UDim2.fromScale(3.04, 9.51)}
+	// 				Text={"8ft"}
+	// 				TextColor3={Color3.fromRGB(255, 255, 255)}
+	// 				TextScaled={true}
+	// 				TextWrapped={true}
+	// 				TextXAlignment={Enum.TextXAlignment.Left}
+	// 			/>
+	// 		</frame>
+
+	// 		<frame
+	// 			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+	// 			BorderColor3={Color3.fromRGB(0, 0, 0)}
+	// 			BorderSizePixel={0}
+	// 			LayoutOrder={3}
+	// 			key={"Increment"}
+	// 			Size={UDim2.fromScale(0.159, 0.008)}
+	// 		>
+	// 			<textlabel
+	// 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+	// 				BackgroundTransparency={1}
+	// 				BorderColor3={Color3.fromRGB(0, 0, 0)}
+	// 				BorderSizePixel={0}
+	// 				FontFace={new Font("rbxasset://fonts/families/ComicNeueAngular.json")}
+	// 				key={"Amount"}
+	// 				Position={UDim2.fromScale(1.72, -4.27)}
+	// 				Size={UDim2.fromScale(3.04, 9.51)}
+	// 				Text={"12ft"}
+	// 				TextColor3={Color3.fromRGB(255, 255, 255)}
+	// 				TextScaled={true}
+	// 				TextWrapped={true}
+	// 				TextXAlignment={Enum.TextXAlignment.Left}
+	// 			/>
+	// 		</frame>
+
+	// 		<frame
+	// 			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+	// 			BorderColor3={Color3.fromRGB(0, 0, 0)}
+	// 			BorderSizePixel={0}
+	// 			LayoutOrder={4}
+	// 			key={"Increment"}
+	// 			Size={UDim2.fromScale(0.159, 0.008)}
+	// 		>
+	// 			<textlabel
+	// 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+	// 				BackgroundTransparency={1}
+	// 				BorderColor3={Color3.fromRGB(0, 0, 0)}
+	// 				BorderSizePixel={0}
+	// 				FontFace={new Font("rbxasset://fonts/families/ComicNeueAngular.json")}
+	// 				key={"Amount"}
+	// 				Position={UDim2.fromScale(1.72, -4.27)}
+	// 				Size={UDim2.fromScale(3.04, 9.51)}
+	// 				Text={"16ft"}
+	// 				TextColor3={Color3.fromRGB(255, 255, 255)}
+	// 				TextScaled={true}
+	// 				TextWrapped={true}
+	// 				TextXAlignment={Enum.TextXAlignment.Left}
+	// 			/>
+	// 		</frame>
+
+	// 		<frame
+	// 			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+	// 			BorderColor3={Color3.fromRGB(0, 0, 0)}
+	// 			BorderSizePixel={0}
+	// 			LayoutOrder={5}
+	// 			key={"Increment"}
+	// 			Size={UDim2.fromScale(0.159, 0.008)}
+	// 		>
+	// 			<textlabel
+	// 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+	// 				BackgroundTransparency={1}
+	// 				BorderColor3={Color3.fromRGB(0, 0, 0)}
+	// 				BorderSizePixel={0}
+	// 				FontFace={new Font("rbxasset://fonts/families/ComicNeueAngular.json")}
+	// 				key={"Amount"}
+	// 				Position={UDim2.fromScale(1.72, -4.27)}
+	// 				Size={UDim2.fromScale(3.04, 9.51)}
+	// 				Text={"20ft"}
+	// 				TextColor3={Color3.fromRGB(255, 255, 255)}
+	// 				TextScaled={true}
+	// 				TextWrapped={true}
+	// 				TextXAlignment={Enum.TextXAlignment.Left}
+	// 			/>
+	// 		</frame>
+	// 	</frame>
+
+	// 	<textlabel
+	// 		BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+	// 		BackgroundTransparency={1}
+	// 		BorderColor3={Color3.fromRGB(0, 0, 0)}
+	// 		BorderSizePixel={0}
+	// 		FontFace={
+	// 			new Font("rbxasset://fonts/families/HighwayGothic.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+	// 		}
+	// 		key={"Exclaim"}
+	// 		Position={UDim2.fromScale(-1.64, 0.811)}
+	// 		Size={UDim2.fromScale(0.886, 0.1)}
+	// 		Text={"!".rep(warnStage)}
+	// 		TextColor3={Color3.fromRGB(255, 0, 0)}
+	// 		TextScaled={true}
+	// 		TextWrapped={true}
+	// 		TextXAlignment={Enum.TextXAlignment.Right}
+	// 	>
+	// 		<uistroke key={"UIStroke"} Thickness={3} />
+	// 	</textlabel>
+
+	// 	<uigradient
+	// 		key={"UIGradient"}
+	// 		Color={
+	// 			new ColorSequence([
+	// 				new ColorSequenceKeypoint(0, Color3.fromRGB(181, 123, 52)),
+	// 				new ColorSequenceKeypoint(1, Color3.fromRGB(147, 98, 42)),
+	// 			])
+	// 		}
+	// 		Rotation={90}
+	// 	/>
+
+	// 	<canvasgroup
+	// 		key={"CanvasGroup"}
+	// 		BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+	// 		BackgroundTransparency={1}
+	// 		BorderColor3={Color3.fromRGB(0, 0, 0)}
+	// 		BorderSizePixel={0}
+	// 		Size={UDim2.fromScale(1, 1)}
+	// 	>
+	// 		<frame
+	// 			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+	// 			BackgroundTransparency={1}
+	// 			BorderColor3={Color3.fromRGB(0, 0, 0)}
+	// 			BorderSizePixel={0}
+	// 			ClipsDescendants={true}
+	// 			key={"Clipper"}
+	// 			Size={UDim2.fromScale(1, 1)}
+	// 		>
+	// 			<frame
+	// 				AnchorPoint={new Vector2(0.5, 1)}
+	// 				BackgroundColor3={Color3.fromRGB(32, 216, 216)}
+	// 				BorderColor3={Color3.fromRGB(0, 0, 0)}
+	// 				BorderSizePixel={0}
+	// 				key={"BarActual"}
+	// 				Position={UDim2.fromScale(0.5, 1)}
+	// 				Size={barProgress}
+	// 			/>
+	// 		</frame>
+
+	// 		<uicorner key={"UICorner"} CornerRadius={new UDim(1, 8)} />
+	// 	</canvasgroup>
+
+	// 	<frame
+	// 		AnchorPoint={new Vector2(0.5, 0)}
+	// 		BackgroundColor3={Color3.fromRGB(243, 1, 52)}
+	// 		BorderColor3={Color3.fromRGB(0, 0, 0)}
+	// 		BorderSizePixel={0}
+	// 		key={"Slider"}
+	// 		// Position={barProgress.map((p) => UDim2.fromScale(0.5, 1 - p.Y.Scale))}
+	// 		Size={UDim2.fromScale(2.5, 0.2)}
+	// 		ZIndex={2}
+	// 	>
+	// 		<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
+
+	// 		<uistroke key={"UIStroke"} Thickness={3} Transparency={0.4} />
+
+	// 		<imagelabel
+	// 			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+	// 			BackgroundTransparency={1}
+	// 			BorderColor3={Color3.fromRGB(0, 0, 0)}
+	// 			BorderSizePixel={0}
+	// 			Image={"http://www.roblox.com/asset/?id=126053753843429"}
+	// 			key={"ShovelIcon"}
+	// 			Position={UDim2.fromScale(-1.09, -1.92)}
+	// 			Rotation={45 - cycle * 45}
+	// 			ScaleType={Enum.ScaleType.Fit}
+	// 			Size={UDim2.fromScale(0.816, 4.7)}
+	// 			SliceCenter={new Rect(0, 0, 512, 512)}
+	// 		/>
+
+	// 		<uisizeconstraint key={"UISizeConstraint"} MaxSize={new Vector2(75, 15)} MinSize={new Vector2(75, 15)} />
+	// 	</frame>
+	// </frame>;
 
 	return (
 		<frame
 			AnchorPoint={new Vector2(0.5, 0.5)}
 			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+			BackgroundTransparency={1}
 			BorderColor3={Color3.fromRGB(0, 0, 0)}
 			BorderSizePixel={0}
-			key={"Bar"}
+			key={"Digging Progress Bar Frame"}
 			Position={UDim2.fromScale(0.75, 0.5)}
-			Rotation={rotation.map((r) => math.clamp(math.max(1, r) * (cycle * 4), -8, 8))}
-			Size={scale.map((s) => UDim2.fromScale(0.04 * s, 0.65 * s))}
+			Size={scale.map((s) => UDim2.fromScale(0.3 * s, 0.5 * s))}
 			Visible={visible}
+			Rotation={rotation.map((r) => math.clamp(math.max(1, r) * (cycle * 4), -8, 8))}
 		>
-			<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
+			<frame
+				AnchorPoint={new Vector2(0.5, 0.5)}
+				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+				BackgroundTransparency={1}
+				BorderColor3={Color3.fromRGB(0, 0, 0)}
+				BorderSizePixel={0}
+				key={"Progress Bar Frame"}
+				Position={UDim2.fromScale(0.229, 0.482)}
+				Size={UDim2.fromScale(0.277, 0.826)}
+				ZIndex={10}
+			>
+				<imagelabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					Image={"rbxassetid://71521093457489"}
+					key={"Filled Progress Bar"}
+					Position={UDim2.fromScale(0.522, 0.495)}
+					Size={UDim2.fromScale(1, 1.01)}
+				>
+					<uigradient
+						key={"UIGradient"}
+						Offset={barProgress.map((p) => {
+							return new Vector2(0.98, p);
+						})}
+						Rotation={90}
+						Transparency={
+							new NumberSequence([
+								new NumberSequenceKeypoint(0, 1),
+								new NumberSequenceKeypoint(0.00125, 0),
+								new NumberSequenceKeypoint(1, 0),
+							])
+						}
+					/>
+				</imagelabel>
+			</frame>
 
-			<uistroke key={"UIStroke"} Thickness={3} Transparency={0.4} />
+			<imagelabel
+				AnchorPoint={new Vector2(0.5, 0.5)}
+				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+				BackgroundTransparency={1}
+				BorderColor3={Color3.fromRGB(0, 0, 0)}
+				BorderSizePixel={0}
+				Image={"rbxassetid://133217364331896"}
+				key={"Background"}
+				Position={UDim2.fromScale(0.5, 0.5)}
+				Size={UDim2.fromScale(1, 1)}
+			/>
+
+			<frame
+				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+				BackgroundTransparency={1}
+				BorderColor3={Color3.fromRGB(0, 0, 0)}
+				BorderSizePixel={0}
+				key={"Shovel Progress"}
+				Position={UDim2.fromScale(-0.397, -3.84e-8)}
+				Size={UDim2.fromScale(0.36, 0.967)}
+			>
+				<frame
+					AnchorPoint={new Vector2(0.5, 1)}
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					key={"Shovel Marker"}
+					Position={barProgress.map((p) =>
+						UDim2.fromScale(math.clamp(1 - p, 0.5, 1), math.clamp(p + 0.15, 0.1, 1)),
+					)}
+					Size={UDim2.fromScale(1, 0.179)}
+				>
+					<uilistlayout
+						key={"UIListLayout"}
+						FillDirection={Enum.FillDirection.Horizontal}
+						SortOrder={Enum.SortOrder.LayoutOrder}
+						VerticalAlignment={Enum.VerticalAlignment.Center}
+					/>
+
+					<imagelabel
+						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+						BackgroundTransparency={1}
+						BorderColor3={Color3.fromRGB(0, 0, 0)}
+						BorderSizePixel={0}
+						Image={"rbxassetid://90210450208885"}
+						key={"Shovel Icon"}
+						ScaleType={Enum.ScaleType.Fit}
+						Size={UDim2.fromScale(0.63, 0.798)}
+					>
+						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+					</imagelabel>
+
+					<imagelabel
+						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+						BackgroundTransparency={1}
+						BorderColor3={Color3.fromRGB(0, 0, 0)}
+						BorderSizePixel={0}
+						Image={"rbxassetid://75994909740048"}
+						key={"Marker Icon"}
+						Position={UDim2.fromScale(0.63, 0.196)}
+						ScaleType={Enum.ScaleType.Fit}
+						Size={UDim2.fromScale(0.37, 0.469)}
+					>
+						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+					</imagelabel>
+				</frame>
+			</frame>
 
 			<frame
 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -191,243 +544,170 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				BorderColor3={Color3.fromRGB(0, 0, 0)}
 				BorderSizePixel={0}
 				key={"Ruler"}
-				Position={UDim2.fromScale(1.07, 0)}
-				Size={UDim2.fromScale(3.16, 1)}
-				ZIndex={0}
+				Position={UDim2.fromScale(0.45, 0)}
+				Size={UDim2.fromScale(0.55, 0.919)}
 			>
-				<uilistlayout
-					key={"UIListLayout"}
-					Padding={new UDim(0.15, 0)}
-					SortOrder={Enum.SortOrder.LayoutOrder}
-					VerticalAlignment={Enum.VerticalAlignment.Center}
-				/>
-
-				<frame
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					LayoutOrder={1}
-					key={"Increment"}
-					Size={UDim2.fromScale(0.159, 0.008)}
-				>
-					<textlabel
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						FontFace={new Font("rbxasset://fonts/families/ComicNeueAngular.json")}
-						key={"Amount"}
-						Position={UDim2.fromScale(1.72, -4.27)}
-						Size={UDim2.fromScale(3.04, 9.51)}
-						Text={"4ft"}
-						TextColor3={Color3.fromRGB(255, 255, 255)}
-						TextScaled={true}
-						TextWrapped={true}
-						TextXAlignment={Enum.TextXAlignment.Left}
-					/>
-				</frame>
-
-				<frame
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					LayoutOrder={2}
-					key={"Increment"}
-					Size={UDim2.fromScale(0.159, 0.008)}
-				>
-					<textlabel
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						FontFace={new Font("rbxasset://fonts/families/ComicNeueAngular.json")}
-						key={"Amount"}
-						Position={UDim2.fromScale(1.72, -4.27)}
-						Size={UDim2.fromScale(3.04, 9.51)}
-						Text={"8ft"}
-						TextColor3={Color3.fromRGB(255, 255, 255)}
-						TextScaled={true}
-						TextWrapped={true}
-						TextXAlignment={Enum.TextXAlignment.Left}
-					/>
-				</frame>
-
-				<frame
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					LayoutOrder={3}
-					key={"Increment"}
-					Size={UDim2.fromScale(0.159, 0.008)}
-				>
-					<textlabel
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						FontFace={new Font("rbxasset://fonts/families/ComicNeueAngular.json")}
-						key={"Amount"}
-						Position={UDim2.fromScale(1.72, -4.27)}
-						Size={UDim2.fromScale(3.04, 9.51)}
-						Text={"12ft"}
-						TextColor3={Color3.fromRGB(255, 255, 255)}
-						TextScaled={true}
-						TextWrapped={true}
-						TextXAlignment={Enum.TextXAlignment.Left}
-					/>
-				</frame>
-
-				<frame
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					LayoutOrder={4}
-					key={"Increment"}
-					Size={UDim2.fromScale(0.159, 0.008)}
-				>
-					<textlabel
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						FontFace={new Font("rbxasset://fonts/families/ComicNeueAngular.json")}
-						key={"Amount"}
-						Position={UDim2.fromScale(1.72, -4.27)}
-						Size={UDim2.fromScale(3.04, 9.51)}
-						Text={"16ft"}
-						TextColor3={Color3.fromRGB(255, 255, 255)}
-						TextScaled={true}
-						TextWrapped={true}
-						TextXAlignment={Enum.TextXAlignment.Left}
-					/>
-				</frame>
-
-				<frame
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					LayoutOrder={5}
-					key={"Increment"}
-					Size={UDim2.fromScale(0.159, 0.008)}
-				>
-					<textlabel
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						FontFace={new Font("rbxasset://fonts/families/ComicNeueAngular.json")}
-						key={"Amount"}
-						Position={UDim2.fromScale(1.72, -4.27)}
-						Size={UDim2.fromScale(3.04, 9.51)}
-						Text={"20ft"}
-						TextColor3={Color3.fromRGB(255, 255, 255)}
-						TextScaled={true}
-						TextWrapped={true}
-						TextXAlignment={Enum.TextXAlignment.Left}
-					/>
-				</frame>
-			</frame>
-
-			<textlabel
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				FontFace={
-					new Font(
-						"rbxasset://fonts/families/HighwayGothic.json",
-						Enum.FontWeight.Bold,
-						Enum.FontStyle.Normal,
-					)
-				}
-				key={"Exclaim"}
-				Position={UDim2.fromScale(-1.64, 0.811)}
-				Size={UDim2.fromScale(0.886, 0.1)}
-				Text={"!".rep(warnStage)}
-				TextColor3={Color3.fromRGB(255, 0, 0)}
-				TextScaled={true}
-				TextWrapped={true}
-				TextXAlignment={Enum.TextXAlignment.Right}
-			>
-				<uistroke key={"UIStroke"} Thickness={3} />
-			</textlabel>
-
-			<uigradient
-				key={"UIGradient"}
-				Color={
-					new ColorSequence([
-						new ColorSequenceKeypoint(0, Color3.fromRGB(181, 123, 52)),
-						new ColorSequenceKeypoint(1, Color3.fromRGB(147, 98, 42)),
-					])
-				}
-				Rotation={90}
-			/>
-
-			<canvasgroup
-				key={"CanvasGroup"}
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				Size={UDim2.fromScale(1, 1)}
-			>
-				<frame
+				<textlabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
 					BorderColor3={Color3.fromRGB(0, 0, 0)}
 					BorderSizePixel={0}
-					ClipsDescendants={true}
-					key={"Clipper"}
-					Size={UDim2.fromScale(1, 1)}
+					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					key={"1st Increment"}
+					Position={UDim2.fromScale(0.35, 0.127)}
+					Size={UDim2.fromScale(0.548, 0.085)}
+					Text={"4 FT"}
+					TextColor3={Color3.fromRGB(255, 255, 255)}
+					TextScaled={true}
+					TextWrapped={true}
+					ZIndex={105}
 				>
-					<frame
-						AnchorPoint={new Vector2(0.5, 1)}
-						BackgroundColor3={Color3.fromRGB(32, 216, 216)}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						key={"BarActual"}
-						Position={UDim2.fromScale(0.5, 1)}
-						Size={barProgress}
-					/>
-				</frame>
+					<uistroke key={"UIStroke"} Thickness={3} />
 
-				<uicorner key={"UICorner"} CornerRadius={new UDim(1, 8)} />
-			</canvasgroup>
+					<uipadding
+						key={"UIPadding"}
+						PaddingBottom={new UDim(0.000288, 0)}
+						PaddingLeft={new UDim(0.157, 0)}
+						PaddingRight={new UDim(0.157, 0)}
+						PaddingTop={new UDim(0.000288, 0)}
+					/>
+				</textlabel>
+
+				<textlabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					key={"2nd Increment"}
+					Position={UDim2.fromScale(0.37, 0.308)}
+					Size={UDim2.fromScale(0.548, 0.085)}
+					Text={"8 FT"}
+					TextColor3={Color3.fromRGB(255, 255, 255)}
+					TextScaled={true}
+					TextWrapped={true}
+					ZIndex={105}
+				>
+					<uistroke key={"UIStroke"} Thickness={3} />
+
+					<uipadding
+						key={"UIPadding"}
+						PaddingBottom={new UDim(0.000288, 0)}
+						PaddingLeft={new UDim(0.15, 0)}
+						PaddingRight={new UDim(0.15, 0)}
+						PaddingTop={new UDim(0.000288, 0)}
+					/>
+				</textlabel>
+
+				<textlabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					key={"3rd Increment"}
+					Position={UDim2.fromScale(0.4, 0.5)}
+					Size={UDim2.fromScale(0.548, 0.085)}
+					Text={"12 FT"}
+					TextColor3={Color3.fromRGB(255, 255, 255)}
+					TextScaled={true}
+					TextWrapped={true}
+					ZIndex={105}
+				>
+					<uistroke key={"UIStroke"} Thickness={3} />
+
+					<uipadding
+						key={"UIPadding"}
+						PaddingBottom={new UDim(0.000288, 0)}
+						PaddingLeft={new UDim(0.0952, 0)}
+						PaddingRight={new UDim(0.0952, 0)}
+						PaddingTop={new UDim(0.000288, 0)}
+					/>
+				</textlabel>
+
+				<textlabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					key={"4th  Increment"}
+					Position={UDim2.fromScale(0.42, 0.7)}
+					Size={UDim2.fromScale(0.548, 0.085)}
+					Text={"16 FT"}
+					TextColor3={Color3.fromRGB(255, 255, 255)}
+					TextScaled={true}
+					TextWrapped={true}
+					ZIndex={105}
+				>
+					<uistroke key={"UIStroke"} Thickness={3} />
+
+					<uipadding
+						key={"UIPadding"}
+						PaddingBottom={new UDim(0.000288, 0)}
+						PaddingLeft={new UDim(0.0883, 0)}
+						PaddingRight={new UDim(0.0883, 0)}
+						PaddingTop={new UDim(0.000288, 0)}
+					/>
+				</textlabel>
+
+				<textlabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					key={"5th  Increment"}
+					Position={UDim2.fromScale(0.45, 0.892)}
+					Size={UDim2.fromScale(0.548, 0.085)}
+					Text={"20 FT"}
+					TextColor3={Color3.fromRGB(255, 255, 255)}
+					TextScaled={true}
+					TextWrapped={true}
+					ZIndex={105}
+				>
+					<uistroke key={"UIStroke"} Thickness={3} />
+
+					<uipadding
+						key={"UIPadding"}
+						PaddingBottom={new UDim(0.000288, 0)}
+						PaddingLeft={new UDim(0.054, 0)}
+						PaddingRight={new UDim(0.054, 0)}
+						PaddingTop={new UDim(0.000288, 0)}
+					/>
+				</textlabel>
+			</frame>
 
 			<frame
-				AnchorPoint={new Vector2(0.5, 0)}
-				BackgroundColor3={Color3.fromRGB(243, 1, 52)}
+				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+				BackgroundTransparency={1}
 				BorderColor3={Color3.fromRGB(0, 0, 0)}
 				BorderSizePixel={0}
-				key={"Slider"}
-				Position={barProgress.map((p) => UDim2.fromScale(0.5, 1 - p.Y.Scale))}
-				Size={UDim2.fromScale(2.5, 0.2)}
-				ZIndex={2}
+				key={"Progress Marker Frame"}
+				Position={UDim2.fromScale(0.2, 0.0781)}
+				Size={UDim2.fromScale(0.298, 0.809)}
+				ZIndex={10}
 			>
-				<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
-
-				<uistroke key={"UIStroke"} Thickness={3} Transparency={0.4} />
-
 				<imagelabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
 					BorderColor3={Color3.fromRGB(0, 0, 0)}
 					BorderSizePixel={0}
-					Image={"http://www.roblox.com/asset/?id=126053753843429"}
-					key={"ShovelIcon"}
-					Position={UDim2.fromScale(-1.09, -1.92)}
-					Rotation={45 - cycle * 45}
+					Image={"rbxassetid://74432683218728"}
+					key={"Marker"}
+					Position={barProgress.map((p) => UDim2.fromScale(0.5, p))}
 					ScaleType={Enum.ScaleType.Fit}
-					Size={UDim2.fromScale(0.816, 4.7)}
-					SliceCenter={new Rect(0, 0, 512, 512)}
-				/>
-
-				<uisizeconstraint
-					key={"UISizeConstraint"}
-					MaxSize={new Vector2(75, 15)}
-					MinSize={new Vector2(75, 15)}
+					Size={UDim2.fromScale(1, 1)}
 				/>
 			</frame>
+
+			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.61} />
 		</frame>
 	);
 };

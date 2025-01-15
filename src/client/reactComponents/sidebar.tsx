@@ -8,6 +8,8 @@ import { MENUS } from "./mainUi";
 interface SidebarButtonProps {
 	icon: string;
 	text: string;
+	notificationVisible?: boolean;
+	notificationText?: string;
 	onClick?: () => void;
 }
 
@@ -58,7 +60,6 @@ const SidebarButton = (props: SidebarButtonProps) => {
 					MouseButton1Click: props.onClick,
 				}}
 			/>
-
 			<textlabel
 				AnchorPoint={new Vector2(0, 0.5)}
 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -82,6 +83,49 @@ const SidebarButton = (props: SidebarButtonProps) => {
 			>
 				<uistroke key={"UIStroke"} Thickness={3} />
 			</textlabel>
+
+			<frame
+				BackgroundColor3={Color3.fromRGB(230, 42, 25)}
+				BorderColor3={Color3.fromRGB(0, 0, 0)}
+				BorderSizePixel={0}
+				key={"Notification"}
+				Position={UDim2.fromScale(0.676, 0.0908)}
+				Size={UDim2.fromScale(0.307, 0.307)}
+				Visible={props.notificationVisible ?? false}
+			>
+				<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
+
+				<textlabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					key={"Title"}
+					Position={UDim2.fromScale(0.5, 0.5)}
+					Size={UDim2.fromScale(1, 1)}
+					Text={props.notificationText ?? ""}
+					TextColor3={Color3.fromRGB(255, 255, 255)}
+					TextScaled={true}
+					TextWrapped={true}
+					ZIndex={10}
+				>
+					<uistroke key={"UIStroke"} Thickness={2} />
+
+					<uipadding
+						key={"UIPadding"}
+						PaddingBottom={new UDim(0.0167, 0)}
+						PaddingLeft={new UDim(0.35, 0)}
+						PaddingRight={new UDim(0.35, 0)}
+						PaddingTop={new UDim(0.0167, 0)}
+					/>
+				</textlabel>
+
+				<uistroke key={"UIStroke"} Thickness={2} />
+
+				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+			</frame>
 		</frame>
 	);
 };
@@ -109,21 +153,29 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 
 			<SidebarButton
 				icon={"rbxassetid://70651545986325"}
-				text={"BACKPACK"}
+				text={"Backpack"}
 				onClick={() => {
 					props.uiController.toggleUi(gameConstants.MAIN_UI, { menu: MENUS.Inventory });
 				}}
 			/>
 			<SidebarButton
 				icon={"rbxassetid://90345162177443"}
-				text={"SKILLS"}
+				text={"Skills"}
 				onClick={() => {
 					props.uiController.toggleUi(gameConstants.MAIN_UI, { menu: MENUS.Skills });
 				}}
 			/>
 			<SidebarButton
 				icon={"rbxassetid://125407928227030"}
-				text={"SHOP"}
+				text={"Shop"}
+				onClick={() => {
+					props.uiController.toggleUi(gameConstants.MAIN_UI, { menu: MENUS.Shop });
+				}}
+			/>
+			<SidebarButton
+				icon={"rbxassetid://108568741864610"}
+				text={"Auto Dig"}
+				notificationVisible={true}
 				onClick={() => {
 					props.uiController.toggleUi(gameConstants.MAIN_UI, { menu: MENUS.Shop });
 				}}
