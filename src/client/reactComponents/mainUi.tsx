@@ -1,4 +1,4 @@
-import React, { Dispatch } from "@rbxts/react";
+import React, { createRef, Dispatch, useEffect, useState } from "@rbxts/react";
 import { UiController } from "client/controllers/uiController";
 import { gameConstants } from "shared/constants";
 import { Item, type ItemType, Rarity, SkillName } from "shared/networkTypes";
@@ -22,10 +22,92 @@ export function capitalizeWords(str: string): string {
 		.join(" ");
 }
 
+interface AnimatedButtonProps {
+	size?: { X: { Scale: number }; Y: { Scale: number } };
+	position?: UDim2;
+	anchorPoint?: Vector2;
+	onClick?: () => void;
+	onHover?: () => void;
+	onLeave?: () => void;
+	scales?: NumberRange;
+	layoutOrder?: number;
+	children?: React.ReactNode;
+	zindex?: number;
+	ref?: React.Ref<Frame>;
+}
+
+export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
+	size = { X: { Scale: 1 }, Y: { Scale: 1 } },
+	position = new UDim2(0.5, 0, 0.5, 0),
+	anchorPoint = new Vector2(0.5, 0.5),
+	onClick,
+	onHover,
+	onLeave,
+	layoutOrder,
+	scales,
+	children,
+	zindex,
+	ref,
+}) => {
+	const [isHovered, setIsHovered] = useState(false);
+	const [isPressed, setPressed] = useState(false);
+	const [scale, sizeMotion] = useMotion(1);
+	const [MIN_SCALE, MAX_SCALE] = scales ? [scales.Min, scales.Max] : [0.95, 1.05];
+
+	useEffect(() => {
+		sizeMotion.spring(isHovered ? MAX_SCALE : 1, { tension: 300, friction: 20 });
+	}, [isHovered]);
+
+	useEffect(() => {
+		sizeMotion.spring(isPressed ? MIN_SCALE : isHovered ? MAX_SCALE : 1, { tension: 300, friction: 20 });
+	}, [isPressed]);
+
+	return (
+		<frame
+			BackgroundTransparency={1}
+			Size={scale.map((s) => UDim2.fromScale(size.X.Scale * s, size.Y.Scale * s))}
+			Position={position}
+			AnchorPoint={anchorPoint}
+			LayoutOrder={layoutOrder ?? 0}
+			ZIndex={zindex ?? 10}
+			ref={ref}
+		>
+			<imagebutton
+				BackgroundTransparency={1}
+				Position={UDim2.fromScale(0.5, 0.5)}
+				AnchorPoint={new Vector2(0.5, 0.5)}
+				Size={UDim2.fromScale(1, 1)}
+				ZIndex={zindex ?? 10}
+				Event={{
+					MouseEnter: () => {
+						onHover?.();
+						setIsHovered(true);
+					},
+					MouseLeave: () => {
+						onLeave?.();
+						setIsHovered(false);
+					},
+					MouseButton1Click: () => {
+						// Check for undefined, because we only want a pressing animation if a click event is defined
+						if (onClick !== undefined) {
+							setPressed(true);
+							task.delay(0.1, () => setPressed(false));
+							onClick();
+						}
+					},
+				}}
+			></imagebutton>
+			{React.Children.map(children, (child) => {
+				return child;
+			})}
+		</frame>
+	);
+};
+
 interface ItemStat {
 	key: string;
 	value: string | number;
-	icon: string; // Icon emoji or asset ID
+	icon: string; // Asset ID
 }
 
 interface GenericItemProps {
@@ -39,6 +121,19 @@ interface GenericItemProps {
 
 const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 	const { itemImage, itemName, rarity, stats, itemType, isEquipped } = props;
+	const [isHovered, setIsHovered] = React.useState(false);
+	const [isPressed, setPressed] = React.useState(false);
+	const [size, sizeMotion] = useMotion(1);
+	const [MIN_SCALE, MAX_SCALE] = [0.95, 1.05];
+
+	useEffect(() => {
+		// sizeMotion.spring(isHovered ? START_SZ.add(SZ_INC) : START_SZ, springs.bubbly);
+		sizeMotion.spring(isHovered ? MAX_SCALE : 1, springs.responsive);
+	}, [isHovered]);
+
+	// useEffect(() => {
+	// 	sizeMotion.spring(isPressed ? MIN_SCALE : isHovered ? MAX_SCALE : 1, springs.bubbly);
+	// }, [isPressed]);
 
 	return (
 		<frame
@@ -60,9 +155,22 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 					: 6
 			}
 			key={"Item"}
-			Position={UDim2.fromScale(-2.49e-8, 9.67e-9)}
-			Size={UDim2.fromScale(0.33, 1.01)}
+			Position={UDim2.fromScale(0, 0.5)}
+			Size={size.map((s) => {
+				return UDim2.fromScale(0.33 * s, 1.01 * s);
+			})}
+			AnchorPoint={new Vector2(0.5, 0.5)}
 		>
+			<imagelabel
+				Image={"rbxassetid://131799908550131"}
+				Size={UDim2.fromScale(0.25, 0.2)}
+				BackgroundTransparency={1}
+				Visible={isEquipped}
+				ZIndex={10}
+				AnchorPoint={new Vector2(1, 0)}
+				Position={new UDim2(1, -10, 0, 10)}
+			/>
+
 			<imagebutton
 				AnchorPoint={new Vector2(0.5, 0.5)}
 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -73,11 +181,16 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 				key={"Item Container"}
 				Position={UDim2.fromScale(0.5, 0.5)}
 				Size={UDim2.fromScale(1, 0.949)}
+				Active={!isEquipped}
 				Event={{
 					MouseButton1Click: () => {
 						// Equip the item
 						Events.equipItem(itemType, itemName);
+						setPressed(true);
+						task.delay(0.1, () => setPressed(false));
 					},
+					MouseEnter: () => setIsHovered(true),
+					MouseLeave: () => setIsHovered(false),
 				}}
 			>
 				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.748} />
@@ -181,6 +294,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 						key={"Item Info"}
 						Position={UDim2.fromScale(0.0292, 0.458)}
 						Size={UDim2.fromScale(0.958, 0.533)}
+						ZIndex={2}
 					>
 						<textlabel
 							AnchorPoint={new Vector2(0.5, 0.5)}
@@ -192,21 +306,13 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							key={"Rarity"}
 							Position={UDim2.fromScale(0.508, 0.26)}
 							Size={UDim2.fromScale(1.02, 0.438)}
-							Text={rarity}
-							TextColor3={gameConstants.RARITY_COLORS[rarity]}
+							Text={props.rarity}
+							TextColor3={gameConstants.RARITY_COLORS[props.rarity]}
 							TextScaled={true}
 							TextWrapped={true}
 							TextXAlignment={Enum.TextXAlignment.Right}
 						>
 							<uistroke key={"UIStroke"} Thickness={2} />
-
-							<uipadding
-								key={"UIPadding"}
-								PaddingBottom={new UDim(0.00323, 0)}
-								PaddingLeft={new UDim(0.623, 0)}
-								PaddingRight={new UDim(0.623, 0)}
-								PaddingTop={new UDim(0.00323, 0)}
-							/>
 						</textlabel>
 
 						<uilistlayout
@@ -226,54 +332,69 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							key={"Name"}
 							Position={UDim2.fromScale(0.499, 0.709)}
 							Size={UDim2.fromScale(1.02, 0.521)}
-							Text={spaceWords(itemName)}
+							Text={spaceWords(props.itemName)}
 							TextColor3={Color3.fromRGB(255, 255, 255)}
 							TextScaled={true}
 							TextWrapped={true}
 							TextXAlignment={Enum.TextXAlignment.Right}
 						>
 							<uistroke key={"UIStroke"} Thickness={2} />
-
-							<uipadding
-								key={"UIPadding"}
-								PaddingBottom={new UDim(0.0132, 0)}
-								PaddingLeft={new UDim(0.245, 0)}
-								PaddingRight={new UDim(0.245, 0)}
-								PaddingTop={new UDim(0.0132, 0)}
-							/>
 						</textlabel>
 					</frame>
 
 					{/* <frame
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						key={"Rating"}
-						Position={UDim2.fromScale(0.586, 0.13)}
-						Size={UDim2.fromScale(0.4, 0.333)}
-					>
-						<uilistlayout
-							key={"UIListLayout"}
-							FillDirection={Enum.FillDirection.Horizontal}
-							HorizontalAlignment={Enum.HorizontalAlignment.Right}
-							SortOrder={Enum.SortOrder.LayoutOrder}
-							VerticalAlignment={Enum.VerticalAlignment.Center}
-						/>
-
-						<imagelabel
-							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-							BackgroundTransparency={1}
-							BorderColor3={Color3.fromRGB(0, 0, 0)}
-							BorderSizePixel={0}
-							Image={"rbxassetid://135857882759075"}
-							key={"Star"}
-							Position={UDim2.fromScale(0.768, 0)}
-							ScaleType={Enum.ScaleType.Fit}
-							Size={UDim2.fromScale(0.333, 0.8)}
-						/>
-
-					</frame> */}
+										BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+										BackgroundTransparency={1}
+										BorderColor3={Color3.fromRGB(0, 0, 0)}
+										BorderSizePixel={0}
+										key={"Rating"}
+										Position={UDim2.fromScale(0.586, 0.13)}
+										Size={UDim2.fromScale(0.4, 0.333)}
+									>
+										<uilistlayout
+											key={"UIListLayout"}
+											FillDirection={Enum.FillDirection.Horizontal}
+											HorizontalAlignment={Enum.HorizontalAlignment.Right}
+											SortOrder={Enum.SortOrder.LayoutOrder}
+											VerticalAlignment={Enum.VerticalAlignment.Center}
+										/>
+				
+										<imagelabel
+											BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+											BackgroundTransparency={1}
+											BorderColor3={Color3.fromRGB(0, 0, 0)}
+											BorderSizePixel={0}
+											Image={"rbxassetid://92942300911296"}
+											key={"Star"}
+											Position={UDim2.fromScale(0.768, 0)}
+											ScaleType={Enum.ScaleType.Fit}
+											Size={UDim2.fromScale(0.333, 0.8)}
+										/>
+				
+										<imagelabel
+											BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+											BackgroundTransparency={1}
+											BorderColor3={Color3.fromRGB(0, 0, 0)}
+											BorderSizePixel={0}
+											Image={"rbxassetid://92942300911296"}
+											key={"Star"}
+											Position={UDim2.fromScale(0.768, 0)}
+											ScaleType={Enum.ScaleType.Fit}
+											Size={UDim2.fromScale(0.333, 0.8)}
+										/>
+				
+										<imagelabel
+											BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+											BackgroundTransparency={1}
+											BorderColor3={Color3.fromRGB(0, 0, 0)}
+											BorderSizePixel={0}
+											Image={"rbxassetid://92942300911296"}
+											key={"Star"}
+											Position={UDim2.fromScale(0.768, 0)}
+											ScaleType={Enum.ScaleType.Fit}
+											Size={UDim2.fromScale(0.333, 0.8)}
+										/>
+									</frame> */}
 				</frame>
 			</imagebutton>
 
@@ -423,371 +544,6 @@ const TreasureItemComponent: React.FC<GenericItemProps> = ({
 	);
 };
 
-interface LargeShopItemProps {
-	item: ShopItem;
-}
-
-const LargeShopItemComponent: React.FC<LargeShopItemProps> = ({ item }) => {
-	return (
-		<frame
-			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-			BorderColor3={Color3.fromRGB(0, 0, 0)}
-			BorderSizePixel={0}
-			key={"Segment"}
-			Position={UDim2.fromScale(0.0411, 0.0188)}
-			Size={UDim2.fromScale(0.906, 0.0112)}
-		>
-			<uicorner key={"UICorner"} CornerRadius={new UDim(0.08, 0)} />
-
-			<uistroke key={"UIStroke"} Color={Color3.fromRGB(53, 52, 50)} Thickness={4} />
-
-			<uigradient
-				key={"UIGradient"}
-				Color={
-					new ColorSequence([
-						new ColorSequenceKeypoint(0, Color3.fromRGB(71, 224, 255)),
-						new ColorSequenceKeypoint(0.317, Color3.fromRGB(71, 224, 255)),
-						new ColorSequenceKeypoint(1, Color3.fromRGB(28, 187, 255)),
-					])
-				}
-				Rotation={-45}
-			/>
-
-			<textlabel
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				FontFace={
-					new Font(
-						"rbxasset://fonts/families/AccanthisADFStd.json",
-						Enum.FontWeight.Bold,
-						Enum.FontStyle.Normal,
-					)
-				}
-				key={"Title"}
-				Position={UDim2.fromScale(0, -0.225)}
-				Size={UDim2.fromScale(0.423, 0.192)}
-				Text={item.title}
-				TextColor3={Color3.fromRGB(255, 255, 255)}
-				TextScaled={true}
-				TextWrapped={true}
-				TextXAlignment={Enum.TextXAlignment.Left}
-			>
-				<uistroke key={"UIStroke"} Color={Color3.fromRGB(53, 52, 50)} Thickness={2} />
-			</textlabel>
-
-			<textlabel
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				FontFace={
-					new Font(
-						"rbxasset://fonts/families/AccanthisADFStd.json",
-						Enum.FontWeight.Bold,
-						Enum.FontStyle.Normal,
-					)
-				}
-				key={"SubTitle"}
-				Position={UDim2.fromScale(0.43, -0.18)}
-				Size={UDim2.fromScale(0.289, 0.137)}
-				Text={item.subtitle}
-				TextColor3={item.backgroundColor?.Keypoints[0].Value ?? Color3.fromRGB(255, 255, 255)}
-				TextScaled={true}
-				TextWrapped={true}
-				TextXAlignment={Enum.TextXAlignment.Left}
-			>
-				<uistroke key={"UIStroke"} Color={Color3.fromRGB(53, 52, 50)} Thickness={2} />
-			</textlabel>
-
-			<frame
-				BackgroundColor3={Color3.fromRGB(68, 236, 33)}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				key={"ClaimButton"}
-				Position={UDim2.fromScale(0.612, 0.653)}
-				Size={UDim2.fromScale(0.36, 0.267)}
-			>
-				<uicorner key={"UICorner"} CornerRadius={new UDim(10, 0)} />
-
-				<uistroke key={"UIStroke"} Thickness={3} Transparency={0.2} />
-
-				<textbutton
-					key={"TextButton"}
-					AnchorPoint={new Vector2(0.5, 0.5)}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					FontFace={
-						new Font("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-					}
-					Position={UDim2.fromScale(0.5, 0.5)}
-					Size={UDim2.fromScale(1, 1)}
-					Text={"BUY"}
-					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextScaled={true}
-					TextWrapped={true}
-					Event={{
-						MouseButton1Click: () => {
-							if (item.productId) {
-								if (item.productType === ProductType.GamePass) {
-									MarketplaceService.PromptGamePassPurchase(Players.LocalPlayer, item.productId);
-								} else if (item.productType === ProductType.DevProduct) {
-									MarketplaceService.PromptProductPurchase(Players.LocalPlayer, item.productId);
-								}
-							}
-						},
-					}}
-				>
-					<uistroke key={"UIStroke"} Thickness={3} />
-
-					<uipadding key={"UIPadding"} PaddingBottom={new UDim(0.06, 0)} PaddingTop={new UDim(0.06, 0)} />
-				</textbutton>
-			</frame>
-
-			<imagelabel
-				key={"ImageLabel"}
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				Image={item.image}
-				Position={UDim2.fromScale(0.0181, 0.055)}
-				ScaleType={Enum.ScaleType.Crop}
-				Size={UDim2.fromScale(0.268, 0.89)}
-			>
-				<uicorner key={"UICorner"} CornerRadius={new UDim(0.08, 0)} />
-
-				<uistroke key={"UIStroke"} Color={Color3.fromRGB(53, 52, 50)} Thickness={4} />
-			</imagelabel>
-
-			<textlabel
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				FontFace={
-					new Font(
-						"rbxasset://fonts/families/AccanthisADFStd.json",
-						Enum.FontWeight.Bold,
-						Enum.FontStyle.Italic,
-					)
-				}
-				key={"SegmentTitle"}
-				Position={UDim2.fromScale(0.32, 0.085)}
-				Size={UDim2.fromScale(0.644, 0.177)}
-				Text={item.description}
-				TextColor3={Color3.fromRGB(255, 255, 255)}
-				TextScaled={true}
-				TextWrapped={true}
-				TextXAlignment={Enum.TextXAlignment.Left}
-			>
-				<uistroke key={"UIStroke"} Color={Color3.fromRGB(53, 52, 50)} Thickness={2} />
-			</textlabel>
-
-			<imagelabel
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				Image={"http://www.roblox.com/asset/?id=16228703358"}
-				ImageColor3={Color3.fromRGB(0, 0, 0)}
-				ImageTransparency={0.9}
-				key={"BackDrop"}
-				ScaleType={Enum.ScaleType.Crop}
-				Size={UDim2.fromScale(1, 1)}
-				ZIndex={0}
-			/>
-		</frame>
-	);
-};
-
-interface LargeShopClaimProps {
-	item: ShopItem;
-}
-
-const LargeShopClaimComponent: React.FC<LargeShopClaimProps> = ({ item }) => {
-	return (
-		<frame
-			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-			BorderColor3={Color3.fromRGB(0, 0, 0)}
-			BorderSizePixel={0}
-			key={"Segment"}
-			Position={UDim2.fromScale(0.0466, 0.00369)}
-			Size={UDim2.fromScale(0.906, 0.0112)}
-		>
-			<uicorner key={"UICorner"} CornerRadius={new UDim(0.08, 0)} />
-
-			<uistroke key={"UIStroke"} Color={Color3.fromRGB(53, 52, 50)} Thickness={4} />
-
-			<uigradient key={"UIGradient"} Color={item.backgroundColor} Rotation={-45} />
-
-			<textlabel
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				FontFace={
-					new Font(
-						"rbxasset://fonts/families/AccanthisADFStd.json",
-						Enum.FontWeight.Bold,
-						Enum.FontStyle.Normal,
-					)
-				}
-				key={"Title"}
-				Position={UDim2.fromScale(0, -0.225)}
-				Size={UDim2.fromScale(0.423, 0.192)}
-				Text={item.title}
-				TextColor3={Color3.fromRGB(255, 255, 255)}
-				TextScaled={true}
-				TextWrapped={true}
-				TextXAlignment={Enum.TextXAlignment.Left}
-			>
-				<uistroke key={"UIStroke"} Color={Color3.fromRGB(53, 52, 50)} Thickness={2} />
-			</textlabel>
-
-			<textlabel
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				FontFace={
-					new Font(
-						"rbxasset://fonts/families/AccanthisADFStd.json",
-						Enum.FontWeight.Bold,
-						Enum.FontStyle.Normal,
-					)
-				}
-				key={"SubTitle"}
-				Position={UDim2.fromScale(0.43, -0.18)}
-				Size={UDim2.fromScale(0.128, 0.137)}
-				Text={item.subtitle}
-				TextColor3={item.subtitleColor ?? Color3.fromRGB(235, 68, 246)}
-				TextScaled={true}
-				TextWrapped={true}
-				TextXAlignment={Enum.TextXAlignment.Left}
-			>
-				<uistroke key={"UIStroke"} Color={Color3.fromRGB(53, 52, 50)} Thickness={2} />
-			</textlabel>
-
-			<textlabel
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				FontFace={
-					new Font(
-						"rbxasset://fonts/families/AccanthisADFStd.json",
-						Enum.FontWeight.Bold,
-						Enum.FontStyle.Normal,
-					)
-				}
-				key={"SegmentTitle"}
-				Position={UDim2.fromScale(0.0408, 0.06)}
-				Size={UDim2.fromScale(0.917, 0.207)}
-				Text={item.description}
-				TextColor3={Color3.fromRGB(255, 255, 255)}
-				TextScaled={true}
-				TextWrapped={true}
-				TextXAlignment={Enum.TextXAlignment.Left}
-			>
-				<uistroke key={"UIStroke"} Color={Color3.fromRGB(53, 52, 50)} Thickness={2} />
-			</textlabel>
-
-			<textlabel
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				FontFace={
-					new Font(
-						"rbxasset://fonts/families/AccanthisADFStd.json",
-						Enum.FontWeight.Bold,
-						Enum.FontStyle.Normal,
-					)
-				}
-				key={"Reward"}
-				Position={UDim2.fromScale(0.0408, 0.745)}
-				Size={UDim2.fromScale(0.284, 0.207)}
-				Text={item.reward}
-				TextColor3={Color3.fromRGB(253, 223, 0)}
-				TextScaled={true}
-				TextWrapped={true}
-				TextXAlignment={Enum.TextXAlignment.Right}
-			>
-				<uistroke key={"UIStroke"} Color={Color3.fromRGB(53, 52, 50)} Thickness={2} />
-			</textlabel>
-
-			<frame
-				BackgroundColor3={Color3.fromRGB(68, 236, 33)}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				key={"ClaimButton"}
-				Position={UDim2.fromScale(0.612, 0.653)}
-				Size={UDim2.fromScale(0.36, 0.267)}
-			>
-				<uicorner key={"UICorner"} CornerRadius={new UDim(10, 0)} />
-
-				<uistroke key={"UIStroke"} Thickness={3} Transparency={0.2} />
-
-				<textbutton
-					key={"TextButton"}
-					AnchorPoint={new Vector2(0.5, 0.5)}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					FontFace={
-						new Font("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-					}
-					Position={UDim2.fromScale(0.5, 0.5)}
-					Size={UDim2.fromScale(1, 1)}
-					Text={"CLAIM"}
-					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextScaled={true}
-					TextWrapped={true}
-					Event={{
-						MouseButton1Click: item.claimed,
-					}}
-				>
-					<uistroke key={"UIStroke"} Thickness={3} />
-
-					<uipadding key={"UIPadding"} PaddingBottom={new UDim(0.06, 0)} PaddingTop={new UDim(0.06, 0)} />
-				</textbutton>
-			</frame>
-
-			<imagelabel
-				key={"ImageLabel"}
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				Image={item.image}
-				Position={UDim2.fromScale(0.352, 0.33)}
-				ScaleType={Enum.ScaleType.Crop}
-				Size={UDim2.fromScale(0.233, 0.666)}
-			/>
-
-			<imagelabel
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				Image={"http://www.roblox.com/asset/?id=17497141137"}
-				ImageColor3={Color3.fromRGB(0, 0, 0)}
-				ImageTransparency={0.98}
-				key={"BackDrop"}
-				ScaleType={Enum.ScaleType.Tile}
-				Size={UDim2.fromScale(1, 1)}
-				TileSize={UDim2.fromOffset(45, 45)}
-				ZIndex={0}
-			/>
-		</frame>
-	);
-};
-
 interface CategoryButtonProps {
 	title: string;
 	iconId: string;
@@ -802,8 +558,50 @@ interface CategoryButtonProps {
 	anchorPoint?: Vector2;
 }
 
-export function CategoryButton(props: CategoryButtonProps) {
+const CategoryButton = (props: CategoryButtonProps) => {
 	const { currentCategory, title, iconId, position, size, anchorPoint } = props;
+	const [isHovered, setIsHovered] = React.useState(false);
+	const [isPressed, setPressed] = React.useState(false);
+	const [sz, sizeMotion] = useMotion(1);
+	const [MIN_SCALE, MAX_SCALE] = [0.95, 1.05];
+	const [buttonColor, buttonColorMotion] = useMotion(Color3.fromRGB(22, 33, 66));
+	const [foregroundColor, foregroundColorMotion] = useMotion(Color3.fromRGB(52, 70, 126));
+	const [glowColor, glowColorMotion] = useMotion(Color3.fromRGB(77, 104, 188));
+	const [hovered, setHovered] = React.useState(false);
+
+	React.useEffect(() => {
+		// Animate size
+		sizeMotion.spring(
+			isPressed ? MIN_SCALE : isHovered ? MAX_SCALE : 1, // Default scale
+			springs.responsive,
+		);
+
+		// Animate button color
+		buttonColorMotion.spring(
+			isHovered ? Color3.fromRGB(22 / 2, 33 / 2, 66 / 2) : Color3.fromRGB(22, 33, 66),
+			springs.responsive,
+		);
+
+		// Animate foreground color
+		foregroundColorMotion.spring(
+			currentCategory === title
+				? Color3.fromRGB(248, 199, 50)
+				: isHovered
+				? Color3.fromRGB(38, 51, 89)
+				: Color3.fromRGB(52, 70, 126),
+			springs.responsive,
+		);
+
+		// Animate glow color
+		glowColorMotion.spring(
+			currentCategory === title
+				? Color3.fromRGB(255, 255, 100)
+				: isHovered
+				? Color3.fromRGB(51, 69, 125)
+				: Color3.fromRGB(77, 104, 188),
+			springs.responsive,
+		);
+	}, [isHovered, isPressed, currentCategory]);
 
 	return (
 		<imagebutton
@@ -813,10 +611,12 @@ export function CategoryButton(props: CategoryButtonProps) {
 			BackgroundTransparency={1}
 			BorderSizePixel={0}
 			Image={"rbxassetid://95497998243578"}
-			ImageColor3={currentCategory === title ? Color3.fromRGB(188, 98, 18) : Color3.fromRGB(22, 33, 66)}
+			ImageColor3={buttonColor}
 			Position={position}
 			ScaleType={Enum.ScaleType.Slice}
-			Size={size}
+			Size={sz.map((s) => {
+				return UDim2.fromScale(size.X.Scale * s, size.Y.Scale * s);
+			})}
 			SliceCenter={new Rect(98, 73, 643, 212)}
 			SliceScale={0.25}
 			ZIndex={-10}
@@ -824,7 +624,11 @@ export function CategoryButton(props: CategoryButtonProps) {
 				MouseButton1Click: () => {
 					// Change the category
 					props.setCategory(title);
+					setPressed(true);
+					task.delay(0.1, () => setPressed(false));
 				},
+				MouseEnter: () => setIsHovered(true),
+				MouseLeave: () => setIsHovered(false),
 			}}
 		>
 			{/* Foreground layer */}
@@ -835,7 +639,7 @@ export function CategoryButton(props: CategoryButtonProps) {
 				BackgroundTransparency={1}
 				BorderSizePixel={0}
 				Image={"rbxassetid://112712495005122"}
-				ImageColor3={currentCategory === title ? Color3.fromRGB(248, 199, 50) : Color3.fromRGB(52, 70, 126)}
+				ImageColor3={foregroundColor}
 				Position={UDim2.fromScale(0.5, 0.508)}
 				ScaleType={Enum.ScaleType.Slice}
 				Size={UDim2.fromScale(1, 1.02)}
@@ -852,7 +656,7 @@ export function CategoryButton(props: CategoryButtonProps) {
 				BackgroundTransparency={1}
 				BorderSizePixel={0}
 				Image={"rbxassetid://94298922654109"}
-				ImageColor3={currentCategory === title ? Color3.fromRGB(255, 255, 100) : Color3.fromRGB(77, 104, 188)}
+				ImageColor3={glowColor}
 				Position={UDim2.fromScale(0.5, 0.508)}
 				ScaleType={Enum.ScaleType.Slice}
 				Size={UDim2.fromScale(1, 1.02)}
@@ -921,8 +725,7 @@ export function CategoryButton(props: CategoryButtonProps) {
 			</frame>
 		</imagebutton>
 	);
-}
-
+};
 interface SkillFrameProps {
 	image: string;
 	imageRotation?: number;
@@ -932,6 +735,15 @@ interface SkillFrameProps {
 }
 
 const SkillFrame: React.FC<SkillFrameProps> = (props) => {
+	const [isHovered, setIsHovered] = React.useState(false);
+	const [size, sizeMotion] = useMotion(1);
+	const [, MAX_SCALE] = [0.95, 1.05];
+	const [bgColor, bgColorMotion] = useMotion(Color3.fromRGB(255, 255, 255));
+
+	useEffect(() => {
+		sizeMotion.spring(isHovered ? MAX_SCALE : 1, springs.responsive);
+	}, [isHovered]);
+
 	return (
 		<frame
 			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -944,7 +756,8 @@ const SkillFrame: React.FC<SkillFrameProps> = (props) => {
 		>
 			<imagelabel
 				AnchorPoint={new Vector2(0.5, 0.5)}
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+				BackgroundColor3={bgColor}
+				ImageColor3={bgColor}
 				BackgroundTransparency={1}
 				BorderColor3={Color3.fromRGB(0, 0, 0)}
 				BorderSizePixel={0}
@@ -952,9 +765,19 @@ const SkillFrame: React.FC<SkillFrameProps> = (props) => {
 				key={"Background"}
 				Position={UDim2.fromScale(0.5, 0.5)}
 				ScaleType={Enum.ScaleType.Slice}
-				Size={UDim2.fromScale(1, 1)}
+				Size={size.map((s) => {
+					return UDim2.fromScale(1 * s, 1 * s);
+				})}
 				SliceCenter={new Rect(36, 60, 994, 60)}
 				SliceScale={0.7}
+				Event={{
+					MouseEnter: () => {
+						setIsHovered(true);
+					},
+					MouseLeave: () => {
+						setIsHovered(false);
+					},
+				}}
 			>
 				<frame
 					AnchorPoint={new Vector2(0.5, 0.5)}
@@ -1160,6 +983,420 @@ const SkillFrame: React.FC<SkillFrameProps> = (props) => {
 		</frame>
 	);
 };
+interface InventorySelectorTabProps {
+	inventoryType: ItemType;
+	icon: string;
+	order: number;
+	setSelectedInventoryType: Dispatch<ItemType>;
+	selectedInventoryType: ItemType;
+	position: UDim2;
+}
+
+const InventorySelectorTab = (props: InventorySelectorTabProps) => {
+	const [color, colorMotion] = useMotion(Color3.fromRGB(255, 255, 255));
+	const [hovered, setHovered] = React.useState(false);
+
+	useEffect(() => {
+		colorMotion.spring(
+			!hovered ? Color3.fromRGB(255, 255, 255) : Color3.fromRGB(200, 200, 200),
+			springs.responsive,
+		);
+	}, [hovered]);
+
+	return (
+		<AnimatedButton
+			size={UDim2.fromScale(0.103, 1.18)}
+			layoutOrder={props.order}
+			position={props.position}
+			anchorPoint={new Vector2(0.5, 0.5)}
+			scales={new NumberRange(0.95, 1.05)}
+			onClick={() => {
+				setHovered(false);
+				props.setSelectedInventoryType(props.inventoryType);
+			}}
+			onHover={() => {
+				setHovered(true);
+			}}
+			onLeave={() => {
+				setHovered(false);
+			}}
+		>
+			<frame
+				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+				BackgroundTransparency={1}
+				BorderColor3={Color3.fromRGB(0, 0, 0)}
+				Size={UDim2.fromScale(1, 1)}
+				BorderSizePixel={0}
+			>
+				<imagelabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundColor3={color}
+					ImageColor3={color}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					Image={
+						props.selectedInventoryType === props.inventoryType
+							? "rbxassetid://109250907266323"
+							: "rbxassetid://105250247379697"
+					}
+					LayoutOrder={1}
+					Position={UDim2.fromScale(0.5, 0.5)}
+					Size={UDim2.fromScale(1, 1)}
+				>
+					<imagelabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+						BackgroundTransparency={1}
+						BorderColor3={Color3.fromRGB(0, 0, 0)}
+						BorderSizePixel={0}
+						Image={props.icon}
+						key={"Icon"}
+						Position={UDim2.fromScale(0.5, 0.5)}
+						ScaleType={Enum.ScaleType.Fit}
+						Size={UDim2.fromScale(0.7, 0.7)}
+					/>
+				</imagelabel>
+			</frame>
+		</AnimatedButton>
+	);
+};
+
+interface SellAllBtnProps {
+	position: UDim2;
+	size?: UDim2;
+	anchorPoint?: Vector2;
+	requiresGamepass: boolean;
+}
+
+export const SellAllBtn = (props: SellAllBtnProps) => {
+	return (
+		<AnimatedButton
+			size={props.size ?? UDim2.fromScale(0.268, 1)}
+			scales={new NumberRange(0.95, 1.05)}
+			position={props.position}
+			anchorPoint={props.anchorPoint ?? new Vector2(0.5, 0.5)}
+			onClick={() => {
+				if (props.requiresGamepass) {
+					// TODO: Prompt gamepass purchase.
+					return;
+				}
+				Events.sellAll();
+			}}
+		>
+			<imagebutton
+				AnchorPoint={new Vector2(0.5, 0.5)}
+				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+				BackgroundTransparency={1}
+				BorderColor3={Color3.fromRGB(0, 0, 0)}
+				BorderSizePixel={0}
+				Image={"rbxassetid://92239062767450"}
+				key={"Sell All Btn"}
+				Position={UDim2.fromScale(0.5, 0.5)}
+				ScaleType={Enum.ScaleType.Slice}
+				Size={UDim2.fromScale(1, 1)}
+				SliceCenter={new Rect(40, 86, 544, 87)}
+				SliceScale={0.3}
+			>
+				<textlabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					key={"Label"}
+					Position={UDim2.fromScale(0.5, 0.5)}
+					Size={UDim2.fromScale(0.684, 0.524)}
+					Text={"Sell All"}
+					TextColor3={Color3.fromRGB(255, 255, 255)}
+					TextScaled={true}
+					TextWrapped={true}
+				>
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(1, 75, 33)} Thickness={3} />
+
+					<uipadding
+						key={"UIPadding"}
+						PaddingBottom={new UDim(0.071, 0)}
+						PaddingLeft={new UDim(0.226, 0)}
+						PaddingRight={new UDim(0.226, 0)}
+						PaddingTop={new UDim(0.071, 0)}
+					/>
+				</textlabel>
+			</imagebutton>
+		</AnimatedButton>
+	);
+};
+
+interface ExitButtonProps {
+	uiController: UiController;
+	uiName: string;
+	menuRefToClose?: React.RefObject<Frame>;
+}
+
+export const ExitButton = (props: ExitButtonProps) => {
+	const [isHovered, setIsHovered] = React.useState(false);
+	const [isPressed, setPressed] = React.useState(false);
+	const [size, sizeMotion] = useMotion(1);
+	const [, closingMotion] = useMotion(0);
+
+	useEffect(() => {
+		// sizeMotion.spring(isHovered ? START_SZ.add(SZ_INC) : START_SZ, springs.bubbly);
+		sizeMotion.spring(isHovered ? 1.2 : 1, springs.responsive);
+	}, [isHovered]);
+
+	useEffect(() => {
+		sizeMotion.spring(isPressed ? 0.8 : isHovered ? 1.2 : 1, springs.responsive);
+	}, [isPressed]);
+
+	return (
+		<frame
+			AnchorPoint={new Vector2(0.5, 0.5)}
+			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+			BackgroundTransparency={1}
+			BorderColor3={Color3.fromRGB(0, 0, 0)}
+			BorderSizePixel={0}
+			key={"Exit Button"}
+			Position={UDim2.fromScale(0.978, 0.0365)}
+			Size={size.map((s) => {
+				return UDim2.fromScale(0.123 * s, 0.194 * s);
+			})}
+			ZIndex={100}
+			Active={!isPressed}
+		>
+			<textlabel
+				key={"TextLabel"}
+				AnchorPoint={new Vector2(0.5, 0.5)}
+				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+				BackgroundTransparency={1}
+				BorderColor3={Color3.fromRGB(0, 0, 0)}
+				BorderSizePixel={0}
+				FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+				Position={UDim2.fromScale(0.5, 0.5)}
+				Size={UDim2.fromScale(0.518, 0.518)}
+				Text={"X"}
+				TextColor3={Color3.fromRGB(255, 255, 255)}
+				TextScaled={true}
+				TextWrapped={true}
+				ZIndex={105}
+			>
+				<uipadding
+					key={"UIPadding"}
+					PaddingBottom={new UDim(0.0843, 0)}
+					PaddingLeft={new UDim(0.294, 0)}
+					PaddingRight={new UDim(0.294, 0)}
+					PaddingTop={new UDim(0.0843, 0)}
+				/>
+			</textlabel>
+
+			<imagebutton
+				AnchorPoint={new Vector2(0.5, 0.5)}
+				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+				BackgroundTransparency={1}
+				BorderColor3={Color3.fromRGB(0, 0, 0)}
+				BorderSizePixel={0}
+				Image={"rbxassetid://105623320030835"}
+				key={"ExitBtn"}
+				Position={UDim2.fromScale(0.466, 0.527)}
+				ScaleType={Enum.ScaleType.Slice}
+				Selectable={false}
+				Size={UDim2.fromScale(0.824, 0.87)}
+				SliceCenter={new Rect(0.5, 0.5, 0.5, 0.5)}
+				SliceScale={0.4}
+				ZIndex={100}
+				Event={{
+					MouseButton1Click: () => {
+						const startSz = props.menuRefToClose?.current!.Size;
+						const endSz = UDim2.fromScale(0, 0);
+						let cleanedStep = false;
+						let cleanupStep = closingMotion.onStep((v) => {
+							if (!props.menuRefToClose || !startSz) {
+								cleanupStep();
+								cleanedStep = true;
+								return;
+							}
+							props.menuRefToClose.current!.Size = startSz.Lerp(endSz, v);
+							// TODO: Maybe also add fade out effect.
+						});
+						const cleanup = closingMotion.onComplete(() => {
+							cleanup();
+							props.uiController.closeUi(props.uiName);
+							closingMotion.immediate(0);
+							if (!cleanedStep) {
+								cleanupStep();
+								cleanedStep = true;
+							}
+						});
+						if (props.menuRefToClose) {
+							closingMotion.tween(1, {
+								time: 0.1,
+								style: Enum.EasingStyle.Linear,
+								direction: Enum.EasingDirection.In,
+							});
+						} else {
+							closingMotion.immediate(1);
+						}
+						setPressed(true);
+						task.delay(0.1, () => setPressed(false));
+					},
+					MouseEnter: () => setIsHovered(true),
+					MouseLeave: () => {
+						setIsHovered(false);
+						setPressed(false);
+					},
+				}}
+			/>
+		</frame>
+	);
+};
+
+const RefundPointFrame = () => {
+	const [isHovered, setIsHovered] = React.useState(false);
+	const [isPressed, setPressed] = React.useState(false);
+	const [size, sizeMotion] = useMotion(1);
+	const [MIN_SCALE, MAX_SCALE] = [0.95, 1.05];
+
+	useEffect(() => {
+		// sizeMotion.spring(isHovered ? START_SZ.add(SZ_INC) : START_SZ, springs.bubbly);
+		sizeMotion.spring(isHovered ? MAX_SCALE : 1, springs.responsive);
+	}, [isHovered]);
+
+	useEffect(() => {
+		sizeMotion.spring(isPressed ? MIN_SCALE : isHovered ? MAX_SCALE : 1, springs.responsive);
+	}, [isPressed]);
+
+	return (
+		<frame
+			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+			BackgroundTransparency={1}
+			BorderColor3={Color3.fromRGB(0, 0, 0)}
+			BorderSizePixel={0}
+			key={"Refund Points"}
+			Position={UDim2.fromScale(-5.82e-8, 0.0774)}
+			Size={UDim2.fromScale(0.281, 0.923)}
+		>
+			<textlabel
+				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+				BackgroundTransparency={1}
+				BorderColor3={Color3.fromRGB(0, 0, 0)}
+				BorderSizePixel={0}
+				FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+				key={"Refund Point Label"}
+				Size={UDim2.fromScale(0.85, 0.444)}
+				Text={"Refund Points!"}
+				TextColor3={Color3.fromRGB(255, 255, 255)}
+				TextScaled={true}
+				TextWrapped={true}
+			>
+				<uistroke key={"UIStroke"} Thickness={3} />
+			</textlabel>
+
+			<frame
+				AnchorPoint={new Vector2(0.5, 0.5)}
+				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+				BackgroundTransparency={1}
+				BorderColor3={Color3.fromRGB(0, 0, 0)}
+				BorderSizePixel={0}
+				key={"Refund Points  Btn Frame"}
+				Position={UDim2.fromScale(0.558, 0.722)}
+				Size={UDim2.fromScale(0.981, 0.636)}
+			>
+				<imagebutton
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					Image={"rbxassetid://92239062767450"}
+					key={"Buy Btn"}
+					Position={UDim2.fromScale(0.5, 0.5)}
+					ScaleType={Enum.ScaleType.Slice}
+					Size={size.map((s) => {
+						return UDim2.fromScale(1.03 * s, 1.07 * s);
+					})}
+					SliceCenter={new Rect(47, 94, 539, 94)}
+					Event={{
+						MouseEnter: () => setIsHovered(true),
+						MouseLeave: () => setIsHovered(false),
+						MouseButton1Click: () => {
+							// TODO: Prompt refund point devproduct
+							setPressed(true);
+							task.delay(0.1, () => setPressed(false));
+						},
+					}}
+				>
+					<frame
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+						BackgroundTransparency={1}
+						BorderColor3={Color3.fromRGB(0, 0, 0)}
+						BorderSizePixel={0}
+						key={"Discount Number"}
+						Position={UDim2.fromScale(0.5, 0.492)}
+						Size={UDim2.fromScale(0.829, 0.524)}
+					>
+						<uilistlayout
+							key={"UIListLayout"}
+							FillDirection={Enum.FillDirection.Horizontal}
+							HorizontalAlignment={Enum.HorizontalAlignment.Center}
+							Padding={new UDim(0.05, 0)}
+							SortOrder={Enum.SortOrder.LayoutOrder}
+							VerticalAlignment={Enum.VerticalAlignment.Center}
+						/>
+
+						<imagelabel
+							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+							BackgroundTransparency={1}
+							BorderColor3={Color3.fromRGB(0, 0, 0)}
+							BorderSizePixel={0}
+							Image={"rbxassetid://75287275007438"}
+							key={"Robux"}
+							Position={UDim2.fromScale(0.262, 0.00802)}
+							ScaleType={Enum.ScaleType.Fit}
+							Size={UDim2.fromScale(0.399, 0.984)}
+						>
+							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+						</imagelabel>
+
+						<textlabel
+							AnchorPoint={new Vector2(0.5, 0.5)}
+							AutomaticSize={Enum.AutomaticSize.X}
+							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+							BackgroundTransparency={1}
+							BorderColor3={Color3.fromRGB(0, 0, 0)}
+							BorderSizePixel={0}
+							FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+							key={"Timer"}
+							Position={UDim2.fromScale(0.569, 0.5)}
+							Size={UDim2.fromScale(0.223, 1)}
+							Text={"99"}
+							TextColor3={Color3.fromRGB(255, 255, 255)}
+							TextScaled={true}
+							TextWrapped={true}
+							TextXAlignment={Enum.TextXAlignment.Left}
+							ZIndex={10}
+						>
+							<uistroke key={"UIStroke"} Color={Color3.fromRGB(8, 66, 34)} Thickness={4} />
+
+							<uipadding
+								key={"UIPadding"}
+								PaddingBottom={new UDim(0.00487, 0)}
+								PaddingTop={new UDim(0.00487, 0)}
+							/>
+						</textlabel>
+					</frame>
+				</imagebutton>
+			</frame>
+
+			<uilistlayout
+				key={"UIListLayout"}
+				HorizontalAlignment={Enum.HorizontalAlignment.Center}
+				SortOrder={Enum.SortOrder.LayoutOrder}
+				VerticalAlignment={Enum.VerticalAlignment.Center}
+			/>
+		</frame>
+	);
+};
 
 type InventoryItemProps = {
 	itemImage: string;
@@ -1192,9 +1429,11 @@ export const MainUi = (props: MainUiProps) => {
 		{ level: number; xp: number; xpMax: number; skillPoints: number } | undefined
 	>();
 	const [selectedInventoryType, setSelectedInventoryType] = React.useState<ItemType>("MetalDetectors");
-	const [pos, posMotion] = useMotion(UDim2.fromScale(0.5, 0.6));
+	const [popInSz, popInMotion] = useMotion(UDim2.fromScale(0, 0));
 	const [loading, setLoading] = React.useState(false);
 	const [loadingSpring, setLoadingSpring] = useMotion(1);
+
+	const menuRef = createRef<Frame>();
 
 	const DetectorFolder = ReplicatedStorage.WaitForChild("MetalDetectors") as Folder;
 	const TargetModelFolder = ReplicatedStorage.WaitForChild("TargetModels") as Folder;
@@ -1319,9 +1558,9 @@ export const MainUi = (props: MainUiProps) => {
 
 	React.useEffect(() => {
 		if (visible) {
-			posMotion.spring(UDim2.fromScale(0.5, 0.4), springs.bubbly);
+			popInMotion.spring(UDim2.fromScale(0.72, 0.75), springs.responsive);
 		} else {
-			posMotion.immediate(UDim2.fromScale(0.5, 0.6));
+			popInMotion.immediate(UDim2.fromScale(0, 0));
 		}
 	}, [visible]);
 
@@ -1333,511 +1572,6 @@ export const MainUi = (props: MainUiProps) => {
 		}
 	}, [loading]);
 
-	<frame
-		BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-		BackgroundTransparency={1}
-		BorderColor3={Color3.fromRGB(0, 0, 0)}
-		AnchorPoint={new Vector2(0.5, 0.5)}
-		BorderSizePixel={0}
-		key={"MainUi"}
-		Size={UDim2.fromScale(1, 1)}
-		Visible={visible}
-		Position={pos}
-	>
-		<frame
-			AnchorPoint={new Vector2(0.5, 0.5)}
-			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-			BorderColor3={Color3.fromRGB(0, 0, 0)}
-			BorderSizePixel={0}
-			key={"Main"}
-			Position={UDim2.fromScale(0.593, 0.5)}
-			Size={UDim2.fromScale(0.55, 0.7)}
-		>
-			<uicorner key={"UICorner"} CornerRadius={new UDim(0.06, 0)} />
-
-			<uistroke key={"UIStroke"} Color={Color3.fromRGB(43, 44, 45)} Thickness={4} />
-
-			<uigradient
-				key={"UIGradient"}
-				Color={
-					new ColorSequence([
-						new ColorSequenceKeypoint(0, Color3.fromRGB(102, 109, 119)),
-						new ColorSequenceKeypoint(1, Color3.fromRGB(140, 149, 163)),
-					])
-				}
-				Rotation={-90}
-			/>
-
-			<frame
-				BackgroundColor3={Color3.fromRGB(240, 18, 25)}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				key={"ExitButton"}
-				Position={UDim2.fromScale(0.94, -0.0425)}
-				Size={UDim2.fromScale(0.0876, 0.143)}
-				ZIndex={2}
-			>
-				<uistroke key={"UIStroke"} Color={Color3.fromRGB(43, 44, 45)} Thickness={4} />
-
-				<uicorner key={"UICorner"} CornerRadius={new UDim(0.22, 0)} />
-
-				<uiaspectratioconstraint AspectRatio={1} />
-
-				<textbutton
-					AnchorPoint={new Vector2(0.5, 0.5)}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					FontFace={
-						new Font("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-					}
-					key={"ButtonActual"}
-					Position={UDim2.fromScale(0.5, 0.5)}
-					Size={UDim2.fromScale(1, 1)}
-					Text={"X"}
-					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextScaled={true}
-					TextWrapped={true}
-					ZIndex={4}
-					Event={{
-						MouseButton1Click: () => {
-							props.uiController.closeUi(gameConstants.MAIN_UI);
-						},
-					}}
-				>
-					<uipadding key={"UIPadding"} PaddingBottom={new UDim(0.16, 0)} PaddingTop={new UDim(0.16, 0)} />
-				</textbutton>
-			</frame>
-
-			<frame
-				BackgroundColor3={Color3.fromRGB(74, 79, 86)}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				key={"Upgrades"}
-				Position={UDim2.fromScale(0.0178, 0.0291)}
-				Size={UDim2.fromScale(0.964, 0.539)}
-				Visible={enabledMenu === MENUS.Skills}
-			>
-				<uicorner key={"UICorner"} CornerRadius={new UDim(0.06, 0)} />
-
-				<frame
-					AnchorPoint={new Vector2(0.5, 0.5)}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					key={"Organizer"}
-					Position={UDim2.fromScale(0.5, 0.5)}
-					Size={UDim2.fromScale(0.966, 0.9)}
-				>
-					<uilistlayout
-						key={"UIListLayout"}
-						HorizontalAlignment={Enum.HorizontalAlignment.Center}
-						Padding={new UDim(0.035, 0)}
-						SortOrder={Enum.SortOrder.LayoutOrder}
-					/>
-				</frame>
-
-				<frame
-					BackgroundColor3={Color3.fromRGB(34, 34, 34)}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					key={"ProgressBar"}
-					Position={UDim2.fromScale(0.177, 1.5)}
-					Size={UDim2.fromScale(0.645, 0.0498)}
-				>
-					<uicorner key={"UICorner"} CornerRadius={new UDim(10, 0)} />
-
-					<frame
-						AnchorPoint={new Vector2(0, 0.5)}
-						BackgroundColor3={Color3.fromRGB(146, 255, 15)}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						key={"BarActual"}
-						Position={UDim2.fromScale(0, 0.5)}
-						Size={UDim2.fromScale(math.max((levelState?.xp ?? 0.5) / (levelState?.xpMax ?? 1), 0.05), 1.17)}
-					>
-						<uicorner key={"UICorner"} CornerRadius={new UDim(10, 0)} />
-
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(34, 34, 34)} Thickness={4} />
-					</frame>
-
-					<textlabel
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						FontFace={
-							new Font(
-								"rbxasset://fonts/families/Arial.json",
-								Enum.FontWeight.Bold,
-								Enum.FontStyle.Italic,
-							)
-						}
-						key={"Current"}
-						Position={UDim2.fromScale(-0.189, -0.583)}
-						Size={UDim2.fromScale(0.158, 2.08)}
-						Text={tostring(levelState?.level ?? 1)}
-						TextColor3={Color3.fromRGB(255, 255, 255)}
-						TextScaled={true}
-						TextWrapped={true}
-						TextXAlignment={Enum.TextXAlignment.Right}
-					>
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(34, 34, 34)} Thickness={4} />
-					</textlabel>
-
-					<textlabel
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						FontFace={
-							new Font(
-								"rbxasset://fonts/families/Arial.json",
-								Enum.FontWeight.Bold,
-								Enum.FontStyle.Italic,
-							)
-						}
-						key={"After"}
-						Position={UDim2.fromScale(1.03, -0.583)}
-						Size={UDim2.fromScale(0.158, 2.08)}
-						Text={tostring(levelState?.level ? 1 + levelState!.level : 2)}
-						TextColor3={Color3.fromRGB(255, 255, 255)}
-						TextScaled={true}
-						TextWrapped={true}
-						TextXAlignment={Enum.TextXAlignment.Left}
-					>
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(34, 34, 34)} Thickness={4} />
-					</textlabel>
-
-					<textlabel
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						FontFace={
-							new Font(
-								"rbxasset://fonts/families/Arial.json",
-								Enum.FontWeight.Bold,
-								Enum.FontStyle.Italic,
-							)
-						}
-						key={"Disclaimer"}
-						Position={UDim2.fromScale(0.268, 2.42)}
-						Size={UDim2.fromScale(0.464, 1.42)}
-						Text={"+1 Point EVERY Level"}
-						TextColor3={Color3.fromRGB(255, 255, 255)}
-						TextScaled={true}
-						TextTransparency={0.2}
-						TextWrapped={true}
-					>
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(67, 72, 77)} Thickness={2} />
-					</textlabel>
-
-					<textlabel
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						FontFace={
-							new Font(
-								"rbxasset://fonts/families/Arial.json",
-								Enum.FontWeight.SemiBold,
-								Enum.FontStyle.Normal,
-							)
-						}
-						key={"Available"}
-						Position={UDim2.fromScale(0.0286, -4.5)}
-						Size={UDim2.fromScale(0.943, 3.5)}
-						Text={"Avaible Points: 1"}
-						TextColor3={Color3.fromRGB(255, 255, 255)}
-						TextScaled={true}
-						TextWrapped={true}
-					>
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(34, 34, 34)} Thickness={2} />
-					</textlabel>
-				</frame>
-
-				<imagelabel
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					Image={"http://www.roblox.com/asset/?id=137650843402705"}
-					ImageTransparency={0.95}
-					key={"BackDrop"}
-					Position={UDim2.fromScale(-0.0184, -0.0539)}
-					ScaleType={Enum.ScaleType.Tile}
-					Size={UDim2.fromScale(1.04, 1.85)}
-					TileSize={UDim2.fromScale(0.06, 0.1)}
-					ZIndex={0}
-				>
-					<uigradient
-						key={"UIGradient"}
-						Rotation={-90}
-						Transparency={
-							new NumberSequence([
-								new NumberSequenceKeypoint(0, 0),
-								new NumberSequenceKeypoint(0.715, 1),
-								new NumberSequenceKeypoint(1, 1),
-							])
-						}
-					/>
-				</imagelabel>
-			</frame>
-
-			<frame
-				AnchorPoint={new Vector2(0.5, 0.5)}
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				key={"Shop"}
-				Position={UDim2.fromScale(0.5, 0.5)}
-				Size={UDim2.fromScale(1, 1)}
-				Visible={enabledMenu === MENUS.Shop}
-			>
-				<uicorner key={"UICorner"} CornerRadius={new UDim(0.06, 0)} />
-
-				<uigradient
-					key={"UIGradient"}
-					Color={
-						new ColorSequence([
-							new ColorSequenceKeypoint(0, Color3.fromRGB(223, 185, 0)),
-							new ColorSequenceKeypoint(1, Color3.fromRGB(255, 129, 0)),
-						])
-					}
-					Rotation={-90}
-				/>
-
-				<uistroke key={"UIStroke"} Color={Color3.fromRGB(43, 44, 45)} Thickness={4} />
-
-				<scrollingframe
-					key={"ScrollingFrame"}
-					Active={true}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(27, 42, 53)}
-					BorderSizePixel={0}
-					BottomImage={""}
-					CanvasSize={UDim2.fromScale(0, 5)}
-					Position={UDim2.fromScale(4.76e-8, 0)}
-					ScrollBarImageColor3={Color3.fromRGB(0, 0, 0)}
-					ScrollBarThickness={10}
-					Size={UDim2.fromScale(0.999, 1)}
-					TopImage={""}
-				>
-					<frame
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(27, 42, 53)}
-						BorderSizePixel={0}
-						key={"Content"}
-						Size={UDim2.fromScale(1, 8.01)}
-					>
-						<imagelabel
-							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-							BackgroundTransparency={1}
-							BorderColor3={Color3.fromRGB(0, 0, 0)}
-							BorderSizePixel={0}
-							Image={"http://www.roblox.com/asset/?id=17497141137"}
-							ImageColor3={Color3.fromRGB(0, 0, 0)}
-							ImageTransparency={0.98}
-							key={"BackDrop"}
-							ScaleType={Enum.ScaleType.Tile}
-							Size={UDim2.fromScale(1, 1)}
-							TileSize={UDim2.fromOffset(45, 45)}
-							ZIndex={0}
-						/>
-
-						{shopConfig.map((item) => {
-							if (item.itemType === "Buy") {
-								return <LargeShopItemComponent item={item} />;
-							} else if (item.itemType === "Claim") {
-								return <LargeShopClaimComponent item={item} />;
-							}
-						})}
-					</frame>
-				</scrollingframe>
-			</frame>
-
-			<frame
-				AnchorPoint={new Vector2(0.5, 0.5)}
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				key={"Inventory"}
-				Position={UDim2.fromScale(0.5, 0.5)}
-				Size={UDim2.fromScale(1, 1)}
-				Visible={enabledMenu === MENUS.Inventory}
-			>
-				<uigradient
-					key={"UIGradient"}
-					Color={
-						new ColorSequence([
-							new ColorSequenceKeypoint(0, Color3.fromRGB(102, 109, 119)),
-							new ColorSequenceKeypoint(1, Color3.fromRGB(140, 149, 163)),
-						])
-					}
-					Rotation={-90}
-				/>
-
-				<imagelabel
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					Image={"http://www.roblox.com/asset/?id=17497141137"}
-					ImageColor3={Color3.fromRGB(0, 0, 0)}
-					ImageTransparency={0.98}
-					key={"BackDrop"}
-					ScaleType={Enum.ScaleType.Tile}
-					Size={UDim2.fromScale(1, 1)}
-					TileSize={UDim2.fromOffset(45, 45)}
-					ZIndex={0}
-				/>
-
-				<frame
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					key={"TopbarList"}
-					Position={UDim2.fromScale(0.016, 0.028)}
-					Size={UDim2.fromScale(0.395, 0.178)}
-				>
-					<uilistlayout
-						key={"UIListLayout"}
-						FillDirection={Enum.FillDirection.Horizontal}
-						Padding={new UDim(0.06, 0)}
-						SortOrder={Enum.SortOrder.LayoutOrder}
-					/>
-
-					<frame
-						BackgroundColor3={Color3.fromRGB(114, 121, 133)}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						key={"Button"}
-						Size={UDim2.fromScale(0.253, 1)}
-					>
-						<uicorner key={"UICorner"} CornerRadius={new UDim(0.14, 0)} />
-
-						<imagebutton
-							key={"ImageButton"}
-							AnchorPoint={new Vector2(0.5, 0.5)}
-							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-							BackgroundTransparency={1}
-							BorderColor3={Color3.fromRGB(0, 0, 0)}
-							BorderSizePixel={0}
-							Image={"rbxassetid://90031590147315"}
-							Position={UDim2.fromScale(0.5, 0.5)}
-							Size={UDim2.fromScale(0.82, 0.82)}
-							Event={{
-								MouseButton1Click: () => {
-									setSelectedInventoryType("MetalDetectors");
-								},
-							}}
-						/>
-					</frame>
-
-					<frame
-						BackgroundColor3={Color3.fromRGB(114, 121, 133)}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						key={"Button"}
-						Size={UDim2.fromScale(0.253, 1)}
-					>
-						<uicorner key={"UICorner"} CornerRadius={new UDim(0.14, 0)} />
-
-						<imagebutton
-							key={"ImageButton"}
-							AnchorPoint={new Vector2(0.5, 0.5)}
-							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-							BackgroundTransparency={1}
-							BorderColor3={Color3.fromRGB(0, 0, 0)}
-							BorderSizePixel={0}
-							Image={"rbxassetid://114046423433336"}
-							Position={UDim2.fromScale(0.5, 0.5)}
-							Size={UDim2.fromScale(0.82, 0.82)}
-							Event={{
-								MouseButton1Click: () => {
-									setSelectedInventoryType("Shovels");
-								},
-							}}
-						/>
-					</frame>
-
-					<frame
-						BackgroundColor3={Color3.fromRGB(114, 121, 133)}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						key={"Button"}
-						Size={UDim2.fromScale(0.253, 1)}
-					>
-						<uicorner key={"UICorner"} CornerRadius={new UDim(0.14, 0)} />
-
-						<imagebutton
-							key={"ImageButton"}
-							AnchorPoint={new Vector2(0.5, 0.5)}
-							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-							BackgroundTransparency={1}
-							BorderColor3={Color3.fromRGB(0, 0, 0)}
-							BorderSizePixel={0}
-							Image={"rbxasset://textures/ui/GuiImagePlaceholder.png"}
-							Position={UDim2.fromScale(0.5, 0.5)}
-							Size={UDim2.fromScale(0.82, 0.82)}
-							Event={{
-								MouseButton1Click: () => {
-									setSelectedInventoryType("Target");
-								},
-							}}
-						/>
-					</frame>
-				</frame>
-
-				<uicorner key={"UICorner"} CornerRadius={new UDim(0.06, 0)} />
-
-				<scrollingframe
-					key={"ScrollingFrame"}
-					Active={true}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(27, 42, 53)}
-					BorderSizePixel={0}
-					BottomImage={""}
-					CanvasSize={UDim2.fromScale(1, 0)}
-					AutomaticCanvasSize={Enum.AutomaticSize.X}
-					Position={UDim2.fromScale(0.0177, 0.234)}
-					ScrollBarImageColor3={Color3.fromRGB(0, 0, 0)}
-					ScrollBarImageTransparency={0.2}
-					ScrollBarThickness={10}
-					Size={UDim2.fromScale(0.982, 0.766)}
-					TopImage={""}
-				>
-					<frame
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(27, 42, 53)}
-						BorderSizePixel={0}
-						key={"Content"}
-						Size={UDim2.fromScale(2, 1)}
-					>
-						<uilistlayout
-							key={"UIListLayout"}
-							FillDirection={Enum.FillDirection.Horizontal}
-							Padding={new UDim(0.002, 0)}
-							SortOrder={Enum.SortOrder.LayoutOrder}
-						/>
-
-						{inventory.map((itemProps) => {
-							return <GenericItemComponent {...itemProps}></GenericItemComponent>;
-						})}
-					</frame>
-				</scrollingframe>
-			</frame>
-		</frame>
-	</frame>;
-
 	return (
 		<frame
 			AnchorPoint={new Vector2(0.5, 0.5)}
@@ -1846,9 +1580,10 @@ export const MainUi = (props: MainUiProps) => {
 			BorderColor3={Color3.fromRGB(0, 0, 0)}
 			BorderSizePixel={0}
 			key={"Container"}
-			Position={pos}
-			Size={UDim2.fromScale(0.72, 0.75)}
+			Position={UDim2.fromScale(0.5, 0.45)}
+			Size={popInSz}
 			Visible={visible}
+			ref={menuRef}
 		>
 			<frame
 				AnchorPoint={new Vector2(0.5, 0.5)}
@@ -1877,64 +1612,7 @@ export const MainUi = (props: MainUiProps) => {
 					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.66} />
 				</imagelabel>
 
-				<frame
-					AnchorPoint={new Vector2(0.5, 0.5)}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					key={"Exit Button"}
-					Position={UDim2.fromScale(0.978, 0.0365)}
-					Size={UDim2.fromScale(0.123, 0.194)}
-					ZIndex={100}
-				>
-					<textlabel
-						key={"TextLabel"}
-						AnchorPoint={new Vector2(0.5, 0.5)}
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-						Position={UDim2.fromScale(0.5, 0.5)}
-						Size={UDim2.fromScale(0.518, 0.518)}
-						Text={"X"}
-						TextColor3={Color3.fromRGB(255, 255, 255)}
-						TextScaled={true}
-						TextWrapped={true}
-						ZIndex={105}
-					>
-						<uipadding
-							key={"UIPadding"}
-							PaddingBottom={new UDim(0.0843, 0)}
-							PaddingLeft={new UDim(0.294, 0)}
-							PaddingRight={new UDim(0.294, 0)}
-							PaddingTop={new UDim(0.0843, 0)}
-						/>
-					</textlabel>
-
-					<imagebutton
-						AnchorPoint={new Vector2(0.5, 0.5)}
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						Image={"rbxassetid://105623320030835"}
-						key={"ExitBtn"}
-						Position={UDim2.fromScale(0.466, 0.527)}
-						ScaleType={Enum.ScaleType.Slice}
-						Selectable={false}
-						Size={UDim2.fromScale(0.824, 0.87)}
-						SliceCenter={new Rect(0.5, 0.5, 0.5, 0.5)}
-						SliceScale={0.4}
-						ZIndex={100}
-						Event={{
-							MouseButton1Click: () => {
-								props.uiController.closeUi(gameConstants.MAIN_UI);
-							},
-						}}
-					/>
-				</frame>
+				<ExitButton uiController={props.uiController} uiName={gameConstants.MAIN_UI} menuRefToClose={menuRef} />
 
 				<frame
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -2045,36 +1723,6 @@ export const MainUi = (props: MainUiProps) => {
 							<uicorner key={"UICorner"} CornerRadius={new UDim(0.0289, 0)} />
 						</imagelabel>
 
-						{/* <scrollingframe
-							AnchorPoint={new Vector2(0.5, 0.5)}
-							AutomaticCanvasSize={Enum.AutomaticSize.X}
-							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-							BackgroundTransparency={1}
-							BorderColor3={Color3.fromRGB(0, 0, 0)}
-							BorderSizePixel={0}
-							CanvasSize={new UDim2()}
-							key={"Shovels Container"}
-							Position={UDim2.fromScale(0.5, 0.5)}
-							ScrollBarImageTransparency={1}
-							ScrollBarThickness={0}
-							ScrollingDirection={Enum.ScrollingDirection.X}
-							Selectable={false}
-							Size={UDim2.fromScale(0.975, 1)}
-							Visible={selectedInventoryType === "Shovels"}
-						>
-							<uilistlayout
-								key={"UIListLayout"}
-								FillDirection={Enum.FillDirection.Horizontal}
-								Padding={new UDim(0.01, 0)}
-								SortOrder={Enum.SortOrder.LayoutOrder}
-							/>
-
-							{inventory.map((itemProps) => {
-								if (selectedInventoryType !== "Shovels") return;
-								return <GenericItemComponent {...itemProps}></GenericItemComponent>;
-							})}
-						</scrollingframe> */}
-
 						<scrollingframe
 							AnchorPoint={new Vector2(0.5, 0.5)}
 							AutomaticCanvasSize={
@@ -2104,6 +1752,11 @@ export const MainUi = (props: MainUiProps) => {
 								Padding={new UDim(selectedInventoryType === "Target" ? 0.02 : 0.01, 0)}
 								SortOrder={Enum.SortOrder.LayoutOrder}
 								Wraps={selectedInventoryType === "Target" ? true : false}
+								VerticalAlignment={
+									selectedInventoryType === "Target"
+										? Enum.VerticalAlignment.Top
+										: Enum.VerticalAlignment.Center
+								}
 							/>
 
 							<textlabel
@@ -2125,36 +1778,6 @@ export const MainUi = (props: MainUiProps) => {
 								}
 							})}
 						</scrollingframe>
-
-						{/* <scrollingframe
-							AnchorPoint={new Vector2(0.5, 0.5)}
-							AutomaticCanvasSize={Enum.AutomaticSize.X}
-							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-							BackgroundTransparency={1}
-							BorderColor3={Color3.fromRGB(0, 0, 0)}
-							BorderSizePixel={0}
-							CanvasSize={new UDim2()}
-							key={"Metal Detectors Container"}
-							Position={UDim2.fromScale(0.5, 0.5)}
-							ScrollBarImageTransparency={1}
-							ScrollBarThickness={0}
-							ScrollingDirection={Enum.ScrollingDirection.X}
-							Selectable={false}
-							Size={UDim2.fromScale(0.975, 1)}
-							Visible={selectedInventoryType === "MetalDetectors"}
-						>
-							<uilistlayout
-								key={"UIListLayout"}
-								FillDirection={Enum.FillDirection.Horizontal}
-								Padding={new UDim(0.01, 0)}
-								SortOrder={Enum.SortOrder.LayoutOrder}
-							/>
-
-							{inventory.map((itemProps) => {
-								if (selectedInventoryType !== "MetalDetectors") return;
-								return <GenericItemComponent {...itemProps}></GenericItemComponent>;
-							})}
-						</scrollingframe> */}
 					</frame>
 
 					{/* Inventory Nav */}
@@ -2164,20 +1787,12 @@ export const MainUi = (props: MainUiProps) => {
 						BorderColor3={Color3.fromRGB(0, 0, 0)}
 						BorderSizePixel={0}
 						key={"Top Navigation"}
-						Position={UDim2.fromScale(1.65e-7, 0.0309)}
+						Position={UDim2.fromScale(0, 0.025)}
 						Size={UDim2.fromScale(0.931, 0.14)}
 					>
-						<uilistlayout
-							key={"UIListLayout"}
-							FillDirection={Enum.FillDirection.Horizontal}
-							Padding={new UDim(0.0139, 0)}
-							SortOrder={Enum.SortOrder.LayoutOrder}
-							VerticalAlignment={Enum.VerticalAlignment.Center}
-						/>
-
 						{/* Search Bar */}
 						<imagelabel
-							AnchorPoint={new Vector2(0.5, 0.5)}
+							AnchorPoint={new Vector2(0, 0.5)}
 							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 							BackgroundTransparency={1}
 							BorderColor3={Color3.fromRGB(0, 0, 0)}
@@ -2185,7 +1800,7 @@ export const MainUi = (props: MainUiProps) => {
 							Image={"rbxassetid://104980497933554"}
 							LayoutOrder={5}
 							key={"Search Bar"}
-							Position={UDim2.fromScale(0.587, 0.163)}
+							Position={UDim2.fromScale(0.625, 0.5)}
 							ScaleType={Enum.ScaleType.Fit}
 							Size={UDim2.fromScale(0.394, 0.79)}
 							SliceCenter={new Rect(45, 28, 918, 125)}
@@ -2213,196 +1828,33 @@ export const MainUi = (props: MainUiProps) => {
 							/>
 						</imagelabel>
 
+						<InventorySelectorTab
+							inventoryType="Shovels"
+							order={1}
+							selectedInventoryType={selectedInventoryType}
+							setSelectedInventoryType={setSelectedInventoryType}
+							icon={"rbxassetid://101307691874432"}
+							position={UDim2.fromScale(0.05, 0.5)}
+						/>
+						<InventorySelectorTab
+							inventoryType="MetalDetectors"
+							order={2}
+							selectedInventoryType={selectedInventoryType}
+							setSelectedInventoryType={setSelectedInventoryType}
+							icon={"rbxassetid://139989446078706"}
+							position={UDim2.fromScale(0.165, 0.5)}
+						/>
+						<InventorySelectorTab
+							inventoryType="Target"
+							order={3}
+							selectedInventoryType={selectedInventoryType}
+							setSelectedInventoryType={setSelectedInventoryType}
+							icon={"rbxassetid://90146219889959"}
+							position={UDim2.fromScale(0.28, 0.5)}
+						/>
+
 						{/* Sell All Btn */}
-						<frame
-							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-							BackgroundTransparency={1}
-							BorderColor3={Color3.fromRGB(0, 0, 0)}
-							BorderSizePixel={0}
-							LayoutOrder={4}
-							key={"Sell All Btn Frame"}
-							Size={UDim2.fromScale(0.268, 1)}
-						>
-							<imagebutton
-								AnchorPoint={new Vector2(0.5, 0.5)}
-								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-								BackgroundTransparency={1}
-								BorderColor3={Color3.fromRGB(0, 0, 0)}
-								BorderSizePixel={0}
-								Image={"rbxassetid://92239062767450"}
-								key={"Sell All Btn"}
-								Position={UDim2.fromScale(0.5, 0.5)}
-								ScaleType={Enum.ScaleType.Slice}
-								Size={UDim2.fromScale(1, 1)}
-								SliceCenter={new Rect(40, 86, 544, 87)}
-								SliceScale={0.3}
-							>
-								<textlabel
-									AnchorPoint={new Vector2(0.5, 0.5)}
-									BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-									BackgroundTransparency={1}
-									BorderColor3={Color3.fromRGB(0, 0, 0)}
-									BorderSizePixel={0}
-									FontFace={
-										new Font(
-											"rbxassetid://16658221428",
-											Enum.FontWeight.Bold,
-											Enum.FontStyle.Normal,
-										)
-									}
-									key={"Label"}
-									Position={UDim2.fromScale(0.5, 0.5)}
-									Size={UDim2.fromScale(0.684, 0.524)}
-									Text={"Sell All"}
-									TextColor3={Color3.fromRGB(255, 255, 255)}
-									TextScaled={true}
-									TextWrapped={true}
-								>
-									<uistroke key={"UIStroke"} Color={Color3.fromRGB(1, 75, 33)} Thickness={3} />
-
-									<uipadding
-										key={"UIPadding"}
-										PaddingBottom={new UDim(0.071, 0)}
-										PaddingLeft={new UDim(0.226, 0)}
-										PaddingRight={new UDim(0.226, 0)}
-										PaddingTop={new UDim(0.071, 0)}
-									/>
-								</textlabel>
-							</imagebutton>
-						</frame>
-
-						<frame
-							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-							BackgroundTransparency={1}
-							BorderColor3={Color3.fromRGB(0, 0, 0)}
-							BorderSizePixel={0}
-							LayoutOrder={1}
-							key={"Shovels Tab"}
-							Size={UDim2.fromScale(0.103, 1.18)}
-						>
-							<imagebutton
-								AnchorPoint={new Vector2(0.5, 0.5)}
-								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-								BackgroundTransparency={1}
-								BorderColor3={Color3.fromRGB(0, 0, 0)}
-								BorderSizePixel={0}
-								Image={
-									selectedInventoryType === "Shovels"
-										? "rbxassetid://109250907266323"
-										: "rbxassetid://105250247379697"
-								}
-								LayoutOrder={1}
-								key={"Shovels Tab Btn"}
-								Position={UDim2.fromScale(0.5, 0.5)}
-								Size={UDim2.fromScale(1, 1)}
-								Event={{
-									MouseButton1Click: () => {
-										setSelectedInventoryType("Shovels");
-									},
-								}}
-							>
-								<imagelabel
-									AnchorPoint={new Vector2(0.5, 0.5)}
-									BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-									BackgroundTransparency={1}
-									BorderColor3={Color3.fromRGB(0, 0, 0)}
-									BorderSizePixel={0}
-									Image={"rbxassetid://101307691874432"}
-									key={"Icon"}
-									Position={UDim2.fromScale(0.5, 0.5)}
-									ScaleType={Enum.ScaleType.Fit}
-									Size={UDim2.fromScale(0.7, 0.7)}
-								/>
-							</imagebutton>
-						</frame>
-
-						<frame
-							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-							BackgroundTransparency={1}
-							BorderColor3={Color3.fromRGB(0, 0, 0)}
-							BorderSizePixel={0}
-							LayoutOrder={2}
-							key={"Metal Detector Tab"}
-							Size={UDim2.fromScale(0.103, 1.18)}
-						>
-							<imagebutton
-								AnchorPoint={new Vector2(0.5, 0.5)}
-								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-								BackgroundTransparency={1}
-								BorderColor3={Color3.fromRGB(0, 0, 0)}
-								BorderSizePixel={0}
-								Image={
-									selectedInventoryType === "MetalDetectors"
-										? "rbxassetid://109250907266323"
-										: "rbxassetid://105250247379697"
-								}
-								LayoutOrder={2}
-								key={"Metal Detector Tab Btn"}
-								Position={UDim2.fromScale(0.5, 0.5)}
-								Size={UDim2.fromScale(1, 1)}
-								Event={{
-									MouseButton1Click: () => {
-										setSelectedInventoryType("MetalDetectors");
-									},
-								}}
-							>
-								<imagelabel
-									AnchorPoint={new Vector2(0.5, 0.5)}
-									BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-									BackgroundTransparency={1}
-									BorderColor3={Color3.fromRGB(0, 0, 0)}
-									BorderSizePixel={0}
-									Image={"rbxassetid://139989446078706"}
-									key={"Icon"}
-									Position={UDim2.fromScale(0.5, 0.5)}
-									ScaleType={Enum.ScaleType.Fit}
-									Size={UDim2.fromScale(0.7, 0.7)}
-								/>
-							</imagebutton>
-						</frame>
-
-						<frame
-							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-							BackgroundTransparency={1}
-							BorderColor3={Color3.fromRGB(0, 0, 0)}
-							BorderSizePixel={0}
-							key={"Inventory Tab"}
-							Size={UDim2.fromScale(0.103, 1.18)}
-						>
-							<imagebutton
-								AnchorPoint={new Vector2(0.5, 0.5)}
-								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-								BackgroundTransparency={1}
-								BorderColor3={Color3.fromRGB(0, 0, 0)}
-								BorderSizePixel={0}
-								Image={
-									selectedInventoryType === "Target"
-										? "rbxassetid://109250907266323"
-										: "rbxassetid://105250247379697"
-								}
-								key={"Inventory Tab Btn"}
-								Position={UDim2.fromScale(0.5, 0.5)}
-								Size={UDim2.fromScale(1, 1)}
-								Event={{
-									MouseButton1Click: () => {
-										setSelectedInventoryType("Target");
-									},
-								}}
-							>
-								<imagelabel
-									AnchorPoint={new Vector2(0.5, 0.5)}
-									BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-									BackgroundTransparency={1}
-									BorderColor3={Color3.fromRGB(0, 0, 0)}
-									BorderSizePixel={0}
-									Image={"rbxassetid://90146219889959"}
-									key={"Icon"}
-									Position={UDim2.fromScale(0.5, 0.5)}
-									ScaleType={Enum.ScaleType.Fit}
-									Size={UDim2.fromScale(0.7, 0.7)}
-								/>
-							</imagebutton>
-						</frame>
+						<SellAllBtn position={UDim2.fromScale(0.48, 0.5)} requiresGamepass={true} />
 					</frame>
 
 					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.74} />
@@ -2437,17 +1889,17 @@ export const MainUi = (props: MainUiProps) => {
 						/>
 
 						<SkillFrame
-							image="http://www.roblox.com/asset/?id=126884717839589"
+							image="rbxassetid://115275171647711"
 							title="strength"
 							levelText={`LV. ${skillState?.strength ?? 1}`}
 						/>
 						<SkillFrame
-							image="http://www.roblox.com/asset/?id=102712052261818"
+							image="rbxassetid://83833460426334"
 							title="luck"
 							levelText={`LV. ${skillState?.luck ?? 1}`}
 						/>
 						<SkillFrame
-							image="rbxassetid://137650843402705"
+							image="rbxassetid://121224666125765"
 							imageRotation={90}
 							title="detection"
 							titleSize={new UDim2(0.402, 0, 0.659, 0)}
@@ -2466,136 +1918,7 @@ export const MainUi = (props: MainUiProps) => {
 						Position={UDim2.fromScale(0.000901, 0.736)}
 						Size={UDim2.fromScale(0.988, 0.25)}
 					>
-						<frame
-							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-							BackgroundTransparency={1}
-							BorderColor3={Color3.fromRGB(0, 0, 0)}
-							BorderSizePixel={0}
-							key={"Refund Points"}
-							Position={UDim2.fromScale(-5.82e-8, 0.0774)}
-							Size={UDim2.fromScale(0.281, 0.923)}
-						>
-							<textlabel
-								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-								BackgroundTransparency={1}
-								BorderColor3={Color3.fromRGB(0, 0, 0)}
-								BorderSizePixel={0}
-								FontFace={
-									new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-								}
-								key={"Refund Point Label"}
-								Size={UDim2.fromScale(0.85, 0.444)}
-								Text={"Refund Points!"}
-								TextColor3={Color3.fromRGB(255, 255, 255)}
-								TextScaled={true}
-								TextWrapped={true}
-							>
-								<uistroke key={"UIStroke"} Thickness={3} />
-							</textlabel>
-
-							<frame
-								AnchorPoint={new Vector2(0.5, 0.5)}
-								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-								BackgroundTransparency={1}
-								BorderColor3={Color3.fromRGB(0, 0, 0)}
-								BorderSizePixel={0}
-								key={"Refund Points  Btn Frame"}
-								Position={UDim2.fromScale(0.558, 0.722)}
-								Size={UDim2.fromScale(0.981, 0.636)}
-							>
-								<imagebutton
-									AnchorPoint={new Vector2(0.5, 0.5)}
-									BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-									BackgroundTransparency={1}
-									BorderColor3={Color3.fromRGB(0, 0, 0)}
-									BorderSizePixel={0}
-									Image={"rbxassetid://92239062767450"}
-									key={"Buy Btn"}
-									Position={UDim2.fromScale(0.5, 0.5)}
-									ScaleType={Enum.ScaleType.Slice}
-									Size={UDim2.fromScale(1.03, 1.07)}
-									SliceCenter={new Rect(47, 94, 539, 94)}
-								>
-									<frame
-										AnchorPoint={new Vector2(0.5, 0.5)}
-										BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-										BackgroundTransparency={1}
-										BorderColor3={Color3.fromRGB(0, 0, 0)}
-										BorderSizePixel={0}
-										key={"Discount Number"}
-										Position={UDim2.fromScale(0.5, 0.492)}
-										Size={UDim2.fromScale(0.829, 0.524)}
-									>
-										<uilistlayout
-											key={"UIListLayout"}
-											FillDirection={Enum.FillDirection.Horizontal}
-											HorizontalAlignment={Enum.HorizontalAlignment.Center}
-											Padding={new UDim(0.05, 0)}
-											SortOrder={Enum.SortOrder.LayoutOrder}
-											VerticalAlignment={Enum.VerticalAlignment.Center}
-										/>
-
-										<imagelabel
-											BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-											BackgroundTransparency={1}
-											BorderColor3={Color3.fromRGB(0, 0, 0)}
-											BorderSizePixel={0}
-											Image={"rbxassetid://75287275007438"}
-											key={"Robux"}
-											Position={UDim2.fromScale(0.262, 0.00802)}
-											ScaleType={Enum.ScaleType.Fit}
-											Size={UDim2.fromScale(0.399, 0.984)}
-										>
-											<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-										</imagelabel>
-
-										<textlabel
-											AnchorPoint={new Vector2(0.5, 0.5)}
-											AutomaticSize={Enum.AutomaticSize.X}
-											BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-											BackgroundTransparency={1}
-											BorderColor3={Color3.fromRGB(0, 0, 0)}
-											BorderSizePixel={0}
-											FontFace={
-												new Font(
-													"rbxassetid://16658221428",
-													Enum.FontWeight.Bold,
-													Enum.FontStyle.Normal,
-												)
-											}
-											key={"Timer"}
-											Position={UDim2.fromScale(0.569, 0.5)}
-											Size={UDim2.fromScale(0.223, 1)}
-											Text={"99"}
-											TextColor3={Color3.fromRGB(255, 255, 255)}
-											TextScaled={true}
-											TextWrapped={true}
-											TextXAlignment={Enum.TextXAlignment.Left}
-											ZIndex={10}
-										>
-											<uistroke
-												key={"UIStroke"}
-												Color={Color3.fromRGB(8, 66, 34)}
-												Thickness={4}
-											/>
-
-											<uipadding
-												key={"UIPadding"}
-												PaddingBottom={new UDim(0.00487, 0)}
-												PaddingTop={new UDim(0.00487, 0)}
-											/>
-										</textlabel>
-									</frame>
-								</imagebutton>
-							</frame>
-
-							<uilistlayout
-								key={"UIListLayout"}
-								HorizontalAlignment={Enum.HorizontalAlignment.Center}
-								SortOrder={Enum.SortOrder.LayoutOrder}
-								VerticalAlignment={Enum.VerticalAlignment.Center}
-							/>
-						</frame>
+						<RefundPointFrame />
 
 						<uilistlayout
 							key={"UIListLayout"}

@@ -367,7 +367,7 @@ export class TargetService implements OnStart, OnTick {
 			debugPart.CanCollide = false;
 			debugPart.Position = position.add(new Vector3(0, 1, 0));
 			debugPart.Transparency = 0.5;
-			debugPart.Parent = base; // Parent it to the map for visibility
+			// debugPart.Parent = base; // Parent it to the map for visibility
 			debugPart.Name = tostring(position);
 		}
 

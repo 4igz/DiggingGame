@@ -10,7 +10,7 @@ export const profileTemplate = {
 	equippedDetector: "StarterDetector" as keyof typeof metalDetectorConfig,
 	equippedTreasure: "" as keyof typeof targetConfig,
 	currentMap: "Grasslands" as keyof typeof mapConfig,
-	money: "1;10",
+	money: "1;100",
 
 	// Level data
 	level: 1,

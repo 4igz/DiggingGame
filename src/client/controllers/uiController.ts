@@ -1,12 +1,14 @@
 import { Controller, OnStart } from "@flamework/core";
+import Object from "@rbxts/object-utils";
 import React from "@rbxts/react";
 import ReactRoblox from "@rbxts/react-roblox";
 import { Players, StarterGui } from "@rbxts/services";
 import { Events, Functions } from "client/network";
-import { DiggingBar, DiggingBarProps } from "client/reactComponents/diggingBar";
+import { DiggingBar } from "client/reactComponents/diggingBar";
+import { GamepassShopComponent } from "client/reactComponents/gamepassShop";
 import LuckBar from "client/reactComponents/luckBar";
 import { MainUi } from "client/reactComponents/mainUi";
-import { MoneyDisplay } from "client/reactComponents/moneyDisplay";
+import { RightSideMenu } from "client/reactComponents/rightSideMenu";
 import { Sell } from "client/reactComponents/sell";
 import { ShopComponent } from "client/reactComponents/shop";
 import { Sidebar } from "client/reactComponents/sidebar";
@@ -21,7 +23,7 @@ export class UiController implements OnStart {
 	private currentOpenUi: string | undefined;
 	private diggingBarActive = false; // We create this, so that we can cancel any active digging bar if we open another UI.
 
-	onStart() {
+	constructor() {
 		StarterGui.SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false);
 
 		this.registerUi(
@@ -33,7 +35,44 @@ export class UiController implements OnStart {
 			false,
 			true,
 		);
+		this.registerUi(gameConstants.RIGHT_SIDE_HUD, React.createElement(RightSideMenu), { uiController: this }, true);
+		this.registerUi(gameConstants.LUCKBAR_UI, React.createElement(LuckBar), { visible: false, paused: false });
+		this.registerUi(gameConstants.SIDEBAR_UI, React.createElement(Sidebar), { uiController: this });
+		this.registerUi(
+			gameConstants.MAIN_UI,
+			React.createElement(MainUi),
+			{ uiController: this, visible: false },
+			true,
+		);
+		this.registerUi(gameConstants.TOOLBAR_UI, React.createElement(Toolbar), {});
+		this.registerUi(
+			gameConstants.SELL_UI,
+			React.createElement(Sell),
+			{ visible: false, uiController: this },
+			false,
+			true,
+		);
+		this.registerUi(gameConstants.COMPASS_UI, React.createElement(DistanceLabel), {}, true);
+		this.registerUi(
+			gameConstants.SHOP_UI,
+			React.createElement(ShopComponent),
+			{ visible: false, uiController: this },
+			false,
+			true,
+		);
+		this.registerUi(
+			gameConstants.GAMEPASS_SHOP_UI,
+			React.createElement(GamepassShopComponent),
+			{
+				visible: false,
+				uiController: this,
+			},
+			true,
+			true,
+		);
+	}
 
+	onStart() {
 		Events.beginDigging.connect((target: Target, digInfo: PlayerDigInfo) => {
 			this.toggleUi(gameConstants.DIG_BAR_UI, { target, digInfo });
 			this.diggingBarActive = true;
@@ -46,29 +85,19 @@ export class UiController implements OnStart {
 		});
 
 		Functions.getMoneyShortString.invoke().then((money) => {
-			this.registerUi(gameConstants.MONEY_UI, React.createElement(MoneyDisplay), { amount: money });
+			this.updateUiProps(gameConstants.RIGHT_SIDE_HUD, { amount: money });
 		});
 
-		this.registerUi(gameConstants.LUCKBAR_UI, React.createElement(LuckBar), { visible: false, paused: false });
-		this.registerUi(gameConstants.SIDEBAR_UI, React.createElement(Sidebar), { uiController: this });
-		this.registerUi(
-			gameConstants.MAIN_UI,
-			React.createElement(MainUi),
-			{ uiController: this, visible: false },
-			true,
-		);
-		this.registerUi(gameConstants.TOOLBAR_UI, React.createElement(Toolbar), {});
-		this.registerUi(gameConstants.SELL_UI, React.createElement(Sell), { visible: false, uiController: this });
-		this.registerUi(gameConstants.COMPASS_UI, React.createElement(DistanceLabel), {}, true);
-		this.registerUi(
-			gameConstants.SHOP_UI,
-			React.createElement(ShopComponent),
-			{ visible: false, uiController: this },
-			false,
-			true,
-		);
+		// This sound script hooks up default (hover, click) ui sounds to all buttons and guis alike.
+		const soundScript = Players.LocalPlayer.WaitForChild("PlayerScripts").WaitForChild("Sounds") as LocalScript;
+		soundScript.Enabled = true;
 	}
 
+	public getOpenMenu() {
+		return this.currentOpenUi;
+	}
+
+	// Passing `{visible: true}` is not necessary
 	public toggleUi(name: string, newProps: Partial<Record<string, unknown>> = {}) {
 		if (this.currentOpenUi !== undefined) {
 			if (this.diggingBarActive && name !== gameConstants.DIG_BAR_UI) {

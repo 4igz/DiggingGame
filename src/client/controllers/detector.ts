@@ -1,7 +1,15 @@
 import { Controller, OnStart, OnTick } from "@flamework/core";
-import { PathfindingService, Players, ReplicatedStorage, TweenService, Workspace } from "@rbxts/services";
+import {
+	PathfindingService,
+	Players,
+	ReplicatedStorage,
+	RunService,
+	SoundService,
+	TweenService,
+	Workspace,
+} from "@rbxts/services";
 import { Events } from "client/network";
-import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
+import { BASE_DETECTOR_STRENGTH, metalDetectorConfig } from "shared/config/metalDetectorConfig";
 import { UiController } from "./uiController";
 import { gameConstants } from "shared/constants";
 import { Trove } from "@rbxts/trove";
@@ -17,13 +25,16 @@ export class Detector implements OnStart, OnTick {
 	private ANIMATION_FOLDER = ReplicatedStorage.WaitForChild("Animations");
 	private waypointIndicator = this.VFX_FOLDER.FindFirstChild("Indicator") as BasePart;
 	private areaIndicatorVFX = this.VFX_FOLDER.FindFirstChild("Area") as BasePart;
+	private beepSound = SoundService.WaitForChild("Beep") as Sound;
 	private areaIndicator: BasePart | undefined;
 	private activeWaypointIndicator: BasePart | undefined;
+	private arrowIndicator?: BasePart; // Cloned from ReplicatedStorage
+	private renderStepId = "WaypointArrow";
 	private metalDetectorAnimation = this.ANIMATION_FOLDER.FindFirstChild("MetalDetector") as Animation;
 
-	private isTweening = false;
 	private isRolling = false;
 	private targetActive = false;
+	private phase = 0;
 
 	constructor(private readonly uiController: UiController) {}
 
@@ -89,16 +100,11 @@ export class Detector implements OnStart, OnTick {
 
 					// Cleanup indicators when unequipping
 					child.AncestryChanged.Once(() => {
-
-
-						if (this.activeWaypointIndicator) {
-							this.activeWaypointIndicator.Destroy();
-							this.activeWaypointIndicator = undefined;
-						}
 						if (this.areaIndicator) {
 							this.areaIndicator.Destroy();
 							this.areaIndicator = undefined;
 						}
+						this.hideWaypointArrow();
 
 						if (this.isRolling) {
 							this.isRolling = false;
@@ -123,10 +129,7 @@ export class Detector implements OnStart, OnTick {
 		});
 
 		Events.endDiggingServer.connect(() => {
-			if (this.activeWaypointIndicator) {
-				this.activeWaypointIndicator.Destroy();
-				this.activeWaypointIndicator = undefined;
-			}
+			this.hideWaypointArrow();
 			if (this.areaIndicator) {
 				this.areaIndicator.Destroy();
 				this.areaIndicator = undefined;
@@ -146,9 +149,6 @@ export class Detector implements OnStart, OnTick {
 				return;
 			}
 
-			this.pathCompute.ComputeAsync(startPosition, position);
-			const waypoints = this.pathCompute.GetWaypoints();
-
 			// Randomize the area indicator position, but use a set seed so each target has the same area
 			if (isNearby) {
 				const rng = new Random(position.X + position.Y + position.Z);
@@ -166,63 +166,164 @@ export class Detector implements OnStart, OnTick {
 				this.areaIndicator = areaIndicator;
 			}
 			// Start tweening the waypoint indicator
-			this.tweenToWaypoints(waypoints);
+			this.showWaypointArrow(position);
 		});
 	}
 
-	private lastWaypointIndex = 1; // Track the last waypoint index for resumption
-
-	private async tweenToWaypoints(waypoints: PathWaypoint[]) {
-		if (waypoints.size() === 0) return;
-
-		// this.isTweening = true;
-
+	private getLocalPlayerRootPart(): BasePart | undefined {
 		const player = Players.LocalPlayer;
-		const character = player.Character;
-		if (!character || !character.PrimaryPart) {
-			this.isTweening = false;
+		const character = player.Character ?? player.CharacterAdded.Wait()[0];
+		if (!character) return undefined;
+		const root = character.WaitForChild("HumanoidRootPart");
+		if (!root || !root.IsA("BasePart")) return undefined;
+		return root;
+	}
+
+	public showWaypointArrow(targetPos: Vector3) {
+		const playerRootPart = this.getLocalPlayerRootPart();
+		if (!playerRootPart) {
+			warn("No player root part found, cannot show arrow");
 			return;
 		}
 
-		// Initialize or reuse the waypoint indicator
-		if (!this.activeWaypointIndicator) {
-			this.activeWaypointIndicator = this.waypointIndicator.Clone();
-			this.activeWaypointIndicator.Parent = Workspace;
+		// If we haven't cloned our arrow yet, do so
+		if (!this.arrowIndicator) {
+			// This should be your old arrow part with a BillboardGui inside
+			const arrowTemplate = this.VFX_FOLDER.WaitForChild("IndicatorPart") as Part;
+			this.arrowIndicator = arrowTemplate.Clone();
+			this.arrowIndicator.Parent = Workspace;
 		}
 
-		const maxIterations = waypoints.size() >= 5 ? 5 : waypoints.size();
-		const startIndex = this.lastWaypointIndex; // Start from the last waypoint index if set
+		// Make sure we unbind any old render-step so we don't stack multiple
+		RunService.UnbindFromRenderStep(this.renderStepId);
 
-		for (let i = startIndex; i < maxIterations; i++) {
-			if (!this.activeWaypointIndicator) break; // Likely the detector was unequipped during visualization.
-			const waypoint = waypoints[i];
-			const targetPosition = waypoint.Position.add(new Vector3(0, 2, 0));
+		let prevSinVal = 0;
+		let lastTimestamp = time();
 
-			this.lastWaypointIndex = i; // Update to the current index
+		// Grab the BillboardGui (or sub-GUIs) from the arrow
+		const billboardGui = this.arrowIndicator.WaitForChild("BillboardGui") as BillboardGui;
+		const dot = billboardGui.WaitForChild("Dot") as ImageLabel;
+		const exclamationMarkBlur = billboardGui.WaitForChild("ExclamationMarkBlur") as Frame;
+		const exclamationMark = exclamationMarkBlur.WaitForChild("ExclamationMark") as ImageLabel;
+		const shovel = exclamationMarkBlur.WaitForChild("Shovel") as ImageLabel;
+		// First create a path to the target position and line it with indicators.
+		const player = Players.LocalPlayer;
+		const character = player.Character;
+		if (!character || !character.Parent) return;
 
-			const distance = character.PrimaryPart.Position.sub(targetPosition).Magnitude;
-			const maxDistance = 40;
-			const tweenTime = math.clamp(distance / maxDistance, 0.1, 0.5); // Tween time between 0.1 and 0.5 seconds
-			const tweenInfo = new TweenInfo(tweenTime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out);
-			const tween = TweenService.Create(this.activeWaypointIndicator, tweenInfo, { Position: targetPosition });
+		// Setup the arrow to update every frame
+		RunService.BindToRenderStep(this.renderStepId, Enum.RenderPriority.Camera.Value + 1, () => {
+			const camera = Workspace.CurrentCamera ?? undefined;
+			if (!camera || !this.arrowIndicator) return;
+			let detector = character.FindFirstChildOfClass("Tool");
+			detector = detector && metalDetectorConfig[detector.Name] ? detector : undefined;
+			if (!detector) return;
 
-			tween.Play();
-			await this.waitForTweenCompletion(tween);
-		}
+			// Current distance from player to the waypoint
+			const offset = targetPos.sub(playerRootPart.Position);
+			const distance = offset.Magnitude;
 
-		// Update the last waypoint index for future resumptions
-		if (this.lastWaypointIndex >= waypoints.size()) {
-			this.lastWaypointIndex = 0; // Reset if all waypoints are completed
-		}
+			// Place the arrow about 5 studs in front of the player, in direction of the waypoint
+			if (distance > 0) {
+				const arrowPos = playerRootPart.Position.add(offset.Unit.mul(5));
+				this.arrowIndicator.CFrame = new CFrame(arrowPos);
+			} else {
+				// If somehow the waypoint is exactly at the player, just match positions
+				this.arrowIndicator.CFrame = new CFrame(playerRootPart.Position);
+			}
 
-		// Stop tweening and leave the indicator in place
-		// this.isTweening = false;
+			// Rotate the arrow to match the angle from camera to waypoint
+			const MAX_DIST = BASE_DETECTOR_STRENGTH;
+			const MIN_DIST = 20;
+			let canDig = false;
+			let isReallyClose = false;
+			if (distance > MIN_DIST) {
+				// Calculate angle for the arrow icon
+				const lookVector = camera.CFrame.LookVector;
+				const cameraAngle = math.deg(math.atan2(lookVector.X, lookVector.Z));
+				const offsetAngle = math.deg(math.atan2(offset.Unit.X, offset.Unit.Z));
+				const angle = -((offsetAngle - cameraAngle) % 360);
+
+				dot.Rotation = angle;
+
+				// Lerp color from green (far) to red (closer)
+				const t = (MAX_DIST - distance) / (MAX_DIST - MIN_DIST);
+				const alpha = math.clamp(t, 0, 1);
+				dot.ImageColor3 = Color3.fromRGB(0, 255, 0).Lerp(Color3.fromRGB(255, 0, 0), alpha);
+
+				dot.Visible = true;
+				exclamationMarkBlur.Visible = false;
+			} else if (distance <= MIN_DIST && distance > 8) {
+				// Show exclamation mark
+				dot.Visible = false;
+				exclamationMarkBlur.Visible = true;
+				exclamationMark.Visible = true;
+				shovel.Visible = false;
+				isReallyClose = true;
+			} else {
+				// Very close
+				dot.Visible = false;
+				exclamationMarkBlur.Visible = true;
+				exclamationMark.Visible = false;
+				shovel.Visible = true;
+
+				// Snap arrow onto the exact waypoint position
+				this.arrowIndicator.CFrame = new CFrame(targetPos);
+				canDig = true;
+			}
+
+			const now = time();
+			const deltaTime = now - lastTimestamp;
+			lastTimestamp = now;
+
+			const MIN_BLINK_SPEED = 3;
+			const MAX_BLINK_SPEED = isReallyClose ? 28 : 15;
+
+			const clampedDist = math.clamp(distance, MIN_DIST, MAX_DIST);
+			const alpha = 1 - (clampedDist - MIN_DIST) / (MAX_DIST - MIN_DIST);
+			const blinkSpeed = MIN_BLINK_SPEED + alpha * (MAX_BLINK_SPEED - MIN_BLINK_SPEED);
+
+			// 1) Accumulate 'phase' by blinkSpeed * deltaTime
+			//    This ensures we smoothly continue the wave from last frame.
+			this.phase += blinkSpeed * deltaTime;
+
+			// 2) Evaluate the sine
+			const sinVal = math.sin(this.phase);
+
+			// 3) Convert sine to transparency
+			const transparency = sinVal * 0.25 + 0.25;
+			dot.ImageTransparency = transparency;
+			exclamationMark.ImageTransparency = transparency;
+
+			exclamationMark.Rotation = sinVal * 10;
+			shovel.Rotation = sinVal * 10;
+
+			// 4) Check zero-crossing (- => +) for beep & blink
+			if (sinVal <= 0 && prevSinVal > 0 && !canDig) {
+				this.beepSound.Play();
+
+				const blinkVfx = detector.FindFirstChild("Blink") as Instance;
+				if (blinkVfx) {
+					for (const descendant of blinkVfx.GetDescendants()) {
+						if (descendant.IsA("ParticleEmitter")) {
+							descendant.Emit(1);
+						}
+					}
+				}
+			}
+			prevSinVal = sinVal;
+		});
 	}
 
-	private waitForTweenCompletion(tween: Tween) {
-		return new Promise<void>((resolve) => {
-			tween.Completed.Once(() => resolve());
-		});
+	public hideWaypointArrow() {
+		// Unbind our render-step
+		RunService.UnbindFromRenderStep(this.renderStepId);
+
+		// Destroy the arrow if needed
+		if (this.arrowIndicator) {
+			this.arrowIndicator.Destroy();
+			this.arrowIndicator = undefined;
+		}
 	}
 
 	onTick(dt: number): void {

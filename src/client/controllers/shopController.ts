@@ -1,5 +1,5 @@
 import { Controller, OnStart } from "@flamework/core";
-import { CollectionService } from "@rbxts/services";
+import { CollectionService, ProximityPromptService, TweenService } from "@rbxts/services";
 import { UiController } from "./uiController";
 import { gameConstants } from "shared/constants";
 import ReactRoblox from "@rbxts/react-roblox";
@@ -16,12 +16,14 @@ export class ShopController implements OnStart {
 			[gameConstants.SHOP_UI]: "what would you like to buy?",
 		};
 
-		const createShopPrompt = (part: BasePart, shopType: string) => {
+		const createShopPrompt = (part: BasePart, shopType: keyof typeof PROMPT_DIALOGS) => {
 			// Create a prompt that will open the sell ui when triggered
 			const prompt = new Instance("ProximityPrompt");
 			prompt.ActionText = "Open";
 			prompt.ObjectText = part.Name;
 			prompt.RequiresLineOfSight = false;
+			prompt.HoldDuration = 0;
+			prompt.Style = Enum.ProximityPromptStyle.Custom;
 			prompt.Parent = part;
 
 			const newUiFolder = new Instance("Folder");
@@ -30,18 +32,46 @@ export class ShopController implements OnStart {
 
 			const dialogRoot = ReactRoblox.createRoot(newUiFolder);
 
+			const npcObject = part.FindFirstChild("NPC") as ObjectValue | undefined;
+
+			if (npcObject && npcObject.Value) {
+				const highlight = new Instance("Highlight");
+				highlight.Name = "Highlight";
+				highlight.DepthMode = Enum.HighlightDepthMode.Occluded;
+				highlight.FillColor = Color3.fromRGB(255, 255, 255);
+				highlight.FillTransparency = 1;
+				highlight.Adornee = npcObject.Value;
+				highlight.OutlineTransparency = 1;
+				highlight.Parent = npcObject.Value;
+
+				prompt.PromptShown.Connect(() => {
+					TweenService.Create(
+						highlight,
+						new TweenInfo(0.25, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut),
+						{ OutlineTransparency: 0 },
+					).Play();
+				});
+				prompt.PromptHidden.Connect(() => {
+					TweenService.Create(
+						highlight,
+						new TweenInfo(0.25, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut),
+						{ OutlineTransparency: 1 },
+					).Play();
+				});
+			}
+
 			prompt.Triggered.Connect(() => {
 				prompt.Enabled = false;
 				dialogRoot.render(
 					React.createElement(TypewriterBillboard, {
 						text: PROMPT_DIALOGS[shopType],
 						resetTrigger: tick(),
-						typingSpeed: 20,
+						typingSpeed: 50,
 						part,
 						onFinish: () => {
 							task.wait(1);
 							prompt.Enabled = true;
-							this.uiController.toggleUi(shopType);
+							this.uiController.toggleUi(shopType as string);
 						},
 					}),
 				);

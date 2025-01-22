@@ -7,6 +7,7 @@ import {
 	Players,
 	ReplicatedStorage,
 	RunService,
+	SoundService,
 	TweenService,
 	Workspace,
 } from "@rbxts/services";
@@ -185,7 +186,7 @@ export class ShovelController implements OnStart, OnTick {
 				color = raycast.Instance.Color;
 			}
 
-			const setSize = this.createDigHole(
+			const [setSize, digSound] = this.createDigHole(
 				raycast?.Position ?? target.position,
 				color,
 				0.05,
@@ -238,6 +239,7 @@ export class ShovelController implements OnStart, OnTick {
 					const character = Players.LocalPlayer.Character;
 					if (!character) return;
 					setSize.Fire((this.digProgress / this.digGoal) * craterSize);
+					digSound?.Play();
 
 					// Emit some dirt particles
 					emitParticleDescendants(diggingVfx, 7);
@@ -346,7 +348,9 @@ export class ShovelController implements OnStart, OnTick {
 				// Make the dig model jump
 				const primaryPart = existingModel.PrimaryPart;
 				if (primaryPart) {
+					print(existingModel.GetAttribute("DiggingComplete"));
 					if (existingModel.GetAttribute("DiggingComplete")) {
+						print("Got here");
 						const mass = primaryPart.AssemblyMass;
 						const treasureThrowForce = 20;
 						const randomForce = new Vector3(
@@ -407,8 +411,8 @@ export class ShovelController implements OnStart, OnTick {
 		numSurroundingParts: number,
 		trackedOrigin: Vector3,
 		material: Enum.Material | undefined,
-	): Signal<(size: number) => void> {
-		const setSize = new Signal<(size: number) => void>();
+	): [Signal<(size: number) => void>, Sound] {
+		const digHole = new Signal<(size: number) => void>();
 
 		const hole = new Instance("Part");
 		hole.Shape = Enum.PartType.Cylinder;
@@ -422,6 +426,15 @@ export class ShovelController implements OnStart, OnTick {
 		hole.Parent = Workspace;
 		hole.SetAttribute("TrackedOrigin", trackedOrigin);
 		CollectionService.AddTag(hole, "DigCrater");
+
+		let digSound = hole.FindFirstChild("Digging") as Sound | undefined;
+		if (!digSound) {
+			digSound = SoundService.FindFirstChild("Digging") as Sound | undefined;
+			digSound = digSound?.Clone();
+			if (digSound) {
+				digSound.Parent = hole;
+			}
+		}
 
 		const holeParts = new Map<BasePart, Vector3>();
 
@@ -468,7 +481,7 @@ export class ShovelController implements OnStart, OnTick {
 
 		let prevSize = holeRadius;
 
-		setSize.Connect((size) => {
+		digHole.Connect((size) => {
 			if (size < prevSize) return; // Only allow size increases
 			// Clamp size to maxSize
 			size = math.min(size, maxSize);
@@ -499,8 +512,8 @@ export class ShovelController implements OnStart, OnTick {
 			}
 		});
 
-		setSize.Fire(holeRadius);
+		digHole.Fire(holeRadius);
 
-		return setSize;
+		return [digHole, digSound!];
 	}
 }

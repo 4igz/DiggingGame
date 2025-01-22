@@ -11,7 +11,7 @@ const DistanceLabel = () => {
 	const [distance, setDistance] = useState(0);
 	const [startDistance, setStartDistance] = useState(0);
 	const [pos, setPos] = useState(new Vector3(0, 0, 0));
-	const [barSize, setBarSize] = useMotion(UDim2.fromScale(0.5, 0.465));
+	const [barSize, setBarSize] = useMotion(UDim2.fromScale(0, 0.465));
 
 	useEffect(() => {
 		const trove = new Trove();
@@ -26,6 +26,7 @@ const DistanceLabel = () => {
 
 				if (character && character.Parent) {
 					setStartDistance(pos.sub(character.GetPivot().Position).Magnitude);
+					setDistance(math.floor(pos.sub(character.GetPivot().Position).Magnitude));
 				} else {
 					setStartDistance(BASE_DETECTOR_STRENGTH);
 				}
@@ -39,25 +40,33 @@ const DistanceLabel = () => {
 			}),
 		);
 
-		trove.add(
-			RunService.RenderStepped.Connect(() => {
-				if (visible) {
-					const player = Players.LocalPlayer;
-					const character = player.Character;
-					if (!character) return;
+		if (visible) {
+			trove.add(
+				RunService.RenderStepped.Connect(() => {
+					if (visible) {
+						const player = Players.LocalPlayer;
+						const character = player.Character;
+						if (!character) return;
 
-					setDistance(math.floor(pos.sub(character.GetPivot().Position).Magnitude));
-				}
-			}),
-		);
+						setDistance(math.floor(pos.sub(character.GetPivot().Position).Magnitude));
+					}
+				}),
+			);
+		}
 
 		return () => trove.destroy();
 	}, [pos, visible]);
 
 	useEffect(() => {
-		const x = 0.9 * math.clamp((startDistance - distance) / math.max(1, startDistance), 0, 1);
-		setBarSize.spring(UDim2.fromScale(x, 0.465), springs.bubbly);
+		const barX = math.clamp((startDistance - distance) / math.max(1, startDistance), 0, 1);
+		setBarSize.spring(UDim2.fromScale(barX, 0.465), springs.bubbly);
 	}, [distance, startDistance]);
+
+	useEffect(() => {
+		Events.beginDigging.connect(() => {
+			setVisible(false);
+		});
+	}, []);
 
 	return (
 		<frame
@@ -69,6 +78,7 @@ const DistanceLabel = () => {
 			key={"Metal Detector Frame"}
 			Position={new UDim2(0.5, 0, 0, 15)}
 			Size={UDim2.fromScale(0.585, 0.0867)}
+			ZIndex={0}
 			Visible={visible}
 		>
 			<frame
@@ -80,6 +90,7 @@ const DistanceLabel = () => {
 				key={"Meter"}
 				Position={UDim2.fromScale(0.414, 0.5)}
 				Size={UDim2.fromScale(0.829, 0.8)}
+				ZIndex={5}
 			>
 				<imagelabel
 					AnchorPoint={new Vector2(0.5, 0.5)}
@@ -98,63 +109,96 @@ const DistanceLabel = () => {
 						BorderColor3={Color3.fromRGB(0, 0, 0)}
 						BorderSizePixel={0}
 						key={"Meter"}
-						Position={UDim2.fromScale(0.1, 0.194)}
+						Position={UDim2.fromScale(0.025, 0.194)}
 						Size={barSize}
-					/>
-				</imagelabel>
-			</frame>
+						ZIndex={5}
+					>
+						<frame
+							AnchorPoint={new Vector2(0.5, 0)}
+							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+							BackgroundTransparency={1}
+							BorderColor3={Color3.fromRGB(0, 0, 0)}
+							BorderSizePixel={0}
+							key={"Meter Progress"}
+							Position={UDim2.fromScale(1, 0.5)}
+							Size={UDim2.fromScale(0.2, 1.7)}
+							ZIndex={1e3}
+						>
+							<uisizeconstraint
+								key={"UISizeConstraint"}
+								MaxSize={new Vector2(75, 75)}
+								MinSize={new Vector2(75, 75)}
+							/>
 
-			<frame
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				key={"Meter Progress"}
-				Position={UDim2.fromScale(-0.1, -0.2)}
-				Size={UDim2.fromScale(0.25, 1.86)}
-			>
+							<imagelabel
+								AnchorPoint={new Vector2(0.5, 0.5)}
+								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+								BackgroundTransparency={1}
+								BorderColor3={Color3.fromRGB(0, 0, 0)}
+								BorderSizePixel={0}
+								Image={"rbxassetid://130443371048253"}
+								key={"Background"}
+								Position={UDim2.fromScale(0.5, 0.5)}
+								ScaleType={Enum.ScaleType.Fit}
+								Size={UDim2.fromScale(1, 1)}
+								ZIndex={10}
+							/>
+
+							<imagelabel
+								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+								BackgroundTransparency={1}
+								BorderColor3={Color3.fromRGB(0, 0, 0)}
+								BorderSizePixel={0}
+								Image={"rbxassetid://119544070088143"}
+								key={"Metal Detector Icon"}
+								Position={UDim2.fromScale(0.18, 0.125)}
+								Size={UDim2.fromScale(0.64, 0.5)}
+								ZIndex={10}
+							/>
+
+							<textlabel
+								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+								BackgroundTransparency={1}
+								BorderColor3={Color3.fromRGB(0, 0, 0)}
+								BorderSizePixel={0}
+								FontFace={
+									new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+								}
+								key={"Meter Amount"}
+								Position={UDim2.fromScale(0.163, 0.703)}
+								Size={UDim2.fromScale(0.67, 0.18)}
+								Text={`${math.floor(distance)}m`}
+								TextColor3={Color3.fromRGB(255, 255, 255)}
+								TextScaled={true}
+								TextWrapped={true}
+								ZIndex={10}
+							>
+								<uistroke key={"UIStroke"} Thickness={3} />
+
+								<uipadding
+									key={"UIPadding"}
+									PaddingLeft={new UDim(0.209, 0)}
+									PaddingRight={new UDim(0.209, 0)}
+								/>
+							</textlabel>
+						</frame>
+					</frame>
+				</imagelabel>
+
 				<imagelabel
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
 					BorderColor3={Color3.fromRGB(0, 0, 0)}
 					BorderSizePixel={0}
-					Image={"rbxassetid://130443371048253"}
-					key={"Background"}
+					Image={"rbxassetid://137159884318805"}
+					Interactable={false}
+					key={"Lines"}
 					Position={UDim2.fromScale(0.5, 0.5)}
 					ScaleType={Enum.ScaleType.Fit}
 					Size={UDim2.fromScale(1, 1)}
+					ZIndex={6}
 				/>
-
-				<imagelabel
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					Image={"rbxassetid://119544070088143"}
-					key={"Metal Detector Icon"}
-					Position={UDim2.fromScale(0.18, 0.125)}
-					Size={UDim2.fromScale(0.64, 0.5)}
-				/>
-
-				<textlabel
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-					key={"Meter Amount"}
-					Position={UDim2.fromScale(0.163, 0.703)}
-					Size={UDim2.fromScale(0.67, 0.18)}
-					Text={`${math.floor(distance)}m`}
-					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextScaled={true}
-					TextWrapped={true}
-				>
-					<uistroke key={"UIStroke"} Thickness={3} />
-
-					<uipadding key={"UIPadding"} PaddingLeft={new UDim(0.209, 0)} PaddingRight={new UDim(0.209, 0)} />
-				</textlabel>
 			</frame>
 
 			<frame
@@ -171,7 +215,7 @@ const DistanceLabel = () => {
 					BackgroundTransparency={1}
 					BorderColor3={Color3.fromRGB(0, 0, 0)}
 					BorderSizePixel={0}
-					Image={"rbxassetid://133357639370497"}
+					Image={"rbxassetid://76806044140289"}
 					key={"Icon"}
 					Position={UDim2.fromScale(0.29, 0)}
 					Size={UDim2.fromScale(1, 1)}

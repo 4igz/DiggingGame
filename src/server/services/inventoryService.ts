@@ -22,10 +22,7 @@ type InventoryKeys<T> = {
 
 @Service({})
 export class InventoryService implements OnStart {
-	constructor(
-		private readonly profileService: ProfileService,
-		private readonly moneyService: MoneyService,
-	) {}
+	constructor(private readonly profileService: ProfileService, private readonly moneyService: MoneyService) {}
 
 	onStart() {
 		const inventoryConfigMap: Record<
@@ -60,7 +57,11 @@ export class InventoryService implements OnStart {
 			const { inventoryKey, config } = selected;
 			if (inventoryKey === "targetInventory" || !("price" in config[item])) return;
 
-			// Subtract money from player for buying
+			// Check if player already owns the item
+			if (profile.Data[inventoryKey].includes(item)) {
+				return;
+			}
+
 			const cost = config[item].price;
 
 			if (!this.moneyService.hasEnoughMoney(player, cost)) {
@@ -195,6 +196,9 @@ export class InventoryService implements OnStart {
 				if (![equippedDetector, equippedShovel, equippedTreasure].includes(child.Name)) {
 					child.Destroy();
 				}
+			}
+			if (child.IsA("Accessory") && child.AccessoryType === Enum.AccessoryType.Back) {
+				child.Destroy();
 			}
 			if (child.IsA("Accessory") && shovelConfig[child.Name]) {
 				child.Destroy();

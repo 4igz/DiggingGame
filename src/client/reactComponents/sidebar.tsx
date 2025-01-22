@@ -15,19 +15,19 @@ interface SidebarButtonProps {
 
 const SidebarButton = (props: SidebarButtonProps) => {
 	const START_SZ = UDim2.fromScale(0.396, 0.251);
-	const SZ_INC = UDim2.fromScale(0.05, 0.05);
+	const SZ_INC = UDim2.fromScale(0.025, 0.025);
 	const [isHovered, setIsHovered] = React.useState(false);
 	const [isPressed, setPressed] = React.useState(false);
 	const [size, sizeMotion] = useMotion(START_SZ);
 
 	useEffect(() => {
-		sizeMotion.spring(isHovered ? START_SZ.add(SZ_INC) : START_SZ, springs.bubbly);
+		sizeMotion.spring(isHovered ? START_SZ.add(SZ_INC) : START_SZ, springs.responsive);
 	}, [isHovered]);
 
 	useEffect(() => {
 		sizeMotion.spring(
 			isPressed ? START_SZ.sub(SZ_INC) : isHovered ? START_SZ.add(SZ_INC) : START_SZ,
-			springs.bubbly,
+			springs.responsive,
 		);
 	}, [isPressed]);
 
@@ -55,9 +55,13 @@ const SidebarButton = (props: SidebarButtonProps) => {
 				Event={{
 					MouseEnter: () => setIsHovered(true),
 					MouseLeave: () => setIsHovered(false),
-					MouseButton1Down: () => setPressed(true),
-					MouseButton1Up: () => setPressed(false),
-					MouseButton1Click: props.onClick,
+					MouseButton1Click: () => {
+						if (props.onClick) {
+							props.onClick();
+						}
+						setPressed(true);
+						task.delay(0.1, () => setPressed(false));
+					},
 				}}
 			/>
 			<textlabel
@@ -169,7 +173,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 				icon={"rbxassetid://125407928227030"}
 				text={"Shop"}
 				onClick={() => {
-					props.uiController.toggleUi(gameConstants.MAIN_UI, { menu: MENUS.Shop });
+					props.uiController.toggleUi(gameConstants.GAMEPASS_SHOP_UI);
 				}}
 			/>
 			<SidebarButton
@@ -177,7 +181,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 				text={"Auto Dig"}
 				notificationVisible={true}
 				onClick={() => {
-					props.uiController.toggleUi(gameConstants.MAIN_UI, { menu: MENUS.Shop });
+					props.uiController.toggleUi(gameConstants.GAMEPASS_SHOP_UI);
 				}}
 			/>
 		</frame>

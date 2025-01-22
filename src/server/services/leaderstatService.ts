@@ -25,7 +25,6 @@ export class LeaderstatService implements OnStart {
 				const money = leaderstats.FindFirstChild("Money") as StringValue | undefined;
 				if (money) {
 					money.Value = EternityNum.short(EternityNum.fromString(profile.Data.money));
-					Events.updateMoney.fire(player, profile.Data.money);
 				}
 			}
 		});

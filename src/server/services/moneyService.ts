@@ -2,6 +2,7 @@ import { Service, OnStart } from "@flamework/core";
 import EternityNum from "shared/util/eternityNum";
 import { ProfileService } from "./profileService";
 import { Signals } from "shared/signals";
+import { Events } from "server/network";
 
 @Service({})
 export class MoneyService implements OnStart {
@@ -26,6 +27,7 @@ export class MoneyService implements OnStart {
 		profile.Data.money = EternityNum.toString(
 			EternityNum.add(EternityNum.fromString(profile.Data.money), EternityNum.fromNumber(amount)),
 		);
+		Events.updateMoney.fire(player, profile.Data.money);
 		this.profileService.setProfile(player, profile);
 	}
 
@@ -36,6 +38,7 @@ export class MoneyService implements OnStart {
 		profile.Data.money = EternityNum.toString(
 			EternityNum.sub(EternityNum.fromString(profile.Data.money), EternityNum.fromNumber(amount)),
 		);
+		Events.updateMoney.fire(player, profile.Data.money);
 		this.profileService.setProfile(player, profile);
 	}
 }

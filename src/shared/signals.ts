@@ -5,4 +5,5 @@ export const Signals = {
 	updateDiggingProgress: new Signal<(progress: number, maxProgress: number) => void>(),
 	detectorInitialized: new Signal<(player: Player, detector: Tool) => void>(),
 	addMoney: new Signal<(player: Player, amount: number) => void>(),
+	resetSkills: new Signal<(player: Player) => void>(),
 };

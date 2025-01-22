@@ -17,14 +17,16 @@ export default function LuckBar(props: LuckBarProps) {
 	const maxLuck = 10;
 
 	const [currentLuck, setCurrentLuck] = useState(0);
-	const [luckSz, setLuckSz] = useMotion(UDim2.fromScale(0, 0));
+	const [luckSz, setLuckSz] = useMotion(0);
 	const [visible, setVisible] = useState(false);
+	const [startTime, setStartTime] = useState(0);
 
 	useEffect(() => {
 		setVisible(props.visible);
 
 		if (props.visible) {
-			setLuckSz.immediate(UDim2.fromScale(1, 0));
+			setLuckSz.immediate(0);
+			setStartTime(Workspace.GetServerTimeNow());
 			setCurrentLuck(0);
 		}
 	}, [props.visible]);
@@ -33,6 +35,8 @@ export default function LuckBar(props: LuckBarProps) {
 	useEffect(() => {
 		const connection = Events.updateLuckRoll.connect((luckValue: number, serverTime: number) => {
 			setCurrentLuck(luckValue);
+			setStartTime(Workspace.GetServerTimeNow());
+
 			setVisible(true);
 		});
 
@@ -41,61 +45,135 @@ export default function LuckBar(props: LuckBarProps) {
 
 	// Predict roll based on time since last update
 	useEffect(() => {
-		const connection = RunService.RenderStepped.Connect((dt) => {
+		const connection = RunService.RenderStepped.Connect(() => {
 			if (props.paused) return;
-			// const elapsed = Workspace.GetServerTimeNow() - localTime;
-			// const predictedTime = startTime + elapsed;
-			const predictedTime = Workspace.GetServerTimeNow();
 
-			const sineValue = math.sin(predictedTime * math.pi);
-			const adjustedValue = math.sign(sineValue) * (1 - math.pow(1 - math.abs(sineValue), 0.5)); // Flipped exponential
-			const predictedLuck = 10 * math.abs(adjustedValue);
+			const elapsedTime = Workspace.GetServerTimeNow() - startTime; // Elapsed time
+			const frequencyScale = 0.75; // Frequency adjustment for oscillation
+			const sineValue = math.sin(elapsedTime * math.pi * frequencyScale);
+			const MAGNET_AT = 0.9;
 
-			setCurrentLuck(predictedLuck);
+			// Adjust for exponential shape and amplitude
+			let adjustedValue = math.sign(sineValue) * (1 - math.pow(1 - math.abs(sineValue), 0.5));
+
+			// Magnet effect: clamp to 10 if above 0.9
+			if (math.abs(adjustedValue) > MAGNET_AT) {
+				adjustedValue = 1; // Magnet to top
+			}
+
+			// Scale to 0-10 range
+			const luckValue = 10 * math.abs(adjustedValue);
+
+			setCurrentLuck(luckValue);
 		});
 
 		return () => connection.Disconnect();
-	}, [props.paused]);
+	}, [props.paused, startTime]);
 
 	useEffect(() => {
-		setLuckSz.spring(UDim2.fromScale(1, currentLuck / maxLuck), springs.bubbly);
+		setLuckSz.spring((maxLuck - currentLuck) / maxLuck, springs.responsive);
 	}, [currentLuck]);
 
 	return (
 		<frame
 			AnchorPoint={new Vector2(0.5, 0.5)}
-			Position={new UDim2(0.65, 0, 0.5, 0)}
-			Size={new UDim2(0.01, 0, 0.3, 0)}
-			BackgroundColor3={Color3.fromRGB(30, 30, 30)}
+			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+			BackgroundTransparency={1}
+			BorderColor3={Color3.fromRGB(0, 0, 0)}
 			BorderSizePixel={0}
+			key={"Luck Container"}
+			Position={new UDim2(0.65, 0, 0.5, 0)}
+			Size={UDim2.fromScale(0.0466, 0.495)}
 			Visible={visible}
 		>
-			<uicorner CornerRadius={new UDim(0, 8)} />
-			<frame
-				Size={luckSz}
-				BackgroundColor3={Color3.fromRGB(50, 200, 50)}
+			<imagelabel
+				AnchorPoint={new Vector2(0.5, 0.5)}
+				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+				BackgroundTransparency={1}
+				BorderColor3={Color3.fromRGB(0, 0, 0)}
 				BorderSizePixel={0}
-				ZIndex={2}
-				Position={new UDim2(1, 0, 1, 0)}
-				AnchorPoint={new Vector2(1, 1)}
+				Image={"rbxassetid://139244894119518"}
+				key={"Luck Container"}
+				Position={UDim2.fromScale(0.5, 0.5)}
+				ScaleType={Enum.ScaleType.Fit}
+				Size={UDim2.fromScale(1, 1)}
 			>
-				<uicorner CornerRadius={new UDim(0, 8)} />
+				<imagelabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					Image={"rbxassetid://86778411977516"}
+					key={"Fill"}
+					Position={UDim2.fromScale(0.5, 0.5)}
+					ScaleType={Enum.ScaleType.Fit}
+					Size={UDim2.fromScale(1, 1)}
+				>
+					<uigradient
+						key={"UIGradient"}
+						Offset={luckSz.map((sz) => new Vector2(0.5, sz))}
+						Rotation={90}
+						Transparency={
+							new NumberSequence([
+								new NumberSequenceKeypoint(0, 1),
+								new NumberSequenceKeypoint(0.00125, 0),
+								new NumberSequenceKeypoint(1, 0),
+							])
+						}
+					/>
+				</imagelabel>
+			</imagelabel>
+
+			<frame
+				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+				BackgroundTransparency={1}
+				BorderColor3={Color3.fromRGB(0, 0, 0)}
+				BorderSizePixel={0}
+				key={"Luck Meter"}
+				Position={UDim2.fromScale(-0.571, -0.142)}
+				Size={UDim2.fromScale(2.14, 0.124)}
+			>
+				<uilistlayout
+					key={"UIListLayout"}
+					FillDirection={Enum.FillDirection.Horizontal}
+					SortOrder={Enum.SortOrder.LayoutOrder}
+					VerticalAlignment={Enum.VerticalAlignment.Center}
+				/>
+
+				<imagelabel
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					Image={"rbxassetid://85733831609212"}
+					key={"Luck Icon"}
+					Position={UDim2.fromScale(0, 0.273)}
+					ScaleType={Enum.ScaleType.Fit}
+					Size={UDim2.fromScale(0.483, 1.18)}
+				/>
+
+				<textlabel
+					key={"TextLabel"}
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					Position={UDim2.fromScale(0.483, 0.266)}
+					Size={UDim2.fromScale(0.592, 0.735)}
+					Text={string.format("x%.1f", currentLuck)}
+					TextColor3={Color3.fromRGB(255, 255, 255)}
+					TextScaled={true}
+					TextWrapped={true}
+				>
+					<uistroke key={"UIStroke"} Thickness={3} />
+
+					<uipadding key={"UIPadding"} PaddingLeft={new UDim(0.0282, 0)} PaddingRight={new UDim(0.0282, 0)} />
+				</textlabel>
 			</frame>
 
-			<textlabel
-				AnchorPoint={new Vector2(0.5, 1)}
-				BackgroundTransparency={1}
-				Font={Enum.Font.GothamBold}
-				Position={UDim2.fromScale(0.5, 0)}
-				Size={UDim2.fromScale(1, 0.25)}
-				Text={string.format("🍀%.1fx", currentLuck)}
-				TextColor3={Color3.fromRGB(18, 209, 28)}
-				TextScaled={false}
-				TextXAlignment={Enum.TextXAlignment.Center}
-				TextSize={lerp(18, 24, currentLuck / maxLuck)}
-			>
-				<uistroke Thickness={3} />
-			</textlabel>
+			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.142} />
 		</frame>
 	);
 }

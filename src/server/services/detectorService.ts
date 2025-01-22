@@ -12,8 +12,9 @@ export class DetectorService implements OnStart, OnTick {
 	private lastVisualizationTimes: Map<Player, number> = new Map();
 	private lastPlayerPositions: Map<Player, Vector3> = new Map();
 	private luckRolls: Map<number, number> = new Map();
-	private rolling: Map<number, number> = new Map();
+	private rolling: Map<number, { start: number; current: number }> = new Map();
 	private readonly VISUALIZATION_RATE = 1; // seconds
+	private startRollingTime = Workspace.GetServerTimeNow();
 
 	constructor(private readonly targetService: TargetService, private readonly profileService: ProfileService) {}
 
@@ -23,7 +24,11 @@ export class DetectorService implements OnStart, OnTick {
 			if (existingTarget) return;
 
 			this.luckRolls.set(player.UserId, 0);
-			this.rolling.set(player.UserId, Workspace.GetServerTimeNow());
+			const now = Workspace.GetServerTimeNow() - player.GetNetworkPing();
+			this.rolling.set(player.UserId, {
+				start: now,
+				current: now,
+			});
 		});
 
 		Events.endDetectorLuckRoll.connect((player) => {
@@ -32,7 +37,8 @@ export class DetectorService implements OnStart, OnTick {
 			// Spawn target.
 			const existingTarget = this.targetService.getPlayerTarget(player);
 			if (existingTarget) return;
-			this.targetService.spawnTarget(player, this.luckRolls.get(player.UserId) ?? 1);
+
+			this.targetService.spawnTarget(player, this.luckRolls.get(player.UserId) ?? 0.5);
 		});
 	}
 
@@ -75,24 +81,36 @@ export class DetectorService implements OnStart, OnTick {
 	}
 
 	onTick(dt: number) {
-		const now = Workspace.GetServerTimeNow(); // Current time
-
-		// While player lucks are rolling, make them oscillate between 0 and 10 quadratically
 		for (const [userId, time] of this.rolling) {
-			// Exponential adjustment to speed up near the center and slow down near the ends
-			const sineValue = math.sin(time * math.pi);
-			const adjustedValue = math.sign(sineValue) * (1 - math.pow(1 - math.abs(sineValue), 0.5));
-			const luckValue = 10 * math.abs(adjustedValue);
-			this.luckRolls.set(userId, luckValue);
-			this.rolling.set(userId, time + dt);
+			const elapsedTime = Workspace.GetServerTimeNow() - time.start; // Elapsed time
+			const frequencyScale = 0.75; // Frequency adjustment for oscillation
+			const sineValue = math.sin(elapsedTime * math.pi * frequencyScale);
+			const MAGNET_AT = 0.9;
 
-			// Update the client every second
-			// if (tick() % this.VISUALIZATION_RATE < dt) {
-			// 	const player = Players.GetPlayerByUserId(userId);
-			// 	if (player) {
-			// 		Events.updateLuckRoll.fire(player, luckValue, time);
-			// 	}
-			// }
+			// Adjust for exponential shape and amplitude
+			let adjustedValue = math.sign(sineValue) * (1 - math.pow(1 - math.abs(sineValue), 0.5));
+
+			// Magnet effect: clamp to 10 if above 0.9
+			if (math.abs(adjustedValue) > MAGNET_AT) {
+				adjustedValue = 1; // Magnet to top
+			}
+
+			// Scale to 0-10 range
+			const luckValue = 10 * math.abs(adjustedValue);
+
+			// Update the rolling and luck rolls data
+			this.luckRolls.set(userId, luckValue);
+			this.rolling.set(userId, { start: time.start, current: time.current + dt });
+
+			// Optionally, update the client periodically
+			/*
+			if (tick() % this.VISUALIZATION_RATE < dt) {
+				const player = Players.GetPlayerByUserId(userId);
+				if (player) {
+					Events.updateLuckRoll.fire(player, luckValue, time);
+				}
+			}
+			*/
 		}
 
 		// Make detectors detect metals and flash when they're nearby
@@ -140,6 +158,7 @@ export class DetectorService implements OnStart, OnTick {
 
 				const RECALCULATE_DISTANCE = 5;
 
+				const now = tick();
 				if (
 					now - lastVisualizationTime >= this.VISUALIZATION_RATE ||
 					positionDifference >= RECALCULATE_DISTANCE
