@@ -82,7 +82,10 @@ export class AutoDigging implements OnStart {
 							resolve(true);
 						}
 						resolve(false);
-					}).then((shouldQueue) => {
+					}).then((targetActive) => {
+						if (targetActive) {
+							this.queueNextTargetRequest();
+						}
 						this.moveTo(position);
 					});
 				} else {
