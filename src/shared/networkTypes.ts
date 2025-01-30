@@ -2,17 +2,27 @@ import { MetalDetector } from "./config/metalDetectorConfig";
 import { Shovel, shovelConfig } from "./config/shovelConfig";
 import { targetConfig, TargetConfig } from "./config/targetConfig";
 
-export interface Target extends TargetConfig {
-	name: keyof typeof targetConfig;
-	position: Vector3;
+// What is actually saved in the player profile and replicated.
+export interface TargetItem {
+	itemId: string;
 	weight: number;
+	/**To keep data storage low, we only store the name of the target,
+	 * then we can look up the target in the targetConfig for the rest of the data.  */
+	name: keyof typeof targetConfig;
+}
+
+// What is spawned into the world.
+export interface Target extends TargetConfig, TargetItem {
+	position: Vector3;
 	digProgress: number;
 	maxProgress: number;
 	activelyDigging: boolean;
-	itemId: string;
 	base: BasePart;
 	mapName: string;
 	owner: Player;
+
+	/** The luck multiplier originally used to detect this target. */
+	usedLuckMult: number;
 }
 
 export interface PlayerDigInfo {
@@ -25,7 +35,7 @@ export type ItemType = "MetalDetectors" | "Shovels" | "Target";
 export type Item = (
 	| (MetalDetector & { type: "MetalDetectors" })
 	| (Shovel & { type: "Shovels" })
-	| (Target & { type: "Target" })
+	| (TargetItem & { type: "Target" })
 ) & { name: string };
 
 export type SkillName = "strength" | "luck" | "detection";

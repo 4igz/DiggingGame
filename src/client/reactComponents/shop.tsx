@@ -84,7 +84,7 @@ const SelectionButtonComponent: React.FC<SelectionButtonProps> = (props) => {
 				key={"Title"}
 				Position={UDim2.fromScale(0.108, 0.701)}
 				Size={UDim2.fromScale(0.78, 0.162)}
-				Text={props.title}
+				Text={spaceWords(props.title)}
 				TextColor3={Color3.fromRGB(255, 255, 255)}
 				TextScaled={true}
 				TextWrapped={true}
@@ -572,10 +572,9 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 				);
 			});
 		} else if (selectedShop === "Store") {
+			props.uiController.toggleUi(gameConstants.GAMEPASS_SHOP_UI);
 		}
-	}, [selectedShop]);
 
-	React.useEffect(() => {
 		const connection = Events.updateInventory.connect((inventoryType, [_, inventory]) => {
 			if (inventoryType !== selectedShop) return; // Ensure the event only updates the correct shop
 			setShopContent((prev) =>
@@ -601,6 +600,7 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 			popInMotion.spring(UDim2.fromScale(0.727, 0.606), springs.responsive);
 		} else {
 			popInMotion.immediate(UDim2.fromScale(0, 0));
+			setSelectedShop("");
 		}
 	}, [visible]);
 
@@ -629,7 +629,14 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 				Size={UDim2.fromScale(1, 1)}
 			/>
 
-			<ExitButton uiController={props.uiController} uiName={gameConstants.SHOP_UI} menuRefToClose={menuRef} />
+			<ExitButton
+				uiController={props.uiController}
+				uiName={gameConstants.SHOP_UI}
+				menuRefToClose={menuRef}
+				onClick={() => {
+					setSelectedShop("");
+				}}
+			/>
 
 			<frame
 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}

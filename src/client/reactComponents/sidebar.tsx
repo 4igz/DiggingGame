@@ -4,11 +4,15 @@ import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
 import { gameConstants } from "shared/constants";
 import { MENUS } from "./mainUi";
+import { AutoDigging } from "client/controllers/autoDigController";
+import { Players } from "@rbxts/services";
+import { Signals } from "shared/signals";
 
 interface SidebarButtonProps {
 	icon: string;
 	text: string;
 	notificationVisible?: boolean;
+	notificationColor?: Color3;
 	notificationText?: string;
 	onClick?: () => void;
 }
@@ -89,7 +93,7 @@ const SidebarButton = (props: SidebarButtonProps) => {
 			</textlabel>
 
 			<frame
-				BackgroundColor3={Color3.fromRGB(230, 42, 25)}
+				BackgroundColor3={props.notificationColor ?? Color3.fromRGB(255, 0, 0)}
 				BorderColor3={Color3.fromRGB(0, 0, 0)}
 				BorderSizePixel={0}
 				key={"Notification"}
@@ -135,10 +139,19 @@ const SidebarButton = (props: SidebarButtonProps) => {
 };
 
 interface SidebarProps {
+	autoDigController: AutoDigging;
 	uiController: UiController;
 }
 
 export const Sidebar: React.FC<SidebarProps> = (props) => {
+	const [autoDigEnabled, setAutoDiggingEnabled] = React.useState(false);
+
+	useEffect(() => {
+		Signals.setAutoDiggingEnabled.Connect((enabled: boolean) => {
+			setAutoDiggingEnabled(enabled);
+		});
+	}, []);
+
 	return (
 		<frame
 			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -146,8 +159,9 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 			BorderColor3={Color3.fromRGB(0, 0, 0)}
 			BorderSizePixel={0}
 			key={"QuickActionButtons"}
-			Position={UDim2.fromScale(0.02, 0.173)}
-			Size={UDim2.fromScale(0.143, 0.529)}
+			Position={UDim2.fromScale(0.01, 0.5)}
+			Size={UDim2.fromScale(0.2, 0.6)}
+			AnchorPoint={new Vector2(0, 0.5)}
 		>
 			<uilistlayout
 				key={"UIListLayout"}
@@ -180,8 +194,15 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 				icon={"rbxassetid://108568741864610"}
 				text={"Auto Dig"}
 				notificationVisible={true}
+				notificationColor={autoDigEnabled ? Color3.fromRGB(69, 186, 15) : Color3.fromRGB(230, 42, 25)}
 				onClick={() => {
-					props.uiController.toggleUi(gameConstants.GAMEPASS_SHOP_UI);
+					const enabled = !autoDigEnabled;
+					setAutoDiggingEnabled(enabled);
+
+					props.autoDigController.setAutoDiggingEnabled(enabled);
+					// Set an attribute for other controllers to know if auto digging is enabled
+					// Other than this, there is a signal fired when auto digging is enabled/disabled
+					Players.LocalPlayer.SetAttribute("AutoDigging", enabled);
 				}}
 			/>
 		</frame>

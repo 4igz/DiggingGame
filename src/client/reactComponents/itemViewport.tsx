@@ -1,5 +1,5 @@
 import React from "@rbxts/react";
-import { RunService, ReplicatedStorage } from "@rbxts/services";
+import { RunService} from "@rbxts/services";
 
 interface ViewportModelProps {
 	model: Model;

@@ -1,13 +1,12 @@
 import { Service, OnStart } from "@flamework/core";
 import { LoadedProfile, ProfileService } from "./profileService";
-import { Item, ItemType, Target } from "shared/networkTypes";
+import { Item, ItemType, Target, TargetItem } from "shared/networkTypes";
 import { ReplicatedStorage, ServerStorage } from "@rbxts/services";
 import { Events, Functions } from "server/network";
 import { metalDetectorConfig, MetalDetectorModule } from "shared/config/metalDetectorConfig";
 import { shovelConfig, ShovelModule } from "shared/config/shovelConfig";
-import { targetConfig, TargetModule } from "shared/config/targetConfig";
+import { fullTargetConfig, targetConfig, TargetModule } from "shared/config/targetConfig";
 import { ProfileTemplate } from "server/profileTemplate";
-import EternityNum from "shared/util/eternityNum";
 import { MoneyService } from "./moneyService";
 import { Signals } from "shared/signals";
 
@@ -17,7 +16,7 @@ const TargetToolFolder = ServerStorage.WaitForChild("TargetTools") as Folder;
 const ShovelAccessoryFolder = ServerStorage.WaitForChild("ShovelAccessories") as Folder;
 
 type InventoryKeys<T> = {
-	[K in keyof T]: T[K] extends Array<string> | Array<Target> ? K : never;
+	[K in keyof T]: T[K] extends Array<string> | Array<TargetItem> ? K : never;
 }[keyof T];
 
 @Service({})
@@ -31,7 +30,7 @@ export class InventoryService implements OnStart {
 		> = {
 			MetalDetectors: { inventoryKey: "detectorInventory", config: metalDetectorConfig },
 			Shovels: { inventoryKey: "shovelInventory", config: shovelConfig },
-			Target: { inventoryKey: "targetInventory", config: targetConfig },
+			Target: { inventoryKey: "targetInventory", config: fullTargetConfig },
 		};
 
 		this.profileService.onProfileLoaded.Connect((player: Player, profile) => {
@@ -71,7 +70,7 @@ export class InventoryService implements OnStart {
 			this.moneyService.takeMoney(player, cost);
 
 			const inventory = profile.Data[inventoryKey];
-			inventory.push(item);
+			inventory.push(item as string & TargetItem);
 			this.profileService.setProfile(player, profile);
 			Events.updateInventory(player, itemType, [
 				{
@@ -79,7 +78,9 @@ export class InventoryService implements OnStart {
 					equippedDetector: profile.Data.equippedDetector,
 					equippedTreasure: profile.Data.equippedTreasure,
 				},
-				inventory.map((value) => ({ name: value, type: itemType as ItemType, ...config[value] } as Item)),
+				inventory.map(
+					(value) => ({ name: value, type: itemType as ItemType, ...config[value as string] } as Item),
+				),
 			]);
 		});
 
@@ -87,7 +88,7 @@ export class InventoryService implements OnStart {
 			this.equipTreasure(player, targetName);
 		});
 
-		Events.equipItem.connect((player, itemType, itemName) => {
+		Events.equipItem.connect((player, itemType: Exclude<ItemType, "Target">, itemName) => {
 			const profile = this.profileService.getProfile(player);
 			if (!profile) return;
 
@@ -113,7 +114,7 @@ export class InventoryService implements OnStart {
 					equippedTreasure: profile.Data.equippedTreasure,
 				},
 				profile.Data[inventoryKey].map(
-					(value) => ({ name: value, type: itemType as ItemType, ...config[value] } as Item),
+					(value) => ({ name: value, type: itemType as ItemType, ...config[value as string] } as Item),
 				),
 			]);
 		});
@@ -246,7 +247,11 @@ export class InventoryService implements OnStart {
 		const profile = this.profileService.getProfile(player);
 		if (profile) {
 			profile.Data.targetInventory.push(item);
+			if (!profile.Data.previouslyFoundTargets.has(item.name)) {
+				profile.Data.previouslyFoundTargets.add(item.name);
+			}
 			this.profileService.setProfile(player, profile);
+			Events.targetAdded(player, item.name, item.weight);
 		}
 	}
 

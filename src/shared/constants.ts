@@ -1,6 +1,7 @@
 import { MetalDetector, metalDetectorConfig } from "./config/metalDetectorConfig";
 import { ItemType, Rarity } from "./networkTypes";
 import { Shovel, shovelConfig } from "./config/shovelConfig";
+import { mapConfig } from "./config/mapConfig";
 
 export const gameConstants = {
 	DIG_BAR_UI: "DiggingBar",
@@ -14,12 +15,20 @@ export const gameConstants = {
 	LUCKBAR_UI: "LuckBar",
 	COMPASS_UI: "CompassUi",
 	GAMEPASS_SHOP_UI: "GamepassShop",
+	POPUP_UI: "ItemPopupUi",
+	ISLE_POPUP_UI: "ZonePopupUi",
 
 	PLAYER_COLGROUP: "Player",
-	DIRT_COLGROUP: "Dirt",
+	NOCHARACTERCOLLISION_COLGROUP: "NoCollideWithCharacters",
+	SPAWN_TAG: "MapSpawn",
+	ISLE_ZONE_TAG: "IsleZone",
 
+	AUTO_DIG_FAILURE_THRESHOLD: 5, // If autodig fails this many times consecutively, it will teleport to the nearest map spawn to reset itself.
+	SERVER_LUCK_MULTIPLIER_DURATION: 60 * 60, // 1 hour
+	MAX_MULTIDIG_LEVEL: 6,
 	DIG_RANGE: 5,
 	DIG_TIME_SEC: 0.01, // Ratelimit the speed of digging
+	AUTO_DIG_CLICK_INTERVAL: 0.1, // Seconds between each auto dig click
 
 	// Maps itemType name to config
 	SHOP_CONFIGS: {
@@ -46,10 +55,16 @@ export const gameConstants = {
 	GAMEPASS_IDS: {
 		x2Strength: 1014663108,
 		x2Cash: 1015008881,
-		x2Speed: 1038652835,
+		// x2Speed: 1038652835,
 		BiggerBackpack: 1014776887,
 		SellEverywhere: 1014879019,
 	},
+
+	MAP_THEME_COLORS: {
+		Grasslands: new Color3(0.03, 0.86, 0),
+		Volcano: new Color3(0.86, 0.03, 0),
+		Frozen: Color3.fromRGB(15, 151, 255),
+	} as Record<keyof typeof mapConfig, Color3>,
 
 	RARITY_COLORS: {
 		Common: new Color3(1, 1, 1),
@@ -70,14 +85,12 @@ export const gameConstants = {
 		Mythical: "rbxassetid://129739451092946",
 	} as Record<Rarity, string>,
 
-	MULTI_DIG_ANIMATION_SPRITESHEET: "rbxassetid://80311363716942",
+	INDEX_RARITY_BACKGROUND_IMAGES: {
+		Uncommon: "rbxassetid://106616263841751",
+		Rare: "rbxassetid://97508814457340",
+		Legendary: "rbxassetid://115729927097630",
+		Mythical: "rbxassetid://126358206935930",
+	} as Record<Rarity, string>,
 
-	// MULTI_DIG_ANIMATION_LUT: [
-	// 	"http://www.roblox.com/asset/?id=106506846640616",
-	// 	"http://www.roblox.com/asset/?id=129839500155115",
-	// 	"http://www.roblox.com/asset/?id=131463666526939",
-	// 	"http://www.roblox.com/asset/?id=90514093194318",
-	// 	"http://www.roblox.com/asset/?id=94488229451492",
-	// 	"http://www.roblox.com/asset/?id=88493822484072",
-	// ],
+	MULTI_DIG_ANIMATION_SPRITESHEET: "rbxassetid://80311363716942",
 };

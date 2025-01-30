@@ -3,10 +3,12 @@ import EternityNum from "shared/util/eternityNum";
 import { ProfileService } from "./profileService";
 import { Signals } from "shared/signals";
 import { Events } from "server/network";
+import { GamepassService } from "./gamepassService";
+import { gameConstants } from "shared/constants";
 
 @Service({})
 export class MoneyService implements OnStart {
-	constructor(private readonly profileService: ProfileService) {}
+	constructor(private readonly profileService: ProfileService, private readonly gamepassService: GamepassService) {}
 
 	onStart() {
 		Signals.addMoney.Connect((player, amount) => {
@@ -20,10 +22,16 @@ export class MoneyService implements OnStart {
 		return EternityNum.meeq(EternityNum.fromString(profile.Data.money), EternityNum.fromNumber(amount));
 	}
 
-	giveMoney(player: Player, amount: number) {
+	giveMoney(player: Player, amount: number, can2x = false) {
 		// Add money to player
 		const profile = this.profileService.getProfile(player);
 		if (!profile) return;
+
+		// Double money if can2x is true and they own the 2x cash gamepass
+		if (can2x && this.gamepassService.ownsGamepass(player, gameConstants.GAMEPASS_IDS.x2Cash) === true) {
+			amount *= 2;
+		}
+
 		profile.Data.money = EternityNum.toString(
 			EternityNum.add(EternityNum.fromString(profile.Data.money), EternityNum.fromNumber(amount)),
 		);

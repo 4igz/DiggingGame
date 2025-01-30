@@ -1,12 +1,8 @@
 import { Controller, OnStart } from "@flamework/core";
 
-/// <reference types="@rbxts/types" />
 import { UserInputService, ProximityPromptService, TweenService, TextService, Players } from "@rbxts/services";
 
-// LocalPlayer
 const LocalPlayer = Players.LocalPlayer!;
-
-// PlayerGui
 const PlayerGui = LocalPlayer.WaitForChild("PlayerGui") as PlayerGui;
 
 // Mapping from KeyCode to images

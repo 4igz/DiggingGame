@@ -1,5 +1,4 @@
 import { MarketplaceService } from "@rbxts/services";
-import { ProductType } from "shared/config/shopConfig";
 
 // Define a cache to store developer product info
 const cachedProducts = new Map<number, DeveloperProductInfo | GamePassProductInfo>();

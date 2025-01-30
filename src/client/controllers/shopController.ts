@@ -1,5 +1,5 @@
 import { Controller, OnStart } from "@flamework/core";
-import { CollectionService, ProximityPromptService, TweenService } from "@rbxts/services";
+import { CollectionService, TweenService } from "@rbxts/services";
 import { UiController } from "./uiController";
 import { gameConstants } from "shared/constants";
 import ReactRoblox from "@rbxts/react-roblox";

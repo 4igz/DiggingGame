@@ -1,7 +1,7 @@
 import { Service, OnStart } from "@flamework/core";
 import { ProfileService } from "./profileService";
 import EternityNum from "shared/util/eternityNum";
-import { Events, Functions } from "server/network";
+import { Functions } from "server/network";
 
 @Service({})
 export class LeaderstatService implements OnStart {

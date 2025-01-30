@@ -82,6 +82,36 @@ export const developerProducts: DeveloperProduct[] = [
 			Signals.resetSkills.Fire(player);
 		},
 	},
+	{
+		id: IDS.MoreDigging,
+		name: "Multi Digging",
+		grantReward: (player) => {
+			Signals.giveMultiDig.Fire(player);
+		},
+	},
+	{
+		id: IDS.x2Luck,
+		name: "x2 Luck",
+		grantReward: (player) => {
+			Signals.buyServerLuckMultiplier.Fire(player);
+		},
+	},
+	// {
+	// 	id: IDS.StarterPack,
+	// 	name: "Starter Pack",
+	// 	grantReward: (player) => {
+	// 		Signals.addMoney.Fire(player, 1_000);
+	// 		Signals.giveMultiDig.Fire(player);
+	// 	},
+	// },
+	// {
+	// 	id: IDS.MediumPack,
+	// 	name: "Medium Pack",
+	// 	grantReward: (player) => {
+	// 		Signals.addMoney.Fire(player, 2_500);
+	// 		Signals.giveMultiDig.Fire(player);
+	// 	},
+	// },
 ];
 
 export function getDevProduct(productId: number): DeveloperProduct | undefined {

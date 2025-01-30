@@ -3,14 +3,16 @@ import { UiController } from "client/controllers/uiController";
 import { gameConstants } from "shared/constants";
 import { Item, type ItemType, Rarity, SkillName } from "shared/networkTypes";
 import { Events, Functions } from "client/network";
-import { MarketplaceService, Players, ReplicatedStorage } from "@rbxts/services";
+import { ReplicatedStorage, SoundService } from "@rbxts/services";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
-import { ProductType, shopConfig, ShopItem } from "shared/config/shopConfig";
 import { spaceWords } from "shared/util/nameUtil";
 import { shovelConfig } from "shared/config/shovelConfig";
 import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
-import { targetConfig } from "shared/config/targetConfig";
+import { fullTargetConfig, targetConfig, trashConfig } from "shared/config/targetConfig";
+import { mapConfig } from "shared/config/mapConfig";
+import Object from "@rbxts/object-utils";
+import { usePx } from "client/hooks/usePx";
 
 export function capitalizeWords(str: string): string {
 	return str
@@ -34,6 +36,7 @@ interface AnimatedButtonProps {
 	children?: React.ReactNode;
 	zindex?: number;
 	ref?: React.Ref<Frame>;
+	active?: boolean;
 }
 
 export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
@@ -48,6 +51,7 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
 	children,
 	zindex,
 	ref,
+	active = true,
 }) => {
 	const [isHovered, setIsHovered] = useState(false);
 	const [isPressed, setPressed] = useState(false);
@@ -78,6 +82,7 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
 				AnchorPoint={new Vector2(0.5, 0.5)}
 				Size={UDim2.fromScale(1, 1)}
 				ZIndex={zindex ?? 10}
+				Active={active}
 				Event={{
 					MouseEnter: () => {
 						onHover?.();
@@ -114,7 +119,7 @@ interface GenericItemProps {
 	itemImage: string;
 	itemName: string;
 	rarity: Rarity;
-	itemType: ItemType;
+	itemType: Exclude<ItemType, "Target">;
 	stats: ItemStat[]; // List of stats to display
 	isEquipped: boolean;
 }
@@ -161,6 +166,9 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 			})}
 			AnchorPoint={new Vector2(0.5, 0.5)}
 		>
+			{/* For some reason this constraint breaks the automatic scaling? */}
+			{/* <uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.709} /> */}
+
 			<imagelabel
 				Image={"rbxassetid://131799908550131"}
 				Size={UDim2.fromScale(0.25, 0.2)}
@@ -194,9 +202,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 				}}
 			>
 				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.748} />
-
 				<imagelabel Image={itemImage} Size={UDim2.fromScale(1, 1)} BackgroundTransparency={1} />
-
 				<frame
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
@@ -276,7 +282,6 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 						);
 					})}
 				</frame>
-
 				<frame
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
@@ -397,13 +402,20 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 									</frame> */}
 				</frame>
 			</imagebutton>
-
-			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.709} />
 		</frame>
 	);
 };
 
-const TreasureItemComponent: React.FC<GenericItemProps> = ({
+interface TreasureItemComponentProps {
+	itemImage: string;
+	itemName: string;
+	rarity: Rarity;
+	itemType: Extract<ItemType, "Target">;
+	stats: ItemStat[]; // List of stats to display
+	isEquipped: boolean;
+}
+
+const TreasureItemComponent: React.FC<TreasureItemComponentProps> = ({
 	itemImage,
 	rarity,
 	itemName,
@@ -412,14 +424,13 @@ const TreasureItemComponent: React.FC<GenericItemProps> = ({
 	// itemType,
 }) => {
 	return (
-		<frame
-			BackgroundColor3={Color3.fromRGB(17, 25, 49)}
-			BackgroundTransparency={1}
-			BorderColor3={Color3.fromRGB(0, 0, 0)}
-			BorderSizePixel={0}
-			key={"Item"}
-			Position={UDim2.fromScale(-1.69e-7, -0.0175)}
-			Size={UDim2.fromScale(0.179, 0.39)}
+		<AnimatedButton
+			position={UDim2.fromScale(-1.69e-7, -0.0175)}
+			size={UDim2.fromScale(0.179, 0.39)}
+			scales={new NumberRange(0.975, 1.025)}
+			onClick={() => {
+				Events.equipTreasure(itemName);
+			}}
 		>
 			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 
@@ -540,7 +551,7 @@ const TreasureItemComponent: React.FC<GenericItemProps> = ({
 					</textlabel>
 				</imagelabel>
 			</frame>
-		</frame>
+		</AnimatedButton>
 	);
 };
 
@@ -737,11 +748,17 @@ interface SkillFrameProps {
 const SkillFrame: React.FC<SkillFrameProps> = (props) => {
 	const [isHovered, setIsHovered] = React.useState(false);
 	const [size, sizeMotion] = useMotion(1);
-	const [, MAX_SCALE] = [0.95, 1.05];
+	const [, MAX_SCALE] = [, 1.025];
 	const [bgColor, bgColorMotion] = useMotion(Color3.fromRGB(255, 255, 255));
+	const DIM_AMT = 1.5;
+	const skillUpgrade = SoundService.WaitForChild("UI").WaitForChild("Skill upgrade") as Sound;
 
 	useEffect(() => {
 		sizeMotion.spring(isHovered ? MAX_SCALE : 1, springs.responsive);
+		bgColorMotion.spring(
+			isHovered ? Color3.fromRGB(255 / DIM_AMT, 255 / DIM_AMT, 255 / DIM_AMT) : Color3.fromRGB(255, 255, 255),
+			springs.responsive,
+		);
 	}, [isHovered]);
 
 	return (
@@ -754,7 +771,7 @@ const SkillFrame: React.FC<SkillFrameProps> = (props) => {
 			Position={UDim2.fromScale(0.00269, -4.18e-7)}
 			Size={UDim2.fromScale(0.995, 0.306)}
 		>
-			<imagelabel
+			<imagebutton
 				AnchorPoint={new Vector2(0.5, 0.5)}
 				BackgroundColor3={bgColor}
 				ImageColor3={bgColor}
@@ -770,7 +787,12 @@ const SkillFrame: React.FC<SkillFrameProps> = (props) => {
 				})}
 				SliceCenter={new Rect(36, 60, 994, 60)}
 				SliceScale={0.7}
+				Active={true}
 				Event={{
+					Activated: () => {
+						Events.upgradeSkill.fire(string.lower(props.title) as SkillName);
+						SoundService.PlayLocalSound(skillUpgrade);
+					},
 					MouseEnter: () => {
 						setIsHovered(true);
 					},
@@ -979,7 +1001,7 @@ const SkillFrame: React.FC<SkillFrameProps> = (props) => {
 						</frame>
 					</frame>
 				</frame>
-			</imagelabel>
+			</imagebutton>
 		</frame>
 	);
 };
@@ -1132,6 +1154,7 @@ interface ExitButtonProps {
 	uiController: UiController;
 	uiName: string;
 	menuRefToClose?: React.RefObject<Frame>;
+	onClick?: () => void;
 }
 
 export const ExitButton = (props: ExitButtonProps) => {
@@ -1210,7 +1233,7 @@ export const ExitButton = (props: ExitButtonProps) => {
 						const endSz = UDim2.fromScale(0, 0);
 						let cleanedStep = false;
 						let cleanupStep = closingMotion.onStep((v) => {
-							if (!props.menuRefToClose || !startSz) {
+							if (!props.menuRefToClose || !props.menuRefToClose.current || !startSz) {
 								cleanupStep();
 								cleanedStep = true;
 								return;
@@ -1236,6 +1259,7 @@ export const ExitButton = (props: ExitButtonProps) => {
 						} else {
 							closingMotion.immediate(1);
 						}
+						props.onClick?.();
 						setPressed(true);
 						task.delay(0.1, () => setPressed(false));
 					},
@@ -1247,6 +1271,47 @@ export const ExitButton = (props: ExitButtonProps) => {
 				}}
 			/>
 		</frame>
+	);
+};
+
+interface IndexPageItemProps {
+	itemName: string;
+	unlocked: boolean;
+}
+
+const IndexPageItem = (props: IndexPageItemProps) => {
+	const itemCfg = fullTargetConfig[props.itemName];
+	if (!itemCfg) {
+		warn("Item config not found for item name: ", props.itemName);
+		return undefined;
+	}
+
+	return (
+		<AnimatedButton
+			size={UDim2.fromScale(0.25, 0.4)}
+			layoutOrder={itemCfg.rarity}
+			scales={new NumberRange(0.999, 1)}
+		>
+			{/* Background Color Image, used for rarity. */}
+			<imagelabel
+				Size={UDim2.fromScale(0.95, 0.95)}
+				AnchorPoint={new Vector2(0.5, 0.5)}
+				Position={UDim2.fromScale(0.5, 0.5)}
+				ScaleType={Enum.ScaleType.Fit}
+				BackgroundTransparency={1}
+				// Image={
+				Image={
+					gameConstants.INDEX_RARITY_BACKGROUND_IMAGES[itemCfg.rarityType] ??
+					gameConstants.INDEX_RARITY_BACKGROUND_IMAGES["Uncommon"] // FIXME: Once we have missing images this can be removed.
+				}
+			>
+				<imagelabel
+					Size={UDim2.fromScale(1, 1)}
+					BackgroundTransparency={1}
+					Image={props.unlocked ? fullTargetConfig[props.itemName].itemImage : ""} //FIXME: Replace with locked image
+				/>
+			</imagelabel>
+		</AnimatedButton>
 	);
 };
 
@@ -1404,7 +1469,7 @@ type InventoryItemProps = {
 	rarity: Rarity;
 	stats: ItemStat[];
 	isEquipped: boolean;
-	itemType: ItemType;
+	itemType: Extract<ItemType, "Target"> | Exclude<ItemType, "Target">;
 };
 
 export const MENUS = {
@@ -1432,6 +1497,7 @@ export const MainUi = (props: MainUiProps) => {
 	const [popInSz, popInMotion] = useMotion(UDim2.fromScale(0, 0));
 	const [loading, setLoading] = React.useState(false);
 	const [loadingSpring, setLoadingSpring] = useMotion(1);
+	const px = usePx();
 
 	const menuRef = createRef<Frame>();
 
@@ -1443,13 +1509,14 @@ export const MainUi = (props: MainUiProps) => {
 		{
 			equippedShovel: keyof typeof shovelConfig;
 			equippedDetector: keyof typeof metalDetectorConfig;
-			equippedTreasure: keyof typeof targetConfig;
+			equippedTreasure: keyof typeof fullTargetConfig;
 		},
 		Array<Item>,
 	]) {
 		const newInventory: InventoryItemProps[] = [];
 
 		inv.forEach((item) => {
+			if (item.type !== selectedInventoryType) return;
 			const stats: InventoryItemProps["stats"] = [];
 
 			if (item.type === "MetalDetectors") {
@@ -1488,15 +1555,22 @@ export const MainUi = (props: MainUiProps) => {
 				stats.push({ key: "weight", value: item.weight, icon: "⚖️" });
 			}
 
+			const cfg =
+				item.type === "MetalDetectors"
+					? metalDetectorConfig[item.name]
+					: item.type === "Shovels"
+					? shovelConfig[item.name]
+					: fullTargetConfig[item.name];
+
 			// Push to new inventory
 			newInventory.push({
 				itemType: item.type,
 				isEquipped: [equipped.equippedDetector, equipped.equippedShovel, equipped.equippedTreasure].includes(
 					item.name,
 				),
-				itemImage: item.itemImage,
+				itemImage: cfg.itemImage,
 				itemName: item.name,
-				rarity: item.rarityType,
+				rarity: cfg.rarityType,
 				stats,
 			});
 		});
@@ -1520,7 +1594,7 @@ export const MainUi = (props: MainUiProps) => {
 
 	React.useEffect(() => {
 		if (enabledMenu === MENUS.Inventory) {
-			// setInventory([]);
+			setInventory([]);
 			setLoading(true);
 			Functions.getInventory(selectedInventoryType).then((items) => {
 				updateInventory(items);
@@ -1580,7 +1654,7 @@ export const MainUi = (props: MainUiProps) => {
 			BorderColor3={Color3.fromRGB(0, 0, 0)}
 			BorderSizePixel={0}
 			key={"Container"}
-			Position={UDim2.fromScale(0.5, 0.45)}
+			Position={UDim2.fromScale(0.45, 0.45)}
 			Size={popInSz}
 			Visible={visible}
 			ref={menuRef}
@@ -1724,7 +1798,6 @@ export const MainUi = (props: MainUiProps) => {
 						</imagelabel>
 
 						<scrollingframe
-							AnchorPoint={new Vector2(0.5, 0.5)}
 							AutomaticCanvasSize={
 								selectedInventoryType === "Target" ? Enum.AutomaticSize.Y : Enum.AutomaticSize.X
 							}
@@ -1732,11 +1805,10 @@ export const MainUi = (props: MainUiProps) => {
 							BackgroundTransparency={1}
 							BorderColor3={Color3.fromRGB(0, 0, 0)}
 							BorderSizePixel={0}
-							CanvasSize={new UDim2()}
 							key={"Treasures Container"}
-							Position={UDim2.fromScale(0.5, 0.5)}
 							ScrollBarImageTransparency={1}
 							ScrollBarThickness={0}
+							CanvasSize={UDim2.fromScale(0, 0)}
 							ScrollingDirection={
 								selectedInventoryType === "Target"
 									? Enum.ScrollingDirection.Y
@@ -1765,16 +1837,32 @@ export const MainUi = (props: MainUiProps) => {
 								TextColor3={Color3.fromRGB(255, 255, 255)}
 								BackgroundTransparency={1}
 								TextTransparency={loadingSpring}
-								Text={`Loading ${selectedInventoryType}s...`}
+								Text={`Loading ${spaceWords(selectedInventoryType)}s...`}
 								Visible={loading}
 							/>
 
 							{inventory.map((itemProps) => {
-								if (loading) return;
-								if (selectedInventoryType === "Target") {
-									return <TreasureItemComponent {...itemProps}></TreasureItemComponent>;
-								} else {
-									return <GenericItemComponent {...itemProps}></GenericItemComponent>;
+								if (itemProps.itemType === "Target") {
+									// Pass items with type "Target" to TreasureItemComponent
+									return (
+										<TreasureItemComponent
+											key={itemProps.itemName}
+											{...(itemProps as TreasureItemComponentProps)}
+										/>
+									);
+								} else if (
+									itemProps.itemType === "MetalDetectors" ||
+									itemProps.itemType === "Shovels"
+								) {
+									// Pass only compatible types to GenericItemComponent
+									return (
+										<GenericItemComponent
+											key={itemProps.itemName}
+											{...(itemProps as Omit<GenericItemProps, "itemType"> & {
+												itemType: Exclude<ItemType, "Target">;
+											})}
+										/>
+									);
 								}
 							})}
 						</scrollingframe>
@@ -2092,7 +2180,7 @@ export const MainUi = (props: MainUiProps) => {
 					key={"Index Page"}
 					Position={UDim2.fromScale(0.0335, 0.0724)}
 					Size={UDim2.fromScale(0.938, 0.855)}
-					Visible={false}
+					Visible={enabledMenu === MENUS.Index}
 				>
 					<frame
 						BackgroundColor3={Color3.fromRGB(20, 33, 79)}
@@ -2138,7 +2226,6 @@ export const MainUi = (props: MainUiProps) => {
 								SortOrder={Enum.SortOrder.LayoutOrder}
 								Wraps={true}
 							/>
-
 							<uipadding
 								key={"UIPadding"}
 								PaddingBottom={new UDim(0.01, 0)}
@@ -2146,222 +2233,37 @@ export const MainUi = (props: MainUiProps) => {
 								PaddingRight={new UDim(0.01, 0)}
 								PaddingTop={new UDim(0.01, 0)}
 							/>
-
-							<frame
-								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-								BackgroundTransparency={1}
-								BorderColor3={Color3.fromRGB(0, 0, 0)}
-								BorderSizePixel={0}
-								key={"Index Item Frame"}
-								Position={UDim2.fromScale(6.68e-8, -3.13e-8)}
-								Size={UDim2.fromScale(0.246, 0.362)}
-							>
-								<imagebutton
-									Active={false}
-									AnchorPoint={new Vector2(0.5, 0.5)}
-									BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-									BackgroundTransparency={1}
-									BorderColor3={Color3.fromRGB(0, 0, 0)}
-									BorderSizePixel={0}
-									Image={"rbxassetid://126358206935930"}
-									key={"Index Item"}
-									Position={UDim2.fromScale(0.5, 0.5)}
-									ScaleType={Enum.ScaleType.Fit}
-									Selectable={false}
-									Size={UDim2.fromScale(0.95, 0.95)}
-								/>
-
-								<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-							</frame>
-
-							<frame
-								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-								BackgroundTransparency={1}
-								BorderColor3={Color3.fromRGB(0, 0, 0)}
-								BorderSizePixel={0}
-								key={"Index Item Frame"}
-								Position={UDim2.fromScale(6.68e-8, -3.13e-8)}
-								Size={UDim2.fromScale(0.246, 0.362)}
-							>
-								<imagebutton
-									Active={false}
-									AnchorPoint={new Vector2(0.5, 0.5)}
-									BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-									BackgroundTransparency={1}
-									BorderColor3={Color3.fromRGB(0, 0, 0)}
-									BorderSizePixel={0}
-									Image={"rbxassetid://84668810565175"}
-									key={"Index Item"}
-									Position={UDim2.fromScale(0.5, 0.5)}
-									ScaleType={Enum.ScaleType.Fit}
-									Selectable={false}
-									Size={UDim2.fromScale(0.95, 0.95)}
-								/>
-
-								<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-							</frame>
-
-							<frame
-								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-								BackgroundTransparency={1}
-								BorderColor3={Color3.fromRGB(0, 0, 0)}
-								BorderSizePixel={0}
-								key={"Index Item Frame"}
-								Position={UDim2.fromScale(6.68e-8, -3.13e-8)}
-								Size={UDim2.fromScale(0.246, 0.362)}
-							>
-								<imagebutton
-									Active={false}
-									AnchorPoint={new Vector2(0.5, 0.5)}
-									BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-									BackgroundTransparency={1}
-									BorderColor3={Color3.fromRGB(0, 0, 0)}
-									BorderSizePixel={0}
-									Image={"rbxassetid://106616263841751"}
-									key={"Index Item"}
-									Position={UDim2.fromScale(0.5, 0.5)}
-									ScaleType={Enum.ScaleType.Fit}
-									Selectable={false}
-									Size={UDim2.fromScale(0.95, 0.95)}
-								/>
-
-								<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-							</frame>
-
-							<frame
-								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-								BackgroundTransparency={1}
-								BorderColor3={Color3.fromRGB(0, 0, 0)}
-								BorderSizePixel={0}
-								key={"Index Item Frame"}
-								Position={UDim2.fromScale(6.68e-8, -3.13e-8)}
-								Size={UDim2.fromScale(0.246, 0.362)}
-							>
-								<imagebutton
-									Active={false}
-									AnchorPoint={new Vector2(0.5, 0.5)}
-									BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-									BackgroundTransparency={1}
-									BorderColor3={Color3.fromRGB(0, 0, 0)}
-									BorderSizePixel={0}
-									Image={"rbxassetid://134558639597567"}
-									key={"Index Item"}
-									Position={UDim2.fromScale(0.5, 0.5)}
-									ScaleType={Enum.ScaleType.Fit}
-									Selectable={false}
-									Size={UDim2.fromScale(0.95, 0.95)}
-								/>
-
-								<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-							</frame>
-
-							<frame
-								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-								BackgroundTransparency={1}
-								BorderColor3={Color3.fromRGB(0, 0, 0)}
-								BorderSizePixel={0}
-								key={"Index Item Frame"}
-								Position={UDim2.fromScale(6.68e-8, -3.13e-8)}
-								Size={UDim2.fromScale(0.246, 0.362)}
-							>
-								<imagebutton
-									Active={false}
-									AnchorPoint={new Vector2(0.5, 0.5)}
-									BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-									BackgroundTransparency={1}
-									BorderColor3={Color3.fromRGB(0, 0, 0)}
-									BorderSizePixel={0}
-									Image={"rbxassetid://115729927097630"}
-									key={"Index Item"}
-									Position={UDim2.fromScale(0.5, 0.5)}
-									ScaleType={Enum.ScaleType.Fit}
-									Selectable={false}
-									Size={UDim2.fromScale(0.95, 0.95)}
-								/>
-
-								<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-							</frame>
-
-							<frame
-								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-								BackgroundTransparency={1}
-								BorderColor3={Color3.fromRGB(0, 0, 0)}
-								BorderSizePixel={0}
-								key={"Index Item Frame"}
-								Position={UDim2.fromScale(6.68e-8, -3.13e-8)}
-								Size={UDim2.fromScale(0.246, 0.362)}
-							>
-								<imagebutton
-									Active={false}
-									AnchorPoint={new Vector2(0.5, 0.5)}
-									BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-									BackgroundTransparency={1}
-									BorderColor3={Color3.fromRGB(0, 0, 0)}
-									BorderSizePixel={0}
-									Image={"rbxassetid://113969441104588"}
-									key={"Index Item"}
-									Position={UDim2.fromScale(0.5, 0.5)}
-									ScaleType={Enum.ScaleType.Fit}
-									Selectable={false}
-									Size={UDim2.fromScale(0.95, 0.95)}
-								/>
-
-								<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-							</frame>
-
-							<frame
-								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-								BackgroundTransparency={1}
-								BorderColor3={Color3.fromRGB(0, 0, 0)}
-								BorderSizePixel={0}
-								key={"Index Item Frame"}
-								Position={UDim2.fromScale(6.68e-8, -3.13e-8)}
-								Size={UDim2.fromScale(0.246, 0.362)}
-							>
-								<imagebutton
-									Active={false}
-									AnchorPoint={new Vector2(0.5, 0.5)}
-									BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-									BackgroundTransparency={1}
-									BorderColor3={Color3.fromRGB(0, 0, 0)}
-									BorderSizePixel={0}
-									Image={"rbxassetid://97508814457340"}
-									key={"Index Item"}
-									Position={UDim2.fromScale(0.5, 0.5)}
-									ScaleType={Enum.ScaleType.Fit}
-									Selectable={false}
-									Size={UDim2.fromScale(0.95, 0.95)}
-								/>
-
-								<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-							</frame>
-
-							<frame
-								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-								BackgroundTransparency={1}
-								BorderColor3={Color3.fromRGB(0, 0, 0)}
-								BorderSizePixel={0}
-								key={"Index Item Frame"}
-								Position={UDim2.fromScale(6.68e-8, -3.13e-8)}
-								Size={UDim2.fromScale(0.246, 0.362)}
-							>
-								<imagebutton
-									Active={false}
-									AnchorPoint={new Vector2(0.5, 0.5)}
-									BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-									BackgroundTransparency={1}
-									BorderColor3={Color3.fromRGB(0, 0, 0)}
-									BorderSizePixel={0}
-									Image={"rbxassetid://134558639597567"}
-									key={"Index Item"}
-									Position={UDim2.fromScale(0.5, 0.5)}
-									ScaleType={Enum.ScaleType.Fit}
-									Selectable={false}
-									Size={UDim2.fromScale(0.95, 0.95)}
-								/>
-
-								<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-							</frame>
+							{Object.entries(mapConfig).map(([isleName, isleCfg]) => {
+								return (
+									<frame
+										BackgroundTransparency={1}
+										Size={UDim2.fromScale(1, 0.75)}
+										key={isleName}
+										// AutomaticSize={Enum.AutomaticSize.Y}
+									>
+										<uilistlayout
+											Wraps={true}
+											FillDirection={Enum.FillDirection.Horizontal}
+											SortOrder={Enum.SortOrder.LayoutOrder}
+										/>
+										<textlabel
+											Text={` ---${isleName}`}
+											BackgroundTransparency={1}
+											Font={Enum.Font.BuilderSansBold}
+											TextColor3={gameConstants.MAP_THEME_COLORS[isleName]}
+											TextXAlignment={Enum.TextXAlignment.Left}
+											Size={new UDim2(1, 0, 0, px(30))}
+											LayoutOrder={-1}
+											TextYAlignment={Enum.TextYAlignment.Bottom}
+											TextScaled={true}
+										/>
+										{isleCfg.targetList.map((itemName) => {
+											if (trashConfig[itemName]) return undefined; // Ignore trash items
+											return <IndexPageItem key={itemName} itemName={itemName} unlocked={true} />;
+										})}
+									</frame>
+								);
+							})}
 						</scrollingframe>
 					</frame>
 

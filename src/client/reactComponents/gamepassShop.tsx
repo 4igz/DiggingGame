@@ -4,12 +4,13 @@ import { UiController } from "client/controllers/uiController";
 import { gameConstants } from "shared/constants";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
-import { ContentProvider, MarketplaceService, Players, ReplicatedStorage } from "@rbxts/services";
+import { MarketplaceService, Players, ReplicatedStorage } from "@rbxts/services";
 import { getDevProduct } from "shared/config/devproducts";
 import { separateWithCommas } from "shared/util/nameUtil";
 import { getDeveloperProductInfo } from "shared/util/monetizationUtil";
 import { ProductType } from "shared/config/shopConfig";
 import SpriteClip from "@rbxts/spriteclip";
+import { Events, Functions } from "client/network";
 
 interface BuyButtonProps {
 	position: UDim2;
@@ -37,8 +38,8 @@ const BuyButton = (props: BuyButtonProps) => {
 	return (
 		<frame
 			Position={props.position ?? UDim2.fromScale(0.0883, 0.739)}
+			LayoutOrder={props.layoutOrder ?? 5000}
 			Size={props.size ?? UDim2.fromScale(0.854, 0.245)}
-			LayoutOrder={props.layoutOrder ?? math.huge}
 			BackgroundTransparency={1}
 			AnchorPoint={props.anchorPoint ?? new Vector2(0.5, 0.5)}
 		>
@@ -345,15 +346,24 @@ animation.FrameRate = 0.5;
 
 const DigProduct = (props: MoreDiggingProduct) => {
 	const animationRef = createRef<ImageLabel>();
-	// const [runningAnimation, setRunningAnimation] = React.useState(false);
+	const [digLevel, setDigLevel] = React.useState(0);
 
 	React.useEffect(() => {
 		if (props.runAnimation) {
 			animation.Adornee = animationRef.current;
 			animation.Play();
 
+			Functions.getMultiDigLevel().then((level) => {
+				setDigLevel(level);
+			});
+
+			const connection = Events.updateMultiDigLevel.connect((level) => {
+				setDigLevel(level);
+			});
+
 			return () => {
 				animation.Pause();
+				connection.Disconnect();
 			};
 		}
 	}, [props.runAnimation]);
@@ -365,6 +375,9 @@ const DigProduct = (props: MoreDiggingProduct) => {
 			layoutOrder={3}
 			productType={ProductType.DevProduct}
 			productId={2683148761}
+			predicate={() => {
+				return digLevel < gameConstants.MAX_MULTIDIG_LEVEL;
+			}}
 		>
 			<imagelabel
 				AnchorPoint={new Vector2(0.5, 0.5)}
@@ -977,6 +990,7 @@ interface AnimatedProductButtonProps {
 	layoutOrder?: number;
 	children?: React.ReactNode;
 	zindex?: number;
+	predicate?: () => boolean;
 }
 
 export const AnimatedProductButton = (props: AnimatedProductButtonProps) => {
@@ -990,6 +1004,8 @@ export const AnimatedProductButton = (props: AnimatedProductButtonProps) => {
 			scales={props.scales}
 			onClick={() => {
 				// Prompt product purchase
+				const canBuy = props.predicate ? props.predicate() : true;
+				if (!canBuy) return;
 				switch (props.productType) {
 					case ProductType.GamePass:
 						MarketplaceService.PromptGamePassPurchase(Players.LocalPlayer, props.productId);
@@ -1095,6 +1111,8 @@ interface GamepassShopProps {
 export const GamepassShopComponent = (props: GamepassShopProps) => {
 	const [visible, setVisible] = React.useState(false);
 	const [popInSz, popInMotion] = useMotion(UDim2.fromScale(0, 0));
+	const [serverLuckTimer, setServerLuckTimer] = React.useState(0);
+	const [serverLuck, setServerLuck] = React.useState(1);
 
 	const menuRef = React.createRef<Frame>();
 	const scrollingFrameRef = React.createRef<ScrollingFrame>();
@@ -1108,6 +1126,15 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 	React.useEffect(() => {
 		if (visible) {
 			popInMotion.spring(UDim2.fromScale(0.849, 0.688), springs.responsive);
+
+			const connection = Events.updateServerLuckMultiplier.connect((multiplier: number, time: number) => {
+				setServerLuck(multiplier);
+				setServerLuckTimer(time);
+			});
+
+			return () => {
+				connection.Disconnect();
+			};
 		} else {
 			popInMotion.immediate(UDim2.fromScale(0, 0));
 		}
@@ -1292,7 +1319,12 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								key={"Timer"}
 								Position={UDim2.fromScale(0.752, 0.5)}
 								Size={UDim2.fromScale(0.499, 1)}
-								Text={"24:00:00"}
+								Text={string.format(
+									"%02d:%02d:%02d",
+									math.floor(serverLuckTimer / 3600),
+									math.floor((serverLuckTimer % 3600) / 60),
+									serverLuckTimer % 60,
+								)}
 								TextColor3={Color3.fromRGB(255, 255, 255)}
 								TextScaled={true}
 								TextWrapped={true}
@@ -1403,6 +1435,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								position={UDim2.fromScale(0.76, 0.417)}
 								size={UDim2.fromScale(0.258, 0.58)}
 								productType={Enum.InfoType.Product}
+								anchorPoint={new Vector2(0, 0)}
 							/>
 						</frame>
 
@@ -1642,7 +1675,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 						/>
 
 						<GamepassButton gamepassId={gameConstants.GAMEPASS_IDS.x2Cash} gamepassName={"x2 Cash!"} />
-						<GamepassButton gamepassId={gameConstants.GAMEPASS_IDS.x2Speed} gamepassName="x2 Speed!" />
+						{/* <GamepassButton gamepassId={gameConstants.GAMEPASS_IDS.x2Speed} gamepassName="x2 Speed!" /> */}
 						<GamepassButton
 							gamepassId={gameConstants.GAMEPASS_IDS.BiggerBackpack}
 							gamepassName="Bigger Backpack!"

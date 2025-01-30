@@ -1,46 +1,84 @@
-import React, { createRef, useState } from "@rbxts/react";
+import React, { useState } from "@rbxts/react";
 import { useMotion } from "client/hooks/useMotion";
-import { Events } from "client/network";
+import { Events, Functions } from "client/network";
 import { springs } from "client/utils/springs";
-import EternityNum from "shared/util/eternityNum";
+import EternityNum, { IsInf, IsNaN } from "shared/util/eternityNum";
 import { separateWithCommas } from "shared/util/nameUtil";
 import { AnimatedButton } from "./mainUi";
 import { UiController } from "client/controllers/uiController";
-import { UserInputService, Workspace } from "@rbxts/services";
+import { UserInputService } from "@rbxts/services";
 import { gameConstants } from "shared/constants";
-import { createMotion } from "@rbxts/ripple";
 
 interface MoneyVectorProps {
 	offset: UDim2;
 	size: UDim2;
 	uiAnchor: Vector2;
 	key: string;
-	setAnimationRunning: (clicked: boolean) => void;
+	onComplete: () => void;
 }
 
 const MoneyVector = (props: MoneyVectorProps) => {
-	const [position, positionMotion] = useMotion(UDim2.fromOffset(props.uiAnchor.X, props.uiAnchor.Y));
+	const [position, positionMotion] = useMotion(props.uiAnchor);
+	const [transparency, transparencyMotion] = useMotion(0);
+	// 	const subPos = new Vector2(props.offset.X.Offset, props.offset.Y.Offset);
+	// 	const endPos = position.getValue().sub(subPos);
+
+	// 	const cleanup = positionMotion.onStep((value) => {
+	// 		if (value.sub(endPos).Magnitude < 10) {
+	// 			transparencyMotion.onComplete(() => {
+	// 				props.onComplete();
+	// 			});
+	// 			// Animate to the middle of the screen
+	// 			const fallPos = position.getValue().sub(new Vector2(-props.offset.X.Offset, -100));
+	// 			positionMotion.spring(fallPos, springs.default);
+	// 			const posStep = positionMotion.onStep((value) => {
+	// 				if (value.sub(fallPos).Magnitude < 50) {
+	// 					transparencyMotion.spring(1, springs.responsive);
+	// 					posStep();
+	// 				}
+	// 			});
+	// 			cleanup();
+	// 		}
+	// 	});
+
+	// 	// Animate to the offset
+	// 	positionMotion.spring(position.getValue().sub(subPos), springs.responsive);
+	// }, []);
 
 	React.useEffect(() => {
-		// Animate to the offset
-		positionMotion.spring(position.getValue().add(props.offset), springs.bubbly);
+		// 1) Define start, up, and final/fall positions explicitly
+		const startPos = position.getValue();
 
-		task.delay(0.5, () => {
-			// Animate to the middle of the screen
-			const screenCenter = new Vector2(
-				Workspace.CurrentCamera!.ViewportSize.X / 2,
-				Workspace.CurrentCamera!.ViewportSize.Y / 2,
-			);
-			const cleanup = positionMotion.onStep((value: UDim2, dt) => {
-				const toVec = new Vector2(value.X.Offset, value.Y.Offset);
-				const distance = toVec.sub(screenCenter).Magnitude;
-				if (distance < 10) {
-					positionMotion.destroy();
-					props.setAnimationRunning(false);
-					cleanup();
-				}
-			});
-			positionMotion.spring(UDim2.fromOffset(screenCenter.X, screenCenter.Y), springs.responsive);
+		const x = math.random(-100, 100);
+		const upPos = startPos.sub(new Vector2(x, 50));
+		const fallPos = startPos.add(new Vector2(-x * 2, 50));
+
+		positionMotion.spring(upPos, springs.default);
+
+		// Watch until we reach upPos...
+		const unsub1 = positionMotion.onStep((current) => {
+			if (current.sub(upPos).Magnitude < 25) {
+				unsub1();
+
+				// 3) Animate down to the fallPos
+				positionMotion.spring(fallPos, springs.default);
+
+				// Watch until we reach fallPos...
+				const unsub2 = positionMotion.onStep((current2) => {
+					if (current2.sub(fallPos).Magnitude < 25) {
+						// Once close, stop watching
+						unsub2();
+
+						// 4) Fade out
+						transparencyMotion.spring(1, springs.responsive);
+
+						// Finally, when fade completes, call onComplete
+						transparencyMotion.onComplete(() => {
+							props.onComplete();
+						});
+					}
+				});
+			}
 		});
 	}, []);
 
@@ -48,8 +86,9 @@ const MoneyVector = (props: MoneyVectorProps) => {
 		<imagelabel
 			AnchorPoint={new Vector2(0.5, 0.5)}
 			Image={"rbxassetid://96446480715038"}
+			ImageTransparency={transparency}
 			Size={props.size}
-			Position={position}
+			Position={position.map((value) => UDim2.fromOffset(value.X, value.Y))}
 			key={props.key}
 			BackgroundTransparency={1}
 		/>
@@ -68,39 +107,40 @@ export const RightSideMenu = (props: MenuProps) => {
 	const [animationRunning, setAnimationRunning] = useState(false);
 	const [wasClicked, setWasClicked] = useState(false);
 	const [moneyValue, setMoneyValue] = useState("0");
-	const moneyMotion = createMotion(0);
+	const [, moneyMotion] = useMotion(0);
+
+	const updateMoneyValue = (value: string) => {
+		const etNum = EternityNum.fromString(value);
+		const num = EternityNum.toNumber(etNum);
+		if (IsNaN(etNum) || IsInf(etNum) || num >= math.huge || num !== num) {
+			setMoneyValue(`$${EternityNum.short(etNum)}`);
+		} else {
+			const cleanup = moneyMotion.onStep((value: number, dt) => {
+				setMoneyValue(`$${separateWithCommas(math.floor(value))}`);
+			});
+			const cleanupComplete = moneyMotion.onComplete(() => {
+				cleanup();
+				cleanupComplete();
+			});
+			moneyMotion.spring(EternityNum.toNumber(etNum), springs.default);
+		}
+	};
 
 	React.useEffect(() => {
 		if (!animationRunning && wasClicked) {
 			setWasClicked(false);
 			setMoneyVectors([]);
-			props.uiController.toggleUi(gameConstants.GAMEPASS_SHOP_UI);
 		}
 	}, [animationRunning, wasClicked]);
 
 	React.useEffect(() => {
-		const cleanup = moneyMotion.onStep((value: number, dt) => {
-			setMoneyValue(`$${separateWithCommas(math.floor(value))}`);
+		Functions.getMoneyShortString.invoke().then((money) => {
+			updateMoneyValue(money);
 		});
-
-		if (props.amount) {
-			const num = EternityNum.toNumber(EternityNum.fromString(props.amount));
-			// NaN check
-			if (num !== num) {
-				setMoneyValue(EternityNum.short(EternityNum.fromString(props.amount)));
-			} else {
-				moneyMotion.spring(EternityNum.toNumber(EternityNum.fromString(props.amount)), springs.default);
-			}
-		}
-		const connection = Events.updateMoney.connect((newAmount) => {
-			moneyMotion.spring(EternityNum.toNumber(EternityNum.fromString(newAmount)), springs.default);
+		Events.updateMoney.connect((newAmount) => {
+			updateMoneyValue(newAmount);
 		});
-
-		return () => {
-			connection.Disconnect();
-			cleanup();
-		};
-	}, [props.amount]);
+	}, []);
 
 	return (
 		<frame Size={UDim2.fromScale(1, 1)} BackgroundTransparency={1}>
@@ -124,19 +164,35 @@ export const RightSideMenu = (props: MenuProps) => {
 						if (animationRunning || props.uiController.getOpenMenu() === gameConstants.GAMEPASS_SHOP_UI)
 							return;
 						const creationAmt = math.random(MONEY_VECTOR_CREATION_AMT.Min, MONEY_VECTOR_CREATION_AMT.Max);
+						const completionPromises = new Array<Promise<void>>();
 						const vectors: MoneyVectorProps[] = [];
 						for (let i = 0; i < creationAmt; i++) {
+							let resolvePromise!: () => void;
+							const promise = new Promise<void>((resolve) => {
+								resolvePromise = resolve;
+							});
+							const onComplete = () => {
+								resolvePromise();
+							};
+
+							completionPromises.push(promise);
+
 							vectors.push({
 								size: UDim2.fromScale(0.05, 0.1),
-								offset: UDim2.fromOffset(math.random(-100, 100), math.random(-100, 100)),
+								offset: UDim2.fromOffset(math.random(-100, 100), math.random(50, 100)),
 								uiAnchor: UserInputService.GetMouseLocation(),
 								key: tostring(tick()),
-								setAnimationRunning: setAnimationRunning,
+								onComplete,
 							});
 						}
 						setMoneyVectors(vectors);
 						setAnimationRunning(true);
 						setWasClicked(true);
+						// Once ALL have finished (all Promises resolve), fire setAnimationRunning(false)
+						Promise.all(completionPromises).then(() => {
+							setAnimationRunning(false);
+						});
+						props.uiController.toggleUi(gameConstants.GAMEPASS_SHOP_UI);
 					}}
 				>
 					<imagelabel

@@ -1,44 +1,36 @@
 import { Controller, OnStart, OnTick } from "@flamework/core";
-import {
-	PathfindingService,
-	Players,
-	ReplicatedStorage,
-	RunService,
-	SoundService,
-	TweenService,
-	Workspace,
-} from "@rbxts/services";
+import { Players, ReplicatedStorage, RunService, SoundService, Workspace } from "@rbxts/services";
 import { Events } from "client/network";
 import { BASE_DETECTOR_STRENGTH, metalDetectorConfig } from "shared/config/metalDetectorConfig";
-import { UiController } from "./uiController";
-import { gameConstants } from "shared/constants";
 import { Trove } from "@rbxts/trove";
+import { Signals } from "shared/signals";
+import { ShovelController } from "./shovelController";
 
 @Controller({})
 export class Detector implements OnStart, OnTick {
-	private pathCompute = PathfindingService.CreatePath({
-		AgentRadius: 2,
-		AgentHeight: 5,
-		AgentCanJump: true,
-	});
 	private VFX_FOLDER = ReplicatedStorage.WaitForChild("VFX");
 	private ANIMATION_FOLDER = ReplicatedStorage.WaitForChild("Animations");
-	private waypointIndicator = this.VFX_FOLDER.FindFirstChild("Indicator") as BasePart;
 	private areaIndicatorVFX = this.VFX_FOLDER.FindFirstChild("Area") as BasePart;
-	private beepSound = SoundService.WaitForChild("Beep") as Sound;
+	private beepSound = SoundService.WaitForChild("DetectorBeep") as Sound;
 	private areaIndicator: BasePart | undefined;
-	private activeWaypointIndicator: BasePart | undefined;
 	private arrowIndicator?: BasePart; // Cloned from ReplicatedStorage
 	private renderStepId = "WaypointArrow";
 	private metalDetectorAnimation = this.ANIMATION_FOLDER.FindFirstChild("MetalDetector") as Animation;
 
-	private isRolling = false;
+	private autoDigRunning = false;
+	private isAutoDigging = false;
 	private targetActive = false;
+	private isRolling = false;
 	private phase = 0;
+	private currentBeepSound: Sound | undefined = undefined;
 
-	constructor(private readonly uiController: UiController) {}
+	constructor(private readonly shovelController: ShovelController) {}
 
 	onStart() {
+		Signals.setAutoDiggingRunning.Connect((running: boolean) => {
+			this.autoDigRunning = running;
+		});
+
 		// Detect walking and play animation
 		Players.LocalPlayer.CharacterAdded.Connect((character) => {
 			let detectorTrack: AnimationTrack | undefined;
@@ -69,30 +61,39 @@ export class Detector implements OnStart, OnTick {
 						const detectorAnimation = this.metalDetectorAnimation.Clone();
 						detectorTrack = animator.LoadAnimation(detectorAnimation);
 					}
+					let existingBeepSound = child.FindFirstChild(this.beepSound.Name) as Sound | undefined;
+					if (!existingBeepSound) {
+						const clone = this.beepSound.Clone();
+						clone.Parent = child.FindFirstChildWhichIsA("BasePart") ?? child;
+						existingBeepSound = clone;
+					}
+					this.currentBeepSound = existingBeepSound as Sound;
 
 					const trove = new Trove();
 
 					// Play the animation when the tool is equipped
 					detectorTrack.Play();
 
+					// The delay is so that the player doesn't accidentally start detecting immediately after digging.
 					const thread = task.delay(0.5, () => {
 						trove.add(
 							child.Activated.Connect(() => {
-								if (this.targetActive) return;
-								Events.beginDetectorLuckRoll();
-								this.uiController.toggleUi(gameConstants.LUCKBAR_UI, { visible: true, paused: false });
+								if (this.targetActive || this.isRolling || (this.isAutoDigging && this.autoDigRunning))
+									return;
 								this.isRolling = true;
+								Events.beginDetectorLuckRoll();
+								Signals.startLuckbar.Fire();
 							}),
 						);
 
 						trove.add(
 							child.Deactivated.Connect(() => {
-								if (!this.isRolling) return;
+								if (!this.isRolling || (this.isAutoDigging && this.autoDigRunning)) return;
 								this.isRolling = false;
 								Events.endDetectorLuckRoll();
-								this.uiController.updateUiProps(gameConstants.LUCKBAR_UI, { paused: true });
+								Signals.pauseLuckbar.Fire();
 								task.delay(1, () => {
-									this.uiController.closeUi(gameConstants.LUCKBAR_UI);
+									Signals.closeLuckbar.Fire();
 								});
 							}),
 						);
@@ -109,15 +110,25 @@ export class Detector implements OnStart, OnTick {
 						if (this.isRolling) {
 							this.isRolling = false;
 							Events.endDetectorLuckRoll();
-							this.uiController.closeUi(gameConstants.LUCKBAR_UI);
+							Signals.closeLuckbar.Fire();
 						}
 
 						detectorTrack?.Stop();
 						task.cancel(thread);
 						trove.destroy();
+
+						task.defer(() => {
+							if (!this.shovelController.getDiggingActive() && this.isAutoDigging) {
+								Signals.forceSetAutoDigging.Fire(false);
+							}
+						});
 					});
 				}
 			});
+		});
+
+		Signals.setAutoDiggingEnabled.Connect((enabled) => {
+			this.isAutoDigging = enabled;
 		});
 
 		Events.targetSpawnSuccess.connect(() => {
@@ -168,6 +179,10 @@ export class Detector implements OnStart, OnTick {
 			// Start tweening the waypoint indicator
 			this.showWaypointArrow(position);
 		});
+	}
+
+	public getTargetActive() {
+		return this.targetActive;
 	}
 
 	private getLocalPlayerRootPart(): BasePart | undefined {
@@ -290,17 +305,23 @@ export class Detector implements OnStart, OnTick {
 			// 2) Evaluate the sine
 			const sinVal = math.sin(this.phase);
 
-			// 3) Convert sine to transparency
-			const transparency = sinVal * 0.25 + 0.25;
-			dot.ImageTransparency = transparency;
-			exclamationMark.ImageTransparency = transparency;
+			// 3) Modify sine to transparency
+			// Increase the base transparency and reduce the amplitude
+			const baseTransparency = 0.1; // Lower base transparency for more visibility
+			const amplitude = 0.1; // Reduce amplitude to minimize the range of transparency
+			const transparency = sinVal * amplitude + baseTransparency;
+
+			// Clamp transparency to ensure it doesn't go out of bounds
+			const clampedTransparency = math.clamp(transparency, 0, 1);
+			dot.ImageTransparency = clampedTransparency;
+			exclamationMark.ImageTransparency = clampedTransparency;
 
 			exclamationMark.Rotation = sinVal * 10;
 			shovel.Rotation = sinVal * 10;
 
 			// 4) Check zero-crossing (- => +) for beep & blink
 			if (sinVal <= 0 && prevSinVal > 0 && !canDig) {
-				this.beepSound.Play();
+				if (this.currentBeepSound) this.currentBeepSound.Play();
 
 				const blinkVfx = detector.FindFirstChild("Blink") as Instance;
 				if (blinkVfx) {
@@ -326,7 +347,7 @@ export class Detector implements OnStart, OnTick {
 		}
 	}
 
-	onTick(dt: number): void {
+	onTick(): void {
 		if (this.areaIndicator) {
 			const t = os.clock();
 			const rotationSpeed = 45; // degrees per second

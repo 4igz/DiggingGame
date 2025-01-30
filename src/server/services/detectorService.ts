@@ -1,11 +1,13 @@
 import { Service, OnStart, OnTick } from "@flamework/core";
-import { CollectionService, Players, ServerStorage, Workspace } from "@rbxts/services";
+import { CollectionService, Players, Workspace } from "@rbxts/services";
 import { TargetService } from "./targetService";
-import { BASE_DETECTOR_STRENGTH, metalDetectorConfig } from "shared/config/metalDetectorConfig";
+import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
 import { gameConstants } from "shared/constants";
 import { Events } from "server/network";
 import { Target } from "shared/networkTypes";
 import { ProfileService } from "./profileService";
+import { GamepassService } from "./gamepassService";
+import { Signals } from "shared/signals";
 
 @Service({})
 export class DetectorService implements OnStart, OnTick {
@@ -14,9 +16,12 @@ export class DetectorService implements OnStart, OnTick {
 	private luckRolls: Map<number, number> = new Map();
 	private rolling: Map<number, { start: number; current: number }> = new Map();
 	private readonly VISUALIZATION_RATE = 1; // seconds
-	private startRollingTime = Workspace.GetServerTimeNow();
 
-	constructor(private readonly targetService: TargetService, private readonly profileService: ProfileService) {}
+	constructor(
+		private readonly targetService: TargetService,
+		private readonly profileService: ProfileService,
+		private readonly gamepassService: GamepassService,
+	) {}
 
 	onStart() {
 		Events.beginDetectorLuckRoll.connect((player) => {
@@ -40,6 +45,20 @@ export class DetectorService implements OnStart, OnTick {
 
 			this.targetService.spawnTarget(player, this.luckRolls.get(player.UserId) ?? 0.5);
 		});
+
+		Events.nextTargetAutoDigger.connect((player) => {
+			this.rolling.delete(player.UserId);
+
+			// Spawn target.
+			const existingTarget = this.targetService.getPlayerTarget(player);
+			if (existingTarget) return;
+
+			this.targetService.spawnTarget(player, 10);
+		});
+
+		Signals.startDigging.Connect((player, target) => {
+			this.startDigging(player, target);
+		});
 	}
 
 	startDigging(player: Player, target: Target) {
@@ -53,7 +72,12 @@ export class DetectorService implements OnStart, OnTick {
 		this.targetService.playerDiggingTargets.set(player, target);
 		// Begin digging automatically
 		humanoid.WalkSpeed = 0;
-		Events.beginDigging(player, target, { strength: profile.Data.strength, shovel: profile.Data.equippedShovel });
+
+		let strength = profile.Data.strength;
+		if (this.gamepassService.ownsGamepass(player, gameConstants.GAMEPASS_IDS.x2Strength)) {
+			strength *= 2;
+		}
+		Events.beginDigging(player, target, { strength, shovel: profile.Data.equippedShovel });
 		target.activelyDigging = true;
 
 		// Now equip the shovel for the player also.

@@ -26,8 +26,8 @@ export const metalDetectorConfig: MetalDetectorModule = {
 	},
 	CommonDetector: {
 		strength: 1.5,
-		luck: 1,
-		searchRadius: 50,
+		luck: 0.1,
+		searchRadius: 45,
 		itemImage: "rbxassetid://123445201960643",
 		rarityType: "Uncommon",
 		price: 100,
@@ -45,7 +45,7 @@ export const metalDetectorConfig: MetalDetectorModule = {
 	GoldDetector: {
 		strength: 2,
 		luck: 0.1,
-		searchRadius: 60,
+		searchRadius: 40,
 		itemImage: "rbxassetid://124439509844599",
 		rarityType: "Common",
 		price: 500,
@@ -54,7 +54,7 @@ export const metalDetectorConfig: MetalDetectorModule = {
 	DiamondDetector: {
 		strength: 3,
 		luck: 0.2,
-		searchRadius: 65,
+		searchRadius: 40,
 		itemImage: "rbxassetid://102615131234174",
 		rarityType: "Uncommon",
 		price: 1000,
@@ -63,7 +63,7 @@ export const metalDetectorConfig: MetalDetectorModule = {
 	AmethystDetector: {
 		strength: 4,
 		luck: 0.3,
-		searchRadius: 70,
+		searchRadius: 40,
 		itemImage: "rbxassetid://123979343978192",
 		rarityType: "Uncommon",
 		price: 2500,
@@ -72,7 +72,7 @@ export const metalDetectorConfig: MetalDetectorModule = {
 	RubyDetector: {
 		strength: 5,
 		luck: 0.4,
-		searchRadius: 75,
+		searchRadius: 35,
 		itemImage: "rbxassetid://80842349596350",
 		rarityType: "Rare",
 		price: 5000,
@@ -81,7 +81,7 @@ export const metalDetectorConfig: MetalDetectorModule = {
 	EnchantedDetector: {
 		strength: 6,
 		luck: 0.5,
-		searchRadius: 80,
+		searchRadius: 30,
 		itemImage: "rbxassetid://100950657608323",
 		rarityType: "Rare",
 		price: 10000,
@@ -90,7 +90,7 @@ export const metalDetectorConfig: MetalDetectorModule = {
 	HeavenlyDetector: {
 		strength: 7,
 		luck: 0.6,
-		searchRadius: 85,
+		searchRadius: 30,
 		itemImage: "rbxassetid://133401921939429",
 		rarityType: "Epic",
 		price: 20000,
@@ -99,7 +99,7 @@ export const metalDetectorConfig: MetalDetectorModule = {
 	DemonicDetector: {
 		strength: 8,
 		luck: 0.7,
-		searchRadius: 90,
+		searchRadius: 25,
 		itemImage: "rbxassetid://76078468216770",
 		rarityType: "Epic",
 		price: 50000,
@@ -108,7 +108,7 @@ export const metalDetectorConfig: MetalDetectorModule = {
 	CyberDetector: {
 		strength: 9,
 		luck: 0.8,
-		searchRadius: 95,
+		searchRadius: 20,
 		itemImage: "rbxassetid://121233275974009",
 		rarityType: "Legendary",
 		price: 100000,
@@ -117,7 +117,7 @@ export const metalDetectorConfig: MetalDetectorModule = {
 	AlienDetector: {
 		strength: 10,
 		luck: 0.9,
-		searchRadius: 100,
+		searchRadius: 15,
 		itemImage: "rbxassetid://70623998291755",
 		rarityType: "Legendary",
 		price: 250000,
@@ -126,7 +126,7 @@ export const metalDetectorConfig: MetalDetectorModule = {
 	MonsterDetector: {
 		strength: 11,
 		luck: 1,
-		searchRadius: 105,
+		searchRadius: 10,
 		itemImage: "rbxassetid://110685529014774",
 		rarityType: "Mythical",
 		price: 500000,
@@ -135,7 +135,7 @@ export const metalDetectorConfig: MetalDetectorModule = {
 	PureDetector: {
 		strength: 12,
 		luck: 1.1,
-		searchRadius: 110,
+		searchRadius: 5,
 		itemImage: "rbxassetid://98289595849939",
 		rarityType: "Secret",
 		price: 1000000,

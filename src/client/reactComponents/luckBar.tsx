@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "@rbxts/react";
 import { RunService, Workspace } from "@rbxts/services";
+import { set } from "@rbxts/sift/out/Array";
 import { useMotion } from "client/hooks/useMotion";
-import { Events } from "client/network";
 import { springs } from "client/utils/springs";
+import { Signals } from "shared/signals";
 
 interface LuckBarProps {
 	visible: boolean;
-	paused: boolean;
 }
 
 function lerp(a: number, b: number, t: number): number {
@@ -19,44 +19,52 @@ export default function LuckBar(props: LuckBarProps) {
 	const [currentLuck, setCurrentLuck] = useState(0);
 	const [luckSz, setLuckSz] = useMotion(0);
 	const [visible, setVisible] = useState(false);
+	const [paused, setPaused] = useState(false);
 	const [startTime, setStartTime] = useState(0);
 
 	useEffect(() => {
-		setVisible(props.visible);
+		Signals.startLuckbar.Connect(() => {
+			setLuckSz.immediate(1);
+			setStartTime(Workspace.GetServerTimeNow());
+			setCurrentLuck(0);
 
+			setPaused(false);
+			setVisible(true);
+		});
+		Signals.pauseLuckbar.Connect(() => {
+			setPaused(true);
+		});
+		Signals.closeLuckbar.Connect(() => {
+			setVisible(false);
+			setPaused(true);
+		});
+	}, []);
+
+	useEffect(() => {
 		if (props.visible) {
-			setLuckSz.immediate(0);
+			setLuckSz.immediate(1);
 			setStartTime(Workspace.GetServerTimeNow());
 			setCurrentLuck(0);
 		}
-	}, [props.visible]);
-
-	// Listen to server updates
-	useEffect(() => {
-		const connection = Events.updateLuckRoll.connect((luckValue: number, serverTime: number) => {
-			setCurrentLuck(luckValue);
-			setStartTime(Workspace.GetServerTimeNow());
-
-			setVisible(true);
+		task.defer(() => {
+			setVisible(props.visible);
 		});
-
-		return () => connection.Disconnect();
-	}, []);
+	}, [props.visible]);
 
 	// Predict roll based on time since last update
 	useEffect(() => {
 		const connection = RunService.RenderStepped.Connect(() => {
-			if (props.paused) return;
+			if (paused || !visible) return;
 
 			const elapsedTime = Workspace.GetServerTimeNow() - startTime; // Elapsed time
 			const frequencyScale = 0.75; // Frequency adjustment for oscillation
 			const sineValue = math.sin(elapsedTime * math.pi * frequencyScale);
-			const MAGNET_AT = 0.9;
+			const MAGNET_AT = 0.85;
 
 			// Adjust for exponential shape and amplitude
 			let adjustedValue = math.sign(sineValue) * (1 - math.pow(1 - math.abs(sineValue), 0.5));
 
-			// Magnet effect: clamp to 10 if above 0.9
+			// Magnet effect: clamp to 10 if above threshold
 			if (math.abs(adjustedValue) > MAGNET_AT) {
 				adjustedValue = 1; // Magnet to top
 			}
@@ -68,7 +76,7 @@ export default function LuckBar(props: LuckBarProps) {
 		});
 
 		return () => connection.Disconnect();
-	}, [props.paused, startTime]);
+	}, [paused, startTime, visible]);
 
 	useEffect(() => {
 		setLuckSz.spring((maxLuck - currentLuck) / maxLuck, springs.responsive);

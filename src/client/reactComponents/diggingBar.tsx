@@ -111,6 +111,25 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				}
 			});
 
+			const autoDigConnection = Signals.autoDig.Connect(() => {
+				progress += increment;
+				lastDigTime = tick();
+
+				setRotation.spring(math.clamp(rotation.getValue() + math.random(-2, 2), -12, 12), springs.responsive);
+				setScale.spring(math.max(scale.getValue() + math.random(0.01, 0.05), 1.1), springs.responsive);
+
+				// Allow springs to compound.
+				if (spawnedTask) {
+					task.cancel(spawnedTask);
+					spawnedTask = undefined;
+				}
+
+				spawnedTask = task.delay(0.1, () => {
+					setScale.spring(1, springs.responsive);
+					setRotation.spring(0, springs.responsive);
+				});
+			});
+
 			hb = RunService.Heartbeat.Connect(() => {
 				setBarProgress.spring((target.maxProgress - progress) / target.maxProgress, springs.responsive);
 
@@ -151,11 +170,13 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				redScreen.TintColor = whiteTint;
 
 				clickConnection?.Disconnect();
+				autoDigConnection?.Disconnect();
 				hb?.Disconnect();
 			});
 
 			return () => {
 				endDiggingConnection.Disconnect();
+				autoDigConnection?.Disconnect();
 				hb?.Disconnect();
 				clickConnection?.Disconnect();
 			};

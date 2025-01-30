@@ -4,11 +4,12 @@ import { useMotion } from "client/hooks/useMotion";
 import { Events, Functions } from "client/network";
 import { springs } from "client/utils/springs";
 import { gameConstants } from "shared/constants";
-import { Target } from "shared/networkTypes";
+import { TargetItem } from "shared/networkTypes";
 import { ExitButton, SellAllBtn } from "./mainUi";
+import { fullTargetConfig } from "shared/config/targetConfig";
 
 interface SellTargetProps {
-	target: Target;
+	target: TargetItem;
 }
 
 const SellTargetComponent: React.FC<SellTargetProps> = (props) => {
@@ -136,6 +137,8 @@ const SellTargetComponent: React.FC<SellTargetProps> = (props) => {
 		/>
 	</frame>;
 
+	const cfg = fullTargetConfig[props.target.name];
+
 	return (
 		<frame
 			BackgroundColor3={Color3.fromRGB(17, 25, 49)}
@@ -159,7 +162,7 @@ const SellTargetComponent: React.FC<SellTargetProps> = (props) => {
 			>
 				<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
 
-				<uistroke key={"UIStroke"} Color={gameConstants.RARITY_COLORS[props.target.rarityType]} Thickness={3} />
+				<uistroke key={"UIStroke"} Color={gameConstants.RARITY_COLORS[cfg.rarityType]} Thickness={3} />
 
 				<imagebutton
 					AnchorPoint={new Vector2(0.5, 0.5)}
@@ -198,7 +201,7 @@ interface SellUiProps {
 }
 
 export const Sell: React.FC<SellUiProps> = (props) => {
-	const [shopContent, setShopContent] = React.useState<Target[]>([]);
+	const [shopContent, setShopContent] = React.useState<TargetItem[]>([]);
 	const [visible, setVisible] = React.useState(false);
 	const [pos, posMotion] = useMotion(UDim2.fromScale(0.5, 0.6));
 	const menuRef = React.useRef<Frame>();
@@ -215,7 +218,7 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 				const content = [];
 
 				for (const target of targets) {
-					content.push(target as Target);
+					content.push(target as TargetItem);
 				}
 
 				setShopContent(content);
@@ -231,7 +234,7 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 			const content = [];
 
 			for (const target of inventory) {
-				content.push(target as Target);
+				content.push(target as TargetItem);
 			}
 
 			setShopContent(content);

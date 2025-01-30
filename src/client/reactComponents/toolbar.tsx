@@ -1,9 +1,10 @@
 import React from "@rbxts/react";
-import { Players, StarterGui, UserInputService } from "@rbxts/services";
+import { Players, SoundService, UserInputService } from "@rbxts/services";
 import { Trove } from "@rbxts/trove";
 import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
 import { shovelConfig } from "shared/config/shovelConfig";
-import { targetConfig } from "shared/config/targetConfig";
+import { fullTargetConfig, targetConfig } from "shared/config/targetConfig";
+import { Item, ItemType } from "shared/networkTypes";
 
 interface ToolbarItemProps {
 	icon: string;
@@ -11,6 +12,8 @@ interface ToolbarItemProps {
 	isEquipped: boolean;
 	order: number;
 	tool: Tool;
+	itemType: ItemType;
+	equipToolByOrder: (order: number) => void;
 }
 
 function spaceWords(input: string): string {
@@ -108,6 +111,11 @@ const ToolbarItemComponent: React.FC<ToolbarItemProps> = (props) => {
 			Selectable={false}
 			Size={UDim2.fromScale(0.0896, 1)}
 			LayoutOrder={props.order}
+			Event={{
+				MouseButton1Click: () => {
+					props.equipToolByOrder(props.order);
+				},
+			}}
 		>
 			<uicorner key={"UICorner"} CornerRadius={new UDim(0.08, 0)} />
 
@@ -172,6 +180,7 @@ const ToolbarItemComponent: React.FC<ToolbarItemProps> = (props) => {
 
 export const Toolbar = () => {
 	const [items, setItems] = React.useState<Array<ToolbarItemProps>>([]);
+	const equipSound = SoundService.WaitForChild("Equip") as Sound;
 
 	const equipToolByOrder = (order: number) => {
 		const item = items.find((i) => i.order === order);
@@ -181,6 +190,8 @@ export const Toolbar = () => {
 			const character = localPlayer.Character;
 
 			if (!character || !backpack) return;
+
+			SoundService.PlayLocalSound(equipSound);
 
 			// Unequip all tools except the one being equipped
 			character
@@ -232,8 +243,15 @@ export const Toolbar = () => {
 
 	const handleChildAdded = (child: Instance, equipped: boolean) => {
 		if (child.IsA("Tool")) {
-			const cfg = metalDetectorConfig[child.Name] || targetConfig[child.Name] || shovelConfig[child.Name];
-			if (!cfg) return;
+			const cfg = metalDetectorConfig[child.Name] || fullTargetConfig[child.Name] || shovelConfig[child.Name];
+			const itemType: ItemType | undefined = metalDetectorConfig[child.Name]
+				? "MetalDetectors"
+				: shovelConfig[child.Name]
+				? "Shovels"
+				: fullTargetConfig[child.Name]
+				? "Target"
+				: undefined;
+			if (!cfg || !itemType) return;
 
 			setItems((prev) => {
 				// Check if the tool already exists in the toolbar
@@ -258,6 +276,8 @@ export const Toolbar = () => {
 					isEquipped: equipped,
 					order: nextOrder,
 					tool: child,
+					itemType: itemType,
+					equipToolByOrder: equipToolByOrder,
 				};
 
 				return [...prev, newItem];
@@ -306,6 +326,7 @@ export const Toolbar = () => {
 
 		trove.add(
 			localPlayer.CharacterAdded.Connect((character) => {
+				setItems([]);
 				const backpack = localPlayer.WaitForChild("Backpack");
 
 				// Handle existing tools
