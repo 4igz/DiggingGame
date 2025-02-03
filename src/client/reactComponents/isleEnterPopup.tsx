@@ -105,8 +105,8 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 			return;
 		}
 		// Incase they were running before:
-		// posMotion.stop();
-		// transparencyMotion.stop();
+		posMotion.stop();
+		transparencyMotion.stop();
 
 		// Reset states:
 		posMotion.immediate(UDim2.fromScale(0.5, -0.3));
@@ -129,18 +129,19 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 		setIsleItems(newItems);
 
 		let cleaned = false;
-		const ON_SCREEN_TIME = 5;
-		const unsub2 = transparencyMotion.onComplete(() => {
+		const ON_SCREEN_TIME = 2;
+
+		const unsub2 = posMotion.onComplete(() => {
 			task.wait(ON_SCREEN_TIME);
 			if (cleaned) {
-				// setTransparency.immediate(1);
+				transparencyMotion.immediate(1);
 				return;
 			}
 			transparencyMotion.spring(1, springs.molasses);
 		});
 
-		transparencyMotion.spring(0, springs.molasses);
-		posMotion.spring(UDim2.fromScale(0.5, 0), springs.molasses);
+		transparencyMotion.spring(0, springs.pitch);
+		posMotion.spring(UDim2.fromScale(0.5, 0), springs.heavy);
 
 		return () => {
 			cleaned = true;
@@ -195,7 +196,7 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 			BorderSizePixel={0}
 			key={"Top Bar Frame"}
 			Position={pos}
-			Size={UDim2.fromScale(3.31, 0.269)}
+			Size={UDim2.fromScale(3.31, 0.2)}
 			ref={frameRef}
 		>
 			<uilistlayout

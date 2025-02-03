@@ -49,3 +49,29 @@ export function findFurthestPointWithinRadius(
 
 	return furthestPoint;
 }
+
+// Same function as used on client and server to compute luck. Synced via ping and Workspace.GetServerTimeNow().
+export function computeLuckValue(elapsedTime: number): number {
+	const MAGNET_AT = 0.95;
+	const FREQUENCY = 0.55;
+	const MIN_LUCK = 0.15;
+
+	const waveTime = (elapsedTime * FREQUENCY) % 1;
+
+	// 1) Shift + scale from [-1..+1] to [0..1]
+	const triangleValue = 1 - 2 * math.abs(waveTime - 0.5);
+	// Now zeroToOne smoothly oscillates from 0 up to 1 and back down.
+
+	// 2) Map [0..1] into [0.1..1].
+	//    0.1 is the minimum, 1.0 is the maximum.
+	let adjustedValue = MIN_LUCK + (1 - MIN_LUCK) * triangleValue;
+	// adjustedValue now oscillates between 0.2 and 1.
+
+	// 3) Optional "magnet" effect if we want to clamp any value above MAGNET_AT up to 1.
+	if (adjustedValue > MAGNET_AT) {
+		adjustedValue = 1;
+	}
+
+	// Scale luck to 10
+	return math.max(MIN_LUCK, adjustedValue * 10);
+}

@@ -1,7 +1,7 @@
 import { Service, OnStart } from "@flamework/core";
 import { ProfileService } from "./profileService";
 import EternityNum from "shared/util/eternityNum";
-import { Functions } from "server/network";
+import { Events, Functions } from "server/network";
 
 @Service({})
 export class LeaderstatService implements OnStart {
@@ -31,7 +31,13 @@ export class LeaderstatService implements OnStart {
 
 		Functions.getMoneyShortString.setCallback((player) => {
 			const profile = this.profileService.getProfile(player);
-			if (!profile) return "0";
+			if (!profile) {
+				// Defer this call until the profile is loaded and handle it in a seperate event.
+				this.profileService.onProfileLoaded.Once((player, profile) => {
+					Events.updateMoney.fire(player, profile.Data.money);
+				});
+				return "0";
+			}
 			return profile.Data.money;
 		});
 	}

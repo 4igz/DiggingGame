@@ -307,7 +307,7 @@ export class Detector implements OnStart, OnTick {
 
 			// 3) Modify sine to transparency
 			// Increase the base transparency and reduce the amplitude
-			const baseTransparency = 0.1; // Lower base transparency for more visibility
+			const baseTransparency = 0.2; // Lower base transparency for more visibility
 			const amplitude = 0.1; // Reduce amplitude to minimize the range of transparency
 			const transparency = sinVal * amplitude + baseTransparency;
 

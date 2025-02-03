@@ -1,0 +1,148 @@
+import { Service, OnStart } from "@flamework/core";
+import Object from "@rbxts/object-utils";
+import { HttpService, PhysicsService, ServerStorage, Workspace } from "@rbxts/services";
+import { Events, Functions } from "server/network";
+import { mapConfig } from "shared/config/mapConfig";
+import { ProfileService } from "./profileService";
+import { boatConfig } from "shared/config/boatConfig";
+import { gameConstants } from "shared/constants";
+import { interval } from "shared/util/interval";
+
+@Service({})
+export class BoatService implements OnStart {
+	private boatSpawns = new Map<keyof typeof mapConfig, Array<PVInstance>>();
+	private spawnedBoats = new Map<string, Model>();
+	private boatOwners = new Map<string, Player>();
+	private boatModelFolder = ServerStorage.WaitForChild("BoatModels");
+
+	constructor(private readonly profileService: ProfileService) {
+		PhysicsService.RegisterCollisionGroup(gameConstants.BOAT_COLGROUP);
+		PhysicsService.CollisionGroupSetCollidable(gameConstants.BOAT_COLGROUP, gameConstants.BOAT_COLGROUP, false); // Boats can't collide with another.
+
+		// Initialize boat spawns
+		for (const mapName of Object.keys(mapConfig)) {
+			const map = Workspace.FindFirstChild(mapName);
+			if (!map) {
+				warn(`Couldn't find map for Map: ${mapName} when trying to create boat spawns.`);
+				continue;
+			}
+			const boatSpawnFolder = map.FindFirstChild("BoatSpawns");
+			if (!boatSpawnFolder) {
+				warn(`Couldn't find BoatSpawns folder for Map: ${mapName}`);
+				continue;
+			}
+			const boatSpawns = boatSpawnFolder.GetChildren().filter((child) => child.IsA("PVInstance"));
+			this.boatSpawns.set(mapName, boatSpawns);
+		}
+
+		// Ensure boats are welded and unanchored.
+		for (const boatModel of this.boatModelFolder.GetChildren()) {
+			if (!boatModel.IsA("Model")) {
+				warn(
+					`Unknown instance in ${this.boatModelFolder.GetFullName()} folder or boat model ${
+						boatModel.Name
+					} is not a model.`,
+				);
+				continue;
+			}
+			const primaryPart = boatModel.PrimaryPart;
+			if (!primaryPart) {
+				warn(`Boat model ${boatModel.Name} doesn't have a primary part, and it is required.`);
+				continue;
+			}
+
+			for (const descendant of boatModel.GetDescendants()) {
+				if (descendant === primaryPart) continue;
+				if (descendant.IsA("BasePart")) {
+					const weld = new Instance("WeldConstraint");
+					weld.Parent = primaryPart; // Ensure entire boat is welded to primary part
+					weld.Part0 = primaryPart;
+					weld.Part1 = descendant;
+					descendant.Anchored = false; // Ensure the boat is not anchored
+				}
+			}
+		}
+	}
+
+	onStart() {
+		const boatSpawnCooldown = interval(5);
+
+		Events.spawnBoat.connect((player, boatName) => {
+			if (!boatSpawnCooldown(player.UserId)) return;
+
+			const profile = this.profileService.getProfile(player);
+			if (!profile) {
+				return;
+			}
+			if (!boatConfig[boatName]) {
+				error(`Invalid boat name: ${boatName}`);
+			}
+
+			// Check for an existing boat and remove it
+			const result = Object.entries(this.boatOwners).find(([_, p]) => p === player);
+			if (result) {
+				const [boatId] = result;
+				const boat = this.spawnedBoats.get(boatId);
+				if (boat) {
+					boat.Destroy();
+					this.spawnedBoats.delete(boatId);
+					this.boatOwners.delete(boatId);
+				}
+			}
+
+			if (profile.Data.ownedBoats.get(boatName) === false) return; // Player doesn't own this boat, so they can't spawn it
+			const currentMap = profile.Data.currentMap;
+
+			const unoccupiedBoatSpawn = this.getUnoccupiedBoatSpawn(currentMap);
+			if (!unoccupiedBoatSpawn) {
+				warn(`Couldn't find unoccupied boat spawn for map: ${currentMap}`);
+				return;
+			}
+
+			const boatModel = this.boatModelFolder.FindFirstChild(boatName);
+			if (!boatModel) {
+				error(`Couldn't find boat model for boat: ${boatName}`);
+			}
+
+			const boatId = HttpService.GenerateGUID();
+			this.boatOwners.set(boatId, player);
+
+			const boat = boatModel.Clone() as Model;
+			boat.SetAttribute("boatId", boatId);
+			boat.PivotTo(unoccupiedBoatSpawn?.GetPivot());
+			boat.Parent = Workspace;
+			this.spawnedBoats.set(boatId, boat);
+
+			for (const descendant of boat.GetDescendants()) {
+				if (descendant.IsA("BasePart")) {
+					descendant.SetNetworkOwner(player);
+					descendant.CollisionGroup = gameConstants.BOAT_COLGROUP;
+				}
+			}
+		});
+
+		Functions.getOwnsBoat.setCallback((player, boatId) => {
+			return this.boatOwners.get(boatId) === player;
+		});
+	}
+
+	getUnoccupiedBoatSpawn(mapName: keyof typeof mapConfig): PVInstance | undefined {
+		const boatSpawns = this.boatSpawns.get(mapName);
+		if (!boatSpawns) {
+			// This is a weird bug, but it's better to handle it just incase.
+			warn(`Couldn't find boat spawns for map: ${mapName}`);
+			return;
+		}
+		// Loop through all existing boats, and see if any of them are colliding with boat spawns.
+		// Return the first unoccupied boat spawn.
+		for (const boatSpawn of boatSpawns) {
+			if (this.spawnedBoats.size() > 0) {
+				for (const [boatId, boat] of this.spawnedBoats) {
+					return boatSpawn; // TODO: Implement collision checks
+				}
+			} else {
+				return boatSpawn;
+			}
+		}
+	}
+}

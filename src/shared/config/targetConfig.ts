@@ -9,6 +9,7 @@ export interface TargetConfig {
 	rarityType: Rarity;
 	itemImage: string;
 	animationName?: string; // If not specified, will just be default tool animation.
+	description?: string; // Optional description of the item
 }
 
 export type TargetModule = Readonly<Record<string, TargetConfig>>;
@@ -23,6 +24,7 @@ export const targetConfig: TargetModule = {
 		basePrice: 10,
 		itemImage: "rbxassetid://82293616105219",
 		animationName: "Hold",
+		description: "A small bag filled with shiny coins. It's not worth much, but it's a nice find.",
 	},
 	Ring: {
 		reqStrength: 10,
@@ -31,6 +33,7 @@ export const targetConfig: TargetModule = {
 		baseWeight: new NumberRange(5, 20),
 		basePrice: 20,
 		itemImage: "rbxassetid://78683428732466",
+		description: "A simple ring, likely lost by someone long ago. It's not worth much, but it has a story to tell.",
 	},
 	Necklace: {
 		reqStrength: 15,
@@ -40,6 +43,8 @@ export const targetConfig: TargetModule = {
 		basePrice: 30,
 		itemImage: "rbxassetid://81302821988412",
 		animationName: "Hold",
+		description:
+			"A necklace that was likely lost by someone long ago. It's not worth much, but it has a story to tell.",
 	},
 	"Treasure Chest": {
 		reqStrength: 50,
@@ -49,6 +54,7 @@ export const targetConfig: TargetModule = {
 		basePrice: 100,
 		itemImage: "rbxassetid://116848950666878",
 		animationName: "OverheadHold",
+		description: "A chest filled with various treasures. It's quite heavy, but it's a nice find.",
 	},
 	Diamond: {
 		reqStrength: 30,
@@ -58,6 +64,7 @@ export const targetConfig: TargetModule = {
 		basePrice: 500,
 		itemImage: "rbxassetid://77396148774213",
 		animationName: "Hold",
+		description: "A shiny diamond..",
 	},
 	"Ancient Artifact": {
 		reqStrength: 100,
@@ -66,6 +73,7 @@ export const targetConfig: TargetModule = {
 		baseWeight: new NumberRange(20, 100),
 		basePrice: 1000,
 		itemImage: "rbxassetid://104605374928382",
+		description: "An ancient artifact that's worth a fortune. It's quite heavy for its size.",
 	},
 
 	// Volcano
@@ -76,6 +84,7 @@ export const targetConfig: TargetModule = {
 		baseWeight: new NumberRange(5, 20),
 		basePrice: 10,
 		itemImage: "rbxassetid://118432059776108",
+		description: "A rock from the volcano.",
 	},
 	"Volcano's tear": {
 		reqStrength: 5,
@@ -84,6 +93,7 @@ export const targetConfig: TargetModule = {
 		baseWeight: new NumberRange(5, 20),
 		basePrice: 10,
 		itemImage: "rbxassetid://121295076787199",
+		description: "A tear from the volcano.",
 	},
 	Ammonoids: {
 		reqStrength: 5,
@@ -92,6 +102,7 @@ export const targetConfig: TargetModule = {
 		baseWeight: new NumberRange(5, 20),
 		basePrice: 10,
 		itemImage: "rbxassetid://81329471085203",
+		description: "A fossil of an ancient creature.",
 	},
 	"Heat rock": {
 		reqStrength: 5,
@@ -100,6 +111,7 @@ export const targetConfig: TargetModule = {
 		baseWeight: new NumberRange(5, 20),
 		basePrice: 10,
 		itemImage: "rbxassetid://118432059776108",
+		description: "A rock that's warm to the touch.",
 	},
 	"Lava bucket": {
 		reqStrength: 5,
@@ -108,6 +120,7 @@ export const targetConfig: TargetModule = {
 		baseWeight: new NumberRange(5, 20),
 		basePrice: 10,
 		itemImage: "rbxassetid://81391518039132",
+		description: "A bucket filled with lava.",
 	},
 	"Obsidian shard": {
 		reqStrength: 5,
@@ -116,6 +129,7 @@ export const targetConfig: TargetModule = {
 		baseWeight: new NumberRange(5, 20),
 		basePrice: 10,
 		itemImage: "rbxassetid://115688166680356",
+		description: "A shard of obsidian.",
 	},
 	"Coal artifact": {
 		reqStrength: 5,
@@ -124,6 +138,7 @@ export const targetConfig: TargetModule = {
 		baseWeight: new NumberRange(5, 20),
 		basePrice: 10,
 		itemImage: "rbxassetid://129994688332470",
+		description: "An artifact made of coal.",
 	},
 
 	// Frozen
@@ -134,6 +149,7 @@ export const targetConfig: TargetModule = {
 		baseWeight: new NumberRange(5, 20),
 		basePrice: 10,
 		itemImage: "rbxassetid://122468325756667",
+		description: "A shard of ice.",
 	},
 	"Old mitten": {
 		reqStrength: 5,
@@ -142,6 +158,7 @@ export const targetConfig: TargetModule = {
 		baseWeight: new NumberRange(5, 20),
 		basePrice: 10,
 		itemImage: "rbxassetid://114451456116905",
+		description: "An old mitten.",
 	},
 	"Sapphire gem": {
 		reqStrength: 5,
@@ -150,6 +167,7 @@ export const targetConfig: TargetModule = {
 		baseWeight: new NumberRange(5, 20),
 		basePrice: 10,
 		itemImage: "rbxassetid://84253809232755",
+		description: "A sapphire gem.",
 	},
 	"Viking dagger": {
 		reqStrength: 5,
@@ -158,6 +176,7 @@ export const targetConfig: TargetModule = {
 		baseWeight: new NumberRange(5, 20),
 		basePrice: 10,
 		itemImage: "rbxassetid://136607393225332",
+		description: "A viking dagger.",
 	},
 	"Viking sword": {
 		reqStrength: 5,
@@ -166,6 +185,7 @@ export const targetConfig: TargetModule = {
 		baseWeight: new NumberRange(5, 20),
 		basePrice: 10,
 		itemImage: "rbxassetid://107882679708293",
+		description: "A viking sword.",
 	},
 };
 

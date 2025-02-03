@@ -9,6 +9,7 @@ import { fullTargetConfig, targetConfig, TargetModule } from "shared/config/targ
 import { ProfileTemplate } from "server/profileTemplate";
 import { MoneyService } from "./moneyService";
 import { Signals } from "shared/signals";
+import { boatConfig } from "shared/config/boatConfig";
 
 const DetectorFolder = ReplicatedStorage.WaitForChild("MetalDetectors") as Folder;
 const ShovelFolder = ReplicatedStorage.WaitForChild("Shovels") as Folder;
@@ -84,6 +85,26 @@ export class InventoryService implements OnStart {
 			]);
 		});
 
+		Events.buyBoat.connect((player, boatName) => {
+			const profile = this.profileService.getProfile(player);
+			if (!profile) return;
+
+			if (profile.Data.ownedBoats.get(boatName) === true) return;
+
+			const cost = boatConfig[boatName].price;
+
+			if (!cost || !this.moneyService.hasEnoughMoney(player, cost)) {
+				return;
+			}
+
+			this.moneyService.takeMoney(player, cost);
+
+			profile.Data.ownedBoats.set(boatName, true);
+			this.profileService.setProfile(player, profile);
+
+			Events.updateBoatInventory(player, profile.Data.ownedBoats);
+		});
+
 		Events.equipTreasure.connect((player, targetName) => {
 			this.equipTreasure(player, targetName);
 		});
@@ -151,6 +172,20 @@ export class InventoryService implements OnStart {
 					return item as Item;
 				}),
 			];
+		});
+
+		Functions.getUnlockedTargets.setCallback((player) => {
+			const profile = this.profileService.getProfile(player);
+			if (!profile) return new Set<string>();
+
+			return profile.Data.previouslyFoundTargets;
+		});
+
+		Functions.getOwnedBoats.setCallback((player) => {
+			const profile = this.profileService.getProfile(player);
+			if (!profile) return new Map<string, boolean>();
+
+			return profile.Data.ownedBoats;
 		});
 	}
 
@@ -251,7 +286,20 @@ export class InventoryService implements OnStart {
 				profile.Data.previouslyFoundTargets.add(item.name);
 			}
 			this.profileService.setProfile(player, profile);
-			Events.targetAdded(player, item.name, item.weight);
+			Events.targetAdded(player, item.name, item.weight, profile.Data.currentMap);
+			Events.updateInventory(player, "Target", [
+				{
+					equippedShovel: profile.Data.equippedShovel,
+					equippedDetector: profile.Data.equippedDetector,
+					equippedTreasure: profile.Data.equippedTreasure,
+				},
+				profile.Data.targetInventory.map((item) => ({
+					...item,
+					name: item.name,
+					type: "Target",
+				})),
+			]);
+			Events.updateUnlockedTargets(player, profile.Data.previouslyFoundTargets);
 		}
 	}
 

@@ -17,9 +17,11 @@ export const gameConstants = {
 	GAMEPASS_SHOP_UI: "GamepassShop",
 	POPUP_UI: "ItemPopupUi",
 	ISLE_POPUP_UI: "ZonePopupUi",
+	BOAT_SHOP_UI: "BoatShopUi",
 
 	PLAYER_COLGROUP: "Player",
 	NOCHARACTERCOLLISION_COLGROUP: "NoCollideWithCharacters",
+	BOAT_COLGROUP: "Boat",
 	SPAWN_TAG: "MapSpawn",
 	ISLE_ZONE_TAG: "IsleZone",
 

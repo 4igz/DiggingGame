@@ -35,8 +35,8 @@ export class MoneyService implements OnStart {
 		profile.Data.money = EternityNum.toString(
 			EternityNum.add(EternityNum.fromString(profile.Data.money), EternityNum.fromNumber(amount)),
 		);
-		Events.updateMoney.fire(player, profile.Data.money);
 		this.profileService.setProfile(player, profile);
+		Events.updateMoney.fire(player, profile.Data.money);
 	}
 
 	takeMoney(player: Player, amount: number) {

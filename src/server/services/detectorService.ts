@@ -8,6 +8,7 @@ import { Target } from "shared/networkTypes";
 import { ProfileService } from "./profileService";
 import { GamepassService } from "./gamepassService";
 import { Signals } from "shared/signals";
+import { computeLuckValue } from "shared/util/detectorUtil";
 
 @Service({})
 export class DetectorService implements OnStart, OnTick {
@@ -37,13 +38,23 @@ export class DetectorService implements OnStart, OnTick {
 		});
 
 		Events.endDetectorLuckRoll.connect((player) => {
+			const rollingData = this.rolling.get(player.UserId);
+			if (!rollingData) return;
+
+			// Adjust for latency before ending
+			const now = Workspace.GetServerTimeNow() - player.GetNetworkPing();
+			const elapsedTime = now - rollingData.start;
+
+			// Compute final luck roll based on adjusted time
+			const finalLuckValue = computeLuckValue(elapsedTime);
+
 			this.rolling.delete(player.UserId);
 
 			// Spawn target.
 			const existingTarget = this.targetService.getPlayerTarget(player);
 			if (existingTarget) return;
 
-			this.targetService.spawnTarget(player, this.luckRolls.get(player.UserId) ?? 0.5);
+			this.targetService.spawnTarget(player, finalLuckValue);
 		});
 
 		Events.nextTargetAutoDigger.connect((player) => {
@@ -106,35 +117,11 @@ export class DetectorService implements OnStart, OnTick {
 
 	onTick(dt: number) {
 		for (const [userId, time] of this.rolling) {
-			const elapsedTime = Workspace.GetServerTimeNow() - time.start; // Elapsed time
-			const frequencyScale = 0.75; // Frequency adjustment for oscillation
-			const sineValue = math.sin(elapsedTime * math.pi * frequencyScale);
-			const MAGNET_AT = 0.9;
+			const elapsedTime = Workspace.GetServerTimeNow() - time.start;
+			const luckValue = computeLuckValue(elapsedTime);
 
-			// Adjust for exponential shape and amplitude
-			let adjustedValue = math.sign(sineValue) * (1 - math.pow(1 - math.abs(sineValue), 0.5));
-
-			// Magnet effect: clamp to 10 if above 0.9
-			if (math.abs(adjustedValue) > MAGNET_AT) {
-				adjustedValue = 1; // Magnet to top
-			}
-
-			// Scale to 0-10 range
-			const luckValue = 10 * math.abs(adjustedValue);
-
-			// Update the rolling and luck rolls data
 			this.luckRolls.set(userId, luckValue);
 			this.rolling.set(userId, { start: time.start, current: time.current + dt });
-
-			// Optionally, update the client periodically
-			/*
-			if (tick() % this.VISUALIZATION_RATE < dt) {
-				const player = Players.GetPlayerByUserId(userId);
-				if (player) {
-					Events.updateLuckRoll.fire(player, luckValue, time);
-				}
-			}
-			*/
 		}
 
 		// Make detectors detect metals and flash when they're nearby

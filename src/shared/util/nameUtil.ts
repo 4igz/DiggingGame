@@ -41,3 +41,15 @@ export function separateWithCommas(num: number | string): string {
 		return integerPart;
 	}
 }
+
+const units = ["", "K", "M", "B", "T", "Q", "Qn", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td"];
+export function shortenNumber(num: number): string {
+	let unitIndex = 0;
+
+	while (num >= 1000 && unitIndex < units.size() - 1) {
+		num /= 1000;
+		unitIndex++;
+	}
+
+	return `${string.format("%0.1f", num)}${units[unitIndex]}`;
+}

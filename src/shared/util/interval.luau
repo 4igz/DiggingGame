@@ -20,7 +20,7 @@ local function interval(s, cleanupInterval)
 
 		-- Update the throttle logic
 		if not pins[id] then
-			pins[id] = os.clock()
+			pins[id] = 0
 		end
 
 		local elapsed = os.clock() - pins[id] > s

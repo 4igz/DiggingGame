@@ -2,7 +2,13 @@ import { Service, OnStart, OnTick } from "@flamework/core";
 import { CollectionService, HttpService, PhysicsService, Players, RunService } from "@rbxts/services";
 import { Events } from "server/network";
 import { gameConstants } from "shared/constants";
-import { fullTargetConfig, TargetConfig as TargetConfig, targetConfig, trashConfig } from "shared/config/targetConfig";
+import {
+	fullTargetConfig,
+	TargetConfig as TargetConfig,
+	targetConfig,
+	TargetModule,
+	trashConfig,
+} from "shared/config/targetConfig";
 import { ProfileService } from "./profileService";
 import { BASE_SHOVEL_STRENGTH, shovelConfig } from "shared/config/shovelConfig";
 import { Target } from "shared/networkTypes";
@@ -15,6 +21,8 @@ import { MoneyService } from "./moneyService";
 import { Signals } from "shared/signals";
 import { GamepassService } from "./gamepassService";
 import { DevproductService } from "./devproductService";
+import Object from "@rbxts/object-utils";
+import Sift from "@rbxts/sift";
 
 const Maps = CollectionService.GetTagged("Map");
 
@@ -104,11 +112,15 @@ export class TargetService implements OnStart, OnTick {
 					type: "Target",
 				})),
 			]);
+
+			Events.soldItem(player, target.name, cfg.rarityType, target.weight * cfg.basePrice);
 		});
 
 		Events.sellAll.connect((player) => {
 			let profile = this.profileService.getProfile(player);
 			if (!profile) return;
+			const count = profile.Data.targetInventory.size();
+			if (count === 0) return;
 			const total = profile.Data.targetInventory.reduce((acc, item) => {
 				const cfg = fullTargetConfig[item.name];
 				return acc + item.weight * cfg.basePrice;
@@ -120,7 +132,8 @@ export class TargetService implements OnStart, OnTick {
 				this.inventoryService.equipTreasure(player, profile.Data.equippedTreasure);
 			}
 			profile = this.profileService.getProfile(player);
-			Events.updateInventory.fire(player, "Target", [
+
+			Events.updateInventory(player, "Target", [
 				{
 					equippedShovel: profile!.Data.equippedShovel,
 					equippedDetector: profile!.Data.equippedDetector,
@@ -128,6 +141,7 @@ export class TargetService implements OnStart, OnTick {
 				},
 				[],
 			]);
+			Events.soldAllItems(player, count, total);
 		});
 
 		Events.endDiggingClient.connect((player) => {
@@ -404,14 +418,19 @@ export class TargetService implements OnStart, OnTick {
 		const playerDetectorConfig = metalDetectorConfig[profile.Data.equippedDetector];
 
 		const ADDED_LUCK_PERCENT = 0.02;
+		const DETECTOR_LUCK_MODIFIER = 0.05;
+		const LUCK_SKILL_LEVEL_ADDITION = 0.01;
 
 		// TODO: Should totalLuck always be 0 if luckMult is 0?
 		const totalLuck =
-			(playerDetectorConfig.luck +
-				profile.Data.luck * ADDED_LUCK_PERCENT * this.devproductService.serverLuckMultiplier(player)) *
+			(playerDetectorConfig.luck * DETECTOR_LUCK_MODIFIER + profile.Data.luck * LUCK_SKILL_LEVEL_ADDITION) *
+			ADDED_LUCK_PERCENT *
+			this.devproductService.serverLuckMultiplier(player) *
 			luckMult;
 
-		const targetData = this.rollTarget(player, totalLuck);
+		print(totalLuck);
+
+		const targetData = this.rollTarget(profile.Data.currentMap, totalLuck);
 
 		if (!targetData) {
 			return;
@@ -444,17 +463,14 @@ export class TargetService implements OnStart, OnTick {
 		return [targetInstance, profile.Data.currentMap];
 	}
 
-	private rollTarget(player: Player, addLuck: number): [keyof typeof fullTargetConfig, TargetConfig] | undefined {
+	private rollTarget(
+		currentMap: keyof typeof mapConfig,
+		addLuck: number,
+	): [keyof typeof fullTargetConfig, TargetConfig] | undefined {
 		// Retrieve the player's profile
-		const profile = this.profileService.getProfile(player);
-		if (!profile) {
-			return undefined;
-		}
-
 		// Retrieve the map data based on the player's current map
-		const mapData = mapConfig[profile.Data.currentMap];
+		const mapData = mapConfig[currentMap];
 		if (!mapData || !mapData.targetList) {
-			warn("Invalid map data for map:", profile.Data.currentMap);
 			return undefined;
 		}
 
@@ -476,7 +492,7 @@ export class TargetService implements OnStart, OnTick {
 		}
 
 		if (cumulativeMap.size() === 0) {
-			warn("No valid targets for the map:", profile.Data.currentMap);
+			warn("No valid targets for the map:", currentMap);
 			return undefined;
 		}
 
@@ -511,5 +527,140 @@ export class TargetService implements OnStart, OnTick {
 
 		// Return the selected target and its configuration
 		return [selectedTarget, cfg[selectedTarget]];
+	}
+
+	private _rollTarget2(
+		currentMap: keyof typeof mapConfig,
+		addLuck: number,
+	): [keyof typeof fullTargetConfig, TargetConfig] | undefined {
+		// 1) Retrieve the map data
+		const mapData = mapConfig[currentMap];
+		if (!mapData || !mapData.targetList) {
+			return undefined;
+		}
+
+		// If luck is 0, they are getting "trash" items, else normal items
+		const cfg = addLuck > 0 ? targetConfig : trashConfig;
+
+		// 2) Compute each item's weight and build a cumulative sum
+		let totalWeight = 0;
+		const cumulativeMap = new Map<keyof typeof fullTargetConfig, number>();
+
+		for (const [name, targetInfo] of pairs(cfg)) {
+			// Skip items not in this map’s targetList
+			if (!mapData.targetList.includes(name)) continue;
+
+			// Example formula: weight = (1 / rarity) * addLuck
+			// (Feel free to tweak or clamp addLuck as needed.)
+			const weight = (1 / targetInfo.rarity) * (addLuck > 0 ? addLuck : 1);
+
+			if (weight <= 0) continue; // Avoid weird edge cases
+
+			totalWeight += weight;
+			cumulativeMap.set(name, totalWeight);
+		}
+
+		if (cumulativeMap.size() === 0) {
+			warn("No valid targets for the map:", currentMap);
+			return undefined;
+		}
+
+		// 3) Roll a random number in [0, totalWeight)
+		const roll = this.rng.NextNumber(0, totalWeight);
+
+		// 4) Find the first item whose cumulative weight is >= roll
+		// Convert to an array, then sort ascending by the cumulative sum
+		let sortedCumulative: [keyof typeof fullTargetConfig, number][] = [...Object.entries(cumulativeMap)];
+		sortedCumulative = Sift.Array.sort(sortedCumulative, (a, b) => a[1] > b[1]);
+
+		print(`addLuck: ${addLuck}, totalWeight: ${totalWeight}, roll: ${roll}, sortedCumulative:`, sortedCumulative);
+
+		let selectedTarget: keyof typeof fullTargetConfig | undefined;
+
+		for (const [name, cumulative] of sortedCumulative) {
+			if (roll <= cumulative) {
+				selectedTarget = name;
+				break;
+			}
+		}
+
+		if (!selectedTarget) {
+			// Theoretically shouldn't happen if totalWeight is correct,
+			// but just in case:
+			warn("Roll failed to match any target, roll =", roll);
+			return undefined;
+		}
+
+		// 5) Return the chosen item + config
+		return [selectedTarget, cfg[selectedTarget]];
+	}
+
+	private rollTargetWithLuck(
+		currentMap: keyof typeof mapConfig,
+		luck: number = 1,
+	): [string, TargetConfig] | undefined {
+		// Luck should be a positive number from 1 -> ∞ or 0 if rolling trash items.
+		if ((luck < 1 && luck > 0) || luck < 0) {
+			warn("Potentially invalid luck value:", luck);
+		}
+
+		// Retrieve the player's profile
+		// Retrieve the map data based on the player's current map
+		const mapData = mapConfig[currentMap];
+		if (!mapData || !mapData.targetList) {
+			return undefined;
+		}
+		// 1) Build a map of itemName → weight = (1 / rarity).
+		//    Also accumulate totalWeight for all items.
+		let totalWeight = 0;
+		const weightMap = new Map<string, number>();
+
+		let mapTargets = Sift.Array.shuffle(mapData.targetList);
+		if (luck > 0) {
+			mapTargets = mapTargets.filter((name) => targetConfig[name] !== undefined); // Filter out trash items
+		}
+
+		const targets: Record<string, TargetConfig> = {};
+
+		mapTargets.forEach((element: string) => {
+			targets[element] = fullTargetConfig[element];
+		});
+
+		for (const [itemName, config] of Object.entries(targets)) {
+			if (config.rarity <= 0) {
+				// Edge case: avoid dividing by zero or negative
+				continue;
+			}
+			const weight = 1 / config.rarity;
+			weightMap.set(itemName, weight);
+			totalWeight += weight;
+		}
+
+		// 2) Generate a random float [0, totalWeight], then divide by luck
+		const rawRoll = math.random() * totalWeight;
+		const scaledRoll = rawRoll / luck;
+
+		// 3) We want to find an item whose (weight) is > scaledRoll,
+		//    but among those, it has the smallest weight.
+		//    (Same logic as your Lua code.)
+		let chosenItem: string | undefined = undefined;
+		let smallestWeightAboveRoll = math.huge;
+
+		print(scaledRoll, weightMap);
+
+		for (const [itemName, weight] of Object.entries(weightMap)) {
+			if (scaledRoll < weight && weight < smallestWeightAboveRoll) {
+				smallestWeightAboveRoll = weight;
+				chosenItem = itemName;
+			}
+		}
+
+		// 4) If nothing matched, it means scaledRoll was bigger than all item weights
+		if (chosenItem === undefined) {
+			return undefined;
+		}
+
+		// Return the item name + the config
+		return [chosenItem, targets[chosenItem]];
 	}
 }

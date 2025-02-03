@@ -14,6 +14,7 @@ export class ShopController implements OnStart {
 		const PROMPT_DIALOGS = {
 			[gameConstants.SELL_UI]: "hey there! you can sell your treasures here",
 			[gameConstants.SHOP_UI]: "what would you like to buy?",
+			[gameConstants.BOAT_SHOP_UI]: "yar matey!",
 		};
 
 		const createShopPrompt = (part: BasePart, shopType: keyof typeof PROMPT_DIALOGS) => {
@@ -87,6 +88,16 @@ export class ShopController implements OnStart {
 			if (!shopPart.IsA("BasePart")) continue;
 			createShopPrompt(shopPart, gameConstants.SHOP_UI);
 		}
+
+		for (const shopPart of CollectionService.GetTagged("BoatShop")) {
+			if (!shopPart.IsA("BasePart")) continue;
+			createShopPrompt(shopPart, gameConstants.BOAT_SHOP_UI);
+		}
+
+		CollectionService.GetInstanceAddedSignal("BoatShop").Connect((shopPart) => {
+			if (!shopPart.IsA("BasePart")) return;
+			createShopPrompt(shopPart, gameConstants.BOAT_SHOP_UI);
+		});
 
 		CollectionService.GetInstanceAddedSignal("Shop").Connect((shopPart) => {
 			if (!shopPart.IsA("BasePart")) return;

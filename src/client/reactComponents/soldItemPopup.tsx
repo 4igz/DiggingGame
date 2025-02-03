@@ -2,24 +2,24 @@ import React, { useEffect } from "@rbxts/react";
 import { RunService } from "@rbxts/services";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
-import { trashConfig } from "shared/config/targetConfig";
 import { gameConstants } from "shared/constants";
 import { Rarity } from "shared/networkTypes";
 import { shortenNumber } from "shared/util/nameUtil";
-import { getOneInXChance } from "shared/util/targetUtil";
 
 const RC = gameConstants.RARITY_COLORS;
 
-export interface ItemPopupProps {
-	itemName: string;
-	itemImage: string;
-	itemRarity: Rarity;
-	itemWeight: number;
-	mapName: string;
+export interface SoldItemPopupProps {
+	itemName?: string;
+	itemRarity?: Rarity;
+	sellCount?: number;
+	sellAmount: number;
+	isSellAll: boolean;
 	onComplete: () => void;
 }
 
-export const ItemAddedPopup = (props: ItemPopupProps) => {
+const SOLD_ALL_COLOR = new Color3(0, 0.68, 1);
+
+export const SoldItemPopup = (props: SoldItemPopupProps) => {
 	const [sizeMotion, setSizeMotion] = useMotion(UDim2.fromScale(0, 0));
 
 	const [spinValue, setSpinValue] = React.useState(0);
@@ -98,7 +98,7 @@ export const ItemAddedPopup = (props: ItemPopupProps) => {
 					key={"ItemImage"}
 					Size={UDim2.fromScale(1, 1)}
 					ZIndex={5}
-					Image={props.itemImage}
+					Image={"rbxassetid://96446480715038"}
 					Rotation={spinValue * -180}
 				>
 					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1} />
@@ -127,24 +127,19 @@ export const ItemAddedPopup = (props: ItemPopupProps) => {
 				RichText={true}
 				Size={UDim2.fromScale(2, 1)}
 				TextXAlignment={Enum.TextXAlignment.Center}
-				Text={
-					trashConfig[props.itemName]
-						? `You just discovered a ${props.itemName} at <font color="rgb(100,125,255)"><b>${string.format(
-								"%.2f",
-								props.itemWeight,
-						  )}</b></font> kg!`
-						: // Trash items don't have rarities (assumed common)
-						  `You just discovered a <font color="rgb(${math.round(
-								RC[props.itemRarity].R * 255,
-						  )},${math.round(RC[props.itemRarity].G * 255)},${math.round(
-								RC[props.itemRarity].B * 255,
-						  )})">1 in ${shortenNumber(getOneInXChance(props.itemName, props.mapName))} ${
-								props.itemName
-						  }</font> at <font color="rgb(100,125,255)"><b>${string.format(
-								"%.2f",
-								props.itemWeight,
-						  )}</b></font> kg!`
-				}
+				Text={`
+					You just sold ${props.isSellAll ? "" : "a"} 
+					<font 
+					color="rgb(${math.round(props.itemRarity ? RC[props.itemRarity].R : SOLD_ALL_COLOR.R * 255)},
+						${math.round(props.itemRarity ? RC[props.itemRarity].G : SOLD_ALL_COLOR.G * 255)},
+						${math.round(props.itemRarity ? RC[props.itemRarity].B : SOLD_ALL_COLOR.B * 255)})"
+					> 
+					${props.isSellAll ? `${props.sellCount} ${props.sellCount ?? 0 > 1 ? "ITEMS" : "ITEM"}` : props.itemName}
+					</font> for 
+					<font color="rgb(0, 255, 0)">
+					<b>$${shortenNumber(props.sellAmount)}</b>
+					</font>!
+				`}
 				TextColor3={Color3.fromRGB(255, 255, 255)}
 				TextScaled={true}
 				TextWrapped={false}

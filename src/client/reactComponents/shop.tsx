@@ -785,7 +785,7 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 							stats={stats}
 							image={item.itemImage}
 							owned={item.owned}
-							order={item.shopOrder ?? 0}
+							order={item.price ?? 0}
 							itemType={item.type}
 							price={item.price}
 						/>

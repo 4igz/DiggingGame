@@ -5,6 +5,7 @@ import { shovelConfig } from "shared/config/shovelConfig";
 import { fullTargetConfig, targetConfig } from "shared/config/targetConfig";
 import Object from "@rbxts/object-utils";
 import { gameConstants } from "shared/constants";
+import { boatConfig } from "shared/config/boatConfig";
 
 // Define the profile template and let TypeScript infer its type
 export const profileTemplate = {
@@ -28,10 +29,11 @@ export const profileTemplate = {
 	multiDigLevel: 0,
 
 	targetInventory: new Array<TargetItem>(),
-	previouslyFoundTargets: new Set<keyof typeof fullTargetConfig>(),
+	previouslyFoundTargets: new Set<keyof typeof targetConfig>(),
 	detectorInventory: ["StarterDetector", "CommonDetector"] as Array<keyof typeof metalDetectorConfig>,
 	shovelInventory: ["StarterShovel", "SilverShovel"] as Array<keyof typeof shovelConfig>,
 
+	ownedBoats: new Map(Object.keys(boatConfig).map((boatName) => [boatName, false])),
 	ownedGamepasses: new Map(Object.keys(gameConstants.GAMEPASS_IDS).map((id) => [id, false])),
 };
 

@@ -26,12 +26,15 @@ export class ShovelController implements OnStart {
 	private lastDiggingTime = 0;
 	private isAutoDigging = false;
 	public onDiggingComplete = new Signal<() => void>();
+	private previousDigLocation = new Vector3();
 
 	constructor() {
 		let autoSendDigCD = interval(gameConstants.AUTO_DIG_CLICK_INTERVAL);
 		const AnimationFolder = ReplicatedStorage.WaitForChild("Animations");
 
 		const shovelDiggingAnimation = AnimationFolder.WaitForChild("DiggingAnimationWithEvent");
+		const shovelFullbodyAnimation = AnimationFolder.WaitForChild("ShovelFullbodyIdle");
+		const shovelUpperbodyAnimation = AnimationFolder.WaitForChild("ShovelUpperbodyIdle");
 		const DIG_ANIMATION_MARKER = "ShovelHitsDirt";
 
 		const setupCharacter = (character: Model) => {
@@ -50,119 +53,197 @@ export class ShovelController implements OnStart {
 				if (child.IsA("Tool") && shovelConfig[child.Name] !== undefined) {
 					const humanoid = character.WaitForChild("Humanoid") as Humanoid;
 					const animator = humanoid.WaitForChild("Animator") as Animator;
-					const shovelAnimation = shovelDiggingAnimation.Clone() as Animation;
-					const track = animator.LoadAnimation(shovelAnimation);
-					track.Priority = Enum.AnimationPriority.Action;
-					track.Looped = true;
-					humanoid.WalkSpeed = 0;
+
+					// Create your animation tracks
+					const digTrack = animator.LoadAnimation(shovelDiggingAnimation as Animation);
+					digTrack.Priority = Enum.AnimationPriority.Action;
+					digTrack.Looped = true;
+
+					const fullIdle = animator.LoadAnimation(shovelFullbodyAnimation as Animation);
+					fullIdle.Priority = Enum.AnimationPriority.Idle;
+					fullIdle.Looped = true;
+
+					const upperIdle = animator.LoadAnimation(shovelUpperbodyAnimation as Animation);
+					upperIdle.Priority = Enum.AnimationPriority.Movement;
+					upperIdle.Looped = true;
+
+					// Speeds for your digging animation
 					const CLICK_ANIM_SPEED = 3;
 					const BASE_SPEED = 1.5;
-					task.defer(() => track.AdjustSpeed(0));
 
+					// Track state for the dig animation
+					let animActive = false;
 					let clickTimes: number[] = [];
 					const maxClickCount = 10;
-					let animActive = false;
 
-					track.GetMarkerReachedSignal(DIG_ANIMATION_MARKER).Connect(() => {
+					// Example marker connection
+					digTrack.GetMarkerReachedSignal(DIG_ANIMATION_MARKER).Connect(() => {
 						Signals.dig.Fire();
 					});
 
-					const startAnimation = () => {
-						if (animActive) return;
+					const startDiggingAnimation = () => {
+						// If we're already active or not in a dig state, skip.
+						if (animActive && !this.diggingActive) return;
 						animActive = true;
-						track.AdjustSpeed(BASE_SPEED);
-						track.Play();
+
+						// Stop all idle animations when digging
+						fullIdle.Stop();
+						upperIdle.Stop();
+
+						digTrack.AdjustSpeed(BASE_SPEED);
+						if (!digTrack.IsPlaying) {
+							digTrack.Play();
+						}
 					};
 
-					const stopAnimation = () => {
+					const stopDiggingAnimation = () => {
 						if (!animActive) return;
 						animActive = false;
-						track.AdjustSpeed(0);
-						track.TimePosition = 0;
+
+						digTrack.Stop();
+						digTrack.TimePosition = 0;
 					};
 
-					track.Play();
+					/**
+					 * Plays the correct idle animation depending on whether the player is moving.
+					 * If the player is moving -> use the upper-body idle animation.
+					 * Otherwise -> use the full-body idle animation.
+					 */
+					const updateIdleAnimation = () => {
+						// Only run if NOT digging
+						if (this.diggingActive) {
+							fullIdle.Stop();
+							upperIdle.Stop();
+							return;
+						}
 
+						const isMoving = humanoid.MoveDirection.Magnitude > 0;
+
+						if (isMoving) {
+							// Use the upper-body idle
+							if (!upperIdle.IsPlaying) upperIdle.Play();
+							if (fullIdle.IsPlaying) fullIdle.Stop();
+						} else {
+							// Use the full-body idle
+							if (!fullIdle.IsPlaying) fullIdle.Play();
+							if (upperIdle.IsPlaying) upperIdle.Stop();
+						}
+					};
+
+					// Adjust the dig track speed back to 0 so it doesn't animate by default
+					task.defer(() => digTrack.AdjustSpeed(0));
+
+					// === Connect run service for repeated checks ===
 					let steppedConnection: RBXScriptConnection | undefined;
 					const rsThread = task.delay(0.1, () => {
 						steppedConnection = RunService.Stepped.Connect(() => {
-							if (humanoid && humanoid.Parent) {
+							/**
+							 * Stop player movement while digging (if desired).
+							 * You can remove this if you want them to still move while digging.
+							 */
+							if (humanoid && humanoid.Parent && this.diggingActive) {
 								humanoid.WalkSpeed = 0;
+							} else {
+								humanoid.WalkSpeed = 16;
 							}
-							// Send to server to dig, and if it calls back, then we set diggingActive to true
+
+							if (this.diggingActive) {
+								startDiggingAnimation();
+							}
+
+							// If we're auto-digging, try to start dig
 							if (this.diggingActive && this.isAutoDigging && autoSendDigCD()) {
-								startAnimation();
 								Signals.autoDig.Fire();
 								this.lastDiggingTime = tick();
-								Events.dig();
+								Events.dig(); // Fire to server
 
+								// Keep track of the times we "dug"
 								const currentTime = tick();
-
-								// Add current time to the array
 								clickTimes.push(currentTime);
-								if (clickTimes.size() > maxClickCount) {
-									clickTimes.shift(); // Remove oldest timestamp if exceeding max count
-								}
+								if (clickTimes.size() > maxClickCount) clickTimes.shift();
 							} else if (!this.diggingActive) {
-								stopAnimation();
+								// If we've stopped digging, ensure the dig animation is stopped
+								stopDiggingAnimation();
 							}
 
 							// Filter out old clicks
-							clickTimes = clickTimes.filter((time) => tick() - time <= track.Length / track.Speed);
+							clickTimes = clickTimes.filter((time) => tick() - time <= digTrack.Length / digTrack.Speed);
 
-							if (clickTimes.size() >= 1) {
-								// Adjust speed based on average click interval
-								if (!animActive) return;
-								track.AdjustSpeed(CLICK_ANIM_SPEED);
+							// If the dig animation is active, adjust speed based on recent clicks
+							if (animActive) {
+								if (clickTimes.size() >= 1) {
+									digTrack.AdjustSpeed(CLICK_ANIM_SPEED);
+								} else {
+									digTrack.AdjustSpeed(BASE_SPEED);
+								}
 							}
+
+							// Always update idle animations if not digging
+							updateIdleAnimation();
 						});
 					});
 
+					// === Hook into tool activation ===
 					let toolConnection: RBXScriptConnection | undefined;
-
 					const thread = task.delay(0.5, () => {
 						toolConnection = child.Activated.Connect(() => {
 							if (this.diggingActive) {
-								startAnimation();
+								startDiggingAnimation();
 							}
+
 							const currentTime = tick();
-
 							if (!this.diggingActive) {
-								Events.dig();
+								// "Dig Everywhere" logic here
+								const DIG_EVERYWHERE_MOVE_REQUIREMENT = 1;
+								if (
+									this.previousDigLocation.sub(character.GetPivot().Position).Magnitude >
+									DIG_EVERYWHERE_MOVE_REQUIREMENT
+								) {
+									humanoid.WalkSpeed = 0;
+									Events.dig();
+								}
 							}
 
-							// Add current time to the array
+							// Record click time
 							clickTimes.push(currentTime);
 							if (clickTimes.size() > maxClickCount) {
-								clickTimes.shift(); // Remove oldest timestamp if exceeding max count
+								clickTimes.shift();
 							}
 						});
 					});
 
+					// === Cleanup on tool removal ===
 					child.AncestryChanged.Once(() => {
-						// Cleanup when the tool is unequipped or removed
 						toolConnection?.Disconnect();
 						steppedConnection?.Disconnect();
 						task.cancel(rsThread);
 						task.cancel(thread);
-						track.Stop();
-						track.Destroy();
+
+						digTrack.Stop();
+						digTrack.Destroy();
+
+						// Reset speed
 						humanoid.WalkSpeed = 16;
 
+						// If we were digging, end it
 						if (this.diggingActive) {
+							this.diggingActive = false;
 							Events.endDiggingClient();
 							this.onDiggingComplete.Fire();
 						}
+
+						// Also stop idle animations if you want them ended when unequipping the tool
+						upperIdle.Stop();
+						fullIdle.Stop();
 					});
 				}
 			});
 		};
 
+		Players.LocalPlayer.CharacterAdded.Connect(setupCharacter);
 		if (Players.LocalPlayer.Character) {
 			setupCharacter(Players.LocalPlayer.Character);
 		}
-
-		Players.LocalPlayer.CharacterAdded.Connect(setupCharacter);
 	}
 
 	onStart() {
@@ -185,6 +266,7 @@ export class ShovelController implements OnStart {
 			if (!character || !character.PrimaryPart) return;
 			this.diggingActive = true;
 			this.lastDiggingTime = tick();
+			this.previousDigLocation = character.GetPivot().Position;
 
 			// Make the player face the target.
 			const pivot = character.GetPivot();
@@ -193,7 +275,9 @@ export class ShovelController implements OnStart {
 				new Vector3(target.position.X, pivot.Position.Y, target.position.Z),
 			);
 
-			character.PivotTo(lookAtCFrame);
+			const tweenInfo = new TweenInfo(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out);
+			const tween = TweenService.Create(character.PrimaryPart, tweenInfo, { CFrame: lookAtCFrame });
+			tween.Play();
 
 			// Create the dig target model.
 			let model = DigTargetModelFolder.FindFirstChild(target.name) as Model | undefined;
@@ -227,6 +311,8 @@ export class ShovelController implements OnStart {
 			diggingConnections.forEach((con) => con.Disconnect());
 			model.SetAttribute("TrackedOrigin", target.position);
 			digModels.set(target.itemId, model);
+
+			// new Instance("Highlight", model);
 
 			const digTrove = new Trove();
 			digTroves.set(target.itemId, digTrove);
@@ -361,7 +447,7 @@ export class ShovelController implements OnStart {
 					dirtBlock.Position = origin.add(new Vector3(math.random(-3, 3), 0, math.random(-3, 3)));
 					dirtBlock.Material = Enum.Material.Sand;
 					dirtBlock.Anchored = false;
-					dirtBlock.CanCollide = false; // Because the collision groups wont work
+					dirtBlock.CanCollide = true; // Because the collision groups wont work
 					dirtBlock.Parent = Workspace;
 
 					dirtBlock.CollisionGroup = gameConstants.NOCHARACTERCOLLISION_COLGROUP;
@@ -421,7 +507,8 @@ export class ShovelController implements OnStart {
 
 						const primaryPart = existingModel.PrimaryPart;
 						const mass = primaryPart.AssemblyMass;
-						const THROW_FORCE = 2;
+						const THROW_FORCE = 20;
+						const UP_FORCE = 5;
 
 						// Compute the direction from the object to the player
 						const directionToPlayer = character.PrimaryPart.Position.sub(
@@ -429,23 +516,23 @@ export class ShovelController implements OnStart {
 						).Unit;
 
 						// Reverse the direction to throw behind the player
-						const directionToThrow = directionToPlayer.mul(1);
-
-						// Add a slight random deviation to the force
-						const randomDeviation = new Vector3(
-							math.random(THROW_FORCE / 2, THROW_FORCE),
-							math.random(THROW_FORCE / 2, THROW_FORCE), // Positive Y force for an upward throw
-							math.random(THROW_FORCE / 2, THROW_FORCE),
-						);
+						const directionToThrow = directionToPlayer.mul(new Vector3(1, UP_FORCE, 1));
 
 						// Combine the backward direction and the deviation, scaling the force
-						const randomForce = directionToThrow.add(randomDeviation.Unit).mul(THROW_FORCE);
+						const randomForce = directionToThrow.mul(THROW_FORCE);
 
 						// Adjust the object's position to simulate a throw
 						existingModel.PivotTo(
-							existingModel.GetPivot().add(new Vector3(0, existingModel.GetExtentsSize().Y * 4, 0)),
+							existingModel.GetPivot().add(new Vector3(0, existingModel.GetExtentsSize().Y * 2, 0)),
 						);
-						task.defer(() => primaryPart.ApplyImpulse(randomForce.mul(mass / 3)));
+						task.defer(() => {
+							for (const descendant of existingModel.GetDescendants()) {
+								if (descendant.IsA("BasePart")) {
+									descendant.AssemblyLinearVelocity = Vector3.zero;
+								}
+							}
+							primaryPart.ApplyImpulse(randomForce.mul(mass));
+						});
 					} else {
 						existingModel.Destroy();
 					}

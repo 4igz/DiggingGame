@@ -1,4 +1,4 @@
-import React, { createRef, Dispatch, useEffect, useState } from "@rbxts/react";
+import React, { createRef, Dispatch, SetStateAction, useEffect, useState } from "@rbxts/react";
 import { UiController } from "client/controllers/uiController";
 import { gameConstants } from "shared/constants";
 import { Item, type ItemType, Rarity, SkillName } from "shared/networkTypes";
@@ -6,13 +6,15 @@ import { Events, Functions } from "client/network";
 import { ReplicatedStorage, SoundService } from "@rbxts/services";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
-import { spaceWords } from "shared/util/nameUtil";
+import { shortenNumber, spaceWords } from "shared/util/nameUtil";
 import { shovelConfig } from "shared/config/shovelConfig";
 import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
 import { fullTargetConfig, targetConfig, trashConfig } from "shared/config/targetConfig";
 import { mapConfig } from "shared/config/mapConfig";
 import Object from "@rbxts/object-utils";
 import { usePx } from "client/hooks/usePx";
+import { getOneInXChance } from "shared/util/targetUtil";
+import { set } from "@rbxts/sift/out/Array";
 
 export function capitalizeWords(str: string): string {
 	return str
@@ -35,7 +37,7 @@ interface AnimatedButtonProps {
 	layoutOrder?: number;
 	children?: React.ReactNode;
 	zindex?: number;
-	ref?: React.Ref<Frame>;
+	Ref?: React.Ref<Frame>;
 	active?: boolean;
 }
 
@@ -50,7 +52,7 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
 	scales,
 	children,
 	zindex,
-	ref,
+	Ref: ref,
 	active = true,
 }) => {
 	const [isHovered, setIsHovered] = useState(false);
@@ -1275,8 +1277,10 @@ export const ExitButton = (props: ExitButtonProps) => {
 };
 
 interface IndexPageItemProps {
-	itemName: string;
+	itemName: keyof typeof targetConfig;
 	unlocked: boolean;
+	mapName: keyof typeof mapConfig;
+	setSelected: Dispatch<{ targetName: keyof typeof targetConfig; mapName: keyof typeof mapConfig }>;
 }
 
 const IndexPageItem = (props: IndexPageItemProps) => {
@@ -1287,31 +1291,32 @@ const IndexPageItem = (props: IndexPageItemProps) => {
 	}
 
 	return (
-		<AnimatedButton
-			size={UDim2.fromScale(0.25, 0.4)}
-			layoutOrder={itemCfg.rarity}
-			scales={new NumberRange(0.999, 1)}
-		>
-			{/* Background Color Image, used for rarity. */}
-			<imagelabel
-				Size={UDim2.fromScale(0.95, 0.95)}
-				AnchorPoint={new Vector2(0.5, 0.5)}
-				Position={UDim2.fromScale(0.5, 0.5)}
-				ScaleType={Enum.ScaleType.Fit}
-				BackgroundTransparency={1}
-				// Image={
-				Image={
-					gameConstants.INDEX_RARITY_BACKGROUND_IMAGES[itemCfg.rarityType] ??
-					gameConstants.INDEX_RARITY_BACKGROUND_IMAGES["Uncommon"] // FIXME: Once we have missing images this can be removed.
-				}
+		<frame Size={UDim2.fromScale(0.25, 0.4)} BackgroundTransparency={1} LayoutOrder={itemCfg.rarity}>
+			<AnimatedButton
+				size={UDim2.fromScale(1, 1)}
+				scales={new NumberRange(0.95, 1.05)}
+				onClick={() => props.setSelected({ targetName: props.itemName, mapName: props.mapName })}
 			>
+				{/* Background Color Image, used for rarity. */}
 				<imagelabel
-					Size={UDim2.fromScale(1, 1)}
+					Size={UDim2.fromScale(0.95, 0.95)}
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					Position={UDim2.fromScale(0.5, 0.5)}
+					ScaleType={Enum.ScaleType.Fit}
 					BackgroundTransparency={1}
-					Image={props.unlocked ? fullTargetConfig[props.itemName].itemImage : ""} //FIXME: Replace with locked image
-				/>
-			</imagelabel>
-		</AnimatedButton>
+					ImageColor3={gameConstants.RARITY_COLORS[itemCfg.rarityType]}
+					Image={"rbxassetid://118068418947215"}
+				>
+					<imagelabel
+						Size={UDim2.fromScale(1, 1)}
+						BackgroundTransparency={1}
+						Image={
+							props.unlocked ? fullTargetConfig[props.itemName].itemImage : "rbxassetid://113782765462239"
+						} //FIXME: Replace with locked image
+					/>
+				</imagelabel>
+			</AnimatedButton>
+		</frame>
 	);
 };
 
@@ -1497,12 +1502,16 @@ export const MainUi = (props: MainUiProps) => {
 	const [popInSz, popInMotion] = useMotion(UDim2.fromScale(0, 0));
 	const [loading, setLoading] = React.useState(false);
 	const [loadingSpring, setLoadingSpring] = useMotion(1);
-	const px = usePx();
-
+	const [selectedIndexItem, setSelectedIndexItem] = useState<{
+		targetName: keyof typeof targetConfig | "";
+		mapName: keyof typeof mapConfig | "";
+	}>({ targetName: "", mapName: "" });
+	const [unlockedTreasures, setUnlockedTreasures] = useState<Set<keyof typeof targetConfig>>();
 	const menuRef = createRef<Frame>();
 
+	const px = usePx();
+
 	const DetectorFolder = ReplicatedStorage.WaitForChild("MetalDetectors") as Folder;
-	const TargetModelFolder = ReplicatedStorage.WaitForChild("TargetModels") as Folder;
 	const ShovelFolder = ReplicatedStorage.WaitForChild("Shovels") as Folder;
 
 	function updateInventory([equipped, inv]: [
@@ -1545,11 +1554,6 @@ export const MainUi = (props: MainUiProps) => {
 					icon: "rbxassetid://100052274681629",
 				});
 			} else if (item.type === "Target") {
-				const target = TargetModelFolder.FindFirstChild(item.name) as Model;
-				if (!target) {
-					warn("Target not found in folder:", item.name);
-					return;
-				}
 
 				// Populate stats
 				stats.push({ key: "weight", value: item.weight, icon: "⚖️" });
@@ -1626,6 +1630,13 @@ export const MainUi = (props: MainUiProps) => {
 			return () => {
 				skillCon.Disconnect();
 				levelCon.Disconnect();
+			};
+		} else if (enabledMenu === MENUS.Index) {
+			Functions.getUnlockedTargets().then(setUnlockedTreasures);
+			const connection = Events.updateUnlockedTargets.connect(setUnlockedTreasures);
+
+			return () => {
+				connection.Disconnect();
 			};
 		}
 	}, [visible, enabledMenu, selectedInventoryType]);
@@ -2259,7 +2270,20 @@ export const MainUi = (props: MainUiProps) => {
 										/>
 										{isleCfg.targetList.map((itemName) => {
 											if (trashConfig[itemName]) return undefined; // Ignore trash items
-											return <IndexPageItem key={itemName} itemName={itemName} unlocked={true} />;
+											return (
+												<IndexPageItem
+													key={itemName}
+													itemName={itemName}
+													unlocked={unlockedTreasures?.has(itemName) ?? false}
+													mapName={isleName}
+													setSelected={(selection) =>
+														setSelectedIndexItem({
+															targetName: selection.targetName,
+															mapName: selection.mapName,
+														})
+													}
+												/>
+											);
 										})}
 									</frame>
 								);
@@ -2322,7 +2346,29 @@ export const MainUi = (props: MainUiProps) => {
 							Position={UDim2.fromScale(0.5, 0.5)}
 							ScaleType={Enum.ScaleType.Fit}
 							Size={UDim2.fromScale(1, 1)}
-						/>
+						>
+							<imagelabel
+								AnchorPoint={new Vector2(0.5, 0.5)}
+								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+								BackgroundTransparency={1}
+								BorderColor3={Color3.fromRGB(0, 0, 0)}
+								BorderSizePixel={0}
+								key={"TreasureIcon"}
+								Position={UDim2.fromScale(0.5, 0.25)}
+								Size={UDim2.fromScale(0.8, 0.4)}
+								Image={
+									selectedIndexItem.targetName !== "" &&
+									unlockedTreasures?.has(selectedIndexItem.targetName) === true
+										? targetConfig[selectedIndexItem.targetName]?.itemImage ??
+										  "rbxassetid://113782765462239"
+										: "rbxassetid://113782765462239"
+								}
+							>
+								<uicorner key={"UICorner"} />
+
+								<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+							</imagelabel>
+						</imagelabel>
 
 						<frame
 							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -2345,8 +2391,14 @@ export const MainUi = (props: MainUiProps) => {
 								key={"Display Name"}
 								Position={UDim2.fromScale(0.5, 0.24)}
 								Size={UDim2.fromScale(1, 0.481)}
-								Text={"Super Rock"}
-								TextColor3={Color3.fromRGB(255, 255, 255)}
+								Text={selectedIndexItem.targetName}
+								TextColor3={
+									selectedIndexItem.targetName !== ""
+										? gameConstants.RARITY_COLORS[
+												targetConfig[selectedIndexItem.targetName].rarityType
+										  ]
+										: Color3.fromRGB(255, 255, 255)
+								}
 								TextScaled={true}
 								TextWrapped={true}
 							>
@@ -2373,7 +2425,16 @@ export const MainUi = (props: MainUiProps) => {
 								key={"Chance"}
 								Position={UDim2.fromScale(0.5, 0.689)}
 								Size={UDim2.fromScale(1, 0.316)}
-								Text={"1 in 5.5B"}
+								Text={
+									selectedIndexItem.targetName !== "" && selectedIndexItem.mapName !== ""
+										? `1 in ${shortenNumber(
+												getOneInXChance(
+													selectedIndexItem.targetName,
+													selectedIndexItem.mapName,
+												),
+										  )}`
+										: ""
+								}
 								TextColor3={Color3.fromRGB(255, 213, 0)}
 								TextScaled={true}
 								TextWrapped={true}
@@ -2411,7 +2472,10 @@ export const MainUi = (props: MainUiProps) => {
 								Position={UDim2.fromScale(0.5, 0.33)}
 								Size={UDim2.fromScale(1, 0.659)}
 								Text={
-									"After 3 years of being regular rock, the rock decided it’s time to become SUPER SAYIAN!!!"
+									targetConfig[selectedIndexItem.targetName] !== undefined &&
+									targetConfig[selectedIndexItem.targetName].description !== undefined
+										? targetConfig[selectedIndexItem.targetName].description
+										: ""
 								}
 								TextColor3={Color3.fromRGB(187, 199, 234)}
 								TextScaled={true}
@@ -2495,8 +2559,8 @@ export const MainUi = (props: MainUiProps) => {
 				BorderColor3={Color3.fromRGB(0, 0, 0)}
 				BorderSizePixel={0}
 				key={"Treasure Count"}
-				Position={UDim2.fromScale(0.58, 0.977)}
-				Size={UDim2.fromScale(0.367, 0.0965)}
+				Position={UDim2.fromScale(0.58, 0.95)}
+				Size={UDim2.fromScale(0.367, 0.05)}
 			>
 				<textlabel
 					AnchorPoint={new Vector2(0.5, 0.5)}
@@ -2513,7 +2577,8 @@ export const MainUi = (props: MainUiProps) => {
 					TextScaled={true}
 					TextStrokeColor3={Color3.fromRGB(255, 255, 255)}
 					TextWrapped={true}
-					TextXAlignment={Enum.TextXAlignment.Left}
+					TextYAlignment={Enum.TextYAlignment.Top}
+					TextXAlignment={Enum.TextXAlignment.Right}
 				>
 					<uistroke key={"UIStroke"} Color={Color3.fromRGB(20, 38, 80)} Thickness={4} />
 
