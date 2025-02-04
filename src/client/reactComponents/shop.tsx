@@ -219,7 +219,7 @@ interface GenericItemProps {
 	stats: ItemStat[]; // List of stats to display
 	image: string;
 	owned: boolean;
-	itemType: Exclude<ItemType, "Target">;
+	itemType: Exclude<Exclude<ItemType, "Target">, "Boats">;
 	price: number;
 	order: number;
 }

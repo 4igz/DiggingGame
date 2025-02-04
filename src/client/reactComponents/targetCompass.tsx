@@ -58,7 +58,7 @@ const DistanceLabel = () => {
 	}, [pos, visible]);
 
 	useEffect(() => {
-		const barX = math.clamp((startDistance - distance) / math.max(1, startDistance), 0, 1);
+		const barX = math.clamp((startDistance - distance) / math.max(1, startDistance), 0, 0.95);
 		setBarSize.spring(UDim2.fromScale(barX, 0.465), springs.bubbly);
 	}, [distance, startDistance]);
 
@@ -111,7 +111,7 @@ const DistanceLabel = () => {
 						key={"Meter"}
 						Position={UDim2.fromScale(0.025, 0.194)}
 						Size={barSize}
-						ZIndex={5}
+						ZIndex={1}
 					>
 						<frame
 							AnchorPoint={new Vector2(0.5, 0)}

@@ -10,6 +10,7 @@ interface BillboardGuiProps {
 	textColor?: Color3;
 	font?: Enum.Font;
 	offsetWorldSpace?: Vector3;
+	enabled: boolean;
 }
 
 export const RichBillboardText = (props: BillboardGuiProps) => {
@@ -18,6 +19,8 @@ export const RichBillboardText = (props: BillboardGuiProps) => {
 			StudsOffset={props.offsetWorldSpace ?? Vector3.zero}
 			Size={props.bbgSize ?? new UDim2(9, 0, 2, 0)}
 			Adornee={props.adornee}
+			Enabled={props.enabled ?? true}
+			AlwaysOnTop={true}
 		>
 			<textlabel
 				Text={props.text}

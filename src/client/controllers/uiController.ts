@@ -22,6 +22,7 @@ import { ZoneController } from "./zoneController";
 import { Signals } from "shared/signals";
 import { BoatShopComponent } from "client/reactComponents/boatShop";
 import { Popups } from "client/reactComponents/popups";
+import { ShovelController } from "./shovelController";
 
 @Controller({})
 export class UiController implements OnStart {
@@ -30,7 +31,11 @@ export class UiController implements OnStart {
 	private diggingBarActive = false; // We create this, so that we can cancel any active digging bar if we open another UI.
 	private autoDiggingEnabled = false;
 
-	constructor(private readonly autoDigging: AutoDigging, private readonly zoneController: ZoneController) {
+	constructor(
+		private readonly autoDigging: AutoDigging,
+		private readonly zoneController: ZoneController,
+		private readonly shovelController: ShovelController,
+	) {
 		StarterGui.SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false);
 
 		this.registerUi(
@@ -38,6 +43,7 @@ export class UiController implements OnStart {
 			React.createElement(DiggingBar),
 			{
 				visible: false,
+				shovelController: this.shovelController,
 			},
 			false,
 			true,

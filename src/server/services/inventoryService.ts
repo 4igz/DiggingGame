@@ -1,7 +1,7 @@
 import { Service, OnStart } from "@flamework/core";
 import { LoadedProfile, ProfileService } from "./profileService";
 import { Item, ItemType, Target, TargetItem } from "shared/networkTypes";
-import { ReplicatedStorage, ServerStorage } from "@rbxts/services";
+import { Players, ReplicatedStorage, ServerStorage } from "@rbxts/services";
 import { Events, Functions } from "server/network";
 import { metalDetectorConfig, MetalDetectorModule } from "shared/config/metalDetectorConfig";
 import { shovelConfig, ShovelModule } from "shared/config/shovelConfig";
@@ -27,11 +27,18 @@ export class InventoryService implements OnStart {
 	onStart() {
 		const inventoryConfigMap: Record<
 			ItemType,
-			{ inventoryKey: InventoryKeys<ProfileTemplate>; config: TargetModule | ShovelModule | MetalDetectorModule }
+			{
+				inventoryKey: InventoryKeys<ProfileTemplate>;
+				config: TargetModule | ShovelModule | MetalDetectorModule | typeof boatConfig;
+			}
 		> = {
 			MetalDetectors: { inventoryKey: "detectorInventory", config: metalDetectorConfig },
 			Shovels: { inventoryKey: "shovelInventory", config: shovelConfig },
 			Target: { inventoryKey: "targetInventory", config: fullTargetConfig },
+			Boats: {
+				inventoryKey: "targetInventory",
+				config: boatConfig,
+			},
 		};
 
 		this.profileService.onProfileLoaded.Connect((player: Player, profile) => {
@@ -83,6 +90,7 @@ export class InventoryService implements OnStart {
 					(value) => ({ name: value, type: itemType as ItemType, ...config[value as string] } as Item),
 				),
 			]);
+			Events.boughtItem(player, item, itemType, config[item]);
 		});
 
 		Events.buyBoat.connect((player, boatName) => {
@@ -103,6 +111,7 @@ export class InventoryService implements OnStart {
 			this.profileService.setProfile(player, profile);
 
 			Events.updateBoatInventory(player, profile.Data.ownedBoats);
+			Events.boughtItem(player, boatName, "Boats", boatConfig[boatName]);
 		});
 
 		Events.equipTreasure.connect((player, targetName) => {
@@ -186,6 +195,30 @@ export class InventoryService implements OnStart {
 			if (!profile) return new Map<string, boolean>();
 
 			return profile.Data.ownedBoats;
+		});
+
+		Players.PlayerAdded.Connect((player) => {
+			player.CharacterAdded.Connect((character) => {
+				const toolMotorContainer = character.WaitForChild("RightHand") as BasePart;
+				const motor = new Instance("Motor6D");
+				motor.Enabled = false;
+				motor.Part0 = toolMotorContainer;
+				motor.Name = "ToolMotor";
+				motor.Parent = toolMotorContainer;
+
+				character.ChildAdded.Connect((child) => {
+					if (child.IsA("Tool") && shovelConfig[child.Name]) {
+						const handle = child.WaitForChild("Shovel") as BasePart;
+						motor.Part1 = handle;
+						motor.Enabled = true;
+
+						child.AncestryChanged.Once(() => {
+							motor.Part1 = undefined;
+							motor.Enabled = false;
+						});
+					}
+				});
+			});
 		});
 	}
 

@@ -1,22 +1,22 @@
 import { Networking } from "@flamework/networking";
 import { Item, ItemType, PlayerDigInfo, SkillName, Target } from "./networkTypes";
-import { metalDetectorConfig } from "./config/metalDetectorConfig";
-import { shovelConfig } from "./config/shovelConfig";
+import { MetalDetector, metalDetectorConfig } from "./config/metalDetectorConfig";
+import { Shovel, shovelConfig } from "./config/shovelConfig";
 import { fullTargetConfig, targetConfig } from "./config/targetConfig";
 import { gameConstants } from "./constants";
 import { mapConfig } from "./config/mapConfig";
-import { boatConfig } from "./config/boatConfig";
+import { BoatConfig, boatConfig } from "./config/boatConfig";
 
 interface ClientToServerEvents {
 	dig: () => void;
 	sellAll: () => void;
 	sellTarget: (id: string) => void;
 	buyItem(
-		itemType: Exclude<ItemType, "Target">,
+		itemType: Exclude<Exclude<ItemType, "Target">, "Boats">,
 		itemName: keyof typeof metalDetectorConfig | keyof typeof shovelConfig | keyof typeof targetConfig,
 	): void;
 	buyBoat(boatName: keyof typeof boatConfig): void;
-	equipItem(itemType: Exclude<ItemType, "Target">, itemName: string): void;
+	equipItem(itemType: Exclude<Exclude<ItemType, "Target">, "Boats">, itemName: string): void;
 	/** Used for cancelling digging and cancelling detecting a target. */
 	endDiggingClient: () => void;
 	upgradeSkill: (skillName: SkillName) => void;
@@ -35,7 +35,7 @@ interface ServerToClientEvents {
 	updateLuckRoll: (roll: number, serverTime: number) => void;
 	targetSpawnSuccess(position: Vector3): void;
 	targetDespawned(): void;
-	createWaypointVisualization: (targetPosition: Vector3, detectorName: string, isNearby: boolean) => void;
+	createWaypointVisualization: (targetPosition: Vector3, detectorName: string) => void;
 	updateMoney: (money: string) => void;
 	updateLevelUi: (level: number, experience: number, nextLevelExperience: number, skillPoints: number) => void;
 	updateInventory: (
@@ -60,6 +60,7 @@ interface ServerToClientEvents {
 		sellAmount: number,
 	) => void;
 	soldAllItems: (count: number, sellAmount: number) => void;
+	boughtItem: (itemName: string, itemType: ItemType, itemConfig: Shovel | MetalDetector | BoatConfig) => void;
 }
 
 interface ClientToServerFunctions {

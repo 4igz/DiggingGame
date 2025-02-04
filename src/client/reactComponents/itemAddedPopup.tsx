@@ -129,18 +129,20 @@ export const ItemAddedPopup = (props: ItemPopupProps) => {
 				TextXAlignment={Enum.TextXAlignment.Center}
 				Text={
 					trashConfig[props.itemName]
-						? `You just discovered a ${props.itemName} at <font color="rgb(100,125,255)"><b>${string.format(
+						? `You just discovered ${
+								"aeiou".find(string.lower(props.itemName.sub(0, 1))).size() > 0 ? "an" : "a"
+						  } ${props.itemName} at <font color="rgb(100,125,255)"><b>${string.format(
 								"%.2f",
 								props.itemWeight,
 						  )}</b></font> kg!`
 						: // Trash items don't have rarities (assumed common)
-						  `You just discovered a <font color="rgb(${math.round(
-								RC[props.itemRarity].R * 255,
-						  )},${math.round(RC[props.itemRarity].G * 255)},${math.round(
-								RC[props.itemRarity].B * 255,
-						  )})">1 in ${shortenNumber(getOneInXChance(props.itemName, props.mapName))} ${
-								props.itemName
-						  }</font> at <font color="rgb(100,125,255)"><b>${string.format(
+						  `You just discovered ${
+								"aeiou".find(string.lower(props.itemName.sub(0, 1))).size() > 0 ? "an" : "a"
+						  } <font color="rgb(${math.round(RC[props.itemRarity].R * 255)},${math.round(
+								RC[props.itemRarity].G * 255,
+						  )},${math.round(RC[props.itemRarity].B * 255)})">1 in ${shortenNumber(
+								getOneInXChance(props.itemName, props.mapName),
+						  )} ${props.itemName}</font> at <font color="rgb(100,125,255)"><b>${string.format(
 								"%.2f",
 								props.itemWeight,
 						  )}</b></font> kg!`

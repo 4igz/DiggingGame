@@ -92,13 +92,19 @@ interface IsleEnterPopupProps {
 const connectedZoneNames = new Set<string>();
 
 export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
-	const [isleName, setIsleName] = useState<keyof typeof mapConfig>("Grasslands");
+	const [isleName, setIsleName] = useState<keyof typeof mapConfig>("");
+	const [firstEnter, setFirstEnter] = useState(true);
 	const [pos, posMotion] = useMotion(UDim2.fromScale(0.5, -0.3));
 	const [, transparencyMotion] = useMotion(1);
 	const [isleItems, setIsleItems] = useState<ItemProps[]>([]);
 	const frameRef = createRef<Frame>();
 
 	useEffect(() => {
+		if (!isleName || isleName === "") return;
+		if (firstEnter) {
+			setFirstEnter(false);
+			return;
+		}
 		const cfg = mapConfig[isleName];
 		if (!cfg) {
 			warn(`Island ${isleName} does not have a corresponding config in mapConfig`);
@@ -109,8 +115,8 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 		transparencyMotion.stop();
 
 		// Reset states:
-		posMotion.immediate(UDim2.fromScale(0.5, -0.3));
 		transparencyMotion.immediate(1);
+		posMotion.immediate(UDim2.fromScale(0.5, -0.3));
 		// setIsleItems([]); // Reset previous items
 
 		// Iterate through the targetList and add the items to the list
@@ -140,8 +146,10 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 			transparencyMotion.spring(1, springs.molasses);
 		});
 
-		transparencyMotion.spring(0, springs.pitch);
-		posMotion.spring(UDim2.fromScale(0.5, 0), springs.heavy);
+		task.defer(() => {
+			transparencyMotion.spring(0, springs.pitch);
+			posMotion.spring(UDim2.fromScale(0.5, 0), springs.heavy);
+		});
 
 		return () => {
 			cleaned = true;

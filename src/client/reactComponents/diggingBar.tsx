@@ -1,5 +1,5 @@
 import React, { ReactNode, useEffect, useState } from "@rbxts/react";
-import { RunService, UserInputService, Lighting } from "@rbxts/services";
+import { RunService, UserInputService, Lighting, Workspace } from "@rbxts/services";
 import { useMotion } from "client/hooks/useMotion";
 import { Events } from "client/network";
 import { springs } from "client/utils/springs";
@@ -8,10 +8,13 @@ import { PlayerDigInfo, Target } from "shared/networkTypes";
 
 import { BASE_SHOVEL_STRENGTH, shovelConfig } from "shared/config/shovelConfig";
 import { Signals } from "shared/signals";
+import { ShovelController } from "client/controllers/shovelController";
+import CameraShaker, { CameraShakeInstance } from "@rbxts/camera-shaker";
 
 export interface DiggingBarProps {
 	target?: Target;
 	digInfo?: PlayerDigInfo;
+	shovelController: ShovelController;
 
 	visible: boolean;
 }
@@ -25,15 +28,17 @@ redScreen.Parent = Lighting;
 const redTint = new Color3(1, 0.6, 0.6);
 const whiteTint = new Color3(1, 1, 1);
 
+const camera = Workspace.CurrentCamera;
+const defaultFov = camera?.FieldOfView ?? 70;
+const fovGoal = 50;
+
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-const lerpColor = (color1: Color3, color2: Color3, t: number) => {
-	return new Color3(lerp(color1.R, color2.R, t), lerp(color1.G, color2.G, t), lerp(color1.B, color2.B, t));
-};
 
 export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
-	const [barProgress, setBarProgress] = useMotion(0.5);
+	const [barProgress, setBarProgress] = useMotion(1);
 	const [rotation, setRotation] = useMotion(0);
 	const [cycle, setCycle] = useState(0);
+	const [fov, fovMotion] = useMotion(defaultFov);
 
 	const [scale, setScale] = useMotion(1);
 
@@ -72,16 +77,15 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 			}
 			const cfg = shovelConfig[props.digInfo.shovel];
 			const increment = props.digInfo.strength + cfg.strengthMult * BASE_SHOVEL_STRENGTH;
-			let hb: RBXScriptConnection | undefined = undefined;
-			let clickConnection: RBXScriptConnection | undefined = undefined;
 
 			// Create mock data for the target
 			let progress = target.digProgress;
 			let lastDigTime = tick();
 			let spawnedTask: thread | undefined = undefined;
 
-			clickConnection = UserInputService.InputBegan.Connect((input) => {
+			const clickConnection = UserInputService.InputBegan.Connect((input) => {
 				if (input.UserInputType === Enum.UserInputType.MouseButton1) {
+					if (!props.shovelController.getCanStartDigging()) return;
 					Events.dig();
 
 					// Since the server is rate limited by this same timer, we should
@@ -130,7 +134,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				});
 			});
 
-			hb = RunService.Heartbeat.Connect(() => {
+			const hb = RunService.Heartbeat.Connect(() => {
 				setBarProgress.spring((target.maxProgress - progress) / target.maxProgress, springs.responsive);
 
 				setWarnStage(0);
@@ -174,16 +178,36 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				hb?.Disconnect();
 			});
 
-			return () => {
-				endDiggingConnection.Disconnect();
+			const endDiggingSignalConnection = Signals.endDigging.Connect(() => {
+				redScreen.TintColor = whiteTint;
+
+				clickConnection?.Disconnect();
 				autoDigConnection?.Disconnect();
 				hb?.Disconnect();
-				clickConnection?.Disconnect();
+			});
+
+			return () => {
+				endDiggingConnection.Disconnect();
+				autoDigConnection.Disconnect();
+				endDiggingSignalConnection.Disconnect();
+				hb.Disconnect();
+				clickConnection.Disconnect();
 			};
 		} else {
 			setBarProgress.immediate(1);
+			fovMotion.spring(defaultFov, springs.responsive);
 		}
 	}, [visible]);
+
+	useEffect(() => {
+		fovMotion.spring(lerp(fovGoal, defaultFov, barProgress.getValue() / 1), springs.default);
+	}, [barProgress.getValue()]);
+
+	useEffect(() => {
+		fovMotion.onStep((value) => {
+			camera!.FieldOfView = value;
+		});
+	}, []);
 
 	return (
 		<frame
@@ -255,56 +279,10 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				BorderColor3={Color3.fromRGB(0, 0, 0)}
 				BorderSizePixel={0}
 				key={"Shovel Progress"}
-				Position={UDim2.fromScale(-0.397, -3.84e-8)}
-				Size={UDim2.fromScale(0.36, 0.967)}
-			>
-				<frame
-					AnchorPoint={new Vector2(0.5, 1)}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					key={"Shovel Marker"}
-					Position={barProgress.map((p) =>
-						UDim2.fromScale(math.clamp(1 - p, 0.5, 1), math.clamp(p + 0.15, 0.1, 1)),
-					)}
-					Size={UDim2.fromScale(1, 0.179)}
-				>
-					<uilistlayout
-						key={"UIListLayout"}
-						FillDirection={Enum.FillDirection.Horizontal}
-						SortOrder={Enum.SortOrder.LayoutOrder}
-						VerticalAlignment={Enum.VerticalAlignment.Center}
-					/>
-
-					<imagelabel
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						Image={"rbxassetid://90210450208885"}
-						key={"Shovel Icon"}
-						ScaleType={Enum.ScaleType.Fit}
-						Size={UDim2.fromScale(0.63, 0.798)}
-					>
-						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-					</imagelabel>
-
-					<imagelabel
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						Image={"rbxassetid://75994909740048"}
-						key={"Marker Icon"}
-						Position={UDim2.fromScale(0.63, 0.196)}
-						ScaleType={Enum.ScaleType.Fit}
-						Size={UDim2.fromScale(0.37, 0.469)}
-					>
-						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-					</imagelabel>
-				</frame>
-			</frame>
+				Position={UDim2.fromScale(-0.397, 0.0781)}
+				Size={UDim2.fromScale(0.298, 0.809)}
+				AnchorPoint={new Vector2(0.5, 0.5)}
+			></frame>
 
 			<frame
 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -472,7 +450,52 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 					Position={barProgress.map((p) => UDim2.fromScale(0.5, p))}
 					ScaleType={Enum.ScaleType.Fit}
 					Size={UDim2.fromScale(1, 1)}
-				/>
+				>
+					<frame
+						AnchorPoint={new Vector2(0.5, 1)}
+						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+						BackgroundTransparency={1}
+						BorderColor3={Color3.fromRGB(0, 0, 0)}
+						BorderSizePixel={0}
+						key={"Shovel Marker"}
+						Position={barProgress.map((p) => UDim2.fromScale(-0.5 - p, 1))}
+						Size={UDim2.fromScale(1, 1)}
+					>
+						<uilistlayout
+							key={"UIListLayout"}
+							FillDirection={Enum.FillDirection.Horizontal}
+							SortOrder={Enum.SortOrder.LayoutOrder}
+							VerticalAlignment={Enum.VerticalAlignment.Center}
+						/>
+
+						<imagelabel
+							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+							BackgroundTransparency={1}
+							BorderColor3={Color3.fromRGB(0, 0, 0)}
+							BorderSizePixel={0}
+							Image={"rbxassetid://90210450208885"}
+							key={"Shovel Icon"}
+							ScaleType={Enum.ScaleType.Fit}
+							Size={UDim2.fromScale(0.63, 0.798)}
+						>
+							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+						</imagelabel>
+
+						<imagelabel
+							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+							BackgroundTransparency={1}
+							BorderColor3={Color3.fromRGB(0, 0, 0)}
+							BorderSizePixel={0}
+							Image={"rbxassetid://75994909740048"}
+							key={"Marker Icon"}
+							Position={UDim2.fromScale(0.63, 0.196)}
+							ScaleType={Enum.ScaleType.Fit}
+							Size={UDim2.fromScale(0.37, 0.469)}
+						>
+							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+						</imagelabel>
+					</frame>
+				</imagelabel>
 			</frame>
 
 			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.61} />

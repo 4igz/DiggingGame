@@ -1,3 +1,4 @@
+import { BoatConfig } from "./config/boatConfig";
 import { MetalDetector } from "./config/metalDetectorConfig";
 import { Shovel, shovelConfig } from "./config/shovelConfig";
 import { targetConfig, TargetConfig } from "./config/targetConfig";
@@ -31,12 +32,13 @@ export interface PlayerDigInfo {
 }
 
 export type Rarity = "Common" | "Uncommon" | "Rare" | "Epic" | "Legendary" | "Mythical" | "Secret";
-export type ItemType = "MetalDetectors" | "Shovels" | "Target";
-export type Item = (
-	| (MetalDetector & { type: "MetalDetectors" })
-	| (Shovel & { type: "Shovels" })
-	| (TargetItem & { type: "Target" })
-) & { name: string };
+export type ItemType = "MetalDetectors" | "Shovels" | "Target" | "Boats";
+export type Item =
+	| (
+			| (MetalDetector & { type: "MetalDetectors" })
+			| (Shovel & { type: "Shovels" })
+			| (TargetItem & { type: "Target" })
+	  ) & { name: string };
 
 export type SkillName = "strength" | "luck" | "detection";
 

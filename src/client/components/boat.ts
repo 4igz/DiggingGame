@@ -113,6 +113,10 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 					playingTrack.Stop();
 				}
 				humanoid.ChangeState(Enum.HumanoidStateType.Running);
+				this.currentLinearVelocity = new Vector3(0, 0, 0);
+				this.currentAngularVelocity = new Vector3(0, 0, 0);
+				this.instance.Hull.ForceAttachment.LinearVelocity.VectorVelocity = this.currentLinearVelocity;
+				this.instance.Hull.ForceAttachment.AngularVelocity.AngularVelocity = this.currentAngularVelocity;
 			},
 			true,
 			ownerSeatPrompt.GamepadKeyCode,

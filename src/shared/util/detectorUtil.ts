@@ -52,7 +52,7 @@ export function findFurthestPointWithinRadius(
 
 // Same function as used on client and server to compute luck. Synced via ping and Workspace.GetServerTimeNow().
 export function computeLuckValue(elapsedTime: number): number {
-	const MAGNET_AT = 0.95;
+	const MAGNET_AT = 0.96;
 	const FREQUENCY = 0.55;
 	const MIN_LUCK = 0.15;
 

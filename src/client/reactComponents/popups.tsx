@@ -3,16 +3,19 @@ import { Events } from "client/network";
 import { fullTargetConfig } from "shared/config/targetConfig";
 import { ItemAddedPopup, ItemPopupProps } from "./itemAddedPopup";
 import { SoldItemPopup, SoldItemPopupProps } from "./soldItemPopup";
+import { Item } from "shared/networkTypes";
+import { BoughtItemPopup, BoughtItemPopupProps } from "./boughtItemPopup";
 
 const POPUP_TYPES = {
 	ItemAdded: "ItemAdded",
+	BoughtItem: "BoughtItem",
 	SoldItem: "SoldItem",
 };
 
 interface PopupProps {
 	id: number; // NEW: unique ID
+	popupProps: ItemPopupProps | SoldItemPopupProps | BoughtItemPopupProps;
 	popupType: keyof typeof POPUP_TYPES;
-	popupProps: ItemPopupProps | SoldItemPopupProps;
 }
 
 export const Popups = () => {
@@ -51,9 +54,79 @@ export const Popups = () => {
 			}
 		});
 
-		Events.soldItem.connect((itemName, itemRarity, sellAmount) => {});
+		Events.soldItem.connect((itemName, itemRarity, sellAmount) => {
+			nextId.current++;
+			const newId = nextId.current;
 
-		Events.soldAllItems.connect((count, sellAmount) => {});
+			setPopups((prev) => [
+				...prev,
+				{
+					id: newId,
+					popupType: "SoldItem",
+					popupProps: {
+						itemName,
+						itemRarity,
+						sellAmount,
+						isSellAll: false,
+						// Pass a callback that removes *this* popup's ID:
+						onComplete: () => {
+							setPopups((prev2) => {
+								return prev2.filter((popup) => popup.id !== newId);
+							});
+						},
+					},
+				},
+			]);
+		});
+
+		Events.soldAllItems.connect((sellCount, sellAmount) => {
+			nextId.current++;
+			const newId = nextId.current;
+
+			setPopups((prev) => [
+				...prev,
+				{
+					id: newId,
+					popupType: "SoldItem",
+					popupProps: {
+						itemName: "",
+						sellAmount,
+						isSellAll: true,
+						sellCount,
+						// Pass a callback that removes *this* popup's ID:
+						onComplete: () => {
+							setPopups((prev2) => {
+								return prev2.filter((popup) => popup.id !== newId);
+							});
+						},
+					},
+				},
+			]);
+		});
+
+		Events.boughtItem.connect((name, itemType, config) => {
+			nextId.current++;
+			const newId = nextId.current;
+
+			setPopups((prev) => [
+				...prev,
+				{
+					id: newId,
+					popupType: "BoughtItem",
+					popupProps: {
+						itemName: name,
+						itemImage: config.itemImage,
+						itemRarity: config.rarityType,
+						// Pass a callback that removes *this* popup's ID:
+						onComplete: () => {
+							setPopups((prev2) => {
+								return prev2.filter((popup) => popup.id !== newId);
+							});
+						},
+					},
+				},
+			]);
+		});
 	}, []);
 
 	return (
@@ -72,12 +145,11 @@ export const Popups = () => {
 			/>
 			{popups.map((popup) => {
 				if (popup.popupType === "ItemAdded") {
-					// Use "popup.id" for a stable React key:
-					if (popup.popupType === "ItemAdded") {
-						return <ItemAddedPopup key={popup.id} {...(popup.popupProps as ItemPopupProps)} />;
-					} else if (popup.popupType === "SoldItem") {
-						return <SoldItemPopup key={popup.id} {...(popup.popupProps as SoldItemPopupProps)} />;
-					}
+					return <ItemAddedPopup key={popup.id} {...(popup.popupProps as ItemPopupProps)} />;
+				} else if (popup.popupType === "SoldItem") {
+					return <SoldItemPopup key={popup.id} {...(popup.popupProps as SoldItemPopupProps)} />;
+				} else if (popup.popupType === "BoughtItem") {
+					return <BoughtItemPopup key={popup.id} {...(popup.popupProps as BoughtItemPopupProps)} />;
 				}
 			})}
 		</frame>

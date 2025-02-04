@@ -4,22 +4,18 @@ import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
 import { gameConstants } from "shared/constants";
 import { Rarity } from "shared/networkTypes";
-import { shortenNumber } from "shared/util/nameUtil";
+import { shortenNumber, spaceWords } from "shared/util/nameUtil";
 
 const RC = gameConstants.RARITY_COLORS;
 
-export interface SoldItemPopupProps {
-	itemName?: string;
-	itemRarity?: Rarity;
-	sellCount?: number;
-	sellAmount: number;
-	isSellAll: boolean;
+export interface BoughtItemPopupProps {
+	itemName: string;
+	itemImage: string;
+	itemRarity: Rarity;
 	onComplete: () => void;
 }
 
-const SOLD_ALL_COLOR = new Color3(0, 0.68, 1);
-
-export const SoldItemPopup = (props: SoldItemPopupProps) => {
+export const BoughtItemPopup = (props: BoughtItemPopupProps) => {
 	const [sizeMotion, setSizeMotion] = useMotion(UDim2.fromScale(0, 0));
 
 	const [spinValue, setSpinValue] = React.useState(0);
@@ -98,7 +94,7 @@ export const SoldItemPopup = (props: SoldItemPopupProps) => {
 					key={"ItemImage"}
 					Size={UDim2.fromScale(1, 1)}
 					ZIndex={5}
-					Image={"rbxassetid://96446480715038"}
+					Image={props.itemImage}
 					Rotation={spinValue * -180}
 				>
 					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1} />
@@ -127,19 +123,9 @@ export const SoldItemPopup = (props: SoldItemPopupProps) => {
 				RichText={true}
 				Size={UDim2.fromScale(2, 1)}
 				TextXAlignment={Enum.TextXAlignment.Center}
-				Text={`You just sold ${
-					props.isSellAll
-						? ""
-						: `${"aeiou".find(string.lower((props.itemName ?? "").sub(0, 1))).size() > 0 ? "an " : "a "}`
-				}<font color="rgb(${math.round(
-					props.itemRarity ? RC[props.itemRarity].R * 255 : SOLD_ALL_COLOR.R * 255,
-				)},${math.round(props.itemRarity ? RC[props.itemRarity].G * 255 : SOLD_ALL_COLOR.G * 255)},${math.round(
-					props.itemRarity ? RC[props.itemRarity].B * 255 : SOLD_ALL_COLOR.B * 255,
-				)})">${
-					props.isSellAll
-						? `${props.sellCount} ${(props.sellCount ?? 0) > 1 ? "ITEMS" : "ITEM"}`
-						: props.itemName
-				}</font> for <font color="rgb(0, 255, 0)"><b>$${shortenNumber(props.sellAmount)}</b></font>!`}
+				Text={`You bought a <font color="rgb(${RC[props.itemRarity].R * 255},${RC[props.itemRarity].G * 255},${
+					RC[props.itemRarity].B * 255
+				})">${spaceWords(props.itemName)}</font>`}
 				TextColor3={Color3.fromRGB(255, 255, 255)}
 				TextScaled={true}
 				TextWrapped={false}

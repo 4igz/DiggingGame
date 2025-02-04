@@ -195,7 +195,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 				Event={{
 					MouseButton1Click: () => {
 						// Equip the item
-						Events.equipItem(itemType, itemName);
+						Events.equipItem(itemType as Exclude<Exclude<ItemType, "Target">, "Boats">, itemName);
 						setPressed(true);
 						task.delay(0.1, () => setPressed(false));
 					},
@@ -1310,10 +1310,10 @@ const IndexPageItem = (props: IndexPageItemProps) => {
 					<imagelabel
 						Size={UDim2.fromScale(1, 1)}
 						BackgroundTransparency={1}
-						Image={
-							props.unlocked ? fullTargetConfig[props.itemName].itemImage : "rbxassetid://113782765462239"
-						} //FIXME: Replace with locked image
-					/>
+						Image={fullTargetConfig[props.itemName].itemImage}
+					>
+						<uigradient Color={new ColorSequence(Color3.fromRGB(0, 0, 0))} Enabled={!props.unlocked} />
+					</imagelabel>
 				</imagelabel>
 			</AnimatedButton>
 		</frame>
@@ -1554,7 +1554,6 @@ export const MainUi = (props: MainUiProps) => {
 					icon: "rbxassetid://100052274681629",
 				});
 			} else if (item.type === "Target") {
-
 				// Populate stats
 				stats.push({ key: "weight", value: item.weight, icon: "⚖️" });
 			}
@@ -2357,14 +2356,17 @@ export const MainUi = (props: MainUiProps) => {
 								Position={UDim2.fromScale(0.5, 0.25)}
 								Size={UDim2.fromScale(0.8, 0.4)}
 								Image={
-									selectedIndexItem.targetName !== "" &&
-									unlockedTreasures?.has(selectedIndexItem.targetName) === true
+									selectedIndexItem.targetName !== ""
 										? targetConfig[selectedIndexItem.targetName]?.itemImage ??
 										  "rbxassetid://113782765462239"
 										: "rbxassetid://113782765462239"
 								}
 							>
 								<uicorner key={"UICorner"} />
+								<uigradient
+									Color={new ColorSequence(new Color3(0, 0, 0))}
+									Enabled={unlockedTreasures?.has(selectedIndexItem.targetName) === false}
+								/>
 
 								<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 							</imagelabel>

@@ -174,7 +174,6 @@ export class DetectorService implements OnStart, OnTick {
 					now - lastVisualizationTime >= this.VISUALIZATION_RATE ||
 					positionDifference >= RECALCULATE_DISTANCE
 				) {
-					Events.createWaypointVisualization(player, digTarget.position, detector.Name, nearbyTarget);
 					this.lastVisualizationTimes.set(player, now);
 					this.lastPlayerPositions.set(player, playerPosition);
 				}

@@ -221,7 +221,7 @@ export const trashConfig: TargetModule = {
 		rarityType: "Common",
 		baseWeight: new NumberRange(2.5, 11),
 		basePrice: 2.5,
-		itemImage: "rbxassetid://134314922415893",
+		itemImage: "rbxassetid://91884190576086",
 	},
 	["Old ring"]: {
 		reqStrength: 0,

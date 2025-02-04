@@ -34,8 +34,11 @@ export class TargetService implements OnStart, OnTick {
 	public activeTargets: Array<Target> = new Array();
 	public playerDigCooldown: Map<Player, boolean> = new Map();
 	public playerDiggingTargets: Map<Player, Target> = new Map();
+	private playerLastSuccessfulDigCooldown: Set<Player> = new Set();
 
 	private rng = new Random(tick());
+
+	private readonly SUCCESSFUL_DIG_COOLDOWN = 1; // Prevent player from immediately digging again after just finishing digging
 
 	constructor(
 		private readonly profileService: ProfileService,
@@ -153,6 +156,7 @@ export class TargetService implements OnStart, OnTick {
 			if (this.playerDigCooldown.get(player)) {
 				return;
 			}
+			if (this.playerLastSuccessfulDigCooldown.has(player)) return;
 
 			let target = this.getPlayerTarget(player);
 			if (!target) {
@@ -167,6 +171,17 @@ export class TargetService implements OnStart, OnTick {
 
 				const map = Maps.find((map) => map.Name === mapName) as Folder | undefined;
 				if (!map) return;
+
+				const profile = this.profileService.getProfile(player);
+				if (!profile) return;
+
+				const shovel = character.FindFirstChild(profile.Data.equippedShovel) as Tool;
+
+				if (!shovel) {
+					// They are trying to dig without a shovel equipped.
+					// This is likely due to latency
+					return;
+				}
 
 				// Get the spawn bases from the map
 				const spawnBaseFolder = map.WaitForChild("SpawnBases");
@@ -198,9 +213,17 @@ export class TargetService implements OnStart, OnTick {
 				return;
 			}
 			const targetDistance = player.Character?.PrimaryPart?.Position.sub(target.position).Magnitude;
-			if (targetDistance === undefined) return;
+			if (targetDistance === undefined) {
+				// This can happen when their character is destroyed, forex, they fell into void or reset.
+				Events.endDiggingServer.fire(player, target.itemId);
+				return;
+			}
 			// Ensure exploiters can't dig from far away
-			if (targetDistance > gameConstants.DIG_RANGE * 2) return;
+			if (targetDistance > gameConstants.DIG_RANGE * 2) {
+				Events.endDiggingServer.fire(player, target.itemId); // End, incase this is a person trying to dig from far away.
+				// If we didn't end then their dig wouldn't end until the timer ran out and they would be stuck.
+				return;
+			}
 
 			this.dig(player, target);
 		});
@@ -244,7 +267,14 @@ export class TargetService implements OnStart, OnTick {
 		}
 
 		// Add experience to the player
+		// TODO: Take rarity, or if it's trash into account.
 		this.levelService.addExperience(player, target.weight * 10);
+
+		this.playerLastSuccessfulDigCooldown.add(player);
+
+		task.delay(this.SUCCESSFUL_DIG_COOLDOWN, () => {
+			this.playerLastSuccessfulDigCooldown.delete(player);
+		});
 
 		// Delete the debugPart in the base with the same position as this target
 		if (RunService.IsStudio()) {
@@ -330,6 +360,8 @@ export class TargetService implements OnStart, OnTick {
 			shovel.Parent = backpack;
 			const detector = backpack.FindFirstChild(profile.Data.equippedDetector) as Tool;
 			if (detector) {
+				// We use attributes to reliably replicate the last dig time in time for the client to see the parented
+				detector.SetAttribute("LastSuccessfulDigTime", tick()); // For the client to know when they last successfully dug
 				detector.Parent = character;
 			}
 		}
@@ -391,6 +423,7 @@ export class TargetService implements OnStart, OnTick {
 		this.activeTargets.push(target);
 
 		Events.targetSpawnSuccess.fire(player, position);
+		Events.createWaypointVisualization(player, position, profile.Data.equippedDetector);
 
 		// Just a part to visualize targets for debugging
 		if (RunService.IsStudio()) {
@@ -428,7 +461,6 @@ export class TargetService implements OnStart, OnTick {
 			this.devproductService.serverLuckMultiplier(player) *
 			luckMult;
 
-		print(totalLuck);
 
 		const targetData = this.rollTarget(profile.Data.currentMap, totalLuck);
 
@@ -573,8 +605,6 @@ export class TargetService implements OnStart, OnTick {
 		let sortedCumulative: [keyof typeof fullTargetConfig, number][] = [...Object.entries(cumulativeMap)];
 		sortedCumulative = Sift.Array.sort(sortedCumulative, (a, b) => a[1] > b[1]);
 
-		print(`addLuck: ${addLuck}, totalWeight: ${totalWeight}, roll: ${roll}, sortedCumulative:`, sortedCumulative);
-
 		let selectedTarget: keyof typeof fullTargetConfig | undefined;
 
 		for (const [name, cumulative] of sortedCumulative) {
@@ -645,8 +675,6 @@ export class TargetService implements OnStart, OnTick {
 		//    (Same logic as your Lua code.)
 		let chosenItem: string | undefined = undefined;
 		let smallestWeightAboveRoll = math.huge;
-
-		print(scaledRoll, weightMap);
 
 		for (const [itemName, weight] of Object.entries(weightMap)) {
 			if (scaledRoll < weight && weight < smallestWeightAboveRoll) {

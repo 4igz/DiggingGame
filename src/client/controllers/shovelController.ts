@@ -1,4 +1,4 @@
-import { Controller, OnStart, OnTick } from "@flamework/core";
+import { Controller, OnStart } from "@flamework/core";
 import Signal from "@rbxts/goodsignal";
 import {
 	CollectionService,
@@ -16,7 +16,17 @@ import { gameConstants } from "shared/constants";
 import { Signals } from "shared/signals";
 import { getTopmostPartAtPosition } from "shared/util/castingUtil";
 import { interval } from "shared/util/interval";
-import { emitParticleDescendants, setParticleDescendantsEnabled } from "shared/util/vfxUtil";
+import { emitParticleDescendants, emitUsingAttributes, setParticleDescendantsEnabled } from "shared/util/vfxUtil";
+import { ZoneController } from "./zoneController";
+import CameraShaker from "@rbxts/camera-shaker";
+
+const camera = Workspace.CurrentCamera;
+
+const camShake = new CameraShaker(
+	Enum.RenderPriority.Camera.Value,
+	(shakeCFrame) => (camera!.CFrame = camera!.CFrame.mul(shakeCFrame)),
+);
+camShake.Start();
 
 @Controller({})
 export class ShovelController implements OnStart {
@@ -27,8 +37,9 @@ export class ShovelController implements OnStart {
 	private isAutoDigging = false;
 	public onDiggingComplete = new Signal<() => void>();
 	private previousDigLocation = new Vector3();
+	private canStartDigging = false;
 
-	constructor() {
+	constructor(private readonly zoneController: ZoneController) {
 		let autoSendDigCD = interval(gameConstants.AUTO_DIG_CLICK_INTERVAL);
 		const AnimationFolder = ReplicatedStorage.WaitForChild("Animations");
 
@@ -153,6 +164,7 @@ export class ShovelController implements OnStart {
 
 							// If we're auto-digging, try to start dig
 							if (this.diggingActive && this.isAutoDigging && autoSendDigCD()) {
+								this.canStartDigging = true;
 								Signals.autoDig.Fire();
 								this.lastDiggingTime = tick();
 								Events.dig(); // Fire to server
@@ -185,7 +197,7 @@ export class ShovelController implements OnStart {
 
 					// === Hook into tool activation ===
 					let toolConnection: RBXScriptConnection | undefined;
-					const thread = task.delay(0.5, () => {
+					const thread = task.spawn(() => {
 						toolConnection = child.Activated.Connect(() => {
 							if (this.diggingActive) {
 								startDiggingAnimation();
@@ -225,8 +237,10 @@ export class ShovelController implements OnStart {
 						// Reset speed
 						humanoid.WalkSpeed = 16;
 
+						this.canStartDigging = false;
 						// If we were digging, end it
 						if (this.diggingActive) {
+							Signals.endDigging.Fire();
 							this.diggingActive = false;
 							Events.endDiggingClient();
 							this.onDiggingComplete.Fire();
@@ -251,6 +265,7 @@ export class ShovelController implements OnStart {
 		const VfxFolder = ReplicatedStorage.WaitForChild("VFX");
 		const digVfx = VfxFolder.WaitForChild("DiggingVfx") as BasePart;
 		const rewardVfx = VfxFolder.WaitForChild("Reward") as BasePart;
+		const digCompleteVfx = VfxFolder.WaitForChild("DigCompletionVfx") as BasePart;
 		const digModels = new Map<string, Model>();
 		const digTroves = new Map<string, Trove>();
 		const diggingConnections = new Array<RBXScriptConnection>();
@@ -267,6 +282,7 @@ export class ShovelController implements OnStart {
 			this.diggingActive = true;
 			this.lastDiggingTime = tick();
 			this.previousDigLocation = character.GetPivot().Position;
+			this.canStartDigging = true;
 
 			// Make the player face the target.
 			const pivot = character.GetPivot();
@@ -327,6 +343,7 @@ export class ShovelController implements OnStart {
 			// const h = new Instance("Highlight");
 			// h.Parent = model;
 
+			const currentMapFolder = Workspace.FindFirstChild(this.zoneController.getCurrentMapName());
 			const params = new RaycastParams();
 			params.FilterType = Enum.RaycastFilterType.Exclude;
 			params.FilterDescendantsInstances = [
@@ -336,6 +353,9 @@ export class ShovelController implements OnStart {
 				target.base,
 				...(target.base && target.base.Parent ? [target.base.Parent] : []),
 				...CollectionService.GetTagged("DigCrater"),
+				currentMapFolder?.FindFirstChild("Others") as Folder,
+				currentMapFolder?.FindFirstChild("SpawnBases") as Folder,
+				currentMapFolder?.FindFirstChild("PathfindingModifiers") as Folder,
 			];
 			// const raycast = Workspace.Raycast(target.position, new Vector3(0, -5, 0), params);
 			const [hitPart, hitPosition] = getTopmostPartAtPosition(target.position, params, 5, 10);
@@ -344,7 +364,12 @@ export class ShovelController implements OnStart {
 			const craterParts = 12;
 			let color = Color3.fromRGB(101, 67, 33);
 
-			if (hitPart && hitPart.Material !== Enum.Material.Grass && hitPart.Material !== Enum.Material.LeafyGrass) {
+			if (
+				hitPart &&
+				hitPart.Material !== Enum.Material.Grass &&
+				hitPart.Material !== Enum.Material.LeafyGrass &&
+				hitPart.Material !== Enum.Material.Ground
+			) {
 				color = hitPart.Color;
 			}
 
@@ -385,7 +410,7 @@ export class ShovelController implements OnStart {
 							),
 						);
 
-						if (progress >= maxProgress * 0.9) {
+						if (progress >= maxProgress * 0.99) {
 							// Play some vfx and sounds when completing digging.
 							setParticleDescendantsEnabled(model);
 							model.SetAttribute("DiggingComplete", true);
@@ -403,6 +428,12 @@ export class ShovelController implements OnStart {
 				if (!character) return;
 				setSize.Fire((this.digProgress / this.digGoal) * craterSize);
 				digSound?.Play();
+
+				// A tiny bump to the camera
+				const c = new CameraShaker.CameraShakeInstance(1, 4, 0, 0.3);
+				c.PositionInfluence = new Vector3(1, 1, 1);
+				c.RotationInfluence = new Vector3(0, 0, 5);
+				camShake.Shake(c);
 
 				// Emit some dirt particles
 				emitParticleDescendants(diggingVfx, 7);
@@ -424,20 +455,23 @@ export class ShovelController implements OnStart {
 				// const raycast = Workspace.Raycast(origin, new Vector3(0, -5, 0), params);
 				const [hitPart] = getTopmostPartAtPosition(origin, params, 5, 10);
 
-				const particleNum = math.random(5, 15);
+				const particleNum = math.random(8, 14);
+				const rng = new Random(tick());
 				for (let i = 0; i < particleNum; i++) {
 					const dirtBlock = new Instance("Part");
 					const minSize = 0.55;
-					const maxSize = 2;
+					const maxSize = 1.8;
 					dirtBlock.Size = new Vector3(
-						math.random(minSize, maxSize),
-						math.random(minSize, maxSize),
-						math.random(minSize, maxSize),
+						rng.NextNumber(minSize, maxSize),
+						rng.NextNumber(minSize, maxSize),
+						rng.NextNumber(minSize, maxSize),
 					);
 
 					if (
 						hitPart &&
-						(hitPart.Material === Enum.Material.Grass || hitPart.Material === Enum.Material.LeafyGrass)
+						(hitPart.Material === Enum.Material.Grass ||
+							hitPart.Material === Enum.Material.LeafyGrass ||
+							hitPart.Material === Enum.Material.Ground)
 					) {
 						dirtBlock.Color = Color3.fromRGB(101, 67, 33); // Dirt color
 					} else {
@@ -462,8 +496,8 @@ export class ShovelController implements OnStart {
 					);
 
 					task.defer(() => {
-						dirtBlock.ApplyImpulse(randomForce.mul(mass));
-						dirtBlock.ApplyAngularImpulse(randomForce.mul(mass));
+						dirtBlock.ApplyImpulse(randomForce.mul(mass * 1.3));
+						dirtBlock.ApplyAngularImpulse(randomForce.mul(mass / 2));
 					});
 
 					// Create a tween for fading out the dirt block
@@ -490,7 +524,9 @@ export class ShovelController implements OnStart {
 
 		Events.endDiggingServer.connect((itemId?: string) => {
 			this.diggingActive = false;
+			this.canStartDigging = false;
 			this.onDiggingComplete.Fire();
+			Signals.endDigging.Fire();
 			if (!itemId) return;
 			const existingModel = digModels.get(itemId);
 			const digTrove = digTroves.get(itemId);
@@ -501,6 +537,20 @@ export class ShovelController implements OnStart {
 				if (primaryPart) {
 					if (existingModel.GetAttribute("DiggingComplete")) {
 						SoundService.PlayLocalSound(digOutSound);
+
+						// A larger camera bump
+						const c = new CameraShaker.CameraShakeInstance(2, 10, 0, 0.3);
+						c.PositionInfluence = new Vector3(2, 2, 2);
+						c.RotationInfluence = new Vector3(5, 5, 0);
+						camShake.Shake(c);
+
+						const digCompleteVfxClone = digCompleteVfx.Clone();
+						digCompleteVfxClone.PivotTo(new CFrame(existingModel.GetAttribute("TrackedOrigin") as Vector3));
+						digCompleteVfxClone.Parent = Workspace;
+						digTrove.add(digCompleteVfxClone);
+						task.defer(function () {
+							emitUsingAttributes(digCompleteVfxClone);
+						});
 
 						const character = Players.LocalPlayer.Character;
 						if (!character || !character.PrimaryPart || !existingModel.PrimaryPart) return;
@@ -578,6 +628,10 @@ export class ShovelController implements OnStart {
 		});
 	}
 
+	public getCanStartDigging() {
+		return this.canStartDigging;
+	}
+
 	public getDiggingActive() {
 		return this.diggingActive;
 	}
@@ -595,8 +649,8 @@ export class ShovelController implements OnStart {
 		trackedOrigin: Vector3,
 		material: Enum.Material | undefined,
 		digTrove: Trove,
-	): [Signal<(size: number) => void>, Sound] {
-		const digHole = new Signal<(size: number) => void>();
+	): [Signal<(size: number) => void>, Sound, BasePart] {
+		const digHoleSignal = new Signal<(size: number) => void>();
 
 		const hole = new Instance("Part");
 		hole.Shape = Enum.PartType.Cylinder;
@@ -667,7 +721,7 @@ export class ShovelController implements OnStart {
 
 		let prevSize = holeRadius;
 
-		digHole.Connect((size) => {
+		digHoleSignal.Connect((size) => {
 			if (size < prevSize) return; // Only allow size increases
 			// Clamp size to maxSize
 			size = math.min(size, maxSize);
@@ -716,8 +770,8 @@ export class ShovelController implements OnStart {
 			}
 		});
 
-		digHole.Fire(holeRadius);
+		digHoleSignal.Fire(holeRadius);
 
-		return [digHole, digSound!];
+		return [digHoleSignal, digSound!, hole];
 	}
 }

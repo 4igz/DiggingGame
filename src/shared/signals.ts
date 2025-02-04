@@ -12,6 +12,7 @@ export const Signals = {
 	startDigging: new Signal<(player: Player, target: Target) => void>(),
 
 	// Client only signals:
+	endDigging: new Signal<() => void>(),
 	autoDig: new Signal<() => void>(),
 	dig: new Signal<() => void>(),
 	forceSetAutoDigging: new Signal<(enabled: boolean) => void>(),

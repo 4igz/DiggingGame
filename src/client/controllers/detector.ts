@@ -5,17 +5,20 @@ import { BASE_DETECTOR_STRENGTH, metalDetectorConfig } from "shared/config/metal
 import { Trove } from "@rbxts/trove";
 import { Signals } from "shared/signals";
 import { ShovelController } from "./shovelController";
+import { interval } from "shared/util/interval";
 
 @Controller({})
 export class Detector implements OnStart, OnTick {
 	private VFX_FOLDER = ReplicatedStorage.WaitForChild("VFX");
 	private ANIMATION_FOLDER = ReplicatedStorage.WaitForChild("Animations");
-	private areaIndicatorVFX = this.VFX_FOLDER.FindFirstChild("Area") as BasePart;
+	private areaIndicatorVFX = this.VFX_FOLDER.FindFirstChild("DigAreaIndicatorVfx") as BasePart;
 	private beepSound = SoundService.WaitForChild("DetectorBeep") as Sound;
 	private areaIndicator: BasePart | undefined;
 	private arrowIndicator?: BasePart; // Cloned from ReplicatedStorage
 	private renderStepId = "WaypointArrow";
 	private metalDetectorAnimation = this.ANIMATION_FOLDER.FindFirstChild("MetalDetector") as Animation;
+
+	private SUCCESSFUL_DIG_DETECT_COOLDOWN = 1;
 
 	private autoDigRunning = false;
 	private isAutoDigging = false;
@@ -23,6 +26,9 @@ export class Detector implements OnStart, OnTick {
 	private isRolling = false;
 	private phase = 0;
 	private currentBeepSound: Sound | undefined = undefined;
+
+	private DIG_DING_INTERVAL = interval(1);
+	private dingSound = SoundService.WaitForChild("UI")?.WaitForChild("DigDing") as Sound;
 
 	constructor(private readonly shovelController: ShovelController) {}
 
@@ -56,6 +62,9 @@ export class Detector implements OnStart, OnTick {
 			// Detect tools being equipped
 			character.ChildAdded.Connect((child) => {
 				if (child.IsA("Tool") && metalDetectorConfig[child.Name]) {
+					// We use this to check if the player has just finished digging, to determine if the equip should have a cooldown
+					// before working since they are possibly still spam clicking the shovel as the detector is being equipped.
+					const lastSuccessfulDigTime = child.GetAttribute("LastSuccessfulDigTime") as number | undefined;
 					if (!detectorTrack) {
 						const animator = humanoid.WaitForChild("Animator") as Animator;
 						const detectorAnimation = this.metalDetectorAnimation.Clone();
@@ -75,29 +84,33 @@ export class Detector implements OnStart, OnTick {
 					detectorTrack.Play();
 
 					// The delay is so that the player doesn't accidentally start detecting immediately after digging.
-					const thread = task.delay(0.5, () => {
-						trove.add(
-							child.Activated.Connect(() => {
-								if (this.targetActive || this.isRolling || (this.isAutoDigging && this.autoDigRunning))
-									return;
-								this.isRolling = true;
-								Events.beginDetectorLuckRoll();
-								Signals.startLuckbar.Fire();
-							}),
-						);
+					const thread = task.delay(
+						tick() - (lastSuccessfulDigTime ?? 0) > this.SUCCESSFUL_DIG_DETECT_COOLDOWN ? 0 : 0.5,
+						() => {
+							trove.add(
+								child.Activated.Connect(() => {
+									if (
+										this.targetActive ||
+										this.isRolling ||
+										(this.isAutoDigging && this.autoDigRunning)
+									)
+										return;
+									this.isRolling = true;
+									Events.beginDetectorLuckRoll();
+									Signals.startLuckbar.Fire();
+								}),
+							);
 
-						trove.add(
-							child.Deactivated.Connect(() => {
-								if (!this.isRolling || (this.isAutoDigging && this.autoDigRunning)) return;
-								this.isRolling = false;
-								Events.endDetectorLuckRoll();
-								Signals.pauseLuckbar.Fire();
-								task.delay(1, () => {
+							trove.add(
+								child.Deactivated.Connect(() => {
+									if (!this.isRolling || (this.isAutoDigging && this.autoDigRunning)) return;
+									this.isRolling = false;
+									Events.endDetectorLuckRoll();
 									Signals.closeLuckbar.Fire();
-								});
-							}),
-						);
-					});
+								}),
+							);
+						},
+					);
 
 					// Cleanup indicators when unequipping
 					child.AncestryChanged.Once(() => {
@@ -147,37 +160,16 @@ export class Detector implements OnStart, OnTick {
 			}
 		});
 
-		Events.createWaypointVisualization.connect((position: Vector3, detectorName: string, isNearby: boolean) => {
+		Events.createWaypointVisualization.connect((position: Vector3, detectorName: string) => {
 			// First create a path to the target position and line it with indicators.
-			const player = Players.LocalPlayer;
-			const character = player.Character;
-			if (!character) return;
-			const startPosition = character.PrimaryPart?.Position;
-			if (!startPosition) return;
 			const detectorCfg = metalDetectorConfig[detectorName];
 			if (!detectorCfg) {
 				warn(`Detector config not found for ${detectorName}`);
 				return;
 			}
 
-			// Randomize the area indicator position, but use a set seed so each target has the same area
-			if (isNearby) {
-				const rng = new Random(position.X + position.Y + position.Z);
-				const randomAngle = rng.NextNumber() * 2 * math.pi;
-				const randomRadius = math.sqrt(rng.NextNumber()) * (detectorCfg.searchRadius / 4); // Reduced radius to center the target
-				const offsetX = math.cos(randomAngle) * randomRadius;
-				const offsetZ = math.sin(randomAngle) * randomRadius;
-				const offsetPosition = new Vector3(offsetX, 0, offsetZ);
-				const finalPosition = position.add(offsetPosition).add(new Vector3(0, 1, 0));
-				const areaIndicator = this.areaIndicator ?? this.areaIndicatorVFX.Clone();
-				areaIndicator.Size = new Vector3(detectorCfg.searchRadius, 0.001, detectorCfg.searchRadius);
-				areaIndicator.SetAttribute("OriginalPosition", finalPosition);
-				areaIndicator.Position = finalPosition;
-				areaIndicator.Parent = Workspace;
-				this.areaIndicator = areaIndicator;
-			}
 			// Start tweening the waypoint indicator
-			this.showWaypointArrow(position);
+			this.showWaypointArrow(position, detectorCfg.searchRadius);
 		});
 	}
 
@@ -194,7 +186,7 @@ export class Detector implements OnStart, OnTick {
 		return root;
 	}
 
-	public showWaypointArrow(targetPos: Vector3) {
+	public showWaypointArrow(targetPos: Vector3, detectorSearchRadius: number) {
 		const playerRootPart = this.getLocalPlayerRootPart();
 		if (!playerRootPart) {
 			warn("No player root part found, cannot show arrow");
@@ -227,7 +219,7 @@ export class Detector implements OnStart, OnTick {
 		if (!character || !character.Parent) return;
 
 		// Setup the arrow to update every frame
-		RunService.BindToRenderStep(this.renderStepId, Enum.RenderPriority.Camera.Value + 1, () => {
+		RunService.BindToRenderStep(this.renderStepId, Enum.RenderPriority.Input.Value + 1, () => {
 			const camera = Workspace.CurrentCamera ?? undefined;
 			if (!camera || !this.arrowIndicator) return;
 			let detector = character.FindFirstChildOfClass("Tool");
@@ -245,6 +237,25 @@ export class Detector implements OnStart, OnTick {
 			} else {
 				// If somehow the waypoint is exactly at the player, just match positions
 				this.arrowIndicator.CFrame = new CFrame(playerRootPart.Position);
+			}
+
+			const isNearby = distance < detectorSearchRadius;
+
+			// Randomize the area indicator position, but use a set seed so each target has the same area
+			if (isNearby && !this.areaIndicator) {
+				const rng = new Random(targetPos.X + targetPos.Y + targetPos.Z);
+				const randomAngle = rng.NextNumber() * 2 * math.pi;
+				const randomRadius = math.sqrt(rng.NextNumber()) * (detectorSearchRadius / 4); // Reduced radius to center the target
+				const offsetX = math.cos(randomAngle) * randomRadius;
+				const offsetZ = math.sin(randomAngle) * randomRadius;
+				const offsetPosition = new Vector3(offsetX, 0, offsetZ);
+				const finalPosition = targetPos.add(offsetPosition).add(new Vector3(0, 1, 0));
+				const areaIndicator = this.areaIndicator ?? this.areaIndicatorVFX.Clone();
+				areaIndicator.Size = new Vector3(detectorSearchRadius, 0.001, detectorSearchRadius);
+				areaIndicator.SetAttribute("OriginalPosition", finalPosition);
+				areaIndicator.Position = finalPosition;
+				areaIndicator.Parent = Workspace;
+				this.areaIndicator = areaIndicator;
 			}
 
 			// Rotate the arrow to match the angle from camera to waypoint
@@ -331,6 +342,11 @@ export class Detector implements OnStart, OnTick {
 						}
 					}
 				}
+			} else if (canDig) {
+				// Play ding sound to say that they can dig every second.
+				if (this.DIG_DING_INTERVAL()) {
+					SoundService.PlayLocalSound(this.dingSound);
+				}
 			}
 			prevSinVal = sinVal;
 		});
@@ -348,22 +364,18 @@ export class Detector implements OnStart, OnTick {
 	}
 
 	onTick(): void {
-		if (this.areaIndicator) {
-			const t = os.clock();
-			const rotationSpeed = 45; // degrees per second
-			const bobbingSpeed = 2; // radians per second
-			const bobbingHeight = 0.5; // studs
-
-			if (!this.areaIndicator.GetAttribute("OriginalPosition")) {
-				this.areaIndicator.SetAttribute("OriginalPosition", this.areaIndicator.Position);
-			}
-
-			const originalPosition = this.areaIndicator.GetAttribute("OriginalPosition") as Vector3;
-
-			const rotation = CFrame.Angles(0, math.rad(t * rotationSpeed), 0);
-			const bobOffset = math.sin(t * bobbingSpeed) * bobbingHeight;
-
-			this.areaIndicator.CFrame = new CFrame(originalPosition).mul(rotation).mul(new CFrame(0, bobOffset, 0));
-		}
+		// if (this.areaIndicator) {
+		// 	const t = os.clock();
+		// 	const rotationSpeed = 45; // degrees per second
+		// 	const bobbingSpeed = 2; // radians per second
+		// 	const bobbingHeight = 0.1; // studs
+		// 	if (!this.areaIndicator.GetAttribute("OriginalPosition")) {
+		// 		this.areaIndicator.SetAttribute("OriginalPosition", this.areaIndicator.Position);
+		// 	}
+		// 	const originalPosition = this.areaIndicator.GetAttribute("OriginalPosition") as Vector3;
+		// 	const rotation = CFrame.Angles(0, math.rad(t * rotationSpeed), 0);
+		// 	const bobOffset = math.sin(t * bobbingSpeed) * bobbingHeight;
+		// 	this.areaIndicator.CFrame = new CFrame(originalPosition).mul(rotation).mul(new CFrame(0, bobOffset, 0));
+		// }
 	}
 }
