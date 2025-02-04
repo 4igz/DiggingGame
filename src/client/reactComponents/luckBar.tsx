@@ -6,6 +6,7 @@ import { springs } from "client/utils/springs";
 import { gameConstants, ROLL_TYPES } from "shared/constants";
 import { Signals } from "shared/signals";
 import { computeLuckValue } from "shared/util/detectorUtil";
+import { emitUsingAttributes } from "shared/util/vfxUtil";
 
 interface LuckBarProps {
 	visible: boolean;
@@ -19,9 +20,10 @@ const camera = Workspace.CurrentCamera;
 const defaultFov = camera?.FieldOfView ?? 70;
 const fovGoal = 60;
 
-const detectorEffectTextContainer = ReplicatedStorage.WaitForChild("VFX").FindFirstChild(
-	"DetectorEffectTextVfx",
-) as Part;
+const vfx = ReplicatedStorage.WaitForChild("VFX") as Folder;
+const detectorEffectTextContainer = vfx.FindFirstChild("DetectorEffectTextVfx") as Part;
+const highRollVfx = vfx.FindFirstChild("HighRollContainer")?.FindFirstChild("fx") as Attachment;
+const lowRollVfx = vfx.FindFirstChild("LowRollContainer")?.FindFirstChild("fx") as Attachment;
 const tickSound = SoundService.WaitForChild("UI").WaitForChild("LuckBarTick") as Sound;
 const luckRollSoundContainer = SoundService.WaitForChild("LuckRolls");
 let lastPlayedLuck = 1;
@@ -99,8 +101,8 @@ export default function LuckBar(props: LuckBarProps) {
 		// Give some visual aid to show the player how they rolled
 		const character = Players.LocalPlayer.Character;
 		if (!character) return;
-		const rollVfxClone = detectorEffectTextContainer.Clone();
-		rollVfxClone.PivotTo(character.GetPivot().add(new Vector3(math.random(-3, 3), 1, math.random(-3, 3))));
+		const rollTextVfxClone = detectorEffectTextContainer.Clone();
+		rollTextVfxClone.PivotTo(character.GetPivot().add(new Vector3(math.random(-3, 3), 1, math.random(-3, 3))));
 		let rollType;
 		let highestValue = -1;
 		for (const [roll, value] of Object.entries(gameConstants.ROLL_LUCK_VALUES)) {
@@ -113,7 +115,17 @@ export default function LuckBar(props: LuckBarProps) {
 			warn("No roll type found for luck value", currentLuck);
 			return;
 		}
-		const gui = rollVfxClone.WaitForChild("DetectorEffectText") as BillboardGui;
+		const vfx = currentLuck > gameConstants.HIGH_ROLL_THRESHOLD ? highRollVfx : lowRollVfx;
+		const vfxClone = vfx.Clone();
+		for (const descendant of vfxClone.GetDescendants()) {
+			if (descendant.IsA("ParticleEmitter")) {
+				descendant.Color = gameConstants.ROLL_COLORS[rollType];
+			}
+		}
+		vfxClone.Position = Vector3.zero;
+		vfxClone.Parent = character.PrimaryPart;
+
+		const gui = rollTextVfxClone.WaitForChild("DetectorEffectText") as BillboardGui;
 		const text = gui.WaitForChild("Text") as TextLabel;
 		text.Text = ROLL_TYPES[rollType];
 		const gradient = text.WaitForChild("TextGradient") as UIGradient;
@@ -123,19 +135,21 @@ export default function LuckBar(props: LuckBarProps) {
 			SoundService.PlayLocalSound(rollSound);
 		}
 		const stroke = text.WaitForChild("UIStroke") as UIStroke;
-		rollVfxClone.Parent = Workspace;
+		rollTextVfxClone.Parent = Workspace;
 
 		const textPopoutTweenInfo = new TweenInfo(0.5, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out);
 		const floatUpTweenInfo = new TweenInfo(2, Enum.EasingStyle.Linear, Enum.EasingDirection.Out);
 
 		TweenService.Create(text, textPopoutTweenInfo, { TextSize: 40 }).Play();
 		TweenService.Create(gui, floatUpTweenInfo, { StudsOffsetWorldSpace: new Vector3(0, 3, 0) }).Play();
+		emitUsingAttributes(vfxClone);
 
 		task.delay(1, () => {
 			const tween = TweenService.Create(text, textPopoutTweenInfo, { TextSize: 1, TextTransparency: 1 });
 			TweenService.Create(stroke, textPopoutTweenInfo, { Transparency: 1 }).Play();
 			tween.Completed.Connect(() => {
-				rollVfxClone.Destroy();
+				rollTextVfxClone.Destroy();
+				// vfxClone.Destroy();
 			});
 
 			tween.Play();

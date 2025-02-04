@@ -124,7 +124,7 @@ export const RightSideMenu = (props: MenuProps) => {
 			setMoneyValue(`$${EternityNum.short(etNum)}`);
 		} else {
 			const cleanup = moneyMotion.onStep((value: number, dt) => {
-				setMoneyValue(`$${separateWithCommas(math.floor(value))}`);
+				setMoneyValue(`$${EternityNum.short(EternityNum.fromNumber(value))}`);
 			});
 			const cleanupComplete = moneyMotion.onComplete(() => {
 				cleanup();
@@ -167,7 +167,7 @@ export const RightSideMenu = (props: MenuProps) => {
 			>
 				<AnimatedButton
 					position={UDim2.fromScale(0.5, 0.5)}
-					size={UDim2.fromScale(1, 0.176)}
+					size={UDim2.fromScale(0.9, 0.2)}
 					onClick={() => {
 						// if (animationRunning) return;
 						const creationAmt = math.random(MONEY_VECTOR_CREATION_AMT.Min, MONEY_VECTOR_CREATION_AMT.Max);
@@ -228,7 +228,7 @@ export const RightSideMenu = (props: MenuProps) => {
 						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 						key={"Amount"}
 						Position={UDim2.fromScale(0.062, 0.5)}
-						Size={UDim2.fromScale(0.658, 0.7)}
+						Size={UDim2.fromScale(0.6, 0.7)}
 						Text={moneyValue}
 						TextColor3={Color3.fromRGB(92, 255, 133)}
 						TextScaled={true}
@@ -251,11 +251,12 @@ export const RightSideMenu = (props: MenuProps) => {
 						BorderSizePixel={0}
 						Image={"rbxassetid://94511559177860"}
 						key={"Wallet"}
-						Position={UDim2.fromScale(0.765, 0)}
-						Size={UDim2.fromScale(0.256, 0.947)}
-					/>
-
-					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={3.7} />
+						AnchorPoint={new Vector2(1, 0)}
+						Position={UDim2.fromScale(1, 0)}
+						Size={UDim2.fromScale(0.5, 1)}
+					>
+						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1} />
+					</imagelabel>
 				</AnimatedButton>
 
 				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.65} />

@@ -195,7 +195,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 			};
 		} else {
 			setBarProgress.immediate(1);
-			fovMotion.spring(defaultFov, springs.responsive);
+			fovMotion.spring(defaultFov, springs.bubbly);
 		}
 	}, [visible]);
 

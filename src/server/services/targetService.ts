@@ -23,6 +23,7 @@ import { GamepassService } from "./gamepassService";
 import { DevproductService } from "./devproductService";
 import Object from "@rbxts/object-utils";
 import Sift from "@rbxts/sift";
+import { ZoneService } from "./zoneService";
 
 const Maps = CollectionService.GetTagged("Map");
 
@@ -47,6 +48,7 @@ export class TargetService implements OnStart, OnTick {
 		private readonly moneyService: MoneyService,
 		private readonly gamepassService: GamepassService,
 		private readonly devproductService: DevproductService,
+		private readonly zoneService: ZoneService,
 	) {}
 
 	onStart() {
@@ -65,10 +67,9 @@ export class TargetService implements OnStart, OnTick {
 			false,
 		);
 
-		// TODO: Probably make an event for when the player changes maps and use that instead
-		this.profileService.profileChanged.Connect((player, profile) => {
+		this.zoneService.ChangedMap.Connect((player, zoneName) => {
 			const target = this.getPlayerTarget(player);
-			if (target && target.mapName !== profile.Data.currentMap) {
+			if (target && target.mapName !== zoneName) {
 				this.activeTargets = this.activeTargets.filter((t) => t !== target);
 				this.playerDiggingTargets.delete(player);
 				Events.targetDespawned.fire(player);
@@ -460,7 +461,6 @@ export class TargetService implements OnStart, OnTick {
 			ADDED_LUCK_PERCENT *
 			this.devproductService.serverLuckMultiplier(player) *
 			luckMult;
-
 
 		const targetData = this.rollTarget(profile.Data.currentMap, totalLuck);
 

@@ -133,7 +133,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 					key={"Stats"}
 					Position={UDim2.fromScale(0.0923, 0.069)}
 					Size={UDim2.fromScale(0.472, 0.374)}
-					ZIndex={2}
+					ZIndex={3}
 				>
 					<frame
 						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -178,6 +178,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							TextScaled={true}
 							TextWrapped={true}
 							TextXAlignment={Enum.TextXAlignment.Left}
+							ZIndex={5}
 						>
 							<uistroke key={"UIStroke"} Thickness={2} />
 
@@ -204,6 +205,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 					key={"Information"}
 					Position={UDim2.fromScale(0.0674, 0.602)}
 					Size={UDim2.fromScale(0.852, 0.318)}
+					ZIndex={3}
 				>
 					<frame
 						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -213,7 +215,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 						key={"Item Info"}
 						Position={UDim2.fromScale(0.0292, 0.458)}
 						Size={UDim2.fromScale(0.958, 0.533)}
-						ZIndex={2}
+						ZIndex={3}
 					>
 						<textlabel
 							AnchorPoint={new Vector2(0.5, 0.5)}
@@ -229,6 +231,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							TextColor3={gameConstants.RARITY_COLORS[props.rarity]}
 							TextScaled={true}
 							TextWrapped={true}
+							ZIndex={3}
 							TextXAlignment={Enum.TextXAlignment.Right}
 						>
 							<uistroke key={"UIStroke"} Thickness={2} />
@@ -256,6 +259,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							TextScaled={true}
 							TextWrapped={true}
 							TextXAlignment={Enum.TextXAlignment.Right}
+							ZIndex={3}
 						>
 							<uistroke key={"UIStroke"} Thickness={2} />
 						</textlabel>
@@ -323,9 +327,13 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 					BorderSizePixel={0}
 					Image={props.image}
 					key={"ItemRender"}
-					Size={UDim2.fromScale(1, 1)}
-					ZIndex={0}
-				/>
+					Size={UDim2.fromScale(0.9, 1)}
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					Position={UDim2.fromScale(0.5, 0.5)}
+					ZIndex={2}
+				>
+					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.5} />
+				</imagelabel>
 			</imagebutton>
 		</frame>
 	);
@@ -431,7 +439,7 @@ export const BoatShopComponent: React.FC<ShopProps> = (props) => {
 						key={"Profile"}
 						Position={UDim2.fromScale(0.5, 0.446)}
 						Size={UDim2.fromScale(0.717, 0.717)}
-						Image={"rbxassetid://77754309050946"}
+						Image={""}
 					/>
 				</imagelabel>
 			</frame>

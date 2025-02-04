@@ -150,6 +150,11 @@ export class Detector implements OnStart, OnTick {
 
 		Events.targetDespawned.connect(() => {
 			this.targetActive = false;
+			this.hideWaypointArrow();
+			if (this.areaIndicator) {
+				this.areaIndicator.Destroy();
+				this.areaIndicator = undefined;
+			}
 		});
 
 		Events.endDiggingServer.connect(() => {

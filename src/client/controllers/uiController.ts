@@ -95,10 +95,16 @@ export class UiController implements OnStart {
 			},
 			true,
 		);
-		this.registerUi(gameConstants.BOAT_SHOP_UI, React.createElement(BoatShopComponent), {
-			visible: false,
-			uiController: this,
-		});
+		this.registerUi(
+			gameConstants.BOAT_SHOP_UI,
+			React.createElement(BoatShopComponent),
+			{
+				visible: false,
+				uiController: this,
+			},
+			false,
+			true,
+		);
 	}
 
 	onStart() {

@@ -1,6 +1,6 @@
 import { Controller, OnInit, OnStart } from "@flamework/core";
 import Signal from "@rbxts/goodsignal";
-import { CollectionService, Players, SoundService, TweenService, Workspace } from "@rbxts/services";
+import { CollectionService, Lighting, Players, SoundService, TweenService, Workspace } from "@rbxts/services";
 import { Zone } from "@rbxts/zone-plus";
 import { mapConfig } from "shared/config/mapConfig";
 import { gameConstants } from "shared/constants";
@@ -33,9 +33,44 @@ export class ZoneController implements OnInit {
 			Density: 0.7,
 			Color: Color3.fromRGB(255, 255, 255),
 		},
+		HighSeas: {
+			Cover: 0.65,
+			Density: 0.3,
+			Color: Color3.fromRGB(220, 220, 220),
+		},
 	} as Record<keyof typeof mapConfig, Partial<InstanceProperties<Clouds>>>;
 
+	private COLOR_CORRECTION_PROPERTIES_TABLE = {
+		Grasslands: {
+			Brightness: 0,
+			Contrast: 0,
+			Saturation: 0.1,
+			TintColor: Color3.fromRGB(255, 255, 255),
+		},
+		Volcano: {
+			Brightness: -0.05,
+			Contrast: 0.05,
+			Saturation: 0,
+			TintColor: Color3.fromRGB(235, 200, 200),
+		},
+		Frozen: {
+			Brightness: 0,
+			Contrast: 0,
+			Saturation: 0,
+			TintColor: Color3.fromRGB(202, 241, 255),
+		},
+		HighSeas: {
+			Brightness: 0,
+			Contrast: 0,
+			Saturation: 0,
+			TintColor: Color3.fromRGB(255, 255, 255),
+		},
+	} as Record<keyof typeof mapConfig, Partial<InstanceProperties<ColorCorrectionEffect>>>;
+
+	private AREA_CHANGE_TWEEN_INFO = new TweenInfo(2, Enum.EasingStyle.Quad);
+
 	private clouds = Workspace.Terrain.WaitForChild("Clouds") as Clouds;
+	private colorCorrection = Lighting.WaitForChild("ZonesCC") as ColorCorrectionEffect;
 	private currentMapName = "Grasslands";
 
 	constructor() {
@@ -45,6 +80,9 @@ export class ZoneController implements OnInit {
 			const zone = new Zone(element);
 			zone.localPlayerEntered.Connect(() => {
 				this.onZoneEnter(element.Name as keyof typeof mapConfig);
+			});
+			zone.localPlayerExited.Connect(() => {
+				this.onZoneLeave();
 			});
 			this.isleZoneMap.set(element.Name, zone);
 		});
@@ -61,6 +99,9 @@ export class ZoneController implements OnInit {
 				zone.localPlayerEntered.Connect(() => {
 					this.onZoneEnter(instance.Name as keyof typeof mapConfig);
 				});
+				zone.localPlayerExited.Connect(() => {
+					this.onZoneLeave();
+				});
 				this.zonesUpdated.Fire();
 			}
 		});
@@ -71,11 +112,39 @@ export class ZoneController implements OnInit {
 	onZoneEnter(zoneName: keyof typeof mapConfig) {
 		TweenService.Create(
 			this.clouds,
-			new TweenInfo(2, Enum.EasingStyle.Quad),
+			this.AREA_CHANGE_TWEEN_INFO,
 			this.CLOUD_ZONE_PROPERTIES_TABLE[zoneName],
+		).Play();
+		TweenService.Create(
+			this.colorCorrection,
+			this.AREA_CHANGE_TWEEN_INFO,
+			this.COLOR_CORRECTION_PROPERTIES_TABLE[zoneName],
 		).Play();
 		this.currentMapName = zoneName;
 		this.playAreaSound(zoneName);
+	}
+
+	onZoneLeave() {
+		// Check if player is in any zones, and if not then assume they are in the sea.
+		let playerIsInZone = false;
+		for (const [, zone] of this.isleZoneMap) {
+			if (zone.findLocalPlayer()) {
+				playerIsInZone = true;
+				break;
+			}
+		}
+		if (!playerIsInZone) {
+			TweenService.Create(
+				this.clouds,
+				this.AREA_CHANGE_TWEEN_INFO,
+				this.CLOUD_ZONE_PROPERTIES_TABLE.HighSeas,
+			).Play();
+			TweenService.Create(
+				this.colorCorrection,
+				this.AREA_CHANGE_TWEEN_INFO,
+				this.COLOR_CORRECTION_PROPERTIES_TABLE.HighSeas,
+			).Play();
+		}
 	}
 
 	playAreaSound(zoneName: keyof typeof mapConfig) {

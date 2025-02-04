@@ -1,6 +1,6 @@
 import { Service, OnStart } from "@flamework/core";
 import Object from "@rbxts/object-utils";
-import { HttpService, PhysicsService, ServerStorage, Workspace } from "@rbxts/services";
+import { HttpService, PhysicsService, Players, ServerStorage, Workspace } from "@rbxts/services";
 import { Events, Functions } from "server/network";
 import { mapConfig } from "shared/config/mapConfig";
 import { ProfileService } from "./profileService";
@@ -18,6 +18,24 @@ export class BoatService implements OnStart {
 	constructor(private readonly profileService: ProfileService) {
 		PhysicsService.RegisterCollisionGroup(gameConstants.BOAT_COLGROUP);
 		PhysicsService.CollisionGroupSetCollidable(gameConstants.BOAT_COLGROUP, gameConstants.BOAT_COLGROUP, false); // Boats can't collide with another.
+
+		Workspace.Terrain.CollisionGroup = gameConstants.BOAT_COLGROUP; // Terrain can't collide with boats
+
+		Players.PlayerAdded.Connect((player) => {
+			player.CharacterAdded.Connect((character) => {
+				for (const part of character.GetDescendants()) {
+					if (part.IsA("BasePart")) {
+						part.Massless = true;
+					}
+				}
+
+				character.DescendantAdded.Connect((descendant) => {
+					if (descendant.IsA("BasePart")) {
+						descendant.Massless = true;
+					}
+				});
+			});
+		});
 
 		// Initialize boat spawns
 		for (const mapName of Object.keys(mapConfig)) {
@@ -59,6 +77,10 @@ export class BoatService implements OnStart {
 					weld.Part0 = primaryPart;
 					weld.Part1 = descendant;
 					descendant.Anchored = false; // Ensure the boat is not anchored
+
+					if (descendant.Name !== "Physics") {
+						descendant.CollisionGroup = gameConstants.BOAT_COLGROUP;
+					}
 				}
 			}
 		}
@@ -112,13 +134,6 @@ export class BoatService implements OnStart {
 			boat.PivotTo(unoccupiedBoatSpawn?.GetPivot());
 			boat.Parent = Workspace;
 			this.spawnedBoats.set(boatId, boat);
-
-			for (const descendant of boat.GetDescendants()) {
-				if (descendant.IsA("BasePart")) {
-					descendant.SetNetworkOwner(player);
-					descendant.CollisionGroup = gameConstants.BOAT_COLGROUP;
-				}
-			}
 		});
 
 		Functions.getOwnsBoat.setCallback((player, boatId) => {

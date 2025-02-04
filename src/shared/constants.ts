@@ -3,7 +3,14 @@ import { ItemType, Rarity } from "./networkTypes";
 import { Shovel, shovelConfig } from "./config/shovelConfig";
 import { mapConfig } from "./config/mapConfig";
 
-export const ROLL_TYPES = { Bad: "Bad..", Okay: "Okay.", Great: "Great!", Wow: "Wow!!", Super: "Super!!" };
+export const ROLL_TYPES = {
+	Bad: "Bad..",
+	Okay: "Okay.",
+	Great: "Great!",
+	Wow: "Wow!!",
+	Super: "Super!!",
+	Perfect: "PERFECT!!",
+};
 
 export const gameConstants = {
 	DIG_BAR_UI: "DiggingBar",
@@ -71,12 +78,15 @@ export const gameConstants = {
 	} as Record<keyof typeof mapConfig, Color3>,
 
 	ROLL_LUCK_VALUES: {
-		Bad: 1.5,
+		Bad: 0,
 		Okay: 3,
-		Great: 5,
-		Wow: 9,
-		Super: 10,
+		Great: 4.5,
+		Wow: 6.5,
+		Super: 9,
+		Perfect: 9.9,
 	} as Record<keyof typeof ROLL_TYPES, number>,
+
+	HIGH_ROLL_THRESHOLD: 6.5,
 
 	ROLL_COLORS: {
 		Bad: new ColorSequence(new Color3(1, 1, 1), new Color3(0.35, 0.35, 0.35)),
@@ -84,6 +94,7 @@ export const gameConstants = {
 		Great: new ColorSequence(new Color3(0, 1, 1), new Color3(0, 0.8, 0.8)),
 		Wow: new ColorSequence(new Color3(1, 0, 1), new Color3(0.8, 0, 0.8)),
 		Super: new ColorSequence(new Color3(1, 0.5, 0), new Color3(1, 0.77, 0)),
+		Perfect: new ColorSequence(new Color3(1, 0.15, 0), new Color3(1, 0.37, 0)),
 	} as Record<keyof typeof ROLL_TYPES, ColorSequence>,
 
 	RARITY_COLORS: {

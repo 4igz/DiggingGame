@@ -1,6 +1,7 @@
 import { Rarity } from "shared/networkTypes";
 
-export const DEFAULT_BOAT_SPEED = 25;
+export const DEFAULT_BOAT_TURN_SPEED = 1000;
+export const DEFAULT_BOAT_SPEED = 5000;
 
 export interface BoatConfig {
 	price: number;
@@ -12,12 +13,12 @@ export interface BoatConfig {
 }
 
 export const boatConfig: Record<string, BoatConfig> = {
-	Raft: {
+	["Wooden boat"]: {
 		price: 1000,
-		itemImage: "rbxassetid://113782765462239",
+		itemImage: "rbxassetid://119081046401633",
 		rarityType: "Common",
 
 		speed: 1,
-		turnSpeed: 1,
+		turnSpeed: 2,
 	},
 };

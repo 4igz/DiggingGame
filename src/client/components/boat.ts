@@ -2,7 +2,7 @@ import { OnRender, OnStart } from "@flamework/core";
 import { Component, BaseComponent } from "@flamework/components";
 import { ContextActionService, Players } from "@rbxts/services";
 import { Functions } from "client/network";
-import { boatConfig, DEFAULT_BOAT_SPEED } from "shared/config/boatConfig";
+import { boatConfig, DEFAULT_BOAT_SPEED, DEFAULT_BOAT_TURN_SPEED } from "shared/config/boatConfig";
 
 interface Attributes {
 	boatId: string; // Assigned by the server to indicate the boat's unique ID
@@ -11,12 +11,13 @@ interface Attributes {
 interface BoatComponent extends Model {
 	// It's not an actual seat instance because we don't want everyone to be able to sit in it.
 	OwnerSeat: BasePart & {
-		Highlight: Highlight;
 		ProximityPrompt: ProximityPrompt;
 		SitAnim: Animation;
 		WeldConstraint: WeldConstraint;
 	};
-	Hull: BasePart & {
+	Hull: BasePart;
+	Seats: Folder;
+	Physics: BasePart & {
 		ForceAttachment: Attachment & {
 			AngularVelocity: AngularVelocity;
 			LinearVelocity: LinearVelocity;
@@ -40,18 +41,18 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 		"PlayerModule",
 	) as ModuleScript) as PlayerModule;
 	private controls = this.playerModule.GetControls();
-	private isSitting: boolean = false;
+	private isSittingInDriverSeat: boolean = false;
 	private isOwner: boolean = false;
 	private cfg = boatConfig[this.instance.Name];
 
 	// Store “current” velocities so we can smoothly update them
-	private currentLinearVelocity = new Vector3(0, 0, 0);
+	private currentVelocity = new Vector3(0, 0, 0);
 	private currentAngularVelocity = new Vector3(0, 0, 0);
 
 	// Tweak these to tune how quickly you accelerate/decelerate
 	private readonly velocityBlendAlpha = 0.1; // 0 < alpha < 1
 	private readonly maxForwardSpeed = this.cfg.speed * DEFAULT_BOAT_SPEED;
-	private readonly maxTurnSpeed = this.cfg.turnSpeed;
+	private readonly maxTurnSpeed = this.cfg.turnSpeed * DEFAULT_BOAT_TURN_SPEED;
 
 	onStart() {
 		const { OwnerSeat: ownerSeat } = this.instance;
@@ -65,13 +66,6 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 			}
 		});
 
-		ownerSeatPrompt.PromptShown.Connect(() => {
-			this.instance.OwnerSeat.Highlight.Enabled = true;
-		});
-		ownerSeatPrompt.PromptHidden.Connect(() => {
-			this.instance.OwnerSeat.Highlight.Enabled = false;
-		});
-
 		let playingTrack: AnimationTrack | undefined = undefined;
 
 		ownerSeatPrompt.Triggered.Connect((playerWhoTriggered) => {
@@ -82,7 +76,7 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 			const humanoid = character?.FindFirstChild("Humanoid") as Humanoid;
 			const animator = humanoid.FindFirstChild("Animator") as Animator;
 			if (!character || !character.Parent || !hrp || !humanoid || !animator) return;
-			this.isSitting = true;
+			this.isSittingInDriverSeat = true;
 
 			ownerSeatPrompt.Enabled = false;
 
@@ -98,13 +92,13 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 		ContextActionService.BindAction(
 			"ExitBoat",
 			(_, userInputState) => {
-				if (userInputState !== Enum.UserInputState.Begin || !this.isSitting)
+				if (userInputState !== Enum.UserInputState.Begin || !this.isSittingInDriverSeat)
 					return Enum.ContextActionResult.Pass;
 				const character = Players.LocalPlayer.Character;
 				const humanoid = character?.FindFirstChild("Humanoid") as Humanoid;
 				if (!character || !character.Parent || !humanoid) return;
 
-				this.isSitting = false;
+				this.isSittingInDriverSeat = false;
 				weld.Part1 = undefined;
 				character.PivotTo(ownerSeat.CFrame.add(new Vector3(0, 4, 0)));
 
@@ -113,10 +107,11 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 					playingTrack.Stop();
 				}
 				humanoid.ChangeState(Enum.HumanoidStateType.Running);
-				this.currentLinearVelocity = new Vector3(0, 0, 0);
+				this.currentVelocity = new Vector3(0, 0, 0);
 				this.currentAngularVelocity = new Vector3(0, 0, 0);
-				this.instance.Hull.ForceAttachment.LinearVelocity.VectorVelocity = this.currentLinearVelocity;
-				this.instance.Hull.ForceAttachment.AngularVelocity.AngularVelocity = this.currentAngularVelocity;
+				this.instance.Physics.ForceAttachment.LinearVelocity.VectorVelocity = this.currentVelocity;
+				// this.instance.Hull.ForceAttachment.LinearVelocity.VectorVelocity = this.currentLinearVelocity;
+				this.instance.Physics.ForceAttachment.AngularVelocity.AngularVelocity = this.currentAngularVelocity;
 			},
 			true,
 			ownerSeatPrompt.GamepadKeyCode,
@@ -127,8 +122,8 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 		Players.LocalPlayer.CharacterAdded.Connect((character) => {
 			const humanoid = character.WaitForChild("Humanoid") as Humanoid;
 			humanoid.Died.Once(() => {
-				if (this.isSitting && this.isOwner) {
-					this.isSitting = false;
+				if (this.isSittingInDriverSeat && this.isOwner) {
+					this.isSittingInDriverSeat = false;
 					weld.Part1 = undefined;
 
 					ownerSeatPrompt.Enabled = this.isOwner;
@@ -138,8 +133,8 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 	}
 
 	onRender(dt: number): void {
-		if (!this.isOwner || !this.isSitting) return;
-		const { LinearVelocity: linearVelocity, AngularVelocity: angularVelocity } = this.instance.Hull.ForceAttachment;
+		if (!this.isOwner || !this.isSittingInDriverSeat) return;
+		const Vf = this.instance.Physics.ForceAttachment.LinearVelocity;
 
 		const moveVector = this.controls.GetMoveVector();
 
@@ -150,18 +145,19 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 		const targetTurnSpeed = -moveVector.X * this.maxTurnSpeed;
 
 		// Convert these scalars into Vector3
-		const targetLinearVelocity = new Vector3(0, 0, targetForwardSpeed);
+		const vel = new Vector3(0, 0, targetForwardSpeed);
 		const targetAngularVelocity = new Vector3(0, targetTurnSpeed, 0);
 
 		// 2. Smoothly blend from current velocity to target velocity
-		const FPS = 60; // Assume 60 FPS instead of using dt as framerates can differ and cause the boat to move slower/faster.
-		const alpha = 1 - math.exp(-FPS * dt);
-		this.currentLinearVelocity = this.currentLinearVelocity.Lerp(targetLinearVelocity, alpha);
+		// const FPS = 60; // Assume 60 FPS instead of using dt as framerates can differ and cause the boat to move slower/faster.
+		// const alpha = 1 - math.exp(-FPS * dt);
+		// this.currentVelocity = this.currentVelocity.Lerp(vel, alpha);
 
-		this.currentAngularVelocity = this.currentAngularVelocity.Lerp(targetAngularVelocity, this.velocityBlendAlpha);
+		// this.currentAngularVelocity = this.currentAngularVelocity.Lerp(targetAngularVelocity, this.velocityBlendAlpha);
 
 		// 3. Assign the smoothed velocities to Roblox’s LinearVelocity & AngularVelocity
-		linearVelocity.VectorVelocity = this.currentLinearVelocity;
-		angularVelocity.AngularVelocity = this.currentAngularVelocity;
+		Vf.VectorVelocity = vel;
+		// linearVelocity.VectorVelocity = this.currentLinearVelocity;
+		this.instance.Physics.ForceAttachment.AngularVelocity.AngularVelocity = targetAngularVelocity;
 	}
 }
