@@ -269,7 +269,7 @@ export class ShovelController implements OnStart {
 		const digModels = new Map<string, Model>();
 		const digTroves = new Map<string, Trove>();
 		const diggingConnections = new Array<RBXScriptConnection>();
-		const digOutSound = SoundService.WaitForChild("Dig out") as Sound;
+		const digOutSound = SoundService.WaitForChild("Tools").WaitForChild("Dig out") as Sound;
 
 		Signals.setAutoDiggingEnabled.Connect((enabled) => {
 			this.isAutoDigging = enabled;
@@ -668,7 +668,7 @@ export class ShovelController implements OnStart {
 
 		let digSound = hole.FindFirstChild("Digging") as Sound | undefined;
 		if (!digSound) {
-			digSound = SoundService.FindFirstChild("Digging") as Sound | undefined;
+			digSound = SoundService.WaitForChild("Tools").FindFirstChild("Digging") as Sound | undefined;
 			digSound = digSound?.Clone();
 			if (digSound) {
 				digSound.Parent = hole;

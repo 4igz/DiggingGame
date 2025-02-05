@@ -9,7 +9,7 @@ import { getMapFromTarget, getOneInXChance } from "shared/util/targetUtil";
 
 interface Attributes {}
 
-interface TreasureComponent extends Model {}
+interface TreasureComponent extends Instance {}
 
 @Component({
 	tag: "Treasure",
@@ -29,7 +29,7 @@ export class Treasure extends BaseComponent<Attributes, TreasureComponent> imple
 			const [enabled, setEnabled] = React.useState(true);
 
 			useEffect(() => {
-				if (this.instance.IsA("Model")) {
+				if (this.instance.IsA("PVInstance")) {
 					setEnabled(this.instance.GetAttribute("DiggingComplete") === true);
 
 					this.instance.AttributeChanged.Connect((key) => {
@@ -40,17 +40,25 @@ export class Treasure extends BaseComponent<Attributes, TreasureComponent> imple
 				}
 			}, []);
 
+			const adornee = this.instance.IsA("PVInstance")
+				? this.instance
+				: this.instance.FindFirstChildWhichIsA("PVInstance");
+
+			if (!adornee) {
+				error("No adornee found for treasure display.");
+			}
+
 			return (
 				<RichBillboardText
 					text={`1 in <font color="rgb(100,125,255)"><b>${shortenNumber(
 						getOneInXChance(name, getMapFromTarget(name) ?? "Grasslands"),
 					)}</b></font>`}
-					adornee={this.instance}
+					adornee={adornee}
 					isRichText={true}
 					offsetWorldSpace={new Vector3(0, 1, 0)}
 					font={Enum.Font.GothamMedium}
 					bbgSize={new UDim2(4, 0, 1, 0)}
-					enabled={enabled}
+					enabled={(this.instance.IsA("Tool") && true) || enabled}
 				/>
 			);
 		};

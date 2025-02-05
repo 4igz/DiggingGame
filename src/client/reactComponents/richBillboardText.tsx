@@ -14,12 +14,19 @@ interface BillboardGuiProps {
 }
 
 export const RichBillboardText = (props: BillboardGuiProps) => {
+	const [isEnabled, setEnabled] = React.useState(true);
+
+	React.useEffect(() => {
+		if (props.enabled === undefined) return;
+		setEnabled(props.enabled);
+	}, [props.enabled]);
+
 	return (
 		<billboardgui
 			StudsOffset={props.offsetWorldSpace ?? Vector3.zero}
 			Size={props.bbgSize ?? new UDim2(9, 0, 2, 0)}
 			Adornee={props.adornee}
-			Enabled={props.enabled ?? true}
+			Enabled={isEnabled ?? true}
 			AlwaysOnTop={true}
 		>
 			<textlabel

@@ -53,6 +53,7 @@ export const BoughtItemPopup = (props: BoughtItemPopupProps) => {
 			Position={UDim2.fromScale(0.5, 0.5)}
 			Size={sizeMotion}
 			Visible={true}
+			ZIndex={1000}
 		>
 			<uilistlayout
 				key={"UIListLayout"}
@@ -95,7 +96,7 @@ export const BoughtItemPopup = (props: BoughtItemPopupProps) => {
 					Size={UDim2.fromScale(1, 1)}
 					ZIndex={5}
 					Image={props.itemImage}
-					Rotation={spinValue * -180}
+					Rotation={spinValue * -45}
 				>
 					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1} />
 				</imagelabel>
@@ -121,15 +122,14 @@ export const BoughtItemPopup = (props: BoughtItemPopupProps) => {
 				FontFace={Font.fromEnum(Enum.Font.FredokaOne)}
 				key={"ExplainerText"}
 				RichText={true}
-				Size={UDim2.fromScale(2, 1)}
+				Size={UDim2.fromScale(2, 2)}
 				TextXAlignment={Enum.TextXAlignment.Center}
-				Text={`You bought a <font color="rgb(${RC[props.itemRarity].R * 255},${RC[props.itemRarity].G * 255},${
-					RC[props.itemRarity].B * 255
-				})">${spaceWords(props.itemName)}</font>`}
+				Text={`You bought a <font color="rgb(${math.floor(RC[props.itemRarity].R * 255)},${math.floor(
+					RC[props.itemRarity].G * 255,
+				)},${math.floor(RC[props.itemRarity].B * 255)})">${spaceWords(props.itemName)}</font>`}
 				TextColor3={Color3.fromRGB(255, 255, 255)}
 				TextScaled={true}
 				TextWrapped={false}
-				AutomaticSize={Enum.AutomaticSize.X}
 			>
 				<uistroke key={"UIStroke"} />
 			</textlabel>

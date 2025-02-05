@@ -12,7 +12,7 @@ export class Detector implements OnStart, OnTick {
 	private VFX_FOLDER = ReplicatedStorage.WaitForChild("VFX");
 	private ANIMATION_FOLDER = ReplicatedStorage.WaitForChild("Animations");
 	private areaIndicatorVFX = this.VFX_FOLDER.FindFirstChild("DigAreaIndicatorVfx") as BasePart;
-	private beepSound = SoundService.WaitForChild("DetectorBeep") as Sound;
+	private beepSound = SoundService.WaitForChild("Tools").WaitForChild("DetectorBeep") as Sound;
 	private areaIndicator: BasePart | undefined;
 	private arrowIndicator?: BasePart; // Cloned from ReplicatedStorage
 	private renderStepId = "WaypointArrow";

@@ -276,22 +276,6 @@ export class TargetService implements OnStart, OnTick {
 		task.delay(this.SUCCESSFUL_DIG_COOLDOWN, () => {
 			this.playerLastSuccessfulDigCooldown.delete(player);
 		});
-
-		// Delete the debugPart in the base with the same position as this target
-		if (RunService.IsStudio()) {
-			for (const map of CollectionService.GetTagged("Map")) {
-				if (!map) return false;
-				const spawnBaseFolder = map.WaitForChild("SpawnBases");
-				for (const base of spawnBaseFolder.GetChildren()) {
-					if (base.IsA("BasePart")) {
-						const debugPart = base.FindFirstChild(tostring(target.position));
-						if (debugPart && debugPart.IsA("Part")) {
-							debugPart.Destroy();
-						}
-					}
-				}
-			}
-		}
 	}
 
 	private dig(player: Player, target: Target) {
@@ -426,19 +410,6 @@ export class TargetService implements OnStart, OnTick {
 		Events.targetSpawnSuccess.fire(player, position);
 		Events.createWaypointVisualization(player, position, profile.Data.equippedDetector);
 
-		// Just a part to visualize targets for debugging
-		if (RunService.IsStudio()) {
-			const debugPart = new Instance("Part");
-			debugPart.Size = new Vector3(1, 1, 1);
-			debugPart.Color = new Color3(1, 0, 0);
-			debugPart.Anchored = true;
-			debugPart.CanCollide = false;
-			debugPart.Position = position.add(new Vector3(0, 1, 0));
-			debugPart.Transparency = 0.5;
-			// debugPart.Parent = base; // Parent it to the map for visibility
-			debugPart.Name = "DebugTreasurePart";
-		}
-
 		return true;
 	}
 
@@ -455,12 +426,13 @@ export class TargetService implements OnStart, OnTick {
 		const DETECTOR_LUCK_MODIFIER = 0.05;
 		const LUCK_SKILL_LEVEL_ADDITION = 0.01;
 
-		// TODO: Should totalLuck always be 0 if luckMult is 0?
-		const totalLuck =
+		let totalLuck =
 			(playerDetectorConfig.luck * DETECTOR_LUCK_MODIFIER + profile.Data.luck * LUCK_SKILL_LEVEL_ADDITION) *
 			ADDED_LUCK_PERCENT *
 			this.devproductService.serverLuckMultiplier(player) *
 			luckMult;
+
+		totalLuck = math.clamp(totalLuck, 0, 1);
 
 		const targetData = this.rollTarget(profile.Data.currentMap, totalLuck);
 
@@ -471,8 +443,10 @@ export class TargetService implements OnStart, OnTick {
 		const [name, targetConfig] = targetData;
 
 		// Determine the weight of the target.
-		const weight = this.rng.NextNumber(targetConfig.baseWeight.Min, targetConfig.baseWeight.Max); // TODO: Just random for now, later adjust for rarity and luck
-		const maxProgress = weight * 20; // TODO: Later adjust for rarity
+		const weightRange = targetConfig.baseWeight.Max - targetConfig.baseWeight.Min;
+		const adjustedWeight = targetConfig.baseWeight.Min + weightRange * totalLuck;
+		const weight = this.rng.NextNumber(targetConfig.baseWeight.Min, adjustedWeight);
+		const maxProgress = weight * 20;
 
 		const targetInstance = {
 			...targetConfig,

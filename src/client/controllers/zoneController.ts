@@ -67,6 +67,29 @@ export class ZoneController implements OnInit {
 		},
 	} as Record<keyof typeof mapConfig, Partial<InstanceProperties<ColorCorrectionEffect>>>;
 
+	private WATER_COLOR_PROPERTIES_TABLE = {
+		Grasslands: {
+			WaterReflectance: 1,
+			WaterTransparency: 0.5,
+			WaterColor: Color3.fromRGB(60, 127, 211),
+		},
+		Volcano: {
+			WaterReflectance: 0.7,
+			WaterTransparency: 0.5,
+			WaterColor: Color3.fromRGB(15, 30, 45),
+		},
+		Frozen: {
+			WaterReflectance: 0.8,
+			WaterTransparency: 0.4,
+			WaterColor: Color3.fromRGB(130, 165, 200),
+		},
+		HighSeas: {
+			WaterReflectance: 1,
+			WaterTransparency: 0.5,
+			WaterColor: Color3.fromRGB(60, 127, 211),
+		},
+	} as Record<keyof typeof mapConfig, Partial<InstanceProperties<Terrain>>>;
+
 	private AREA_CHANGE_TWEEN_INFO = new TweenInfo(2, Enum.EasingStyle.Quad);
 
 	private clouds = Workspace.Terrain.WaitForChild("Clouds") as Clouds;
@@ -75,7 +98,7 @@ export class ZoneController implements OnInit {
 
 	constructor() {
 		this.isleZoneParts.forEach((element) => {
-			// Ensure this zone part is named after it's corresponding map in the config.
+			// Ensure this zone part is named after its corresponding map in the config.
 			assert(mapConfig[element.Name], `Zone ${element.Name} does not have a corresponding config in mapConfig`);
 			const zone = new Zone(element);
 			zone.localPlayerEntered.Connect(() => {
@@ -89,7 +112,7 @@ export class ZoneController implements OnInit {
 
 		CollectionService.GetInstanceAddedSignal(gameConstants.ISLE_ZONE_TAG).Connect((instance) => {
 			if (instance.IsA("PVInstance")) {
-				// Ensure this zone part is named after it's corresponding map in the config.
+				// Ensure this zone part is named after its corresponding map in the config.
 				assert(
 					mapConfig[instance.Name],
 					`Zone ${instance.Name} does not have a corresponding config in mapConfig`,
@@ -120,6 +143,11 @@ export class ZoneController implements OnInit {
 			this.AREA_CHANGE_TWEEN_INFO,
 			this.COLOR_CORRECTION_PROPERTIES_TABLE[zoneName],
 		).Play();
+		TweenService.Create(
+			Workspace.Terrain,
+			this.AREA_CHANGE_TWEEN_INFO,
+			this.WATER_COLOR_PROPERTIES_TABLE[zoneName],
+		).Play();
 		this.currentMapName = zoneName;
 		this.playAreaSound(zoneName);
 	}
@@ -144,6 +172,11 @@ export class ZoneController implements OnInit {
 				this.AREA_CHANGE_TWEEN_INFO,
 				this.COLOR_CORRECTION_PROPERTIES_TABLE.HighSeas,
 			).Play();
+			TweenService.Create(
+				Workspace.Terrain,
+				this.AREA_CHANGE_TWEEN_INFO,
+				this.WATER_COLOR_PROPERTIES_TABLE.HighSeas,
+			).Play();
 		}
 	}
 
@@ -157,9 +190,10 @@ export class ZoneController implements OnInit {
 			warn(`No sound found for ${zoneName}`);
 			return;
 		}
-		sound.Parent = Players.LocalPlayer;
-		sound.Play();
-		this.currentPlayingAreaSound = sound;
+		const newSound = sound.Clone();
+		newSound.Parent = Players.LocalPlayer;
+		newSound.Play();
+		this.currentPlayingAreaSound = newSound;
 	}
 
 	public getCurrentMapName() {

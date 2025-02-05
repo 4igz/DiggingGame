@@ -15,7 +15,9 @@ interface BoatComponent extends Model {
 		SitAnim: Animation;
 		WeldConstraint: WeldConstraint;
 	};
-	Hull: BasePart;
+	Hull: BasePart & {
+		OuterWake: Trail;
+	};
 	Seats: Folder;
 	Physics: BasePart & {
 		ForceAttachment: Attachment & {
@@ -50,13 +52,16 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 	private currentAngularVelocity = new Vector3(0, 0, 0);
 
 	// Tweak these to tune how quickly you accelerate/decelerate
-	private readonly velocityBlendAlpha = 0.1; // 0 < alpha < 1
 	private readonly maxForwardSpeed = this.cfg.speed * DEFAULT_BOAT_SPEED;
 	private readonly maxTurnSpeed = this.cfg.turnSpeed * DEFAULT_BOAT_TURN_SPEED;
 
 	onStart() {
 		const { OwnerSeat: ownerSeat } = this.instance;
 		const { ProximityPrompt: ownerSeatPrompt, SitAnim: sitAnim, WeldConstraint: weld } = ownerSeat;
+
+		this.instance.Physics.ForceAttachment.LinearVelocity.MaxForce = this.maxForwardSpeed;
+		this.instance.Physics.ForceAttachment.AngularVelocity.MaxTorque = this.maxTurnSpeed;
+		this.instance.Hull.OuterWake.Enabled = false;
 
 		Functions.getOwnsBoat(this.attributes.boatId).then((isOwner) => {
 			this.isOwner = isOwner;
@@ -133,6 +138,15 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 	}
 
 	onRender(dt: number): void {
+		const wakeSpeedThreshold = 50; // Define a threshold for enabling the wake
+
+		const currentSpeed = this.instance.Physics.AssemblyLinearVelocity.Magnitude;
+		if (currentSpeed > wakeSpeedThreshold) {
+			this.instance.Hull.OuterWake.Enabled = true;
+		} else {
+			this.instance.Hull.OuterWake.Enabled = false;
+		}
+
 		if (!this.isOwner || !this.isSittingInDriverSeat) return;
 		const Vf = this.instance.Physics.ForceAttachment.LinearVelocity;
 
@@ -155,9 +169,7 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 
 		// this.currentAngularVelocity = this.currentAngularVelocity.Lerp(targetAngularVelocity, this.velocityBlendAlpha);
 
-		// 3. Assign the smoothed velocities to Roblox’s LinearVelocity & AngularVelocity
 		Vf.VectorVelocity = vel;
-		// linearVelocity.VectorVelocity = this.currentLinearVelocity;
 		this.instance.Physics.ForceAttachment.AngularVelocity.AngularVelocity = targetAngularVelocity;
 	}
 }

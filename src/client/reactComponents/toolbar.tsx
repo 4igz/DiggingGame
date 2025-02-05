@@ -180,7 +180,7 @@ const ToolbarItemComponent: React.FC<ToolbarItemProps> = (props) => {
 
 export const Toolbar = () => {
 	const [items, setItems] = React.useState<Array<ToolbarItemProps>>([]);
-	const equipSound = SoundService.WaitForChild("Equip") as Sound;
+	const equipSound = SoundService.WaitForChild("Tools").WaitForChild("Equip") as Sound;
 
 	const equipToolByOrder = (order: number) => {
 		const item = items.find((i) => i.order === order);
@@ -207,6 +207,13 @@ export const Toolbar = () => {
 			if (item.tool.Parent === character) {
 				item.tool.Parent = backpack;
 			} else {
+				for (const descendant of item.tool.GetDescendants()) {
+					if (descendant.IsA("BasePart")) {
+						descendant.Anchored = false;
+						descendant.Massless = true;
+					}
+				}
+
 				item.tool.Parent = character;
 			}
 

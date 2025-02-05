@@ -142,14 +142,16 @@ export default function LuckBar(props: LuckBarProps) {
 
 		TweenService.Create(text, textPopoutTweenInfo, { TextSize: 40 }).Play();
 		TweenService.Create(gui, floatUpTweenInfo, { StudsOffsetWorldSpace: new Vector3(0, 3, 0) }).Play();
-		emitUsingAttributes(vfxClone);
+		if (rollType !== "Bad") {
+			emitUsingAttributes(vfxClone);
+		}
 
 		task.delay(1, () => {
 			const tween = TweenService.Create(text, textPopoutTweenInfo, { TextSize: 1, TextTransparency: 1 });
 			TweenService.Create(stroke, textPopoutTweenInfo, { Transparency: 1 }).Play();
 			tween.Completed.Connect(() => {
 				rollTextVfxClone.Destroy();
-				// vfxClone.Destroy();
+				vfxClone.Destroy();
 			});
 
 			tween.Play();
@@ -223,7 +225,7 @@ export default function LuckBar(props: LuckBarProps) {
 							key={"Luck Icon"}
 							Position={UDim2.fromScale(0, 0.273)}
 							ScaleType={Enum.ScaleType.Fit}
-							Size={UDim2.fromScale(math.sqrt(currentLuck) / 2, math.sqrt(currentLuck) / 2)}
+							Size={UDim2.fromScale(math.sqrt(currentLuck) / 4, math.sqrt(currentLuck) / 2)}
 						>
 							<textlabel
 								key={"TextLabel"}
@@ -235,13 +237,13 @@ export default function LuckBar(props: LuckBarProps) {
 									new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
 								}
 								Position={UDim2.fromScale(1, 0.5)}
-								Size={UDim2.fromScale(0, 0.735)}
+								Size={UDim2.fromScale(1, 0.735)}
 								Text={string.format("x%.1f", currentLuck)}
 								AnchorPoint={new Vector2(0, 0.5)}
 								TextColor3={Color3.fromRGB(255, 255, 255)}
-								TextScaled={false}
+								TextXAlignment={Enum.TextXAlignment.Left}
+								TextScaled={true}
 								TextWrapped={false}
-								TextSize={math.sqrt(currentLuck) * 12}
 							>
 								<uistroke key={"UIStroke"} Thickness={3} />
 							</textlabel>

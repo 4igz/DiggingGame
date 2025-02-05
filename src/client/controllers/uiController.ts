@@ -86,7 +86,7 @@ export class UiController implements OnStart {
 			true,
 			true,
 		);
-		this.registerUi(gameConstants.POPUP_UI, React.createElement(Popups), {});
+		this.registerUi(gameConstants.POPUP_UI, React.createElement(Popups), {}, false, true, 1);
 		this.registerUi(
 			gameConstants.ISLE_POPUP_UI,
 			React.createElement(IsleEnterPopup),
@@ -202,8 +202,9 @@ export class UiController implements OnStart {
 		initialProps: T,
 		ignoreGuiInset = false,
 		useSibling = false,
+		displayOrder?: number,
 	) {
-		const root = this.newUiRoot(name, ignoreGuiInset, useSibling);
+		const root = this.newUiRoot(name, ignoreGuiInset, useSibling, displayOrder);
 		this.menus.set(name, { element: component, root, props: initialProps });
 		root.render(React.cloneElement(component, { ...initialProps, uiController: this }));
 	}
@@ -220,9 +221,10 @@ export class UiController implements OnStart {
 		}
 	}
 
-	public newUiRoot(name: string, ignoreGuiInset = false, useSibling = false) {
+	public newUiRoot(name: string, ignoreGuiInset = false, useSibling = false, displayOrder: number = 0) {
 		const uiRoot = new Instance("ScreenGui");
 		uiRoot.IgnoreGuiInset = ignoreGuiInset;
+		uiRoot.DisplayOrder = displayOrder;
 		if (useSibling) {
 			uiRoot.ZIndexBehavior = Enum.ZIndexBehavior.Sibling;
 		}

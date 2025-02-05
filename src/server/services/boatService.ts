@@ -37,6 +37,19 @@ export class BoatService implements OnStart {
 			});
 		});
 
+		Players.PlayerRemoving.Connect((player) => {
+			const result = Object.entries(this.boatOwners).find(([_, p]) => p === player);
+			if (result) {
+				const [boatId] = result;
+				const boat = this.spawnedBoats.get(boatId);
+				if (boat) {
+					boat.Destroy();
+					this.spawnedBoats.delete(boatId);
+					this.boatOwners.delete(boatId);
+				}
+			}
+		});
+
 		// Initialize boat spawns
 		for (const mapName of Object.keys(mapConfig)) {
 			const map = Workspace.FindFirstChild(mapName);
@@ -80,6 +93,7 @@ export class BoatService implements OnStart {
 
 					if (descendant.Name !== "Physics") {
 						descendant.CollisionGroup = gameConstants.BOAT_COLGROUP;
+						descendant.Massless = true;
 					}
 				}
 			}
@@ -87,10 +101,12 @@ export class BoatService implements OnStart {
 	}
 
 	onStart() {
-		const boatSpawnCooldown = interval(5);
+		const boatSpawnCooldown = interval(1);
 
 		Events.spawnBoat.connect((player, boatName) => {
-			if (!boatSpawnCooldown(player.UserId)) return;
+			if (!boatSpawnCooldown(player.UserId)) {
+				return;
+			}
 
 			const profile = this.profileService.getProfile(player);
 			if (!profile) {
@@ -105,6 +121,7 @@ export class BoatService implements OnStart {
 			if (result) {
 				const [boatId] = result;
 				const boat = this.spawnedBoats.get(boatId);
+				if (boat && boat.Name === boatName) return; // Player already has this boat spawned
 				if (boat) {
 					boat.Destroy();
 					this.spawnedBoats.delete(boatId);
@@ -115,7 +132,7 @@ export class BoatService implements OnStart {
 			if (profile.Data.ownedBoats.get(boatName) === false) return; // Player doesn't own this boat, so they can't spawn it
 			const currentMap = profile.Data.currentMap;
 
-			const unoccupiedBoatSpawn = this.getUnoccupiedBoatSpawn(currentMap);
+			const unoccupiedBoatSpawn = this.getUnoccupiedBoatSpawn(player, currentMap);
 			if (!unoccupiedBoatSpawn) {
 				warn(`Couldn't find unoccupied boat spawn for map: ${currentMap}`);
 				return;
@@ -131,9 +148,15 @@ export class BoatService implements OnStart {
 
 			const boat = boatModel.Clone() as Model;
 			boat.SetAttribute("boatId", boatId);
-			boat.PivotTo(unoccupiedBoatSpawn?.GetPivot());
+			boat.PivotTo(unoccupiedBoatSpawn?.GetPivot().add(new Vector3(0, boat.GetExtentsSize().Y / 2, 0)));
 			boat.Parent = Workspace;
 			this.spawnedBoats.set(boatId, boat);
+
+			for (const descendant of boat.GetDescendants()) {
+				if (descendant.IsA("BasePart")) {
+					descendant.SetNetworkOwner(player);
+				}
+			}
 		});
 
 		Functions.getOwnsBoat.setCallback((player, boatId) => {
@@ -141,23 +164,61 @@ export class BoatService implements OnStart {
 		});
 	}
 
-	getUnoccupiedBoatSpawn(mapName: keyof typeof mapConfig): PVInstance | undefined {
+	getUnoccupiedBoatSpawn(player: Player, mapName: keyof typeof mapConfig): PVInstance | undefined {
 		const boatSpawns = this.boatSpawns.get(mapName);
 		if (!boatSpawns) {
 			// This is a weird bug, but it's better to handle it just incase.
 			warn(`Couldn't find boat spawns for map: ${mapName}`);
 			return;
 		}
+		const playerPos = player.Character?.GetPivot().Position;
+		if (!playerPos) return;
 		// Loop through all existing boats, and see if any of them are colliding with boat spawns.
 		// Return the first unoccupied boat spawn.
-		for (const boatSpawn of boatSpawns) {
-			if (this.spawnedBoats.size() > 0) {
-				for (const [boatId, boat] of this.spawnedBoats) {
-					return boatSpawn; // TODO: Implement collision checks
+		if (this.spawnedBoats.size() > 0) {
+			let closestSpawn: PVInstance | undefined;
+			let minDistance = math.huge;
+
+			for (const spawn of boatSpawns) {
+				const spawnPos = spawn.GetPivot().Position;
+				let occupied = false;
+
+				for (const [, boat] of this.spawnedBoats) {
+					const boatPos = boat.GetPivot().Position;
+					const boatSize = boat.GetExtentsSize();
+
+					if (
+						math.abs(boatPos.X - spawnPos.X) < boatSize.X / 2 &&
+						math.abs(boatPos.Z - spawnPos.Z) < boatSize.Z / 2
+					) {
+						occupied = true;
+						break;
+					}
 				}
-			} else {
-				return boatSpawn;
+
+				if (!occupied) {
+					const distance = spawnPos.sub(playerPos).Magnitude;
+					if (distance < minDistance) {
+						minDistance = distance;
+						closestSpawn = spawn;
+					}
+				}
+
+				return closestSpawn;
 			}
+		} else {
+			let closestSpawn: PVInstance | undefined;
+			let closestDistance = math.huge;
+
+			for (const spawn of boatSpawns) {
+				const distance = spawn.GetPivot().Position.sub(playerPos).Magnitude;
+				if (distance < closestDistance) {
+					closestDistance = distance;
+					closestSpawn = spawn;
+				}
+			}
+
+			return closestSpawn;
 		}
 	}
 }

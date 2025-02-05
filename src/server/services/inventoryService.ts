@@ -79,7 +79,13 @@ export class InventoryService implements OnStart {
 
 			const inventory = profile.Data[inventoryKey];
 			inventory.push(item as string & TargetItem);
-			this.profileService.setProfile(player, profile);
+			const equippedItemKey = itemType === "MetalDetectors" ? "equippedDetector" : "equippedShovel";
+			const equippedItem = profile.Data[equippedItemKey];
+			const equippedItemPrice = "price" in config[equippedItem] ? config[equippedItem].price : 0;
+			if (!equippedItem || cost > equippedItemPrice) {
+				profile.Data[equippedItemKey] = item;
+				this.giveTools(player, profile);
+			}
 			Events.updateInventory(player, itemType, [
 				{
 					equippedShovel: profile.Data.equippedShovel,
@@ -90,6 +96,8 @@ export class InventoryService implements OnStart {
 					(value) => ({ name: value, type: itemType as ItemType, ...config[value as string] } as Item),
 				),
 			]);
+			this.profileService.setProfile(player, profile);
+
 			Events.boughtItem(player, item, itemType, config[item]);
 		});
 
@@ -314,7 +322,7 @@ export class InventoryService implements OnStart {
 	public addItemToTargetInventory(player: Player, item: Target) {
 		const profile = this.profileService.getProfile(player);
 		if (profile) {
-			profile.Data.targetInventory.push(item);
+			profile.Data.targetInventory.push({ itemId: item.itemId, name: item.name, weight: item.weight });
 			if (!profile.Data.previouslyFoundTargets.has(item.name)) {
 				profile.Data.previouslyFoundTargets.add(item.name);
 			}

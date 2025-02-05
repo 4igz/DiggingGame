@@ -53,6 +53,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 			LayoutOrder={props.price}
 			key={"Item"}
 			Position={UDim2.fromScale(0.601, 0)}
+			AnchorPoint={new Vector2(0.5, 0.5)}
 			Size={sz.map((s) => {
 				return UDim2.fromScale(0.329 * s, 1.01 * s);
 			})}

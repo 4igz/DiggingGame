@@ -5,7 +5,7 @@ export const BASE_DETECTOR_STRENGTH = 175;
 export interface MetalDetector {
 	strength: number; // The distance at which you will find a target area
 	rarityType: Rarity; // Rarity of the detector
-	luck: number; // 0-1
+	luck: number; // 0-100
 	searchRadius: number; // Determines the radius that is provided to the player to find a nearby target.
 	itemImage: string;
 	price: number;
@@ -134,7 +134,7 @@ export const metalDetectorConfig: MetalDetectorModule = {
 	},
 	PureDetector: {
 		strength: 12,
-		luck: 10,
+		luck: 100,
 		searchRadius: 5,
 		itemImage: "rbxassetid://98289595849939",
 		rarityType: "Secret",
