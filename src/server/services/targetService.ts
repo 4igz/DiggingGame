@@ -1,5 +1,5 @@
 import { Service, OnStart, OnTick } from "@flamework/core";
-import { CollectionService, HttpService, PhysicsService, Players, RunService } from "@rbxts/services";
+import { CollectionService, HttpService, PhysicsService, Players, RunService, Workspace } from "@rbxts/services";
 import { Events } from "server/network";
 import { gameConstants } from "shared/constants";
 import {
@@ -185,9 +185,11 @@ export class TargetService implements OnStart, OnTick {
 				}
 
 				// Get the spawn bases from the map
-				const spawnBaseFolder = map.WaitForChild("SpawnBases");
+				// const spawnBaseFolder = map.WaitForChild("SpawnBases");
 
-				const bases = spawnBaseFolder.GetChildren().filter((inst) => inst.IsA("BasePart"));
+				// const bases = spawnBaseFolder.GetChildren().filter((inst) => inst.IsA("BasePart"));
+				const bases = this.getNearbyBases(character.GetPivot().Position, gameConstants.DIG_RANGE);
+				print(bases);
 				const position = findFurthestPointWithinRadius(
 					character.GetPivot().Position,
 					bases,
@@ -200,9 +202,7 @@ export class TargetService implements OnStart, OnTick {
 				}
 
 				target.position = position;
-				target.base = spawnBaseFolder.GetChildren()[
-					this.rng.NextInteger(0, spawnBaseFolder.GetChildren().size() - 1)
-				] as BasePart;
+				target.base = bases[this.rng.NextInteger(0, bases.size() - 1)] as BasePart;
 				target.mapName = map.Name;
 
 				// Add the target to the active targets
@@ -243,6 +243,25 @@ export class TargetService implements OnStart, OnTick {
 			if (!target.activelyDigging) continue;
 			target.digProgress = math.max(0, target.digProgress - target.maxProgress * 0.0005);
 		}
+	}
+
+	private basePredicate(base: BasePart) {
+		const diggableMaterials = [
+			Enum.Material.Grass,
+			Enum.Material.Sand,
+			Enum.Material.LeafyGrass,
+			Enum.Material.Mud,
+			Enum.Material.Snow,
+			Enum.Material.Ground,
+		];
+
+		return (
+			base.IsA("BasePart") &&
+			diggableMaterials.find((material) => base.Material === material) &&
+			!CollectionService.HasTag(base, "CantDigHere") &&
+			base.CanCollide &&
+			!(base.Transparency >= 0.95)
+		);
 	}
 
 	public getPlayerTarget(player: Player): Target | undefined {
@@ -362,12 +381,20 @@ export class TargetService implements OnStart, OnTick {
 		}
 	}
 
+	public getNearbyBases(position: Vector3, radius: number) {
+		const bases = Workspace.GetPartBoundsInRadius(position, radius).filter((inst) => this.basePredicate(inst));
+		return bases;
+	}
+
 	// Spawn a target and assign it to a player.
 	// Returns true if the target was successfully spawned, false otherwise.
 	public spawnTarget(player: Player, luckMult: number): boolean {
 		const profile = this.profileService.getProfile(player);
 
 		if (!profile) return false;
+
+		const character = player.Character;
+		if (!character) return false;
 
 		const map = Maps.find((map) => map.Name === profile.Data.currentMap) as Folder | undefined;
 		if (!map) return false;
@@ -379,16 +406,13 @@ export class TargetService implements OnStart, OnTick {
 		const radius = BASE_DETECTOR_STRENGTH / playerDetectorConfig.strength;
 		const randomScaleFactor = 0.75 + math.random() * 0.25; // Essentially ensures that the target is within 0.75-1x the detectors range
 		const adjustedRadius = radius * randomScaleFactor;
+		const bases = this.getNearbyBases(character.GetPivot().Position, adjustedRadius);
 
-		const playerPosition = player.Character?.PrimaryPart?.Position;
+		const playerPosition = character.GetPivot().Position;
 
 		if (!playerPosition) return false;
 
-		const position = findFurthestPointWithinRadius(
-			playerPosition,
-			spawnBaseFolder.GetChildren().filter((inst) => inst.IsA("BasePart")),
-			adjustedRadius,
-		);
+		const position = findFurthestPointWithinRadius(playerPosition, bases, adjustedRadius);
 
 		if (!position) return false;
 
