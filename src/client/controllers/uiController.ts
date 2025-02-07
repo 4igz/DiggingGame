@@ -23,6 +23,7 @@ import { Signals } from "shared/signals";
 import { BoatShopComponent } from "client/reactComponents/boatShop";
 import { Popups } from "client/reactComponents/popups";
 import { ShovelController } from "./shovelController";
+import canDigPopup from "client/reactComponents/canDigPopup";
 
 @Controller({})
 export class UiController implements OnStart {
@@ -105,6 +106,8 @@ export class UiController implements OnStart {
 			false,
 			true,
 		);
+
+		this.registerUi("CanDigIndicator", React.createElement(canDigPopup), { });
 	}
 
 	onStart() {

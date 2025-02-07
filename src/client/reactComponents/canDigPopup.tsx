@@ -4,6 +4,7 @@ import { Signals } from "shared/signals";
 
 const Shovel = "rbxassetid://80703918143921";
 const XShovel = "rbxassetid://79006133321536";
+
 export = () => {
 	const [visible, setVisible] = React.useState(false);
 	const [digEnabled, setDigEnabled] = React.useState(false);
@@ -26,9 +27,13 @@ export = () => {
 		<imagelabel
 			AnchorPoint={new Vector2(0, 1)}
 			Position={UDim2.fromScale(0, 1)}
+			Size={UDim2.fromScale(0.1, 0.1)}
 			Image={digEnabled ? Shovel : XShovel}
 			Visible={visible}
 			BackgroundTransparency={1}
-		/>
+			ScaleType={Enum.ScaleType.Fit}
+		>
+			<uiaspectratioconstraint AspectRatio={1} />
+		</imagelabel>
 	);
 };
