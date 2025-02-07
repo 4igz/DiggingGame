@@ -1,4 +1,4 @@
-import React, { createRef, useEffect, useState } from "@rbxts/react";
+import React, { createRef, useEffect, useRef, useState } from "@rbxts/react";
 import { useMotion } from "client/hooks/useMotion";
 import { Events, Functions } from "client/network";
 import { springs } from "client/utils/springs";
@@ -8,38 +8,40 @@ import { AnimatedButton } from "./mainUi";
 import { UiController } from "client/controllers/uiController";
 import { RunService, UserInputService } from "@rbxts/services";
 import { gameConstants } from "shared/constants";
+import { set } from "@rbxts/sift/out/Array";
 
 interface MoneyVectorProps {
 	offset: UDim2;
 	size: UDim2;
 	uiAnchor: Vector2;
 	key: string;
-	onComplete: () => void;
+	onComplete: (key: string) => void;
 }
 
 let variation = 0;
+const random = new Random();
 const MoneyVector = (props: MoneyVectorProps) => {
+	variation += 1;
+	variation = variation % 4;
+
 	const vectorRef = createRef<ImageLabel>();
+	const startVelocityX = useRef((random.NextNumber() / 2 + 0.5) * (variation - 2));
+	const startTick = useRef(tick());
+	const [position, setPosition] = useState(props.uiAnchor);
+	const [velocity, setVelocity] = useState(
+		new Vector2(startVelocityX.current, -2).Unit.mul(random.NextInteger(400, 600)),
+	);
+	const [rotation, setRotation] = useState(0);
+	const [transparency, setTransparency] = useState(0);
+	const [visible, setVisible] = useState(false);
 
 	useEffect(() => {
 		const cashClone = vectorRef.current;
 		if (!cashClone) {
 			return;
 		}
-		const startTick = tick();
-		const random = new Random();
 
-		let position = props.uiAnchor;
-
-		variation += 2;
-		variation = variation % 4;
-
-		const startVelocityX = (random.NextNumber() / 2 + 0.5) * (variation - 2);
-		let velocity = new Vector2(startVelocityX, -2).Unit.mul(random.NextInteger(400, 600));
 		const acceleration = new Vector2(0, 2000);
-
-		// Set initial position and parent
-		cashClone.Position = new UDim2(0, position.X, 0, position.Y);
 
 		// Define constants
 		const KILL_TIME = 0.8;
@@ -47,36 +49,37 @@ const MoneyVector = (props: MoneyVectorProps) => {
 		const FADE_OUT_TIME = 0.25;
 		const ROTATION_MAX_CONST = 30;
 
+		task.delay(KILL_TIME, () => {
+			if (vectorRef.current && vectorRef.current.Parent) {
+				vectorRef.current.Destroy();
+			}
+		});
+
 		const connection = RunService.RenderStepped.Connect((dt) => {
-			// RenderStepped:Wait() returns a tuple [dt], so use destructuring
 			const currentTick = tick();
-			const runningTime = currentTick - startTick;
+			const runningTime = currentTick - startTick.current;
 
 			// Break conditions
 			if (!cashClone.Parent || runningTime > KILL_TIME) {
 				connection.Disconnect();
-				props.onComplete();
 				return;
 			}
 
 			// Rotation
-			cashClone.Rotation = (runningTime / KILL_TIME) * -startVelocityX * ROTATION_MAX_CONST;
+			setRotation((runningTime / KILL_TIME) * -startVelocityX.current * ROTATION_MAX_CONST);
 
 			// Update velocity and position
-			velocity = velocity.add(acceleration.mul(dt));
-			position = position.add(velocity.mul(dt));
-
-			// Apply new position
-			cashClone.Position = new UDim2(0, position.X, 0, position.Y);
+			setVelocity(velocity.add(acceleration.mul(dt)));
+			setPosition(position.add(velocity.mul(dt)));
 
 			// Visibility logic
 			if (runningTime > POP_IN_TIME) {
-				cashClone.Visible = true;
+				setVisible(true);
 			}
 
 			// Fade-out logic
 			if (KILL_TIME - runningTime < FADE_OUT_TIME) {
-				cashClone.ImageTransparency = 1 - (KILL_TIME - runningTime) / FADE_OUT_TIME;
+				setTransparency(1 - (KILL_TIME - runningTime) / FADE_OUT_TIME);
 			}
 		});
 
@@ -88,15 +91,19 @@ const MoneyVector = (props: MoneyVectorProps) => {
 				vectorRef.current.Destroy();
 			}
 		};
-	}, []);
+	}, [vectorRef]);
 
 	return (
 		<imagelabel
 			AnchorPoint={new Vector2(0.5, 0)}
 			Image={"rbxassetid://96446480715038"}
 			Size={props.size}
+			Visible={visible}
+			Position={new UDim2(0, position.X, 0, position.Y)}
+			ImageTransparency={transparency}
 			key={props.key}
 			BackgroundTransparency={1}
+			Rotation={rotation}
 			ref={vectorRef}
 		/>
 	);
@@ -111,8 +118,6 @@ const MONEY_VECTOR_CREATION_AMT = new NumberRange(4, 6);
 
 export const RightSideMenu = (props: MenuProps) => {
 	const [moneyVectors, setMoneyVectors] = useState<MoneyVectorProps[]>([]);
-	const [animationRunning, setAnimationRunning] = useState(false);
-	const [wasClicked, setWasClicked] = useState(false);
 	const [moneyValue, setMoneyValue] = useState("0");
 	const [, moneyMotion] = useMotion(0);
 	const moneyFrameRef = createRef<Frame>();
@@ -133,13 +138,6 @@ export const RightSideMenu = (props: MenuProps) => {
 			moneyMotion.spring(EternityNum.toNumber(etNum), springs.default);
 		}
 	};
-
-	React.useEffect(() => {
-		if (!animationRunning && wasClicked) {
-			setWasClicked(false);
-			setMoneyVectors([]);
-		}
-	}, [animationRunning, wasClicked]);
 
 	React.useEffect(() => {
 		Functions.getMoneyShortString.invoke().then((money) => {
@@ -171,18 +169,14 @@ export const RightSideMenu = (props: MenuProps) => {
 					onClick={() => {
 						// if (animationRunning) return;
 						const creationAmt = math.random(MONEY_VECTOR_CREATION_AMT.Min, MONEY_VECTOR_CREATION_AMT.Max);
-						const completionPromises = new Array<Promise<void>>();
 						const vectors: MoneyVectorProps[] = [];
 						for (let i = 0; i < creationAmt; i++) {
-							let resolvePromise!: () => void;
-							const promise = new Promise<void>((resolve) => {
-								resolvePromise = resolve;
-							});
-							const onComplete = () => {
-								resolvePromise();
+							const onComplete = (key: string) => {
+								print(key);
+								setMoneyVectors((prev) => {
+									return prev.filter((vector) => vector.key !== key);
+								});
 							};
-
-							completionPromises.push(promise);
 
 							vectors.push({
 								size: UDim2.fromScale(0.05, 0.1),
@@ -196,13 +190,7 @@ export const RightSideMenu = (props: MenuProps) => {
 								onComplete,
 							});
 						}
-						setMoneyVectors(vectors);
-						setAnimationRunning(true);
-						setWasClicked(true);
-						// Once ALL have finished
-						Promise.all(completionPromises).then(() => {
-							setAnimationRunning(false);
-						});
+						setMoneyVectors((prev) => [...prev, ...vectors]);
 						props.uiController.toggleUi(gameConstants.GAMEPASS_SHOP_UI);
 					}}
 					Ref={moneyFrameRef}

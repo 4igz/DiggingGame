@@ -62,6 +62,8 @@ export class ShovelController implements OnStart {
 				}
 
 				if (child.IsA("Tool") && shovelConfig[child.Name] !== undefined) {
+					Signals.setShovelEquipped.Fire(true);
+
 					const humanoid = character.WaitForChild("Humanoid") as Humanoid;
 					const animator = humanoid.WaitForChild("Animator") as Animator;
 
@@ -213,6 +215,8 @@ export class ShovelController implements OnStart {
 								) {
 									humanoid.WalkSpeed = 0;
 									Events.dig();
+								} else {
+									// TODO: flash canDig indicator
 								}
 							}
 
@@ -226,6 +230,7 @@ export class ShovelController implements OnStart {
 
 					// === Cleanup on tool removal ===
 					child.AncestryChanged.Once(() => {
+						Signals.setShovelEquipped.Fire(false);
 						toolConnection?.Disconnect();
 						steppedConnection?.Disconnect();
 						task.cancel(rsThread);
@@ -337,6 +342,7 @@ export class ShovelController implements OnStart {
 			for (const descendant of model.GetDescendants()) {
 				if (descendant.IsA("BasePart")) {
 					descendant.CollisionGroup = gameConstants.NOCHARACTERCOLLISION_COLGROUP;
+					descendant.Anchored = true;
 				}
 			}
 
@@ -575,12 +581,12 @@ export class ShovelController implements OnStart {
 						existingModel.PivotTo(
 							existingModel.GetPivot().add(new Vector3(0, existingModel.GetExtentsSize().Y * 2, 0)),
 						);
-						task.defer(() => {
-							for (const descendant of existingModel.GetDescendants()) {
-								if (descendant.IsA("BasePart")) {
-									descendant.AssemblyLinearVelocity = Vector3.zero;
-								}
+						for (const descendant of existingModel.GetDescendants()) {
+							if (descendant.IsA("BasePart")) {
+								descendant.Anchored = false;
 							}
+						}
+						task.defer(() => {
 							primaryPart.ApplyImpulse(randomForce.mul(mass));
 						});
 					} else {

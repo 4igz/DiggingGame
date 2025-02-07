@@ -26,6 +26,7 @@ interface ClientToServerEvents {
 	/** A bit dumb, but we assume player rolls a 10 luck detector automatically here */
 	nextTargetAutoDigger: () => void;
 	spawnBoat: (boatName: keyof typeof boatConfig) => void;
+	teleportSuccess: () => void;
 }
 
 interface ServerToClientEvents {
@@ -61,6 +62,8 @@ interface ServerToClientEvents {
 	) => void;
 	soldAllItems: (count: number, sellAmount: number) => void;
 	boughtItem: (itemName: string, itemType: ItemType, itemConfig: Shovel | MetalDetector | BoatConfig) => void;
+	teleportToIsland: (islandName: keyof typeof mapConfig) => void;
+	canDig(bool: boolean): void;
 }
 
 interface ClientToServerFunctions {

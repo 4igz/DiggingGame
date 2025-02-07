@@ -14,6 +14,8 @@ export const Signals = {
 	// Client only signals:
 	endDigging: new Signal<() => void>(),
 	autoDig: new Signal<() => void>(),
+	setCanDig: new Signal<(canDig: boolean) => void>(),
+	setShovelEquipped: new Signal<(equipped: boolean) => void>(),
 	dig: new Signal<() => void>(),
 	forceSetAutoDigging: new Signal<(enabled: boolean) => void>(),
 	setAutoDiggingEnabled: new Signal<(enabled: boolean) => void>(),

@@ -2,6 +2,7 @@ import { Controller, OnInit, OnStart } from "@flamework/core";
 import Signal from "@rbxts/goodsignal";
 import { CollectionService, Lighting, Players, SoundService, TweenService, Workspace } from "@rbxts/services";
 import { Zone } from "@rbxts/zone-plus";
+import { Events } from "client/network";
 import { mapConfig } from "shared/config/mapConfig";
 import { gameConstants } from "shared/constants";
 
@@ -13,6 +14,8 @@ export class ZoneController implements OnInit {
 	public isleZoneMap = new Map<string, Zone>();
 
 	public zonesUpdated = new Signal<() => void>();
+
+	private isFirstZoneEnter = true;
 
 	private areaSounds = SoundService.WaitForChild("Areas") as SoundGroup;
 	private currentPlayingAreaSound: Sound | undefined;
@@ -128,26 +131,31 @@ export class ZoneController implements OnInit {
 				this.zonesUpdated.Fire();
 			}
 		});
+
+		// This is important because this is how we know that the island has streamed in before we teleport the player to it.
+		Events.teleportToIsland.connect((islandName) => {
+			const island = Workspace.WaitForChild(islandName);
+			const spawnPos = (island.WaitForChild("SpawnLocation") as SpawnLocation).CFrame;
+			const character = Players.LocalPlayer.Character || Players.LocalPlayer.CharacterAdded.Wait()[0];
+			const goal = spawnPos.add(new Vector3(0, 5, 0));
+			// Wait for HumanoidRootPart so we can ensure that they can be teleported.
+			character.WaitForChild("HumanoidRootPart");
+			character.PivotTo(goal);
+			Events.teleportSuccess.fire();
+		});
 	}
 
 	onInit() {}
 
 	onZoneEnter(zoneName: keyof typeof mapConfig) {
-		TweenService.Create(
-			this.clouds,
-			this.AREA_CHANGE_TWEEN_INFO,
-			this.CLOUD_ZONE_PROPERTIES_TABLE[zoneName],
-		).Play();
-		TweenService.Create(
-			this.colorCorrection,
-			this.AREA_CHANGE_TWEEN_INFO,
-			this.COLOR_CORRECTION_PROPERTIES_TABLE[zoneName],
-		).Play();
-		TweenService.Create(
-			Workspace.Terrain,
-			this.AREA_CHANGE_TWEEN_INFO,
-			this.WATER_COLOR_PROPERTIES_TABLE[zoneName],
-		).Play();
+		let tweenInfo = this.AREA_CHANGE_TWEEN_INFO;
+		if (this.isFirstZoneEnter) {
+			tweenInfo = new TweenInfo(0);
+			this.isFirstZoneEnter = false;
+		}
+		TweenService.Create(this.clouds, tweenInfo, this.CLOUD_ZONE_PROPERTIES_TABLE[zoneName]).Play();
+		TweenService.Create(this.colorCorrection, tweenInfo, this.COLOR_CORRECTION_PROPERTIES_TABLE[zoneName]).Play();
+		TweenService.Create(Workspace.Terrain, tweenInfo, this.WATER_COLOR_PROPERTIES_TABLE[zoneName]).Play();
 		this.currentMapName = zoneName;
 		this.playAreaSound(zoneName);
 	}
@@ -177,6 +185,7 @@ export class ZoneController implements OnInit {
 				this.AREA_CHANGE_TWEEN_INFO,
 				this.WATER_COLOR_PROPERTIES_TABLE.HighSeas,
 			).Play();
+			this.playAreaSound("HighSeas");
 		}
 	}
 

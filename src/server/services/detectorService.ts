@@ -146,7 +146,12 @@ export class DetectorService implements OnStart, OnTick {
 
 			if (!digTarget) continue;
 
-			const distance = character.PrimaryPart?.Position.sub(digTarget.position).Magnitude;
+			const detectorPosition = character.GetPivot().Position;
+			const targetPosition = digTarget.position;
+			const horizontalDistance = new Vector3(detectorPosition.X, 0, detectorPosition.Z).sub(
+				new Vector3(targetPosition.X, 0, targetPosition.Z),
+			).Magnitude;
+			const distance = horizontalDistance;
 
 			if (distance === undefined) continue;
 

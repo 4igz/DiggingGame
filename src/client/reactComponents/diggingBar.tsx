@@ -10,6 +10,7 @@ import { BASE_SHOVEL_STRENGTH, shovelConfig } from "shared/config/shovelConfig";
 import { Signals } from "shared/signals";
 import { ShovelController } from "client/controllers/shovelController";
 import CameraShaker, { CameraShakeInstance } from "@rbxts/camera-shaker";
+import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 
 export interface DiggingBarProps {
 	target?: Target;
@@ -209,296 +210,313 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 		});
 	}, []);
 
+	const platform = getPlayerPlatform();
+
 	return (
-		<frame
-			AnchorPoint={new Vector2(0.5, 0.5)}
-			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-			BackgroundTransparency={1}
-			BorderColor3={Color3.fromRGB(0, 0, 0)}
-			BorderSizePixel={0}
-			key={"Digging Progress Bar Frame"}
-			Position={UDim2.fromScale(0.75, 0.5)}
-			Size={scale.map((s) => UDim2.fromScale(0.3 * s, 0.5 * s))}
-			Visible={visible}
-			Rotation={rotation.map((r) => math.clamp(math.max(1, r) * (cycle * 4), -8, 8))}
-		>
+		<frame Size={new UDim2(1, 0, 1, 0)} BackgroundTransparency={1} Visible={visible}>
 			<frame
 				AnchorPoint={new Vector2(0.5, 0.5)}
 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 				BackgroundTransparency={1}
 				BorderColor3={Color3.fromRGB(0, 0, 0)}
 				BorderSizePixel={0}
-				key={"Progress Bar Frame"}
-				Position={UDim2.fromScale(0.229, 0.482)}
-				Size={UDim2.fromScale(0.277, 0.826)}
-				ZIndex={10}
+				key={"Digging Progress Bar Frame"}
+				Position={UDim2.fromScale(0.75, 0.5)}
+				Size={scale.map((s) => UDim2.fromScale(0.3 * s, 0.5 * s))}
+				Visible={visible}
+				Rotation={rotation.map((r) => math.clamp(math.max(1, r) * (cycle * 4), -8, 8))}
 			>
-				<imagelabel
+				<frame
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
 					BorderColor3={Color3.fromRGB(0, 0, 0)}
 					BorderSizePixel={0}
-					Image={"rbxassetid://71521093457489"}
-					key={"Filled Progress Bar"}
-					Position={UDim2.fromScale(0.522, 0.495)}
-					Size={UDim2.fromScale(1, 1.01)}
+					key={"Progress Bar Frame"}
+					Position={UDim2.fromScale(0.229, 0.482)}
+					Size={UDim2.fromScale(0.277, 0.826)}
+					ZIndex={10}
 				>
-					<uigradient
-						key={"UIGradient"}
-						Offset={barProgress.map((p) => {
-							return new Vector2(0.98, p);
-						})}
-						Rotation={90}
-						Transparency={
-							new NumberSequence([
-								new NumberSequenceKeypoint(0, 1),
-								new NumberSequenceKeypoint(0.00125, 0),
-								new NumberSequenceKeypoint(1, 0),
-							])
-						}
-					/>
-				</imagelabel>
-			</frame>
-
-			<imagelabel
-				AnchorPoint={new Vector2(0.5, 0.5)}
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				Image={"rbxassetid://133217364331896"}
-				key={"Background"}
-				Position={UDim2.fromScale(0.5, 0.5)}
-				Size={UDim2.fromScale(1, 1)}
-			/>
-
-			<frame
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				key={"Shovel Progress"}
-				Position={UDim2.fromScale(-0.397, 0.0781)}
-				Size={UDim2.fromScale(0.298, 0.809)}
-				AnchorPoint={new Vector2(0.5, 0.5)}
-			></frame>
-
-			<frame
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				key={"Ruler"}
-				Position={UDim2.fromScale(0.45, 0)}
-				Size={UDim2.fromScale(0.55, 0.919)}
-			>
-				<textlabel
-					AnchorPoint={new Vector2(0.5, 0.5)}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-					key={"1st Increment"}
-					Position={UDim2.fromScale(0.35, 0.127)}
-					Size={UDim2.fromScale(0.548, 0.085)}
-					Text={"4 FT"}
-					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextScaled={true}
-					TextWrapped={true}
-					ZIndex={105}
-				>
-					<uistroke key={"UIStroke"} Thickness={3} />
-
-					<uipadding
-						key={"UIPadding"}
-						PaddingBottom={new UDim(0.000288, 0)}
-						PaddingLeft={new UDim(0.157, 0)}
-						PaddingRight={new UDim(0.157, 0)}
-						PaddingTop={new UDim(0.000288, 0)}
-					/>
-				</textlabel>
-
-				<textlabel
-					AnchorPoint={new Vector2(0.5, 0.5)}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-					key={"2nd Increment"}
-					Position={UDim2.fromScale(0.37, 0.308)}
-					Size={UDim2.fromScale(0.548, 0.085)}
-					Text={"8 FT"}
-					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextScaled={true}
-					TextWrapped={true}
-					ZIndex={105}
-				>
-					<uistroke key={"UIStroke"} Thickness={3} />
-
-					<uipadding
-						key={"UIPadding"}
-						PaddingBottom={new UDim(0.000288, 0)}
-						PaddingLeft={new UDim(0.15, 0)}
-						PaddingRight={new UDim(0.15, 0)}
-						PaddingTop={new UDim(0.000288, 0)}
-					/>
-				</textlabel>
-
-				<textlabel
-					AnchorPoint={new Vector2(0.5, 0.5)}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-					key={"3rd Increment"}
-					Position={UDim2.fromScale(0.4, 0.5)}
-					Size={UDim2.fromScale(0.548, 0.085)}
-					Text={"12 FT"}
-					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextScaled={true}
-					TextWrapped={true}
-					ZIndex={105}
-				>
-					<uistroke key={"UIStroke"} Thickness={3} />
-
-					<uipadding
-						key={"UIPadding"}
-						PaddingBottom={new UDim(0.000288, 0)}
-						PaddingLeft={new UDim(0.0952, 0)}
-						PaddingRight={new UDim(0.0952, 0)}
-						PaddingTop={new UDim(0.000288, 0)}
-					/>
-				</textlabel>
-
-				<textlabel
-					AnchorPoint={new Vector2(0.5, 0.5)}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-					key={"4th  Increment"}
-					Position={UDim2.fromScale(0.42, 0.7)}
-					Size={UDim2.fromScale(0.548, 0.085)}
-					Text={"16 FT"}
-					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextScaled={true}
-					TextWrapped={true}
-					ZIndex={105}
-				>
-					<uistroke key={"UIStroke"} Thickness={3} />
-
-					<uipadding
-						key={"UIPadding"}
-						PaddingBottom={new UDim(0.000288, 0)}
-						PaddingLeft={new UDim(0.0883, 0)}
-						PaddingRight={new UDim(0.0883, 0)}
-						PaddingTop={new UDim(0.000288, 0)}
-					/>
-				</textlabel>
-
-				<textlabel
-					AnchorPoint={new Vector2(0.5, 0.5)}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-					key={"5th  Increment"}
-					Position={UDim2.fromScale(0.45, 0.892)}
-					Size={UDim2.fromScale(0.548, 0.085)}
-					Text={"20 FT"}
-					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextScaled={true}
-					TextWrapped={true}
-					ZIndex={105}
-				>
-					<uistroke key={"UIStroke"} Thickness={3} />
-
-					<uipadding
-						key={"UIPadding"}
-						PaddingBottom={new UDim(0.000288, 0)}
-						PaddingLeft={new UDim(0.054, 0)}
-						PaddingRight={new UDim(0.054, 0)}
-						PaddingTop={new UDim(0.000288, 0)}
-					/>
-				</textlabel>
-			</frame>
-
-			<frame
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				key={"Progress Marker Frame"}
-				Position={UDim2.fromScale(0.2, 0.0781)}
-				Size={UDim2.fromScale(0.298, 0.809)}
-				ZIndex={10}
-			>
-				<imagelabel
-					AnchorPoint={new Vector2(0.5, 0.5)}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					Image={"rbxassetid://74432683218728"}
-					key={"Marker"}
-					Position={barProgress.map((p) => UDim2.fromScale(0.5, p))}
-					ScaleType={Enum.ScaleType.Fit}
-					Size={UDim2.fromScale(1, 1)}
-				>
-					<frame
-						AnchorPoint={new Vector2(0.5, 1)}
+					<imagelabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
 						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 						BackgroundTransparency={1}
 						BorderColor3={Color3.fromRGB(0, 0, 0)}
 						BorderSizePixel={0}
-						key={"Shovel Marker"}
-						Position={barProgress.map((p) => UDim2.fromScale(-0.5 - p, 1))}
+						Image={"rbxassetid://71521093457489"}
+						key={"Filled Progress Bar"}
+						Position={UDim2.fromScale(0.522, 0.495)}
+						Size={UDim2.fromScale(1, 1.01)}
+					>
+						<uigradient
+							key={"UIGradient"}
+							Offset={barProgress.map((p) => {
+								return new Vector2(0.98, p);
+							})}
+							Rotation={90}
+							Transparency={
+								new NumberSequence([
+									new NumberSequenceKeypoint(0, 1),
+									new NumberSequenceKeypoint(0.00125, 0),
+									new NumberSequenceKeypoint(1, 0),
+								])
+							}
+						/>
+					</imagelabel>
+				</frame>
+
+				<imagelabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					Image={"rbxassetid://133217364331896"}
+					key={"Background"}
+					Position={UDim2.fromScale(0.5, 0.5)}
+					Size={UDim2.fromScale(1, 1)}
+				/>
+
+				<frame
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					key={"Shovel Progress"}
+					Position={UDim2.fromScale(-0.397, 0.0781)}
+					Size={UDim2.fromScale(0.298, 0.809)}
+					AnchorPoint={new Vector2(0.5, 0.5)}
+				></frame>
+
+				<frame
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					key={"Ruler"}
+					Position={UDim2.fromScale(0.45, 0)}
+					Size={UDim2.fromScale(0.55, 0.919)}
+				>
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+						BackgroundTransparency={1}
+						BorderColor3={Color3.fromRGB(0, 0, 0)}
+						BorderSizePixel={0}
+						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						key={"1st Increment"}
+						Position={UDim2.fromScale(0.35, 0.127)}
+						Size={UDim2.fromScale(0.548, 0.085)}
+						Text={"4 FT"}
+						TextColor3={Color3.fromRGB(255, 255, 255)}
+						TextScaled={true}
+						TextWrapped={true}
+						ZIndex={105}
+					>
+						<uistroke key={"UIStroke"} Thickness={3} />
+
+						<uipadding
+							key={"UIPadding"}
+							PaddingBottom={new UDim(0.000288, 0)}
+							PaddingLeft={new UDim(0.157, 0)}
+							PaddingRight={new UDim(0.157, 0)}
+							PaddingTop={new UDim(0.000288, 0)}
+						/>
+					</textlabel>
+
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+						BackgroundTransparency={1}
+						BorderColor3={Color3.fromRGB(0, 0, 0)}
+						BorderSizePixel={0}
+						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						key={"2nd Increment"}
+						Position={UDim2.fromScale(0.37, 0.308)}
+						Size={UDim2.fromScale(0.548, 0.085)}
+						Text={"8 FT"}
+						TextColor3={Color3.fromRGB(255, 255, 255)}
+						TextScaled={true}
+						TextWrapped={true}
+						ZIndex={105}
+					>
+						<uistroke key={"UIStroke"} Thickness={3} />
+
+						<uipadding
+							key={"UIPadding"}
+							PaddingBottom={new UDim(0.000288, 0)}
+							PaddingLeft={new UDim(0.15, 0)}
+							PaddingRight={new UDim(0.15, 0)}
+							PaddingTop={new UDim(0.000288, 0)}
+						/>
+					</textlabel>
+
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+						BackgroundTransparency={1}
+						BorderColor3={Color3.fromRGB(0, 0, 0)}
+						BorderSizePixel={0}
+						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						key={"3rd Increment"}
+						Position={UDim2.fromScale(0.4, 0.5)}
+						Size={UDim2.fromScale(0.548, 0.085)}
+						Text={"12 FT"}
+						TextColor3={Color3.fromRGB(255, 255, 255)}
+						TextScaled={true}
+						TextWrapped={true}
+						ZIndex={105}
+					>
+						<uistroke key={"UIStroke"} Thickness={3} />
+
+						<uipadding
+							key={"UIPadding"}
+							PaddingBottom={new UDim(0.000288, 0)}
+							PaddingLeft={new UDim(0.0952, 0)}
+							PaddingRight={new UDim(0.0952, 0)}
+							PaddingTop={new UDim(0.000288, 0)}
+						/>
+					</textlabel>
+
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+						BackgroundTransparency={1}
+						BorderColor3={Color3.fromRGB(0, 0, 0)}
+						BorderSizePixel={0}
+						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						key={"4th  Increment"}
+						Position={UDim2.fromScale(0.42, 0.7)}
+						Size={UDim2.fromScale(0.548, 0.085)}
+						Text={"16 FT"}
+						TextColor3={Color3.fromRGB(255, 255, 255)}
+						TextScaled={true}
+						TextWrapped={true}
+						ZIndex={105}
+					>
+						<uistroke key={"UIStroke"} Thickness={3} />
+
+						<uipadding
+							key={"UIPadding"}
+							PaddingBottom={new UDim(0.000288, 0)}
+							PaddingLeft={new UDim(0.0883, 0)}
+							PaddingRight={new UDim(0.0883, 0)}
+							PaddingTop={new UDim(0.000288, 0)}
+						/>
+					</textlabel>
+
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+						BackgroundTransparency={1}
+						BorderColor3={Color3.fromRGB(0, 0, 0)}
+						BorderSizePixel={0}
+						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						key={"5th  Increment"}
+						Position={UDim2.fromScale(0.45, 0.892)}
+						Size={UDim2.fromScale(0.548, 0.085)}
+						Text={"20 FT"}
+						TextColor3={Color3.fromRGB(255, 255, 255)}
+						TextScaled={true}
+						TextWrapped={true}
+						ZIndex={105}
+					>
+						<uistroke key={"UIStroke"} Thickness={3} />
+
+						<uipadding
+							key={"UIPadding"}
+							PaddingBottom={new UDim(0.000288, 0)}
+							PaddingLeft={new UDim(0.054, 0)}
+							PaddingRight={new UDim(0.054, 0)}
+							PaddingTop={new UDim(0.000288, 0)}
+						/>
+					</textlabel>
+				</frame>
+
+				<frame
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					key={"Progress Marker Frame"}
+					Position={UDim2.fromScale(0.2, 0.0781)}
+					Size={UDim2.fromScale(0.298, 0.809)}
+					ZIndex={10}
+				>
+					<imagelabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+						BackgroundTransparency={1}
+						BorderColor3={Color3.fromRGB(0, 0, 0)}
+						BorderSizePixel={0}
+						Image={"rbxassetid://74432683218728"}
+						key={"Marker"}
+						Position={barProgress.map((p) => UDim2.fromScale(0.5, p))}
+						ScaleType={Enum.ScaleType.Fit}
 						Size={UDim2.fromScale(1, 1)}
 					>
-						<uilistlayout
-							key={"UIListLayout"}
-							FillDirection={Enum.FillDirection.Horizontal}
-							SortOrder={Enum.SortOrder.LayoutOrder}
-							VerticalAlignment={Enum.VerticalAlignment.Center}
-						/>
-
-						<imagelabel
+						<frame
+							AnchorPoint={new Vector2(0.5, 1)}
 							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 							BackgroundTransparency={1}
 							BorderColor3={Color3.fromRGB(0, 0, 0)}
 							BorderSizePixel={0}
-							Image={"rbxassetid://90210450208885"}
-							key={"Shovel Icon"}
-							ScaleType={Enum.ScaleType.Fit}
-							Size={UDim2.fromScale(0.63, 0.798)}
+							key={"Shovel Marker"}
+							Position={barProgress.map((p) => UDim2.fromScale(-0.5 - p, 1))}
+							Size={UDim2.fromScale(1, 1)}
 						>
-							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-						</imagelabel>
+							<uilistlayout
+								key={"UIListLayout"}
+								FillDirection={Enum.FillDirection.Horizontal}
+								SortOrder={Enum.SortOrder.LayoutOrder}
+								VerticalAlignment={Enum.VerticalAlignment.Center}
+							/>
 
-						<imagelabel
-							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-							BackgroundTransparency={1}
-							BorderColor3={Color3.fromRGB(0, 0, 0)}
-							BorderSizePixel={0}
-							Image={"rbxassetid://75994909740048"}
-							key={"Marker Icon"}
-							Position={UDim2.fromScale(0.63, 0.196)}
-							ScaleType={Enum.ScaleType.Fit}
-							Size={UDim2.fromScale(0.37, 0.469)}
-						>
-							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-						</imagelabel>
-					</frame>
-				</imagelabel>
+							<imagelabel
+								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+								BackgroundTransparency={1}
+								BorderColor3={Color3.fromRGB(0, 0, 0)}
+								BorderSizePixel={0}
+								Image={"rbxassetid://90210450208885"}
+								key={"Shovel Icon"}
+								ScaleType={Enum.ScaleType.Fit}
+								Size={UDim2.fromScale(0.63, 0.798)}
+							>
+								<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+							</imagelabel>
+
+							<imagelabel
+								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+								BackgroundTransparency={1}
+								BorderColor3={Color3.fromRGB(0, 0, 0)}
+								BorderSizePixel={0}
+								Image={"rbxassetid://75994909740048"}
+								key={"Marker Icon"}
+								Position={UDim2.fromScale(0.63, 0.196)}
+								ScaleType={Enum.ScaleType.Fit}
+								Size={UDim2.fromScale(0.37, 0.469)}
+							>
+								<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+							</imagelabel>
+						</frame>
+					</imagelabel>
+				</frame>
+
+				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.61} />
 			</frame>
 
-			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.61} />
+			<textlabel
+				Text={`${platform === "Mobile" ? "Tap" : "Click"} to dig!`}
+				Position={UDim2.fromScale(0.5, 0.78)}
+				AnchorPoint={new Vector2(0.5, 0)}
+				BackgroundTransparency={1}
+				Font={Enum.Font.BuilderSansBold}
+				TextColor3={Color3.fromRGB(0, 120, 255)}
+				Size={UDim2.fromScale(0.5, 0.05)}
+				TextScaled={true}
+			>
+				<uistroke Thickness={2} />
+			</textlabel>
 		</frame>
 	);
 };

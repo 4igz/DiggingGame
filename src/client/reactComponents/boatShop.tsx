@@ -9,6 +9,7 @@ import { separateWithCommas, spaceWords } from "shared/util/nameUtil";
 import { ExitButton } from "./mainUi";
 import { boatConfig } from "shared/config/boatConfig";
 import Object from "@rbxts/object-utils";
+import { SoundService } from "@rbxts/services";
 
 const BOATSHOP_MENUS = {
 	Boats: "Boats",
@@ -75,6 +76,9 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 					MouseButton1Click: () => {
 						if (owned) {
 							Events.spawnBoat(boatName);
+							SoundService.PlayLocalSound(
+								SoundService.WaitForChild("UI").WaitForChild("BoatSpawn") as Sound,
+							);
 						} else {
 							Events.buyBoat(boatName);
 						}

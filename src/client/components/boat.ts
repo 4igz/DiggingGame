@@ -3,6 +3,7 @@ import { Component, BaseComponent } from "@flamework/components";
 import { ContextActionService, Players } from "@rbxts/services";
 import { Functions } from "client/network";
 import { boatConfig, DEFAULT_BOAT_SPEED, DEFAULT_BOAT_TURN_SPEED } from "shared/config/boatConfig";
+import { is } from "@rbxts/sift/out/Array";
 
 interface Attributes {
 	boatId: string; // Assigned by the server to indicate the boat's unique ID
@@ -68,7 +69,24 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 
 			if (!isOwner) {
 				ownerSeatPrompt.Enabled = false;
+				return;
 			}
+
+			// Create a flashing highlight for the boat to indicate that it's the player's boat
+			// and help point out its location in the world.
+
+			const highlight = new Instance("Highlight");
+			highlight.Parent = this.instance;
+
+			const period = 5; // Time in seconds for a full oscillation
+			const halfPeriod = period / 2;
+			let elapsedTime = 0;
+			while (this.isOwner && this.instance.Parent && !this.isSittingInDriverSeat) {
+				elapsedTime += task.wait();
+				const phase = (elapsedTime % period) / halfPeriod;
+				highlight.FillTransparency = phase <= 1 ? phase : 2 - phase;
+			}
+			highlight.Destroy();
 		});
 
 		let playingTrack: AnimationTrack | undefined = undefined;
@@ -111,7 +129,7 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 				if (playingTrack && playingTrack.IsPlaying) {
 					playingTrack.Stop();
 				}
-				humanoid.ChangeState(Enum.HumanoidStateType.Running);
+				humanoid.ChangeState(Enum.HumanoidStateType.Jumping);
 				this.currentVelocity = new Vector3(0, 0, 0);
 				this.currentAngularVelocity = new Vector3(0, 0, 0);
 				this.instance.Physics.ForceAttachment.LinearVelocity.VectorVelocity = this.currentVelocity;
@@ -138,7 +156,7 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 	}
 
 	onRender(dt: number): void {
-		const wakeSpeedThreshold = 50; // Define a threshold for enabling the wake
+		const wakeSpeedThreshold = 25; // Define a threshold for enabling the wake
 
 		const currentSpeed = this.instance.Physics.AssemblyLinearVelocity.Magnitude;
 		if (currentSpeed > wakeSpeedThreshold) {
