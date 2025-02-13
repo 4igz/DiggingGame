@@ -6,7 +6,7 @@ import { ShovelController } from "./shovelController";
 import { Detector } from "./detector";
 import { Signals } from "shared/signals";
 import { gameConstants } from "shared/constants";
-import Path from "shared/util/SimplePath";
+import { inventorySizeAtom, treasureCountAtom } from "client/atoms/inventoryAtoms";
 
 interface MovementKeyMap {
 	[keyCode: number]: boolean;
@@ -71,6 +71,11 @@ export class AutoDigging implements OnStart {
 
 	onStart(): void {
 		Events.targetSpawnSuccess.connect((position: Vector3) => {
+			if (treasureCountAtom() >= inventorySizeAtom()) {
+				Signals.inventoryFull.Fire();
+				this.setAutoDiggingEnabled(false);
+				return;
+			}
 			if (this.autoDiggingEnabled) {
 				if (this.isPathing) {
 					this.existingPather?.Destroy();
@@ -310,6 +315,13 @@ export class AutoDigging implements OnStart {
 	}
 
 	public setAutoDiggingEnabled(enabled: boolean = true) {
+		if (enabled) {
+			if (treasureCountAtom() >= inventorySizeAtom()) {
+				Signals.inventoryFull.Fire();
+				this.setAutoDiggingEnabled(false);
+				return;
+			}
+		}
 		this.quitCurrentTarget();
 		if (!enabled) {
 			Signals.setAutoDiggingRunning.Fire(false);

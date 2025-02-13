@@ -84,36 +84,31 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 			let lastDigTime = tick();
 			let spawnedTask: thread | undefined = undefined;
 
-			const clickConnection = UserInputService.InputBegan.Connect((input) => {
-				if (input.UserInputType === Enum.UserInputType.MouseButton1) {
-					if (!props.shovelController.getCanStartDigging()) return;
-					Events.dig();
+			const clickConnection = Signals.gotDigInput.Connect(() => {
+				if (!props.shovelController.getCanStartDigging()) return;
+				Events.dig();
 
-					// Since the server is rate limited by this same timer, we should
-					// ratelimit on the client too incase they are autoclicking
-					// way faster than the dig_time and cause the bar to go out of sync
-					if (tick() - lastDigTime >= gameConstants.DIG_TIME_SEC) {
-						progress += increment;
-						lastDigTime = tick();
-					}
-
-					setRotation.spring(
-						math.clamp(rotation.getValue() + math.random(-2, 2), -12, 12),
-						springs.responsive,
-					);
-					setScale.spring(math.max(scale.getValue() + math.random(0.01, 0.05), 1.1), springs.responsive);
-
-					// Allow springs to compound.
-					if (spawnedTask) {
-						task.cancel(spawnedTask);
-						spawnedTask = undefined;
-					}
-
-					spawnedTask = task.delay(0.1, () => {
-						setScale.spring(1, springs.responsive);
-						setRotation.spring(0, springs.responsive);
-					});
+				// Since the server is rate limited by this same timer, we should
+				// ratelimit on the client too incase they are autoclicking
+				// way faster than the dig_time and cause the bar to go out of sync
+				if (tick() - lastDigTime >= gameConstants.DIG_TIME_SEC) {
+					progress += increment;
+					lastDigTime = tick();
 				}
+
+				setRotation.spring(math.clamp(rotation.getValue() + math.random(-2, 2), -12, 12), springs.responsive);
+				setScale.spring(math.max(scale.getValue() + math.random(0.01, 0.05), 1.1), springs.responsive);
+
+				// Allow springs to compound.
+				if (spawnedTask) {
+					task.cancel(spawnedTask);
+					spawnedTask = undefined;
+				}
+
+				spawnedTask = task.delay(0.1, () => {
+					setScale.spring(1, springs.responsive);
+					setRotation.spring(0, springs.responsive);
+				});
 			});
 
 			const autoDigConnection = Signals.autoDig.Connect(() => {

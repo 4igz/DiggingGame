@@ -3,8 +3,9 @@ import { Players, SoundService, UserInputService } from "@rbxts/services";
 import { Trove } from "@rbxts/trove";
 import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
 import { shovelConfig } from "shared/config/shovelConfig";
-import { fullTargetConfig, targetConfig } from "shared/config/targetConfig";
-import { Item, ItemType } from "shared/networkTypes";
+import { fullTargetConfig } from "shared/config/targetConfig";
+import { ItemType } from "shared/networkTypes";
+import { eq } from "shared/util/eternityNum";
 
 interface ToolbarItemProps {
 	icon: string;
@@ -17,89 +18,12 @@ interface ToolbarItemProps {
 }
 
 function spaceWords(input: string): string {
-	// If an lowercase letter precedes a uppercase letter, insert a space between them
+	// If a lowercase letter precedes an uppercase letter, insert a space between them.
 	const [result] = input.gsub("(%l)(%u)", "%1 %2");
 	return result;
 }
 
 const ToolbarItemComponent: React.FC<ToolbarItemProps> = (props) => {
-	<frame
-		BackgroundColor3={props.isEquipped ? Color3.fromRGB(255, 255, 255) : Color3.fromRGB(0, 0, 0)}
-		BackgroundTransparency={0.5}
-		BorderColor3={Color3.fromRGB(0, 0, 0)}
-		BorderSizePixel={0}
-		Size={UDim2.fromScale(0.25, 0.9)}
-		LayoutOrder={props.order}
-	>
-		<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-
-		<uicorner key={"UICorner"} />
-
-		<uistroke key={"UIStroke"} Thickness={3} />
-
-		<uigradient
-			key={"UIGradient"}
-			Color={
-				new ColorSequence([
-					new ColorSequenceKeypoint(0, Color3.fromRGB(0, 85, 127)),
-					new ColorSequenceKeypoint(1, Color3.fromRGB(0, 0, 0)),
-				])
-			}
-			Rotation={90}
-			Enabled={props.isEquipped}
-		/>
-
-		<textlabel
-			AnchorPoint={new Vector2(0, 1)}
-			BackgroundTransparency={1}
-			BorderColor3={Color3.fromRGB(0, 0, 0)}
-			BorderSizePixel={0}
-			FontFace={
-				new Font("rbxasset://fonts/families/ComicNeueAngular.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-			}
-			key={"ItemName"}
-			Position={UDim2.fromScale(0, 1)}
-			Size={UDim2.fromScale(1, 0.283)}
-			Text={spaceWords(props.itemName)}
-			TextColor3={Color3.fromRGB(255, 255, 255)}
-			TextScaled={true}
-			TextWrapped={true}
-		>
-			<uistroke key={"UIStroke"} Thickness={2} />
-		</textlabel>
-
-		<imagelabel
-			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-			BackgroundTransparency={1}
-			BorderColor3={Color3.fromRGB(0, 0, 0)}
-			BorderSizePixel={0}
-			key={"ItemImage"}
-			Size={UDim2.fromScale(1, 1)}
-			Image={props.icon}
-			ZIndex={-1}
-		/>
-
-		<textlabel
-			AnchorPoint={new Vector2(0.5, 0.5)}
-			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-			BackgroundTransparency={1}
-			BorderColor3={Color3.fromRGB(0, 0, 0)}
-			BorderSizePixel={0}
-			FontFace={
-				new Font("rbxasset://fonts/families/ComicNeueAngular.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-			}
-			key={"Order"}
-			Position={UDim2.fromScale(0.1, 0)}
-			Size={UDim2.fromScale(0.5, 0.4)}
-			Text={tostring(props.order)}
-			TextColor3={Color3.fromRGB(255, 255, 255)}
-			TextScaled={true}
-			TextWrapped={true}
-		>
-			<uistroke key={"UIStroke"} Thickness={3} />
-		</textlabel>
-	</frame>;
-
 	return (
 		<imagebutton
 			BackgroundColor3={Color3.fromRGB(117, 117, 117)}
@@ -180,200 +104,300 @@ const ToolbarItemComponent: React.FC<ToolbarItemProps> = (props) => {
 
 export const Toolbar = () => {
 	const [items, setItems] = React.useState<Array<ToolbarItemProps>>([]);
-	const equipSound = SoundService.WaitForChild("Tools").WaitForChild("Equip") as Sound;
+
+	const equipSound = ((): Sound | undefined => {
+		const toolsFolder = SoundService.FindFirstChild("Tools");
+		if (!toolsFolder) return undefined;
+		const sfx = toolsFolder.FindFirstChild("Equip") as Sound | undefined;
+		return sfx;
+	})(); // a bit *IIFE* but it works
 
 	const equipToolByOrder = (order: number) => {
-		const item = items.find((i) => i.order === order);
-		if (item?.tool) {
+		setItems((prev) => {
+			// 1) Find the item in the *current* state (prev)
+			const item = prev.find((i) => i.order === order);
+			if (!item || !item.tool) {
+				return prev; // Nothing to equip
+			}
+
+			// 2) Validate backpack/character
 			const localPlayer = Players.LocalPlayer;
+			if (localPlayer.GetAttribute("SittingInBoatDriverSeat") === true) return prev;
 			const backpack = localPlayer.FindFirstChild("Backpack");
 			const character = localPlayer.Character;
+			if (!character || !backpack) {
+				return prev;
+			}
 
-			if (!character || !backpack) return;
+			// 3) Play SFX if we have one
+			if (equipSound) {
+				SoundService.PlayLocalSound(equipSound);
+			}
 
-			SoundService.PlayLocalSound(equipSound);
+			// 4) Unequip everything else first
+			for (const child of character.GetChildren()) {
+				if (child.IsA("Tool") && child !== item.tool) {
+					child.Parent = backpack;
+				}
+			}
 
-			// Unequip all tools except the one being equipped
-			character
-				.GetChildren()
-				.filter((child) => child.IsA("Tool"))
-				.forEach((child) => {
-					if (child !== item.tool) {
-						child.Parent = backpack;
-					}
-				});
-
-			// Equip or unequip the selected tool
+			// 5) Toggle: If this item is currently equipped, unequip it; otherwise equip.
 			if (item.tool.Parent === character) {
 				item.tool.Parent = backpack;
 			} else {
+				// Safeguard: ensure none of the tool’s parts are anchored.
 				for (const descendant of item.tool.GetDescendants()) {
 					if (descendant.IsA("BasePart")) {
 						descendant.Anchored = false;
 						descendant.Massless = true;
 					}
 				}
-
 				item.tool.Parent = character;
 			}
 
-			// Update `isEquipped` without removing or re-adding the tool
-			setItems((prev) =>
-				prev.map((i) =>
-					i.order === order
-						? { ...i, isEquipped: item.tool.Parent === character }
-						: { ...i, isEquipped: false },
-				),
+			const isNowEquipped = item.tool.Parent === character;
+
+			// 6) Return a new array, updating this item's isEquipped
+			return prev.map((other) =>
+				other.order === order ? { ...other, isEquipped: isNowEquipped } : { ...other, isEquipped: false },
 			);
-		}
+		});
 	};
 
+	/**
+	 * Equips the next item in ascending order. Wraps if at the end.
+	 */
+	const equipNextItem = () => {
+		if (items.size() === 0) return;
+
+		// Sort by order so we can cycle properly.
+		const sorted = [...items].sort((a, b) => a.order < b.order);
+
+		// Find the currently equipped item.
+		let equippedIndex = sorted.findIndex((item) => item.isEquipped);
+
+		// If none is equipped, we’ll just pick the first.
+		if (equippedIndex === -1) {
+			equippedIndex = 0;
+		} else {
+			equippedIndex = (equippedIndex + 1) % sorted.size();
+		}
+
+		// Equip the item at that index
+		equipToolByOrder(sorted[equippedIndex].order);
+	};
+
+	/**
+	 * Equips the previous item in ascending order. Wraps if at the start.
+	 */
+	const equipPreviousItem = () => {
+		if (items.size() === 0) return;
+
+		const sorted = [...items].sort((a, b) => a.order < b.order);
+
+		let equippedIndex = sorted.findIndex((item) => item.isEquipped);
+
+		// If none is equipped, pick last
+		if (equippedIndex === -1) {
+			equippedIndex = sorted.size() - 1;
+		} else {
+			// Move backwards, wrapping to the end if needed
+			equippedIndex = (equippedIndex - 1 + sorted.size()) % sorted.size();
+		}
+
+		equipToolByOrder(sorted[equippedIndex].order);
+	};
+
+	/**
+	 * Listen for user inputs:
+	 *  - Keyboard (digits 1-9)
+	 *  - Gamepad (R1 -> next, L1 -> previous)
+	 */
 	React.useEffect(() => {
 		const trove = new Trove();
 
 		trove.add(
 			UserInputService.InputBegan.Connect((input, gameProcessed) => {
-				if (!gameProcessed && input.UserInputType === Enum.UserInputType.Keyboard) {
-					const keyOrder = input.KeyCode.Value - 48; // Keycode for 1 is 49
+				if (gameProcessed) return;
+
+				// Keyboard 1..9
+				if (input.UserInputType === Enum.UserInputType.Keyboard) {
+					const keyOrder = input.KeyCode.Value - 48; // '1' is 49 in KeyCode
 					if (keyOrder >= 1 && keyOrder <= items.size()) {
 						equipToolByOrder(keyOrder);
+					}
+				}
+
+				// Gamepad R1 -> next, L1 -> previous
+				if (input.UserInputType === Enum.UserInputType.Gamepad1) {
+					if (input.KeyCode === Enum.KeyCode.ButtonR1) {
+						equipNextItem();
+					} else if (input.KeyCode === Enum.KeyCode.ButtonL1) {
+						equipPreviousItem();
 					}
 				}
 			}),
 		);
 
-		// Cleanup connections
 		return () => {
 			trove.destroy();
 		};
 	}, [items]);
 
+	/**
+	 * Once a new child (Tool) is found (in Backpack or Character),
+	 * add it to our items array, or update if it already exists.
+	 */
 	const handleChildAdded = (child: Instance, equipped: boolean) => {
-		if (child.IsA("Tool")) {
-			const cfg = metalDetectorConfig[child.Name] || fullTargetConfig[child.Name] || shovelConfig[child.Name];
-			const itemType: ItemType | undefined = metalDetectorConfig[child.Name]
-				? "MetalDetectors"
-				: shovelConfig[child.Name]
-				? "Shovels"
-				: fullTargetConfig[child.Name]
-				? "Target"
-				: undefined;
-			if (!cfg || !itemType) return;
+		if (!child.IsA("Tool")) return;
 
-			setItems((prev) => {
-				// Check if the tool already exists in the toolbar
-				const existingItem = prev.find((item) => item.tool === child);
+		// Identify the config
+		const cfg = metalDetectorConfig[child.Name] || fullTargetConfig[child.Name] || shovelConfig[child.Name];
+		if (!cfg) return;
 
-				if (existingItem) {
-					// Update the `isEquipped` status if the tool already exists
-					return prev.map((item) => (item.tool === child ? { ...item, isEquipped: equipped } : item));
-				}
+		// Identify which ItemType
+		const itemType: ItemType | undefined = metalDetectorConfig[child.Name]
+			? "MetalDetectors"
+			: shovelConfig[child.Name]
+			? "Shovels"
+			: fullTargetConfig[child.Name]
+			? "Target"
+			: undefined;
+		if (!itemType) return;
 
-				// Assign the next available order, retaining consistent ordering
-				const usedOrders = new Set(prev.map((item) => item.order));
-				let nextOrder = 1;
-				while (usedOrders.has(nextOrder)) {
-					nextOrder++;
-				}
+		setItems((prev) => {
+			const existing = prev.find((item) => item.tool === child);
+			if (existing) {
+				// Just update its "isEquipped" if the item is already in the array
+				return prev.map((item) => (item.tool === child ? { ...item, isEquipped: equipped } : item));
+			}
 
-				// Add the new tool with the next available order
-				const newItem: ToolbarItemProps = {
-					icon: cfg.itemImage,
-					itemName: child.Name,
-					isEquipped: equipped,
-					order: nextOrder,
-					tool: child,
-					itemType: itemType,
-					equipToolByOrder: equipToolByOrder,
-				};
+			// Not in the array yet, so we add it.
+			// We assign the next available order (lowest integer not used).
+			const usedOrders = new Set(prev.map((item) => item.order));
+			let nextOrder = 1;
+			while (usedOrders.has(nextOrder)) {
+				nextOrder++;
+			}
 
-				return [...prev, newItem];
-			});
-		}
+			const newItem: ToolbarItemProps = {
+				icon: cfg.itemImage,
+				itemName: child.Name,
+				isEquipped: equipped,
+				order: nextOrder,
+				tool: child,
+				itemType: itemType,
+				equipToolByOrder,
+			};
+			return [...prev, newItem];
+		});
 	};
 
-	const handleToolRemoved = (tool: Instance) => {
-		if (tool.IsA("Tool")) {
-			setItems((prev) => prev.filter((item) => item.tool !== tool));
+	function handleToolRemoved(tool: Instance) {
+		if (!tool.IsA("Tool")) return;
+
+		// If the tool’s new parent is STILL the player's backpack or character,
+		// it only re‐parented—don’t remove from items. Possibly set isEquipped = false.
+		const localPlayer = Players.LocalPlayer;
+		const newParent = tool.Parent;
+		if (newParent === localPlayer.Character || newParent === localPlayer.FindFirstChild("Backpack")) {
+			// If it’s in the Backpack or Character, just mark isEquipped false (if you want).
+			setItems((prev) => prev.map((item) => (item.tool === tool ? { ...item, isEquipped: false } : item)));
+			return;
 		}
-	};
+
+		// Otherwise, it's truly gone from the player's possession -> remove it
+		setItems((prev) => prev.filter((item) => item.tool !== tool));
+	}
 
 	React.useEffect(() => {
 		const localPlayer = Players.LocalPlayer;
-		const trove = new Trove();
 
-		const setupListeners = (character: Model, backpack: Instance) => {
-			trove.add(backpack.ChildAdded.Connect((child) => handleChildAdded(child, false)));
+		// We only set up listeners once each time the Character changes,
+		// not on every render or whenever items changes.
+		const onCharacterAdded = (character: Model) => {
+			const trove = new Trove();
+
+			const backpack = localPlayer.WaitForChild("Backpack") as Instance;
+
+			// ChildAdded in Backpack
+			trove.add(
+				backpack.ChildAdded.Connect((child) => {
+					handleChildAdded(child, false);
+				}),
+			);
 			trove.add(backpack.ChildRemoved.Connect(handleToolRemoved));
-			trove.add(character.ChildAdded.Connect((child) => handleChildAdded(child, true)));
+
+			// ChildAdded in Character
+			trove.add(
+				character.ChildAdded.Connect((child) => {
+					handleChildAdded(child, true);
+				}),
+			);
 			trove.add(character.ChildRemoved.Connect(handleToolRemoved));
 
-			const humanoid = character.WaitForChild("Humanoid") as Humanoid;
+			// Existing tools in both
+			for (const child of character.GetChildren()) {
+				handleChildAdded(child, true);
+			}
+			for (const child of backpack.GetChildren()) {
+				handleChildAdded(child, false);
+			}
+
+			// When the character is removed or dies, clear items:
+			const humanoid = character.FindFirstChildOfClass("Humanoid");
 			if (humanoid) {
 				trove.add(
 					humanoid.Died.Connect(() => {
-						trove.destroy();
 						setItems([]);
 					}),
 				);
 			}
 			trove.add(
 				localPlayer.CharacterRemoving.Connect(() => {
-					trove.destroy();
 					setItems([]);
 				}),
 			);
-			trove.add(
-				backpack.AncestryChanged.Connect(() => {
-					trove.destroy();
-					setItems([]);
-				}),
-			);
+
+			// Cleanup function—destroy Trove connections
+			const cleanup = () => {
+				trove.destroy();
+			};
+			return cleanup;
 		};
 
-		trove.add(
-			localPlayer.CharacterAdded.Connect((character) => {
-				setItems([]);
-				const backpack = localPlayer.WaitForChild("Backpack");
+		// Handle a new character spawn
+		const charAddedConn = localPlayer.CharacterAdded.Connect((char) => {
+			onCharacterAdded(char);
+		});
 
-				// Handle existing tools
-				character.GetChildren().forEach((child) => handleChildAdded(child, true));
-				backpack.GetChildren().forEach((child) => handleChildAdded(child, false));
-
-				setupListeners(character, backpack);
-			}),
-		);
-
-		const character = localPlayer.Character;
-		const backpack = localPlayer.FindFirstChild("Backpack");
-
-		if (character && backpack) {
-			setupListeners(character, backpack);
+		// If we already have a character, set it up now
+		if (localPlayer.Character) {
+			onCharacterAdded(localPlayer.Character);
 		}
 
+		// Cleanup if Toolbar unmounts
 		return () => {
-			trove.destroy();
+			charAddedConn.Disconnect();
 		};
-	}, [items]);
+	}, []); // IMPORTANT: No [items] dependency, so we don't re‐run on every state change.
 
 	return (
 		<frame
+			key={"ToolbarHolder"}
 			AnchorPoint={new Vector2(0.5, 1)}
-			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 			BackgroundTransparency={1}
-			BorderColor3={Color3.fromRGB(0, 0, 0)}
-			BorderSizePixel={0}
-			key={"Holder"}
 			Position={UDim2.fromScale(0.5, 1)}
-			Size={UDim2.fromScale(0.75, 0.159)}
+			Size={UDim2.fromScale(0.75, 0.15)}
+			ZIndex={1}
 		>
 			<uilistlayout
 				key={"UIListLayout"}
 				FillDirection={Enum.FillDirection.Horizontal}
 				HorizontalAlignment={Enum.HorizontalAlignment.Center}
+				VerticalAlignment={Enum.VerticalAlignment.Center}
 				Padding={new UDim(0.01, 0)}
 				SortOrder={Enum.SortOrder.LayoutOrder}
-				VerticalAlignment={Enum.VerticalAlignment.Center}
 			/>
 			{items.map((item, index) => (
 				<ToolbarItemComponent key={`ToolbarItem_${index}`} {...item} />

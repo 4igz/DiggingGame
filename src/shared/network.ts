@@ -6,6 +6,7 @@ import { fullTargetConfig, targetConfig } from "./config/targetConfig";
 import { gameConstants } from "./constants";
 import { mapConfig } from "./config/mapConfig";
 import { BoatConfig, boatConfig } from "./config/boatConfig";
+import { potionConfig } from "./config/potionConfig";
 
 interface ClientToServerEvents {
 	dig: () => void;
@@ -17,6 +18,7 @@ interface ClientToServerEvents {
 	): void;
 	buyBoat(boatName: keyof typeof boatConfig): void;
 	equipItem(itemType: Exclude<Exclude<ItemType, "Target">, "Boats">, itemName: string): void;
+	drinkPotion(potionName: keyof typeof potionConfig): void;
 	/** Used for cancelling digging and cancelling detecting a target. */
 	endDiggingClient: () => void;
 	upgradeSkill: (skillName: SkillName) => void;
@@ -27,6 +29,7 @@ interface ClientToServerEvents {
 	nextTargetAutoDigger: () => void;
 	spawnBoat: (boatName: keyof typeof boatConfig) => void;
 	teleportSuccess: () => void;
+	claimDailyReward: () => void;
 }
 
 interface ServerToClientEvents {
@@ -62,8 +65,13 @@ interface ServerToClientEvents {
 	) => void;
 	soldAllItems: (count: number, sellAmount: number) => void;
 	boughtItem: (itemName: string, itemType: ItemType, itemConfig: Shovel | MetalDetector | BoatConfig) => void;
+	purchaseFailed: (itemType: ItemType) => void;
 	teleportToIsland: (islandName: keyof typeof mapConfig) => void;
 	canDig(bool: boolean): void;
+	updateDailyStreak: (streak: number, lastClaimTime: number) => void;
+	updateInventorySize: (size: number) => void;
+	updateTreasureCount: (count: number) => void;
+	updateOwnedGamepasses: (ownedGamepasses: Map<keyof typeof gameConstants.GAMEPASS_IDS, boolean>) => void;
 }
 
 interface ClientToServerFunctions {
@@ -83,6 +91,9 @@ interface ClientToServerFunctions {
 	getUnlockedTargets: () => Set<keyof typeof targetConfig>;
 	getOwnedBoats: () => Map<keyof typeof boatConfig, boolean>;
 	getOwnsBoat: (boatName: keyof typeof boatConfig) => boolean;
+	getLastDailyClaimTime: () => number | undefined;
+	getDailyStreak: () => number | undefined;
+	getInventorySize: () => number;
 }
 
 interface ServerToClientFunctions {}

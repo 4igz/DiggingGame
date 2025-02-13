@@ -1,11 +1,14 @@
 import { Controller, OnStart, OnTick } from "@flamework/core";
-import { Players, ReplicatedStorage, RunService, SoundService, Workspace } from "@rbxts/services";
+import { ContextActionService, Players, ReplicatedStorage, RunService, SoundService, Workspace } from "@rbxts/services";
 import { Events } from "client/network";
 import { BASE_DETECTOR_STRENGTH, metalDetectorConfig } from "shared/config/metalDetectorConfig";
 import { Trove } from "@rbxts/trove";
 import { Signals } from "shared/signals";
 import { ShovelController } from "./shovelController";
 import { interval } from "shared/util/interval";
+import { subscribe } from "@rbxts/charm";
+import { gameConstants } from "shared/constants";
+import { inventorySizeAtom, treasureCountAtom } from "client/atoms/inventoryAtoms";
 
 @Controller({})
 export class Detector implements OnStart, OnTick {
@@ -24,6 +27,7 @@ export class Detector implements OnStart, OnTick {
 	private isAutoDigging = false;
 	private targetActive = false;
 	private isRolling = false;
+	private isInventoryFull = false;
 	private phase = 0;
 	private currentBeepSound: Sound | undefined = undefined;
 
@@ -35,6 +39,10 @@ export class Detector implements OnStart, OnTick {
 	onStart() {
 		Signals.setAutoDiggingRunning.Connect((running: boolean) => {
 			this.autoDigRunning = running;
+		});
+
+		subscribe(treasureCountAtom, (count) => {
+			this.isInventoryFull = count >= inventorySizeAtom();
 		});
 
 		// Detect walking and play animation
@@ -84,31 +92,49 @@ export class Detector implements OnStart, OnTick {
 					detectorTrack.Play();
 
 					// The delay is so that the player doesn't accidentally start detecting immediately after digging.
+					const actionName = "DetectorAction";
+
+					const detectorAction = (
+						actionName: string,
+						inputState: Enum.UserInputState,
+						inputObject: InputObject,
+					) => {
+						if (this.isInventoryFull) {
+							Signals.inventoryFull.Fire();
+							return;
+						}
+						if (inputState === Enum.UserInputState.Begin) {
+							if (this.targetActive || this.isRolling || (this.isAutoDigging && this.autoDigRunning))
+								return;
+							this.isRolling = true;
+							Events.beginDetectorLuckRoll();
+							Signals.startLuckbar.Fire();
+						} else if (inputState === Enum.UserInputState.End) {
+							if (!this.isRolling || (this.isAutoDigging && this.autoDigRunning)) return;
+							this.isRolling = false;
+							Events.endDetectorLuckRoll();
+							Signals.closeLuckbar.Fire();
+						}
+					};
+
 					const thread = task.delay(
 						tick() - (lastSuccessfulDigTime ?? 0) > this.SUCCESSFUL_DIG_DETECT_COOLDOWN ? 0 : 0.5,
 						() => {
-							trove.add(
-								child.Activated.Connect(() => {
-									if (
-										this.targetActive ||
-										this.isRolling ||
-										(this.isAutoDigging && this.autoDigRunning)
-									)
-										return;
-									this.isRolling = true;
-									Events.beginDetectorLuckRoll();
-									Signals.startLuckbar.Fire();
-								}),
+							ContextActionService.BindAction(
+								actionName,
+								detectorAction,
+								true,
+								Enum.UserInputType.MouseButton1,
+								Enum.KeyCode.ButtonR2,
 							);
 
-							trove.add(
-								child.Deactivated.Connect(() => {
-									if (!this.isRolling || (this.isAutoDigging && this.autoDigRunning)) return;
-									this.isRolling = false;
-									Events.endDetectorLuckRoll();
-									Signals.closeLuckbar.Fire();
-								}),
-							);
+							const button = ContextActionService.GetButton(actionName);
+
+							// Add a mobile button
+
+							trove.add(() => {
+								ContextActionService.UnbindAction(actionName);
+							});
 						},
 					);
 

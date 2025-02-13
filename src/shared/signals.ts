@@ -12,6 +12,8 @@ export const Signals = {
 	startDigging: new Signal<(player: Player, target: Target) => void>(),
 
 	// Client only signals:
+	gotDigInput: new Signal<() => void>(),
+	inventoryFull: new Signal<() => void>(),
 	endDigging: new Signal<() => void>(),
 	autoDig: new Signal<() => void>(),
 	setCanDig: new Signal<(canDig: boolean) => void>(),

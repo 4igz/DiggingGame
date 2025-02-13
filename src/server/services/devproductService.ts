@@ -29,6 +29,13 @@ export class DevproductService implements OnStart, OnTick {
 		return true;
 	}
 
+	public giveLuckMultiplier(player: Player, length: number) {
+		const timeLeft = (this.trackedServerLuckMultipliers.get(player) ?? 0) + length;
+
+		this.trackedServerLuckMultipliers.set(player, timeLeft);
+		Events.updateServerLuckMultiplier(player, 1, timeLeft);
+	}
+
 	onStart() {
 		Players.PlayerRemoving.Connect((player) => {
 			this.trackedServerLuckMultipliers.delete(player);

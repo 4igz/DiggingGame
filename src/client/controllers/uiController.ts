@@ -2,7 +2,7 @@ import { Controller, OnStart } from "@flamework/core";
 import React from "@rbxts/react";
 import ReactRoblox from "@rbxts/react-roblox";
 import { Players, StarterGui } from "@rbxts/services";
-import { Events, Functions } from "client/network";
+import { Events } from "client/network";
 import { DiggingBar } from "client/reactComponents/diggingBar";
 import { GamepassShopComponent } from "client/reactComponents/gamepassShop";
 import LuckBar from "client/reactComponents/luckBar";
@@ -16,7 +16,6 @@ import { Toolbar } from "client/reactComponents/toolbar";
 import { gameConstants } from "shared/constants";
 import { PlayerDigInfo, Target } from "shared/networkTypes";
 import { AutoDigging } from "./autoDigController";
-import { ItemAddedPopup } from "client/reactComponents/itemAddedPopup";
 import { IsleEnterPopup } from "client/reactComponents/isleEnterPopup";
 import { ZoneController } from "./zoneController";
 import { Signals } from "shared/signals";
@@ -24,6 +23,9 @@ import { BoatShopComponent } from "client/reactComponents/boatShop";
 import { Popups } from "client/reactComponents/popups";
 import { ShovelController } from "./shovelController";
 import canDigPopup from "client/reactComponents/canDigPopup";
+import { DailyRewards } from "client/reactComponents/dailyReward";
+import { VolumeMuteButton } from "client/reactComponents/volumeMuteButton";
+import { GamepassController } from "./gamepassController";
 
 @Controller({})
 export class UiController implements OnStart {
@@ -36,6 +38,7 @@ export class UiController implements OnStart {
 		private readonly autoDigging: AutoDigging,
 		private readonly zoneController: ZoneController,
 		private readonly shovelController: ShovelController,
+		private readonly gamepassController: GamepassController,
 	) {
 		StarterGui.SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false);
 
@@ -58,7 +61,7 @@ export class UiController implements OnStart {
 		this.registerUi(
 			gameConstants.MAIN_UI,
 			React.createElement(MainUi),
-			{ uiController: this, visible: false },
+			{ uiController: this, gamepassController: this.gamepassController, visible: false },
 			true,
 		);
 		this.registerUi(gameConstants.TOOLBAR_UI, React.createElement(Toolbar), {});
@@ -107,7 +110,9 @@ export class UiController implements OnStart {
 			true,
 		);
 
-		this.registerUi("CanDigIndicator", React.createElement(canDigPopup), { });
+		this.registerUi("CanDigIndicator", React.createElement(canDigPopup), {});
+		this.registerUi("VolumeControl", React.createElement(VolumeMuteButton), {});
+		this.registerUi(gameConstants.DAILY_REWARD_UI, React.createElement(DailyRewards), { visible: false });
 	}
 
 	onStart() {

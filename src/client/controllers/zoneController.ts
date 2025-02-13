@@ -1,4 +1,4 @@
-import { Controller, OnInit, OnStart } from "@flamework/core";
+import { Controller, OnInit, OnRender, OnStart } from "@flamework/core";
 import Signal from "@rbxts/goodsignal";
 import { CollectionService, Lighting, Players, SoundService, TweenService, Workspace } from "@rbxts/services";
 import { Zone } from "@rbxts/zone-plus";
@@ -7,7 +7,9 @@ import { mapConfig } from "shared/config/mapConfig";
 import { gameConstants } from "shared/constants";
 
 @Controller({})
-export class ZoneController implements OnInit {
+export class ZoneController implements OnInit, OnRender {
+	private ZONE_BILLBOARD_DIST_THRESHOLD = 200;
+
 	private isleZoneParts = CollectionService.GetTagged(gameConstants.ISLE_ZONE_TAG).filter((inst) => {
 		return inst.IsA("PVInstance");
 	});
@@ -98,6 +100,7 @@ export class ZoneController implements OnInit {
 	private clouds = Workspace.Terrain.WaitForChild("Clouds") as Clouds;
 	private colorCorrection = Lighting.WaitForChild("ZonesCC") as ColorCorrectionEffect;
 	private currentMapName = "Grasslands";
+	private prevPlayerPos = new Vector3();
 
 	constructor() {
 		this.isleZoneParts.forEach((element) => {
@@ -146,6 +149,33 @@ export class ZoneController implements OnInit {
 	}
 
 	onInit() {}
+
+	onRender() {
+		const player = Players.LocalPlayer;
+		const character = player.Character;
+		if (character) {
+			const pos = character.GetPivot().Position;
+			if (!this.prevPlayerPos.FuzzyEq(pos, 1)) {
+				for (const billboard of CollectionService.GetTagged("IsleBillboard")) {
+					if (!billboard.IsA("BillboardGui")) continue;
+					const boardParent = billboard.Parent;
+					if (boardParent !== undefined && boardParent.IsA("PVInstance")) {
+						const distance = pos.sub(boardParent.GetPivot().Position).Magnitude;
+						if (distance < this.ZONE_BILLBOARD_DIST_THRESHOLD) {
+							billboard.Enabled = false;
+							continue;
+						} else {
+							billboard.Enabled = true;
+						}
+						const distanceText = billboard.FindFirstChild("Distance") as TextLabel;
+						if (distanceText) {
+							distanceText.Text = `${math.floor(distance)}m`;
+						}
+					}
+				}
+			}
+		}
+	}
 
 	onZoneEnter(zoneName: keyof typeof mapConfig) {
 		let tweenInfo = this.AREA_CHANGE_TWEEN_INFO;
@@ -200,6 +230,7 @@ export class ZoneController implements OnInit {
 			return;
 		}
 		const newSound = sound.Clone();
+		newSound.SoundGroup = this.areaSounds;
 		newSound.Parent = Players.LocalPlayer;
 		newSound.Play();
 		this.currentPlayingAreaSound = newSound;

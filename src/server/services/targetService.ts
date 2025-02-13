@@ -123,6 +123,27 @@ export class TargetService implements OnStart, OnTick {
 		Events.sellAll.connect((player) => {
 			let profile = this.profileService.getProfile(player);
 			if (!profile) return;
+			const ownsSellEverywhere = this.gamepassService.ownsGamepass(
+				player,
+				gameConstants.GAMEPASS_IDS.SellEverywhere,
+			);
+			if (!ownsSellEverywhere) {
+				// Ensure they're within range of a sell outpost
+				const character = player.Character;
+				if (!character) return;
+				const currentPos = character.GetPivot().Position;
+				let withinRange = false;
+				for (const part of CollectionService.GetTagged("Sell")) {
+					if (!part.IsA("BasePart")) continue;
+					if (currentPos.sub(part.Position).Magnitude <= gameConstants.SHOP_PROMPT_RANGE * 1.2) {
+						withinRange = true;
+						break;
+					}
+				}
+				// If they're not within range, don't sell
+				// TODO: Let player know they need to be within range, incase they walked out of range
+				if (!withinRange) return;
+			}
 			const count = profile.Data.targetInventory.size();
 			if (count === 0) return;
 			const total = profile.Data.targetInventory.reduce((acc, item) => {
@@ -175,6 +196,14 @@ export class TargetService implements OnStart, OnTick {
 
 				const profile = this.profileService.getProfile(player);
 				if (!profile) return;
+
+				// Check if inventory is full before we try doing anything
+				if (profile.Data.targetInventory.size() >= profile.Data.inventorySize) {
+					// This should only happen if their data is out of sync with the server
+					// So sync them up here
+					Events.updateInventorySize(player, profile.Data.inventorySize);
+					return;
+				}
 
 				const shovel = character.FindFirstChild(profile.Data.equippedShovel) as Tool;
 
@@ -430,6 +459,7 @@ export class TargetService implements OnStart, OnTick {
 			(playerDetectorConfig.luck * DETECTOR_LUCK_MODIFIER + profile.Data.luck * LUCK_SKILL_LEVEL_ADDITION) *
 			ADDED_LUCK_PERCENT *
 			this.devproductService.serverLuckMultiplier(player) *
+			profile.Data.potionLuckMultiplier *
 			luckMult;
 
 		totalLuck = math.clamp(totalLuck, 0, 1);

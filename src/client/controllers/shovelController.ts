@@ -2,6 +2,7 @@ import { Controller, OnStart } from "@flamework/core";
 import Signal from "@rbxts/goodsignal";
 import {
 	CollectionService,
+	ContextActionService,
 	Players,
 	ReplicatedStorage,
 	RunService,
@@ -19,6 +20,8 @@ import { interval } from "shared/util/interval";
 import { emitParticleDescendants, emitUsingAttributes, setParticleDescendantsEnabled } from "shared/util/vfxUtil";
 import { ZoneController } from "./zoneController";
 import CameraShaker from "@rbxts/camera-shaker";
+import { subscribe } from "@rbxts/charm";
+import { inventorySizeAtom, treasureCountAtom } from "client/atoms/inventoryAtoms";
 
 const camera = Workspace.CurrentCamera;
 
@@ -27,6 +30,13 @@ const camShake = new CameraShaker(
 	(shakeCFrame) => (camera!.CFrame = camera!.CFrame.mul(shakeCFrame)),
 );
 camShake.Start();
+
+const DIG_KEYBINDS = [
+	Enum.KeyCode.ButtonR2,
+	Enum.KeyCode.ButtonL2,
+	Enum.UserInputType.MouseButton1,
+	Enum.UserInputType.Touch,
+];
 
 @Controller({})
 export class ShovelController implements OnStart {
@@ -38,6 +48,7 @@ export class ShovelController implements OnStart {
 	public onDiggingComplete = new Signal<() => void>();
 	private previousDigLocation = new Vector3();
 	private canStartDigging = false;
+	private isInventoryFull = false;
 
 	constructor(private readonly zoneController: ZoneController) {
 		let autoSendDigCD = interval(gameConstants.AUTO_DIG_CLICK_INTERVAL);
@@ -143,17 +154,11 @@ export class ShovelController implements OnStart {
 						}
 					};
 
-					// Adjust the dig track speed back to 0 so it doesn't animate by default
 					task.defer(() => digTrack.AdjustSpeed(0));
 
-					// === Connect run service for repeated checks ===
 					let steppedConnection: RBXScriptConnection | undefined;
 					const rsThread = task.delay(0.1, () => {
 						steppedConnection = RunService.Stepped.Connect(() => {
-							/**
-							 * Stop player movement while digging (if desired).
-							 * You can remove this if you want them to still move while digging.
-							 */
 							if (humanoid && humanoid.Parent && this.diggingActive) {
 								humanoid.WalkSpeed = 0;
 							} else {
@@ -166,6 +171,10 @@ export class ShovelController implements OnStart {
 
 							// If we're auto-digging, try to start dig
 							if (this.diggingActive && this.isAutoDigging && autoSendDigCD()) {
+								if (this.isInventoryFull) {
+									Signals.setAutoDiggingEnabled.Fire(false);
+									return;
+								}
 								this.canStartDigging = true;
 								Signals.autoDig.Fire();
 								this.lastDiggingTime = tick();
@@ -197,35 +206,53 @@ export class ShovelController implements OnStart {
 						});
 					});
 
+					const shovelAction = () => {
+						if (this.diggingActive) {
+							startDiggingAnimation();
+						}
+
+						const currentTime = tick();
+						if (!this.diggingActive) {
+							// "Dig Everywhere" logic here
+							const DIG_EVERYWHERE_MOVE_REQUIREMENT = 1;
+							if (
+								this.previousDigLocation.sub(character.GetPivot().Position).Magnitude >
+								DIG_EVERYWHERE_MOVE_REQUIREMENT
+							) {
+								if (this.isInventoryFull) {
+									Signals.inventoryFull.Fire();
+									return;
+								}
+								humanoid.WalkSpeed = 0;
+								Events.dig();
+							} else {
+								// TODO: flash canDig indicator
+							}
+						}
+
+						// Record click time
+						clickTimes.push(currentTime);
+						if (clickTimes.size() > maxClickCount) {
+							clickTimes.shift();
+						}
+					};
+
+					const actionName = "ShovelAction";
+
 					// === Hook into tool activation ===
 					let toolConnection: RBXScriptConnection | undefined;
 					const thread = task.spawn(() => {
-						toolConnection = child.Activated.Connect(() => {
-							if (this.diggingActive) {
-								startDiggingAnimation();
-							}
-
-							const currentTime = tick();
-							if (!this.diggingActive) {
-								// "Dig Everywhere" logic here
-								const DIG_EVERYWHERE_MOVE_REQUIREMENT = 1;
-								if (
-									this.previousDigLocation.sub(character.GetPivot().Position).Magnitude >
-									DIG_EVERYWHERE_MOVE_REQUIREMENT
-								) {
-									humanoid.WalkSpeed = 0;
-									Events.dig();
-								} else {
-									// TODO: flash canDig indicator
+						ContextActionService.BindAction(
+							actionName,
+							(_, inputState, inputObject) => {
+								if (inputState === Enum.UserInputState.Begin) {
+									Signals.gotDigInput.Fire();
+									shovelAction();
 								}
-							}
-
-							// Record click time
-							clickTimes.push(currentTime);
-							if (clickTimes.size() > maxClickCount) {
-								clickTimes.shift();
-							}
-						});
+							},
+							false,
+							...DIG_KEYBINDS,
+						);
 					});
 
 					// === Cleanup on tool removal ===
@@ -235,6 +262,7 @@ export class ShovelController implements OnStart {
 						steppedConnection?.Disconnect();
 						task.cancel(rsThread);
 						task.cancel(thread);
+						ContextActionService.UnbindAction(actionName);
 
 						digTrack.Stop();
 						digTrack.Destroy();
@@ -275,6 +303,10 @@ export class ShovelController implements OnStart {
 		const digTroves = new Map<string, Trove>();
 		const diggingConnections = new Array<RBXScriptConnection>();
 		const digOutSound = SoundService.WaitForChild("Tools").WaitForChild("Dig out") as Sound;
+
+		subscribe(treasureCountAtom, (count) => {
+			this.isInventoryFull = count >= inventorySizeAtom();
+		});
 
 		Signals.setAutoDiggingEnabled.Connect((enabled) => {
 			this.isAutoDigging = enabled;

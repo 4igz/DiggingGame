@@ -1,6 +1,6 @@
 import { OnRender, OnStart } from "@flamework/core";
 import { Component, BaseComponent } from "@flamework/components";
-import { ContextActionService, Players } from "@rbxts/services";
+import { ContextActionService, Players, UserInputService } from "@rbxts/services";
 import { Functions } from "client/network";
 import { boatConfig, DEFAULT_BOAT_SPEED, DEFAULT_BOAT_TURN_SPEED } from "shared/config/boatConfig";
 import { is } from "@rbxts/sift/out/Array";
@@ -110,40 +110,66 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 			playingTrack.Play();
 
 			humanoid.ChangeState(Enum.HumanoidStateType.Physics);
+
+			for (const instance of character.GetDescendants()) {
+				if (instance.IsA("BasePart")) {
+					instance.Massless = true;
+				}
+				if (instance.IsA("Tool")) {
+					instance.Parent = Players.LocalPlayer.FindFirstChildOfClass("Backpack");
+				}
+			}
+
+			Players.LocalPlayer.SetAttribute("SittingInBoatDriverSeat", true);
 		});
+
+		const exitBoatAction = (userInputState: Enum.UserInputState) => {
+			if (userInputState !== Enum.UserInputState.Begin || !this.isSittingInDriverSeat)
+				return Enum.ContextActionResult.Pass;
+			this.isSittingInDriverSeat = false;
+			const character = Players.LocalPlayer.Character;
+			const humanoid = character?.FindFirstChild("Humanoid") as Humanoid;
+			if (!character || !character.Parent || !humanoid) return;
+
+			weld.Part1 = undefined;
+			character.PivotTo(ownerSeat.CFrame.add(new Vector3(0, 1, 0)));
+
+			ownerSeatPrompt.Enabled = this.isOwner;
+			if (playingTrack && playingTrack.IsPlaying) {
+				playingTrack.Stop();
+			}
+			humanoid.ChangeState(Enum.HumanoidStateType.Jumping);
+
+			for (const instance of character.GetDescendants()) {
+				if (instance.IsA("BasePart")) {
+					instance.Massless = false;
+				}
+			}
+
+			Players.LocalPlayer.SetAttribute("SittingInBoatDriverSeat", false);
+
+			this.currentVelocity = new Vector3(0, 0, 0);
+			this.currentAngularVelocity = new Vector3(0, 0, 0);
+			this.instance.Physics.ForceAttachment.LinearVelocity.VectorVelocity = this.currentVelocity;
+			this.instance.Physics.ForceAttachment.AngularVelocity.AngularVelocity = this.currentAngularVelocity;
+		};
 
 		ContextActionService.BindAction(
 			"ExitBoat",
-			(_, userInputState) => {
-				if (userInputState !== Enum.UserInputState.Begin || !this.isSittingInDriverSeat)
-					return Enum.ContextActionResult.Pass;
-				const character = Players.LocalPlayer.Character;
-				const humanoid = character?.FindFirstChild("Humanoid") as Humanoid;
-				if (!character || !character.Parent || !humanoid) return;
-
-				this.isSittingInDriverSeat = false;
-				weld.Part1 = undefined;
-				character.PivotTo(ownerSeat.CFrame.add(new Vector3(0, 4, 0)));
-
-				ownerSeatPrompt.Enabled = this.isOwner;
-				if (playingTrack && playingTrack.IsPlaying) {
-					playingTrack.Stop();
-				}
-				humanoid.ChangeState(Enum.HumanoidStateType.Jumping);
-				this.currentVelocity = new Vector3(0, 0, 0);
-				this.currentAngularVelocity = new Vector3(0, 0, 0);
-				this.instance.Physics.ForceAttachment.LinearVelocity.VectorVelocity = this.currentVelocity;
-				// this.instance.Hull.ForceAttachment.LinearVelocity.VectorVelocity = this.currentLinearVelocity;
-				this.instance.Physics.ForceAttachment.AngularVelocity.AngularVelocity = this.currentAngularVelocity;
-			},
+			(_, userInputState) => exitBoatAction(userInputState),
 			true,
 			ownerSeatPrompt.GamepadKeyCode,
 			ownerSeatPrompt.KeyboardKeyCode,
-			Enum.KeyCode.Space,
+			// Enum.KeyCode.ButtonA,
+			// Enum.KeyCode.Space,
 		);
 
-		Players.LocalPlayer.CharacterAdded.Connect((character) => {
-			const humanoid = character.WaitForChild("Humanoid") as Humanoid;
+		UserInputService.JumpRequest.Connect(() => {
+			if (!this.isSittingInDriverSeat) return;
+			exitBoatAction(Enum.UserInputState.Begin);
+		});
+
+		const connectHumanoidDied = (humanoid: Humanoid) => {
 			humanoid.Died.Once(() => {
 				if (this.isSittingInDriverSeat && this.isOwner) {
 					this.isSittingInDriverSeat = false;
@@ -152,6 +178,16 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 					ownerSeatPrompt.Enabled = this.isOwner;
 				}
 			});
+		};
+
+		const humanoid = Players.LocalPlayer.Character?.FindFirstChild("Humanoid") as Humanoid;
+		if (humanoid) {
+			connectHumanoidDied(humanoid);
+		}
+
+		Players.LocalPlayer.CharacterAdded.Connect((character) => {
+			const humanoid = character.WaitForChild("Humanoid") as Humanoid;
+			connectHumanoidDied(humanoid);
 		});
 	}
 
@@ -168,7 +204,14 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 		if (!this.isOwner || !this.isSittingInDriverSeat) return;
 		const Vf = this.instance.Physics.ForceAttachment.LinearVelocity;
 
-		const moveVector = this.controls.GetMoveVector();
+		let moveVector = this.controls.GetMoveVector();
+
+		// Allow player to just move forward with R2 since that is a common control scheme
+		if (UserInputService.IsGamepadButtonDown(Enum.UserInputType.Gamepad1, Enum.KeyCode.ButtonR2)) {
+			moveVector = new Vector3(moveVector.X, moveVector.Y, -1);
+		} else if (UserInputService.IsGamepadButtonDown(Enum.UserInputType.Gamepad1, Enum.KeyCode.ButtonL2)) {
+			moveVector = new Vector3(moveVector.X, moveVector.Y, 1);
+		}
 
 		// 1. Compute the target velocities from input
 		// Forward/backward is moveVector.Z. We clamp to our maximum forward speed.

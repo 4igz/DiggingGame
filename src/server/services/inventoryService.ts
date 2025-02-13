@@ -1,4 +1,4 @@
-import { Service, OnStart } from "@flamework/core";
+import { Service, OnStart, OnTick } from "@flamework/core";
 import { LoadedProfile, ProfileService } from "./profileService";
 import { Item, ItemType, Target, TargetItem } from "shared/networkTypes";
 import { Players, ReplicatedStorage, ServerStorage } from "@rbxts/services";
@@ -10,6 +10,9 @@ import { ProfileTemplate } from "server/profileTemplate";
 import { MoneyService } from "./moneyService";
 import { Signals } from "shared/signals";
 import { boatConfig } from "shared/config/boatConfig";
+import { potionConfig } from "shared/config/potionConfig";
+import { interval } from "shared/util/interval";
+import { gameConstants } from "shared/constants";
 
 const DetectorFolder = ReplicatedStorage.WaitForChild("MetalDetectors") as Folder;
 const ShovelFolder = ReplicatedStorage.WaitForChild("Shovels") as Folder;
@@ -21,7 +24,9 @@ type InventoryKeys<T> = {
 }[keyof T];
 
 @Service({})
-export class InventoryService implements OnStart {
+export class InventoryService implements OnStart, OnTick {
+	private potionDrinkers = new Array<Player>();
+
 	constructor(private readonly profileService: ProfileService, private readonly moneyService: MoneyService) {}
 
 	onStart() {
@@ -29,7 +34,7 @@ export class InventoryService implements OnStart {
 			ItemType,
 			{
 				inventoryKey: InventoryKeys<ProfileTemplate>;
-				config: TargetModule | ShovelModule | MetalDetectorModule | typeof boatConfig;
+				config: TargetModule | ShovelModule | MetalDetectorModule | typeof boatConfig | typeof potionConfig;
 			}
 		> = {
 			MetalDetectors: { inventoryKey: "detectorInventory", config: metalDetectorConfig },
@@ -39,9 +44,21 @@ export class InventoryService implements OnStart {
 				inventoryKey: "targetInventory",
 				config: boatConfig,
 			},
+			Potions: {
+				inventoryKey: "potionInventory",
+				config: potionConfig,
+			},
 		};
 
 		this.profileService.onProfileLoaded.Connect((player: Player, profile) => {
+			if (profile.Data.activePotions.size() > 0) {
+				if (!this.potionDrinkers.includes(player)) {
+					this.potionDrinkers.push(player);
+				}
+			}
+
+			Events.updateInventorySize(player, profile.Data.inventorySize);
+
 			this.giveTools(player, profile);
 			player.CharacterAdded.Connect(() => {
 				const newProfile = this.profileService.getProfile(player);
@@ -49,6 +66,13 @@ export class InventoryService implements OnStart {
 					this.giveTools(player, newProfile);
 				}
 			});
+		});
+
+		Functions.getInventorySize.setCallback((player) => {
+			const profile = this.profileService.getProfile(player);
+			if (!profile) return gameConstants.TARGET_INVENTORY_DEFAULT_CAPACITY;
+
+			return profile.Data.inventorySize;
 		});
 
 		Events.buyItem.connect((player, itemType, item) => {
@@ -66,12 +90,14 @@ export class InventoryService implements OnStart {
 
 			// Check if player already owns the item
 			if (profile.Data[inventoryKey].includes(item)) {
+				Events.purchaseFailed(player, itemType);
 				return;
 			}
 
 			const cost = config[item].price;
 
 			if (!this.moneyService.hasEnoughMoney(player, cost)) {
+				Events.purchaseFailed(player, itemType);
 				return;
 			}
 
@@ -110,6 +136,7 @@ export class InventoryService implements OnStart {
 			const cost = boatConfig[boatName].price;
 
 			if (!cost || !this.moneyService.hasEnoughMoney(player, cost)) {
+				Events.purchaseFailed(player, "Boats");
 				return;
 			}
 
@@ -155,6 +182,42 @@ export class InventoryService implements OnStart {
 					(value) => ({ name: value, type: itemType as ItemType, ...config[value as string] } as Item),
 				),
 			]);
+		});
+
+		Events.drinkPotion.connect((player, potionName) => {
+			const profile = this.profileService.getProfile(player);
+			if (!profile) return;
+
+			const potion = potionConfig[potionName];
+			if (!potion) return;
+
+			if (profile.Data.potionInventory.includes(potionName)) {
+				const potionIndex = profile.Data.potionInventory.indexOf(potionName);
+				profile.Data.potionInventory.remove(potionIndex);
+
+				const existingTimeThisPotion = profile.Data.activePotions.get(potionName);
+				profile.Data.activePotions.set(
+					potionName,
+					(existingTimeThisPotion ?? 0) + gameConstants.POTION_DURATION,
+				);
+				const [, highestMultiplier] = this.getHighestMultiplierPotionName(profile.Data.activePotions);
+				profile.Data.potionLuckMultiplier = highestMultiplier;
+
+				this.profileService.setProfile(player, profile);
+				if (!this.potionDrinkers.includes(player)) {
+					this.potionDrinkers.push(player);
+				}
+				Events.updateInventory(player, "Potions", [
+					{
+						equippedShovel: profile.Data.equippedShovel,
+						equippedDetector: profile.Data.equippedDetector,
+						equippedTreasure: profile.Data.equippedTreasure,
+					},
+					profile.Data.potionInventory.map(
+						(value) => ({ name: value, type: "Potions", ...potionConfig[value as string] } as Item),
+					),
+				]);
+			}
 		});
 
 		Functions.getInventory.setCallback((player, inventoryType) => {
@@ -227,7 +290,80 @@ export class InventoryService implements OnStart {
 					}
 				});
 			});
+
+			Players.PlayerRemoving.Connect((player) => {
+				this.potionDrinkers = this.potionDrinkers.filter((p) => p !== player);
+			});
 		});
+	}
+
+	private POTION_SEC_INTERVAL = interval(1);
+
+	onTick(): void {
+		const playersToRemove = new Array<Player>();
+
+		for (const player of this.potionDrinkers) {
+			if (!player.IsDescendantOf(Players)) {
+				playersToRemove.push(player);
+				continue;
+			}
+			if (this.POTION_SEC_INTERVAL(player.UserId)) {
+				const profile = this.profileService.getProfile(player);
+				if (!profile) continue;
+				if (profile.Data.activePotions.size() > 0) {
+					const [wasSet, highestMultiplier] = this.subtractFromHighestMultiplierPotion(
+						profile.Data.activePotions,
+					);
+
+					if (!wasSet || highestMultiplier === 1) {
+						profile.Data.activePotions.clear();
+						playersToRemove.push(player);
+					}
+
+					profile.Data.potionLuckMultiplier = highestMultiplier;
+					this.profileService.setProfile(player, profile);
+				} else {
+					playersToRemove.push(player);
+				}
+			}
+		}
+
+		// Remove players after the loop to avoid modifying the array while iterating and causing ordering issues
+		this.potionDrinkers = this.potionDrinkers.filter((p) => !playersToRemove.includes(p));
+	}
+
+	subtractFromHighestMultiplierPotion(activePotions: Map<keyof typeof potionConfig, number>): [boolean, number] {
+		if (activePotions.size() === 0) return [false, 1];
+		const [highestMultiplierName, highestMultiplier] = this.getHighestMultiplierPotionName(activePotions);
+
+		if (highestMultiplierName !== "") {
+			const timeLeft = activePotions.get(highestMultiplierName) as number;
+			activePotions.set(highestMultiplierName, timeLeft - 1);
+			return [true, highestMultiplier];
+		}
+
+		return [false, 1];
+	}
+
+	getHighestMultiplierPotionName(activePotions: Map<keyof typeof potionConfig, number>): [string, number] {
+		let highestMultiplierName: keyof typeof potionConfig = "";
+		let highestMultiplier = 1;
+		for (const [potionName, timeLeft] of activePotions) {
+			if (timeLeft <= 0) {
+				activePotions.delete(potionName);
+				continue;
+			}
+
+			const potionCfg = potionConfig[potionName];
+			const { multiplier } = potionCfg;
+
+			if (multiplier > highestMultiplier) {
+				highestMultiplier = multiplier;
+				highestMultiplierName = potionName;
+			}
+		}
+
+		return [highestMultiplierName, highestMultiplier];
 	}
 
 	giveTools(player: Player, profile: LoadedProfile) {
@@ -322,6 +458,11 @@ export class InventoryService implements OnStart {
 	public addItemToTargetInventory(player: Player, item: Target) {
 		const profile = this.profileService.getProfile(player);
 		if (profile) {
+			if (profile.Data.targetInventory.size() >= profile.Data.inventorySize) {
+				// This should not happen!!
+				// This is supposed to be handled on the client way before it reaches the server, and even this point!
+				error("Inventory is full", 2);
+			}
 			profile.Data.targetInventory.push({ itemId: item.itemId, name: item.name, weight: item.weight });
 			if (!profile.Data.previouslyFoundTargets.has(item.name)) {
 				profile.Data.previouslyFoundTargets.add(item.name);
@@ -341,6 +482,7 @@ export class InventoryService implements OnStart {
 				})),
 			]);
 			Events.updateUnlockedTargets(player, profile.Data.previouslyFoundTargets);
+			Events.updateTreasureCount(player, profile.Data.targetInventory.size());
 		}
 	}
 
@@ -350,6 +492,7 @@ export class InventoryService implements OnStart {
 			const index = profile.Data.targetInventory.findIndex((invItem) => invItem.itemId === itemId);
 			if (index !== -1) {
 				profile.Data.targetInventory.remove(index);
+				Events.updateTreasureCount(player, profile.Data.targetInventory.size());
 				this.profileService.setProfile(player, profile);
 			}
 		}

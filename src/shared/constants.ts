@@ -27,6 +27,7 @@ export const gameConstants = {
 	POPUP_UI: "ItemPopupUi",
 	ISLE_POPUP_UI: "ZonePopupUi",
 	BOAT_SHOP_UI: "BoatShopUi",
+	DAILY_REWARD_UI: "DailyRewardUi",
 
 	PLAYER_COLGROUP: "Player",
 	NOCHARACTERCOLLISION_COLGROUP: "NoCollideWithCharacters",
@@ -34,12 +35,16 @@ export const gameConstants = {
 	SPAWN_TAG: "MapSpawn",
 	ISLE_ZONE_TAG: "IsleZone",
 
+	SHOP_PROMPT_RANGE: 10,
+
 	AUTO_DIG_FAILURE_THRESHOLD: 5, // If autodig fails this many times consecutively, it will teleport to the nearest map spawn to reset itself.
 	SERVER_LUCK_MULTIPLIER_DURATION: 60 * 60, // 1 hour
 	MAX_MULTIDIG_LEVEL: 6,
 	DIG_RANGE: 5,
 	DIG_TIME_SEC: 0.01, // Ratelimit the speed of digging
 	AUTO_DIG_CLICK_INTERVAL: 0.1, // Seconds between each auto dig click
+	POTION_DURATION: 300, // 5 minutes
+	TARGET_INVENTORY_DEFAULT_CAPACITY: 100,
 
 	// Maps itemType name to config
 	SHOP_CONFIGS: {

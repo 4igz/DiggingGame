@@ -21,22 +21,6 @@ export class BoatService implements OnStart {
 
 		Workspace.Terrain.CollisionGroup = gameConstants.BOAT_COLGROUP; // Terrain can't collide with boats
 
-		Players.PlayerAdded.Connect((player) => {
-			player.CharacterAdded.Connect((character) => {
-				for (const part of character.GetDescendants()) {
-					if (part.IsA("BasePart")) {
-						part.Massless = true;
-					}
-				}
-
-				character.DescendantAdded.Connect((descendant) => {
-					if (descendant.IsA("BasePart")) {
-						descendant.Massless = true;
-					}
-				});
-			});
-		});
-
 		Players.PlayerRemoving.Connect((player) => {
 			const result = Object.entries(this.boatOwners).find(([_, p]) => p === player);
 			if (result) {

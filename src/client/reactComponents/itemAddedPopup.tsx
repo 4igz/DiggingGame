@@ -10,7 +10,7 @@ import { getOneInXChance } from "shared/util/targetUtil";
 
 const RC = gameConstants.RARITY_COLORS;
 
-export interface ItemPopupProps {
+export interface TreasurePopupProps {
 	itemName: string;
 	itemImage: string;
 	itemRarity: Rarity;
@@ -19,7 +19,7 @@ export interface ItemPopupProps {
 	onComplete: () => void;
 }
 
-export const ItemAddedPopup = (props: ItemPopupProps) => {
+export const TreasureAddedPopup = (props: TreasurePopupProps) => {
 	const [sizeMotion, setSizeMotion] = useMotion(UDim2.fromScale(0, 0));
 
 	const [spinValue, setSpinValue] = React.useState(0);

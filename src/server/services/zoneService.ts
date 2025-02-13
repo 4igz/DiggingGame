@@ -62,7 +62,6 @@ export class ZoneService {
 				humanoid.WalkSpeed = 0;
 			}
 		});
-		print("Request stream around", spawn.Position);
 		player.RequestStreamAroundAsync(spawn.Position);
 		Events.teleportToIsland(player, zoneName);
 	}

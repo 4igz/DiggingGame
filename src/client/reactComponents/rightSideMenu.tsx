@@ -172,7 +172,6 @@ export const RightSideMenu = (props: MenuProps) => {
 						const vectors: MoneyVectorProps[] = [];
 						for (let i = 0; i < creationAmt; i++) {
 							const onComplete = (key: string) => {
-								print(key);
 								setMoneyVectors((prev) => {
 									return prev.filter((vector) => vector.key !== key);
 								});
@@ -337,17 +336,11 @@ export const RightSideMenu = (props: MenuProps) => {
 						Position={UDim2.fromScale(0.671, -0.368)}
 						Size={UDim2.fromScale(0.329, 0.981)}
 					>
-						<imagebutton
-							AnchorPoint={new Vector2(0.5, 0.5)}
-							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-							BackgroundTransparency={1}
-							BorderColor3={Color3.fromRGB(0, 0, 0)}
-							BorderSizePixel={0}
-							key={"Button"}
-							Position={UDim2.fromScale(0.5, 0.5)}
-							ScaleType={Enum.ScaleType.Fit}
-							Selectable={false}
-							Size={UDim2.fromScale(0.9, 0.9)}
+						<AnimatedButton
+							size={UDim2.fromScale(0.9, 0.9)}
+							onClick={() => {
+								props.uiController.toggleUi(gameConstants.DAILY_REWARD_UI);
+							}}
 						>
 							<imagelabel
 								AnchorPoint={new Vector2(0.5, 0.5)}
@@ -392,7 +385,7 @@ export const RightSideMenu = (props: MenuProps) => {
 							</textlabel>
 
 							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-						</imagebutton>
+						</AnimatedButton>
 
 						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 					</frame>

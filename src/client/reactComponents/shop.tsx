@@ -219,7 +219,7 @@ interface GenericItemProps {
 	stats: ItemStat[]; // List of stats to display
 	image: string;
 	owned: boolean;
-	itemType: Exclude<Exclude<ItemType, "Target">, "Boats">;
+	itemType: Exclude<Exclude<Exclude<ItemType, "Target">, "Boats">, "Potions">;
 	price: number;
 	order: number;
 }
@@ -540,7 +540,7 @@ interface ShopProps {
 export const ShopComponent: React.FC<ShopProps> = (props) => {
 	const [visible, setVisible] = React.useState(props.visible);
 	const [selectedShop, setSelectedShop] = React.useState<keyof typeof SHOP_MENUS | "">("");
-	const [shopContent, setShopContent] = React.useState<Array<Item & { owned: boolean }>>([]);
+	const [shopContent, setShopContent] = React.useState<Array<Exclude<Item, { type: "Potions" }> & { owned: boolean }>>([]);
 	const [popInSz, popInMotion] = useMotion(UDim2.fromScale(0, 0));
 	const menuRef = React.createRef<Frame>();
 
@@ -562,13 +562,15 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 
 			Functions.getInventory(selectedShop).then(([_, items]) => {
 				setShopContent(
-					content.map((item) => {
-						const foundItem = items.find((i) => i.name === item.name);
-						if (foundItem) {
-							return { ...item, owned: true };
-						}
-						return item;
-					}),
+					content
+						.filter((item) => item.type !== "Potions")
+						.map((item) => {
+							const foundItem = items.find((i) => i.name === item.name);
+							if (foundItem) {
+								return { ...item, owned: true };
+							}
+							return item;
+						}),
 				);
 			});
 		} else if (selectedShop === "Store") {

@@ -1,7 +1,7 @@
 import React, { useEffect } from "@rbxts/react";
 import { Events } from "client/network";
 import { fullTargetConfig } from "shared/config/targetConfig";
-import { ItemAddedPopup, ItemPopupProps } from "./itemAddedPopup";
+import { TreasureAddedPopup, TreasurePopupProps } from "./itemAddedPopup";
 import { SoldItemPopup, SoldItemPopupProps } from "./soldItemPopup";
 import { Item } from "shared/networkTypes";
 import { BoughtItemPopup, BoughtItemPopupProps } from "./boughtItemPopup";
@@ -14,7 +14,7 @@ const POPUP_TYPES = {
 
 interface PopupProps {
 	id: number; // NEW: unique ID
-	popupProps: ItemPopupProps | SoldItemPopupProps | BoughtItemPopupProps;
+	popupProps: TreasurePopupProps | SoldItemPopupProps | BoughtItemPopupProps;
 	popupType: keyof typeof POPUP_TYPES;
 }
 
@@ -146,7 +146,7 @@ export const Popups = () => {
 			/>
 			{popups.map((popup) => {
 				if (popup.popupType === "ItemAdded") {
-					return <ItemAddedPopup key={popup.id} {...(popup.popupProps as ItemPopupProps)} />;
+					return <TreasureAddedPopup key={popup.id} {...(popup.popupProps as TreasurePopupProps)} />;
 				} else if (popup.popupType === "SoldItem") {
 					return <SoldItemPopup key={popup.id} {...(popup.popupProps as SoldItemPopupProps)} />;
 				} else if (popup.popupType === "BoughtItem") {

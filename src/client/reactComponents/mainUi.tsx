@@ -3,7 +3,7 @@ import { UiController } from "client/controllers/uiController";
 import { gameConstants } from "shared/constants";
 import { Item, type ItemType, Rarity, SkillName } from "shared/networkTypes";
 import { Events, Functions } from "client/network";
-import { ReplicatedStorage, SoundService } from "@rbxts/services";
+import { MarketplaceService, Players, ReplicatedStorage, SoundService, UserInputService } from "@rbxts/services";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
 import { shortenNumber, spaceWords } from "shared/util/nameUtil";
@@ -15,6 +15,11 @@ import Object from "@rbxts/object-utils";
 import { usePx } from "client/hooks/usePx";
 import { getOneInXChance } from "shared/util/targetUtil";
 import { set } from "@rbxts/sift/out/Array";
+import { potionConfig } from "shared/config/potionConfig";
+import { atom } from "@rbxts/charm";
+import { inventorySizeAtom, treasureCountAtom } from "client/atoms/inventoryAtoms";
+import { Signals } from "shared/signals";
+import { GamepassController } from "client/controllers/gamepassController";
 
 export function capitalizeWords(str: string): string {
 	return str
@@ -187,7 +192,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 				BackgroundTransparency={1}
 				BorderColor3={Color3.fromRGB(0, 0, 0)}
 				BorderSizePixel={0}
-				Image={"rbxassetid://132205041343382"}
+				Image={gameConstants.RARITY_BACKGROUND_IMAGES[rarity]}
 				key={"Item Container"}
 				Position={UDim2.fromScale(0.5, 0.5)}
 				Size={UDim2.fromScale(1, 0.949)}
@@ -195,7 +200,11 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 				Event={{
 					MouseButton1Click: () => {
 						// Equip the item
-						Events.equipItem(itemType as Exclude<Exclude<ItemType, "Target">, "Boats">, itemName);
+						if (itemType === "Shovels" || itemType === "MetalDetectors") {
+							Events.equipItem(itemType as Exclude<Exclude<ItemType, "Target">, "Boats">, itemName);
+						} else if (itemType === "Potions") {
+							Events.drinkPotion(itemName);
+						}
 						setPressed(true);
 						task.delay(0.1, () => setPressed(false));
 					},
@@ -1091,6 +1100,7 @@ interface SellAllBtnProps {
 	size?: UDim2;
 	anchorPoint?: Vector2;
 	requiresGamepass: boolean;
+	gamepassController?: GamepassController;
 }
 
 export const SellAllBtn = (props: SellAllBtnProps) => {
@@ -1101,8 +1111,12 @@ export const SellAllBtn = (props: SellAllBtnProps) => {
 			position={props.position}
 			anchorPoint={props.anchorPoint ?? new Vector2(0.5, 0.5)}
 			onClick={() => {
-				if (props.requiresGamepass) {
+				if (props.requiresGamepass && !props.gamepassController?.getOwnsGamepass("SellEverywhere")) {
 					// TODO: Prompt gamepass purchase.
+					MarketplaceService.PromptGamePassPurchase(
+						Players.LocalPlayer,
+						gameConstants.GAMEPASS_IDS.SellEverywhere,
+					);
 					return;
 				}
 				Events.sellAll();
@@ -1165,6 +1179,42 @@ export const ExitButton = (props: ExitButtonProps) => {
 	const [size, sizeMotion] = useMotion(1);
 	const [, closingMotion] = useMotion(0);
 
+	const exit = () => {
+		const startSz = props.menuRefToClose?.current!.Size;
+		const endSz = UDim2.fromScale(0, 0);
+		let cleanedStep = false;
+		let cleanupStep = closingMotion.onStep((v) => {
+			if (!props.menuRefToClose || !props.menuRefToClose.current || !startSz) {
+				cleanupStep();
+				cleanedStep = true;
+				return;
+			}
+			props.menuRefToClose.current!.Size = startSz.Lerp(endSz, v);
+			// TODO: Maybe also add fade out effect.
+		});
+		const cleanup = closingMotion.onComplete(() => {
+			cleanup();
+			props.uiController.closeUi(props.uiName);
+			closingMotion.immediate(0);
+			if (!cleanedStep) {
+				cleanupStep();
+				cleanedStep = true;
+			}
+		});
+		if (props.menuRefToClose) {
+			closingMotion.tween(1, {
+				time: 0.1,
+				style: Enum.EasingStyle.Linear,
+				direction: Enum.EasingDirection.In,
+			});
+		} else {
+			closingMotion.immediate(1);
+		}
+		props.onClick?.();
+		setPressed(true);
+		task.delay(0.1, () => setPressed(false));
+	};
+
 	useEffect(() => {
 		// sizeMotion.spring(isHovered ? START_SZ.add(SZ_INC) : START_SZ, springs.bubbly);
 		sizeMotion.spring(isHovered ? 1.2 : 1, springs.responsive);
@@ -1173,6 +1223,19 @@ export const ExitButton = (props: ExitButtonProps) => {
 	useEffect(() => {
 		sizeMotion.spring(isPressed ? 0.8 : isHovered ? 1.2 : 1, springs.responsive);
 	}, [isPressed]);
+
+	useEffect(() => {
+		// Listen to Gamepad B button for our controller enjoyers
+		const inputBegan = UserInputService.InputBegan.Connect((input) => {
+			if (input.KeyCode === Enum.KeyCode.ButtonB && props.menuRefToClose?.current) {
+				exit();
+			}
+		});
+
+		return () => {
+			inputBegan.Disconnect();
+		};
+	}, [props.menuRefToClose]);
 
 	return (
 		<frame
@@ -1230,41 +1293,7 @@ export const ExitButton = (props: ExitButtonProps) => {
 				SliceScale={0.4}
 				ZIndex={100}
 				Event={{
-					MouseButton1Click: () => {
-						const startSz = props.menuRefToClose?.current!.Size;
-						const endSz = UDim2.fromScale(0, 0);
-						let cleanedStep = false;
-						let cleanupStep = closingMotion.onStep((v) => {
-							if (!props.menuRefToClose || !props.menuRefToClose.current || !startSz) {
-								cleanupStep();
-								cleanedStep = true;
-								return;
-							}
-							props.menuRefToClose.current!.Size = startSz.Lerp(endSz, v);
-							// TODO: Maybe also add fade out effect.
-						});
-						const cleanup = closingMotion.onComplete(() => {
-							cleanup();
-							props.uiController.closeUi(props.uiName);
-							closingMotion.immediate(0);
-							if (!cleanedStep) {
-								cleanupStep();
-								cleanedStep = true;
-							}
-						});
-						if (props.menuRefToClose) {
-							closingMotion.tween(1, {
-								time: 0.1,
-								style: Enum.EasingStyle.Linear,
-								direction: Enum.EasingDirection.In,
-							});
-						} else {
-							closingMotion.immediate(1);
-						}
-						props.onClick?.();
-						setPressed(true);
-						task.delay(0.1, () => setPressed(false));
-					},
+					MouseButton1Click: exit,
 					MouseEnter: () => setIsHovered(true),
 					MouseLeave: () => {
 						setIsHovered(false);
@@ -1486,8 +1515,10 @@ export const MENUS = {
 
 interface MainUiProps {
 	visible: boolean;
-	menu?: string;
+	menu?: keyof typeof MENUS;
+	displayInventoryType?: ItemType;
 	uiController: UiController;
+	gamepassController: GamepassController;
 }
 
 export const MainUi = (props: MainUiProps) => {
@@ -1507,6 +1538,10 @@ export const MainUi = (props: MainUiProps) => {
 		mapName: keyof typeof mapConfig | "";
 	}>({ targetName: "", mapName: "" });
 	const [unlockedTreasures, setUnlockedTreasures] = useState<Set<keyof typeof targetConfig>>();
+	const [targetInventoryUsedSize, setTargetInventoryUsedSize] = useState(0);
+	const [targetInventoryCapacity, setTargetInventoryCapacity] = useState(
+		gameConstants.TARGET_INVENTORY_DEFAULT_CAPACITY,
+	);
 	const menuRef = createRef<Frame>();
 
 	const px = usePx();
@@ -1563,6 +1598,8 @@ export const MainUi = (props: MainUiProps) => {
 					? metalDetectorConfig[item.name]
 					: item.type === "Shovels"
 					? shovelConfig[item.name]
+					: item.type === "Potions"
+					? potionConfig[item.name]
 					: fullTargetConfig[item.name];
 
 			// Push to new inventory
@@ -1602,6 +1639,11 @@ export const MainUi = (props: MainUiProps) => {
 			Functions.getInventory(selectedInventoryType).then((items) => {
 				updateInventory(items);
 				setLoading(false);
+
+				if (selectedInventoryType === "Target") {
+					const [, inv] = items;
+					setTargetInventoryUsedSize(inv.size());
+				}
 			});
 			const connection = Events.updateInventory.connect((inventoryType, inv) => {
 				if (inventoryType === selectedInventoryType) {
@@ -1641,12 +1683,36 @@ export const MainUi = (props: MainUiProps) => {
 	}, [visible, enabledMenu, selectedInventoryType]);
 
 	React.useEffect(() => {
+		treasureCountAtom(targetInventoryUsedSize);
+	}, [targetInventoryUsedSize]);
+
+	React.useEffect(() => {
 		if (visible) {
 			popInMotion.spring(UDim2.fromScale(0.72, 0.75), springs.responsive);
 		} else {
+			const connection = Signals.inventoryFull.Connect(() => {
+				print("Inventory full!");
+				if (visible) {
+					connection?.Disconnect();
+					return;
+				}
+				props.uiController.toggleUi(gameConstants.MAIN_UI, {
+					menu: MENUS.Inventory,
+					displayInventoryType: "Target",
+				});
+			});
 			popInMotion.immediate(UDim2.fromScale(0, 0));
+			return () => {
+				connection?.Disconnect();
+			};
 		}
 	}, [visible]);
+
+	React.useEffect(() => {
+		if (visible && props.displayInventoryType) {
+			setSelectedInventoryType(props.displayInventoryType);
+		}
+	}, [visible, props.displayInventoryType]);
 
 	React.useEffect(() => {
 		if (loading) {
@@ -1655,6 +1721,23 @@ export const MainUi = (props: MainUiProps) => {
 			setLoadingSpring.immediate(1);
 		}
 	}, [loading]);
+
+	React.useEffect(() => {
+		Functions.getInventorySize().then((size) => {
+			setTargetInventoryCapacity(size);
+			inventorySizeAtom(size);
+		});
+
+		Events.updateInventorySize.connect((size) => {
+			setTargetInventoryCapacity(size);
+			inventorySizeAtom(size);
+		});
+
+		Events.updateTreasureCount.connect((count) => {
+			setTargetInventoryUsedSize(count);
+			treasureCountAtom(count);
+		});
+	}, []);
 
 	return (
 		<frame
@@ -1862,7 +1945,8 @@ export const MainUi = (props: MainUiProps) => {
 									);
 								} else if (
 									itemProps.itemType === "MetalDetectors" ||
-									itemProps.itemType === "Shovels"
+									itemProps.itemType === "Shovels" ||
+									itemProps.itemType === "Potions"
 								) {
 									// Pass only compatible types to GenericItemComponent
 									return (
@@ -1903,6 +1987,7 @@ export const MainUi = (props: MainUiProps) => {
 							Size={UDim2.fromScale(0.394, 0.79)}
 							SliceCenter={new Rect(45, 28, 918, 125)}
 							SliceScale={0.3}
+							Visible={false}
 						>
 							<textbox
 								key={"TextBox"}
@@ -1950,9 +2035,21 @@ export const MainUi = (props: MainUiProps) => {
 							icon={"rbxassetid://90146219889959"}
 							position={UDim2.fromScale(0.28, 0.5)}
 						/>
+						<InventorySelectorTab
+							inventoryType="Potions"
+							order={4}
+							selectedInventoryType={selectedInventoryType}
+							setSelectedInventoryType={setSelectedInventoryType}
+							icon={"rbxassetid://93760012973987"}
+							position={UDim2.fromScale(0.395, 0.5)}
+						/>
 
 						{/* Sell All Btn */}
-						<SellAllBtn position={UDim2.fromScale(0.48, 0.5)} requiresGamepass={true} />
+						<SellAllBtn
+							position={UDim2.fromScale(0.68, 0.5)}
+							requiresGamepass={true}
+							gamepassController={props.gamepassController}
+						/>
 					</frame>
 
 					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.74} />
@@ -2574,13 +2671,17 @@ export const MainUi = (props: MainUiProps) => {
 					key={"Count"}
 					Position={UDim2.fromScale(0.5, 0.5)}
 					Size={UDim2.fromScale(0.903, 1)}
-					Text={"Treasures: 0/300"}
-					TextColor3={Color3.fromRGB(255, 255, 255)}
+					Text={`Treasures: ${targetInventoryUsedSize}/${targetInventoryCapacity}`}
+					TextColor3={
+						targetInventoryUsedSize >= targetInventoryCapacity
+							? Color3.fromRGB(255, 0, 0)
+							: Color3.fromRGB(255, 255, 255)
+					}
 					TextScaled={true}
-					TextStrokeColor3={Color3.fromRGB(255, 255, 255)}
 					TextWrapped={true}
 					TextYAlignment={Enum.TextYAlignment.Top}
 					TextXAlignment={Enum.TextXAlignment.Right}
+					Visible={enabledMenu === MENUS.Inventory && selectedInventoryType === "Target"}
 				>
 					<uistroke key={"UIStroke"} Color={Color3.fromRGB(20, 38, 80)} Thickness={4} />
 

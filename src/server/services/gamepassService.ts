@@ -3,7 +3,7 @@ import Object from "@rbxts/object-utils";
 import { MarketplaceService } from "@rbxts/services";
 import { gameConstants } from "shared/constants";
 import { ProfileService } from "./profileService";
-import { Functions } from "server/network";
+import { Events, Functions } from "server/network";
 
 // 🗣️🗣️🗣️
 type ValueOf<T> = T[keyof T];
@@ -25,7 +25,12 @@ export class GamepassService implements OnStart {
 			for (const [id, name] of this.gamepassIdToName) {
 				if (profile.Data.ownedGamepasses.get(name) === true) continue;
 				const ownsGamepass = MarketplaceService.UserOwnsGamePassAsync(player.UserId, id);
+				if (ownsGamepass) {
+					profile.Data.ownedGamepasses.set(name, true);
+				}
 			}
+			this.profileService.setProfile(player, profile);
+			Events.updateOwnedGamepasses(player, profile.Data.ownedGamepasses);
 		});
 
 		MarketplaceService.PromptGamePassPurchaseFinished.Connect((player, assetId, wasPurchased) => {
@@ -47,6 +52,7 @@ export class GamepassService implements OnStart {
 
 			profile.Data.ownedGamepasses.set(gamepassExists, true);
 			this.profileService.setProfile(player, profile);
+			Events.updateOwnedGamepasses(player, profile.Data.ownedGamepasses);
 		});
 
 		Functions.getOwnedGamepasses.setCallback((player) => {

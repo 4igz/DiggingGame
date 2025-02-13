@@ -12,10 +12,9 @@ export function findFurthestPointWithinRadius(
 	startingPosition: Vector3,
 	parts: Array<BasePart>,
 	radius: number,
-	sampleDensity = 5, // Adjust density for precision
+	sampleDensity = 30, // Adjust density for precision
 ): Vector3 | undefined {
 	let furthestPoint: Vector3 | undefined = undefined;
-	let furthestPart: BasePart | undefined = undefined;
 	let maxDistance = 0;
 
 	for (const part of parts) {
