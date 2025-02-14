@@ -11,6 +11,7 @@ import { Signals } from "shared/signals";
 import { ShovelController } from "client/controllers/shovelController";
 import CameraShaker, { CameraShakeInstance } from "@rbxts/camera-shaker";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
+import Object from "@rbxts/object-utils";
 
 export interface DiggingBarProps {
 	target?: Target;
@@ -33,6 +34,46 @@ const camera = Workspace.CurrentCamera;
 const defaultFov = camera?.FieldOfView ?? 70;
 const fovGoal = 50;
 
+const progressBars = [
+	{ threshold: 1, barName: "20" },
+	{ threshold: 0.81, barName: "16" },
+	{ threshold: 0.58, barName: "12" },
+	{ threshold: 0.37, barName: "8" },
+	{ threshold: 0.17, barName: "4" },
+];
+
+const originalBarColors: Record<string, Color3> = {
+	["20"]: Color3.fromRGB(64, 86, 162), // match your existing bar color
+	["16"]: Color3.fromRGB(48, 68, 137),
+	["12"]: Color3.fromRGB(64, 86, 162),
+	["8"]: Color3.fromRGB(48, 68, 137),
+	["4"]: Color3.fromRGB(64, 86, 162),
+};
+
+const barImages: Record<string, string> = {
+	["20"]: "rbxassetid://1148302221185259",
+	["16"]: "rbxassetid://133323928788153",
+	["12"]: "rbxassetid://95711239284393",
+	["8"]: "rbxassetid://76687140716470",
+	["4"]: "rbxassetid://91647746850914",
+};
+
+const barBackgroundImages: Record<string, string> = {
+	["20"]: "rbxassetid://121836677630694",
+	["16"]: "rbxassetid://99229586290044",
+	["12"]: "rbxassetid://126856902854073",
+	["8"]: "rbxassetid://140382903871140",
+	["4"]: "rbxassetid://81833790422645",
+};
+
+const barPositions: Record<string, UDim2> = {
+	["20"]: new UDim2(0.45, 0, 0.892, 0),
+	["16"]: new UDim2(0.42, 0, 0.7, 0),
+	["12"]: new UDim2(0.4, 0, 0.5, 0),
+	["8"]: new UDim2(0.37, 0, 0.308, 0),
+	["4"]: new UDim2(0.35, 0, 0.127, 0),
+};
+
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
@@ -47,6 +88,15 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 	const [visible, setVisible] = React.useState(false);
 
 	const warnStages = [{ 0.4: 1 }, { 0.25: 2 }, { 0.1: 3 }];
+
+	const [currentBar, setCurrentBar] = useState<string | undefined>(undefined);
+
+	const [previousBar, setPreviousBar] = useState<string | undefined>(undefined);
+
+	const [barColorMotion, setBarColorMotion] = useMotion(new Color3());
+	const [barSizeMotion, setBarSizeMotion] = useMotion(1);
+
+	const RED = Color3.fromRGB(255, 0, 0);
 
 	useEffect(() => {
 		let time = 0;
@@ -161,7 +211,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				}
 
 				// Make bar decrease over time
-				const DECREASE_RATE = 0.0005;
+				const DECREASE_RATE = gameConstants.BAR_DECREASE_RATE;
 				progress = progress - target.maxProgress * DECREASE_RATE;
 				progress = math.clamp(progress, 0, target.maxProgress);
 			});
@@ -196,14 +246,75 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 	}, [visible]);
 
 	useEffect(() => {
-		fovMotion.spring(lerp(fovGoal, defaultFov, barProgress.getValue() / 1), springs.default);
-	}, [barProgress.getValue()]);
+		const unsubProgress = setBarProgress.onStep((value) => {
+			// Keep your existing FOV logic
+			fovMotion.spring(lerp(fovGoal, defaultFov, value), springs.default);
 
-	useEffect(() => {
-		fovMotion.onStep((value) => {
+			const alpha = value;
+
+			let chosenBar: string | undefined;
+			for (const data of progressBars) {
+				if (alpha <= data.threshold) {
+					chosenBar = data.barName;
+				}
+			}
+
+			// If none matched (alpha >= all thresholds), pick the last bar in the array:
+			if (!chosenBar) {
+				chosenBar = progressBars[progressBars.size() - 1].barName;
+				warn("No bar matched alpha", alpha);
+			}
+
+			// If we've changed bars, update state
+			if (chosenBar !== currentBar) {
+				setPreviousBar(currentBar);
+				setCurrentBar(chosenBar);
+
+				// Optional: animate newly activated bar
+				print("Chosen:", chosenBar, " Prev:", previousBar);
+
+				if (chosenBar && previousBar) {
+					const newBarNum = tonumber(chosenBar);
+					const oldBarNum = tonumber(previousBar);
+
+					if (newBarNum !== undefined && oldBarNum !== undefined) {
+						if (newBarNum > oldBarNum) {
+							// "Going down" (e.g. from 16 ft => 12 ft), do a quick "pop"
+							// or color highlight:
+							setBarColorMotion.immediate(
+								originalBarColors[currentBar ?? -1] ?? originalBarColors[chosenBar],
+							);
+							setBarColorMotion.spring(RED, springs.responsive);
+
+							const complete = setBarColorMotion.onComplete(() => {
+								setBarColorMotion.spring(originalBarColors[chosenBar], springs.responsive);
+								complete();
+							});
+
+							setBarSizeMotion.spring(1.1, springs.bubbly);
+
+							const complete2 = setBarSizeMotion.onComplete(() => {
+								setBarSizeMotion.spring(1, springs.responsive);
+								complete2();
+							});
+						} else {
+							// "Going up" (e.g. from 8 ft => 12 ft),
+							// do some other effect if you like
+						}
+					}
+				}
+			}
+		});
+
+		const unsubFov = fovMotion.onStep((value) => {
 			camera!.FieldOfView = value;
 		});
-	}, []);
+
+		return () => {
+			unsubProgress();
+			unsubFov();
+		};
+	}, [currentBar, previousBar]);
 
 	const platform = getPlayerPlatform();
 
@@ -259,19 +370,17 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 						/>
 					</imagelabel>
 				</frame>
-
 				<imagelabel
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
 					BorderColor3={Color3.fromRGB(0, 0, 0)}
 					BorderSizePixel={0}
-					Image={"rbxassetid://133217364331896"}
+					Image={"rbxassetid://131382351827899"}
 					key={"Background"}
 					Position={UDim2.fromScale(0.5, 0.5)}
 					Size={UDim2.fromScale(1, 1)}
 				/>
-
 				<frame
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
@@ -282,8 +391,76 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 					Size={UDim2.fromScale(0.298, 0.809)}
 					AnchorPoint={new Vector2(0.5, 0.5)}
 				></frame>
-
+				{/* Bars2 folder */}
 				<frame
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					key={"Ruler"}
+					Position={UDim2.fromScale(0.45, 0)}
+					Size={UDim2.fromScale(0.55, 0.919)}
+				>
+					{(["20", "16", "12", "8", "4"] as const).map((barName) => {
+						const isActive = currentBar === barName;
+						const barColor = originalBarColors[barName];
+						return (
+							<imagelabel
+								key={barName}
+								AnchorPoint={new Vector2(0.5, 0.5)}
+								Position={barPositions[barName]}
+								Size={UDim2.fromScale(0.548, 0.085)}
+								BackgroundTransparency={1}
+								ImageColor3={isActive ? barColorMotion : barColor}
+								BackgroundColor3={isActive ? barColorMotion : barColor}
+								Image={barImages[barName]}
+								ImageTransparency={0}
+								ZIndex={5}
+							>
+								<textlabel
+									key="Number"
+									AnchorPoint={new Vector2(0.5, 0.5)}
+									Position={new UDim2(0.5, 0, 0.5, 0)}
+									BackgroundTransparency={1}
+									Font={Enum.Font.GothamBold}
+									Text={`${barName} FT`}
+									TextColor3={new Color3(1, 1, 1)}
+									Size={UDim2.fromScale(1, 1)}
+									TextScaled={true}
+								>
+									<uistroke Thickness={3} />
+								</textlabel>
+								<uiscale key="UIScale" Scale={isActive ? barSizeMotion : 1} />
+							</imagelabel>
+						);
+					})}
+				</frame>
+
+				<folder key="Bars">
+					{(["20", "16", "12", "8", "4"] as const).map((barName) => {
+						const isActive = currentBar === barName;
+						const barColor = originalBarColors[barName];
+						const barImage = barBackgroundImages[barName];
+
+						return (
+							<imagelabel
+								key={barName}
+								AnchorPoint={new Vector2(0.5, 0.5)} // or your preference
+								Position={new UDim2(0.5, 0, 0.5, 0)}
+								Size={UDim2.fromScale(1, 1)} // matches your Bars2 example
+								BackgroundTransparency={1}
+								Image={barImage}
+								ImageColor3={isActive ? barColorMotion : barColor}
+								ZIndex={0}
+							>
+								{/* Scale effect when active */}
+								<uiscale key="UIScale" Scale={isActive ? barSizeMotion : 1} />
+							</imagelabel>
+						);
+					})}
+				</folder>
+
+				{/* <frame
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
 					BorderColor3={Color3.fromRGB(0, 0, 0)}
@@ -426,8 +603,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 							PaddingTop={new UDim(0.000288, 0)}
 						/>
 					</textlabel>
-				</frame>
-
+				</frame> */}
 				<frame
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
@@ -496,7 +672,6 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 						</frame>
 					</imagelabel>
 				</frame>
-
 				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.61} />
 			</frame>
 
