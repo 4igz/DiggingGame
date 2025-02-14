@@ -161,7 +161,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				}
 
 				// Make bar decrease over time
-				const DECREASE_RATE = 0.0005;
+				const DECREASE_RATE = gameConstants.BAR_DECREASE_RATE;
 				progress = progress - target.maxProgress * DECREASE_RATE;
 				progress = math.clamp(progress, 0, target.maxProgress);
 			});
