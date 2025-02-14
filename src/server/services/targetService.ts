@@ -270,7 +270,7 @@ export class TargetService implements OnStart, OnTick {
 	onTick(): void {
 		for (const [_player, target] of this.playerDiggingTargets) {
 			if (!target.activelyDigging) continue;
-			target.digProgress = math.max(0, target.digProgress - target.maxProgress * 0.0005);
+			target.digProgress = math.max(0, target.digProgress - target.maxProgress * gameConstants.BAR_DECREASE_RATE);
 		}
 	}
 

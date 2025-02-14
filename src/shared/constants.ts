@@ -45,6 +45,7 @@ export const gameConstants = {
 	AUTO_DIG_CLICK_INTERVAL: 0.1, // Seconds between each auto dig click
 	POTION_DURATION: 300, // 5 minutes
 	TARGET_INVENTORY_DEFAULT_CAPACITY: 100,
+	BAR_DECREASE_RATE: 0.0005,
 
 	// Maps itemType name to config
 	SHOP_CONFIGS: {
