@@ -5,6 +5,9 @@ import { SoundService } from "@rbxts/services";
 const areasSoundGroup = SoundService.WaitForChild("Areas") as SoundGroup;
 const areasStartVolume = areasSoundGroup.Volume;
 
+const mutedImage = "rbxassetid://124146564458868";
+const playingImage = "rbxassetid://80637397486717";
+
 export const VolumeMuteButton = () => {
 	const [muted, setMuted] = React.useState(false);
 
@@ -22,7 +25,7 @@ export const VolumeMuteButton = () => {
 			<imagelabel
 				Size={UDim2.fromScale(1, 1)}
 				BackgroundTransparency={1}
-				Image={muted ? "rbxassetid://124146564458868" : "rbxassetid://80637397486717"}
+				Image={muted ? mutedImage : playingImage}
 			/>
 			<uiaspectratioconstraint AspectRatio={1} />
 		</AnimatedButton>

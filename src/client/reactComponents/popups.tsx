@@ -142,7 +142,7 @@ export const Popups = () => {
 				FillDirection={Enum.FillDirection.Vertical}
 				HorizontalAlignment={Enum.HorizontalAlignment.Center}
 				VerticalAlignment={Enum.VerticalAlignment.Bottom}
-				Padding={new UDim(0.125, 0)}
+				Padding={new UDim(0.175, 0)}
 			/>
 			{popups.map((popup) => {
 				if (popup.popupType === "ItemAdded") {

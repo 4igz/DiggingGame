@@ -34,11 +34,12 @@ interface ClientToServerEvents {
 
 interface ServerToClientEvents {
 	beginDigging: (target: Target, digInfo: PlayerDigInfo) => void;
-	endDiggingServer: (itemId?: string) => void;
+	endDiggingServer: (diggingComplete: boolean, itemId?: string) => void;
 	targetAdded: (itemName: keyof typeof fullTargetConfig, weight: number, mapName: keyof typeof mapConfig) => void;
 	updateLuckRoll: (roll: number, serverTime: number) => void;
 	targetSpawnSuccess(position: Vector3): void;
 	targetDespawned(): void;
+	targetSpawnFailure(): void;
 	createWaypointVisualization: (targetPosition: Vector3, detectorName: string) => void;
 	updateMoney: (money: string) => void;
 	updateLevelUi: (level: number, experience: number, nextLevelExperience: number, skillPoints: number) => void;
@@ -72,6 +73,7 @@ interface ServerToClientEvents {
 	updateInventorySize: (size: number) => void;
 	updateTreasureCount: (count: number) => void;
 	updateOwnedGamepasses: (ownedGamepasses: Map<keyof typeof gameConstants.GAMEPASS_IDS, boolean>) => void;
+	levelUp: (newLevel: number) => void;
 }
 
 interface ClientToServerFunctions {
@@ -94,6 +96,7 @@ interface ClientToServerFunctions {
 	getLastDailyClaimTime: () => number | undefined;
 	getDailyStreak: () => number | undefined;
 	getInventorySize: () => number;
+	claimPlaytimeReward: (rewardIndex: number) => boolean;
 }
 
 interface ServerToClientFunctions {}

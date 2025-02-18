@@ -26,6 +26,7 @@ export class LevelService implements OnStart {
 				data.experience -= xpForNextLevel;
 				data.level += 1;
 				data.skillPoints += 1;
+				Events.levelUp.fire(player, data.level);
 			} else {
 				break;
 			}

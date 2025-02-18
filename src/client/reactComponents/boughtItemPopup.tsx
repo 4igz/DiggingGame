@@ -70,7 +70,7 @@ export const BoughtItemPopup = (props: BoughtItemPopupProps) => {
 				BorderSizePixel={0}
 				key={"ImageHolder"}
 				Position={UDim2.fromScale(0.625, 0.219)}
-				Size={UDim2.fromScale(0.25, 1.59)}
+				Size={UDim2.fromScale(0.5, 2)}
 			>
 				<imagelabel
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}

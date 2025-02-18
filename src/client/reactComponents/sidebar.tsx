@@ -7,6 +7,7 @@ import { MENUS } from "./mainUi";
 import { AutoDigging } from "client/controllers/autoDigController";
 import { Players } from "@rbxts/services";
 import { Signals } from "shared/signals";
+import { Events, Functions } from "client/network";
 
 interface SidebarButtonProps {
 	icon: string;
@@ -123,10 +124,10 @@ const SidebarButton = (props: SidebarButtonProps) => {
 
 					<uipadding
 						key={"UIPadding"}
-						PaddingBottom={new UDim(0.0167, 0)}
-						PaddingLeft={new UDim(0.35, 0)}
-						PaddingRight={new UDim(0.35, 0)}
-						PaddingTop={new UDim(0.0167, 0)}
+						PaddingBottom={new UDim(0.025, 0)}
+						PaddingLeft={new UDim(0.05, 0)}
+						PaddingRight={new UDim(0.05, 0)}
+						PaddingTop={new UDim(0.025, 0)}
 					/>
 				</textlabel>
 
@@ -145,10 +146,18 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = (props) => {
 	const [autoDigEnabled, setAutoDiggingEnabled] = React.useState(false);
+	const [availableSkillPoints, setAvailableSkillPoints] = React.useState(0);
 
 	useEffect(() => {
 		Signals.setAutoDiggingEnabled.Connect((enabled: boolean) => {
 			setAutoDiggingEnabled(enabled);
+		});
+
+		Functions.getLevelData().then((levelData) => {
+			setAvailableSkillPoints(levelData.skillPoints);
+		});
+		Events.updateLevelUi.connect((_level, _xp, _xpMax, skillPoints) => {
+			setAvailableSkillPoints(skillPoints);
 		});
 	}, []);
 
@@ -182,6 +191,9 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 				onClick={() => {
 					props.uiController.toggleUi(gameConstants.MAIN_UI, { menu: MENUS.Skills });
 				}}
+				notificationVisible={availableSkillPoints > 0}
+				notificationColor={Color3.fromRGB(230, 42, 25)}
+				notificationText={tostring(availableSkillPoints)}
 			/>
 			<SidebarButton
 				icon={"rbxassetid://125407928227030"}

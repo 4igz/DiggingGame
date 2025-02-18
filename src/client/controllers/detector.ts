@@ -11,7 +11,7 @@ import { gameConstants } from "shared/constants";
 import { inventorySizeAtom, treasureCountAtom } from "client/atoms/inventoryAtoms";
 
 @Controller({})
-export class Detector implements OnStart, OnTick {
+export class Detector implements OnStart {
 	private VFX_FOLDER = ReplicatedStorage.WaitForChild("VFX");
 	private ANIMATION_FOLDER = ReplicatedStorage.WaitForChild("Animations");
 	private areaIndicatorVFX = this.VFX_FOLDER.FindFirstChild("DigAreaIndicatorVfx") as BasePart;
@@ -30,6 +30,7 @@ export class Detector implements OnStart, OnTick {
 	private isInventoryFull = false;
 	private phase = 0;
 	private currentBeepSound: Sound | undefined = undefined;
+	private awaitingResponse = false;
 
 	private DIG_DING_INTERVAL = interval(1);
 	private dingSound = SoundService.WaitForChild("UI")?.WaitForChild("DigDing") as Sound;
@@ -104,7 +105,12 @@ export class Detector implements OnStart, OnTick {
 							return;
 						}
 						if (inputState === Enum.UserInputState.Begin) {
-							if (this.targetActive || this.isRolling || (this.isAutoDigging && this.autoDigRunning))
+							if (
+								this.awaitingResponse ||
+								this.targetActive ||
+								this.isRolling ||
+								(this.isAutoDigging && this.autoDigRunning)
+							)
 								return;
 							this.isRolling = true;
 							Events.beginDetectorLuckRoll();
@@ -112,11 +118,13 @@ export class Detector implements OnStart, OnTick {
 						} else if (inputState === Enum.UserInputState.End) {
 							if (!this.isRolling || (this.isAutoDigging && this.autoDigRunning)) return;
 							this.isRolling = false;
+							this.awaitingResponse = true;
 							Events.endDetectorLuckRoll();
 							Signals.closeLuckbar.Fire();
 						}
 					};
 
+					// Delay the detector action to prevent accidental detections if the player was just digging
 					const thread = task.delay(
 						tick() - (lastSuccessfulDigTime ?? 0) > this.SUCCESSFUL_DIG_DETECT_COOLDOWN ? 0 : 0.5,
 						() => {
@@ -140,12 +148,6 @@ export class Detector implements OnStart, OnTick {
 
 					// Cleanup indicators when unequipping
 					child.AncestryChanged.Once(() => {
-						if (this.areaIndicator) {
-							this.areaIndicator.Destroy();
-							this.areaIndicator = undefined;
-						}
-						this.hideWaypointArrow();
-
 						if (this.isRolling) {
 							this.isRolling = false;
 							Events.endDetectorLuckRoll();
@@ -172,9 +174,16 @@ export class Detector implements OnStart, OnTick {
 
 		Events.targetSpawnSuccess.connect(() => {
 			this.targetActive = true;
+			this.awaitingResponse = false;
+		});
+
+		Events.targetSpawnFailure.connect(() => {
+			this.awaitingResponse = false;
+			this.targetActive = false;
 		});
 
 		Events.targetDespawned.connect(() => {
+			this.awaitingResponse = false;
 			this.targetActive = false;
 			this.hideWaypointArrow();
 			if (this.areaIndicator) {
@@ -255,7 +264,6 @@ export class Detector implements OnStart, OnTick {
 			if (!camera || !this.arrowIndicator) return;
 			let detector = character.FindFirstChildOfClass("Tool");
 			detector = detector && metalDetectorConfig[detector.Name] ? detector : undefined;
-			if (!detector) return;
 
 			// Current distance from player to the waypoint
 			const offset = targetPos.sub(playerRootPart.Position);
@@ -365,7 +373,7 @@ export class Detector implements OnStart, OnTick {
 			if (sinVal <= 0 && prevSinVal > 0 && !canDig) {
 				if (this.currentBeepSound) this.currentBeepSound.Play();
 
-				const blinkVfx = detector.FindFirstChild("Blink") as Instance;
+				const blinkVfx = detector?.FindFirstChild("Blink") as Instance;
 				if (blinkVfx) {
 					for (const descendant of blinkVfx.GetDescendants()) {
 						if (descendant.IsA("ParticleEmitter")) {
@@ -392,21 +400,5 @@ export class Detector implements OnStart, OnTick {
 			this.arrowIndicator.Destroy();
 			this.arrowIndicator = undefined;
 		}
-	}
-
-	onTick(): void {
-		// if (this.areaIndicator) {
-		// 	const t = os.clock();
-		// 	const rotationSpeed = 45; // degrees per second
-		// 	const bobbingSpeed = 2; // radians per second
-		// 	const bobbingHeight = 0.1; // studs
-		// 	if (!this.areaIndicator.GetAttribute("OriginalPosition")) {
-		// 		this.areaIndicator.SetAttribute("OriginalPosition", this.areaIndicator.Position);
-		// 	}
-		// 	const originalPosition = this.areaIndicator.GetAttribute("OriginalPosition") as Vector3;
-		// 	const rotation = CFrame.Angles(0, math.rad(t * rotationSpeed), 0);
-		// 	const bobOffset = math.sin(t * bobbingSpeed) * bobbingHeight;
-		// 	this.areaIndicator.CFrame = new CFrame(originalPosition).mul(rotation).mul(new CFrame(0, bobOffset, 0));
-		// }
 	}
 }

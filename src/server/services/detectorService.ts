@@ -54,7 +54,10 @@ export class DetectorService implements OnStart, OnTick {
 			const existingTarget = this.targetService.getPlayerTarget(player);
 			if (existingTarget) return;
 
-			this.targetService.spawnTarget(player, finalLuckValue);
+			const response = this.targetService.spawnTarget(player, finalLuckValue);
+			if (!response) {
+				Events.targetSpawnFailure.fire(player);
+			}
 		});
 
 		Events.nextTargetAutoDigger.connect((player) => {
@@ -64,7 +67,10 @@ export class DetectorService implements OnStart, OnTick {
 			const existingTarget = this.targetService.getPlayerTarget(player);
 			if (existingTarget) return;
 
-			this.targetService.spawnTarget(player, 10);
+			const response = this.targetService.spawnTarget(player, 10);
+			if (!response) {
+				Events.targetSpawnFailure.fire(player);
+			}
 		});
 
 		Signals.startDigging.Connect((player, target) => {
@@ -125,29 +131,17 @@ export class DetectorService implements OnStart, OnTick {
 		}
 
 		// Make detectors detect metals and flash when they're nearby
-		for (const detector of CollectionService.GetTagged("Detector")) {
-			if (!detector || detector.Parent === undefined) continue;
-			assert(detector.IsA("Tool"), "Detector must be a tool");
-
-			const detectorConfig = metalDetectorConfig[detector.Name];
-			assert(detectorConfig, "Detector config not found");
-
-			const character = detector.Parent as Model | undefined;
+		for (const target of this.targetService.activeTargets) {
+			const player = target.owner;
+			const character = player.Character as Model | undefined;
 			if (!character) continue;
 			const humanoid = character.FindFirstChild("Humanoid") as Humanoid;
 			if (!humanoid) continue;
-			const player = Players.GetPlayerFromCharacter(character);
-			if (!player) continue;
 
-			// Default state
-			let nearbyTarget = false;
-			let digTarget = this.targetService.getPlayerTarget(player);
 			let withinDigRange = false;
 
-			if (!digTarget) continue;
-
 			const detectorPosition = character.GetPivot().Position;
-			const targetPosition = digTarget.position;
+			const targetPosition = target.position;
 			const horizontalDistance = new Vector3(detectorPosition.X, 0, detectorPosition.Z).sub(
 				new Vector3(targetPosition.X, 0, targetPosition.Z),
 			).Magnitude;
@@ -158,15 +152,13 @@ export class DetectorService implements OnStart, OnTick {
 			if (distance < gameConstants.DIG_RANGE) {
 				// Within DIG_RANGE, set state to fully on and beeping
 				withinDigRange = true;
-			} else if (distance < detectorConfig.searchRadius) {
-				nearbyTarget = true;
 			}
 
-			if (withinDigRange && digTarget) {
+			if (withinDigRange && target) {
 				const isDigging = this.targetService.playerDiggingTargets.has(player);
 				if (isDigging) continue;
-				this.startDigging(player, digTarget);
-			} else if (digTarget) {
+				this.startDigging(player, target);
+			} else if (target) {
 				const lastVisualizationTime = this.lastVisualizationTimes.get(player) ?? 0;
 				const lastPlayerPosition = this.lastPlayerPositions.get(player) ?? new Vector3();
 				const playerPosition = player.Character?.PrimaryPart?.Position ?? new Vector3();

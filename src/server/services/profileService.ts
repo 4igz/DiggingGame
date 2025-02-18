@@ -11,7 +11,7 @@ export class ProfileService implements OnStart {
 	public onProfileLoaded = new Signal<(player: Player, profile: LoadedProfile) => void>();
 	public profileChanged = new Signal<(player: Player, profile: LoadedProfile) => void>();
 
-	private profileStore = GetProfileStore("v1", profileTemplate);
+	private profileStore = GetProfileStore("v0", profileTemplate);
 	private profileCache = new Map<Player, Profile<ProfileTemplate>>();
 
 	onStart() {

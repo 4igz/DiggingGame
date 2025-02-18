@@ -29,7 +29,7 @@ export = () => {
 			Position={UDim2.fromScale(0, 1)}
 			Size={UDim2.fromScale(0.1, 0.1)}
 			Image={digEnabled ? Shovel : XShovel}
-			Visible={visible}
+			Visible={false}
 			BackgroundTransparency={1}
 			ScaleType={Enum.ScaleType.Fit}
 		>

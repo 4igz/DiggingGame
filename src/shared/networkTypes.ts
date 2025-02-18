@@ -45,6 +45,15 @@ export type Item =
 
 export type SkillName = "strength" | "luck" | "detection";
 
+export type RewardType = "Money" | "LuckMultiplier" | ItemType;
+
+export interface Reward {
+	rewardType: RewardType;
+	rewardLength?: number; // In seconds
+	itemName?: ItemName; // Required if rewardType is ItemType
+	rewardAmount?: number; // Defaults to 1
+}
+
 /**
  * Represents an EternityNum object, capable of handling very large numbers.
  */

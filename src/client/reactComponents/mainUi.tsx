@@ -129,6 +129,7 @@ interface GenericItemProps {
 	itemType: Exclude<ItemType, "Target">;
 	stats: ItemStat[]; // List of stats to display
 	isEquipped: boolean;
+	count: number;
 }
 
 const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
@@ -424,6 +425,7 @@ interface TreasureItemComponentProps {
 	itemType: Extract<ItemType, "Target">;
 	stats: ItemStat[]; // List of stats to display
 	isEquipped: boolean;
+	count: number;
 }
 
 const TreasureItemComponent: React.FC<TreasureItemComponentProps> = ({
@@ -432,6 +434,7 @@ const TreasureItemComponent: React.FC<TreasureItemComponentProps> = ({
 	itemName,
 	stats,
 	isEquipped,
+	count,
 	// itemType,
 }) => {
 	return (
@@ -466,6 +469,7 @@ const TreasureItemComponent: React.FC<TreasureItemComponentProps> = ({
 					key={"Stats"}
 					Position={UDim2.fromScale(0.0923, 0.069)}
 					Size={UDim2.fromScale(0.472, 0.374)}
+					ZIndex={3}
 				>
 					<uilistlayout
 						key={"UIListLayout"}
@@ -538,6 +542,21 @@ const TreasureItemComponent: React.FC<TreasureItemComponentProps> = ({
 					})}
 				</frame>
 
+				<textlabel
+					BackgroundTransparency={1}
+					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					key={"Amount"}
+					Position={UDim2.fromScale(0.1, 0.1)}
+					Size={UDim2.fromScale(0.2, 0.2)}
+					Text={`x${count}`}
+					TextColor3={Color3.fromRGB(255, 255, 255)}
+					TextScaled={true}
+					TextXAlignment={Enum.TextXAlignment.Left}
+					ZIndex={10}
+				>
+					<uistroke key={"UIStroke"} Thickness={2} />
+				</textlabel>
+
 				<imagelabel
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -546,7 +565,7 @@ const TreasureItemComponent: React.FC<TreasureItemComponentProps> = ({
 					BorderSizePixel={0}
 					key={"Icon"}
 					Position={UDim2.fromScale(0.5, 0.5)}
-					Size={UDim2.fromOffset(70, 70)}
+					Size={UDim2.fromScale(1, 1)}
 					Image={itemImage}
 				>
 					<textlabel
@@ -800,10 +819,6 @@ const SkillFrame: React.FC<SkillFrameProps> = (props) => {
 				SliceScale={0.7}
 				Active={true}
 				Event={{
-					Activated: () => {
-						Events.upgradeSkill.fire(string.lower(props.title) as SkillName);
-						SoundService.PlayLocalSound(skillUpgrade);
-					},
 					MouseEnter: () => {
 						setIsHovered(true);
 					},
@@ -974,6 +989,7 @@ const SkillFrame: React.FC<SkillFrameProps> = (props) => {
 								Event={{
 									Activated: () => {
 										Events.upgradeSkill.fire(string.lower(props.title) as SkillName);
+										SoundService.PlayLocalSound(skillUpgrade);
 									},
 								}}
 							>
@@ -1504,6 +1520,7 @@ type InventoryItemProps = {
 	stats: ItemStat[];
 	isEquipped: boolean;
 	itemType: Extract<ItemType, "Target"> | Exclude<ItemType, "Target">;
+	count: number;
 };
 
 export const MENUS = {
@@ -1520,6 +1537,8 @@ interface MainUiProps {
 	uiController: UiController;
 	gamepassController: GamepassController;
 }
+
+const cachedInventories = {} as Record<ItemType, InventoryItemProps[]>;
 
 export const MainUi = (props: MainUiProps) => {
 	const [visible, setVisible] = React.useState(false);
@@ -1561,6 +1580,7 @@ export const MainUi = (props: MainUiProps) => {
 
 		inv.forEach((item) => {
 			if (item.type !== selectedInventoryType) return;
+			if (newInventory.find((invItem) => invItem.itemName === item.name)) return;
 			const stats: InventoryItemProps["stats"] = [];
 
 			if (item.type === "MetalDetectors") {
@@ -1611,10 +1631,12 @@ export const MainUi = (props: MainUiProps) => {
 				itemImage: cfg.itemImage,
 				itemName: item.name,
 				rarity: cfg.rarityType,
+				count: inv.filter((invItem) => invItem.name === item.name).size(),
 				stats,
 			});
 		});
 
+		cachedInventories[selectedInventoryType] = newInventory;
 		setInventory(newInventory);
 	}
 
@@ -1634,26 +1656,20 @@ export const MainUi = (props: MainUiProps) => {
 
 	React.useEffect(() => {
 		if (enabledMenu === MENUS.Inventory) {
-			setInventory([]);
-			setLoading(true);
+			const cache = cachedInventories[selectedInventoryType];
+			if (cache === undefined) {
+				setLoading(true);
+			}
+			setInventory(cache ?? []);
 			Functions.getInventory(selectedInventoryType).then((items) => {
-				updateInventory(items);
 				setLoading(false);
+				updateInventory(items);
 
 				if (selectedInventoryType === "Target") {
 					const [, inv] = items;
 					setTargetInventoryUsedSize(inv.size());
 				}
 			});
-			const connection = Events.updateInventory.connect((inventoryType, inv) => {
-				if (inventoryType === selectedInventoryType) {
-					updateInventory(inv);
-				}
-			});
-
-			return () => {
-				connection.Disconnect();
-			};
 		} else if (enabledMenu === MENUS.Skills) {
 			Functions.getSkills().then((skills) => {
 				setSkills(skills);
@@ -1685,6 +1701,14 @@ export const MainUi = (props: MainUiProps) => {
 	React.useEffect(() => {
 		treasureCountAtom(targetInventoryUsedSize);
 	}, [targetInventoryUsedSize]);
+
+	React.useEffect(() => {
+		Events.updateInventory.connect((inventoryType, inv) => {
+			if (inventoryType === selectedInventoryType) {
+				updateInventory(inv);
+			}
+		});
+	}, []);
 
 	React.useEffect(() => {
 		if (visible) {
@@ -1937,6 +1961,7 @@ export const MainUi = (props: MainUiProps) => {
 							{inventory.map((itemProps) => {
 								if (itemProps.itemType === "Target") {
 									// Pass items with type "Target" to TreasureItemComponent
+
 									return (
 										<TreasureItemComponent
 											key={itemProps.itemName}

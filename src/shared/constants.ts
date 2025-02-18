@@ -1,5 +1,5 @@
 import { MetalDetector, metalDetectorConfig } from "./config/metalDetectorConfig";
-import { ItemType, Rarity } from "./networkTypes";
+import { ItemType, Rarity, RewardType } from "./networkTypes";
 import { Shovel, shovelConfig } from "./config/shovelConfig";
 import { mapConfig } from "./config/mapConfig";
 
@@ -11,6 +11,11 @@ export const ROLL_TYPES = {
 	Super: "Super!!",
 	Perfect: "PERFECT!!",
 };
+
+export const REWARD_IMAGES = {
+	Money: "rbxassetid://96446480715038",
+	LuckMultiplier: "rbxassetid://83833460426334",
+} as Record<RewardType, string>;
 
 export const gameConstants = {
 	DIG_BAR_UI: "DiggingBar",
@@ -28,6 +33,7 @@ export const gameConstants = {
 	ISLE_POPUP_UI: "ZonePopupUi",
 	BOAT_SHOP_UI: "BoatShopUi",
 	DAILY_REWARD_UI: "DailyRewardUi",
+	PLAYTIME_REWARD_UI: "PlaytimeRewardUi",
 
 	PLAYER_COLGROUP: "Player",
 	NOCHARACTERCOLLISION_COLGROUP: "NoCollideWithCharacters",
@@ -46,6 +52,11 @@ export const gameConstants = {
 	POTION_DURATION: 300, // 5 minutes
 	TARGET_INVENTORY_DEFAULT_CAPACITY: 100,
 	BAR_DECREASE_RATE: 0.0005,
+
+	// Skills modifiers
+	STRENGTH_MODIFIER: 0.1,
+	DETECTION_MODIFIER: 0.1,
+	LUCK_MODIFIER: 0.1,
 
 	// Maps itemType name to config
 	SHOP_CONFIGS: {

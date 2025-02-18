@@ -53,3 +53,25 @@ export function shortenNumber(num: number): string {
 
 	return `${string.format("%0.1f", num)}${units[unitIndex]}`;
 }
+
+export function formatTime(timeLeft: number, format: string = "%02d:%02d:%02d"): string {
+	const hours = math.floor(timeLeft / 3600);
+	const minutes = math.floor((timeLeft % 3600) / 60);
+	const seconds = timeLeft % 60;
+
+	return string.format(format, hours, minutes, seconds);
+}
+
+export function formatShortTime(timeLeft: number): string {
+	const hours = math.floor(timeLeft / 3600);
+	const minutes = math.floor((timeLeft % 3600) / 60);
+	const seconds = math.floor(timeLeft % 60);
+
+	if (hours > 0) {
+		return `${hours}h ${minutes}m`;
+	} else if (minutes > 0) {
+		return `${minutes}m ${seconds}s`;
+	} else {
+		return `${seconds}s`;
+	}
+}

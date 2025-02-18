@@ -1,6 +1,9 @@
 import React, { useEffect } from "@rbxts/react";
 import { Events, Functions } from "client/network";
-import { dailyRewardImages, dailyRewards, REWARD_COOLDOWN, RewardType } from "shared/config/dailyRewardConfig";
+import { dailyRewards, DAILY_REWARD_COOLDOWN } from "shared/config/dailyRewardConfig";
+import { REWARD_IMAGES } from "shared/constants";
+import { RewardType } from "shared/networkTypes";
+import { formatShortTime } from "shared/util/nameUtil";
 
 interface RewardProps {
 	day: number;
@@ -46,7 +49,7 @@ const DailyReward = (props: RewardProps) => {
 					BackgroundTransparency={1}
 					BorderColor3={Color3.fromRGB(0, 0, 0)}
 					BorderSizePixel={0}
-					Image={dailyRewardImages[cfg.rewardType as RewardType]}
+					Image={REWARD_IMAGES[cfg.rewardType as RewardType]}
 					LayoutOrder={1}
 					key={"Reward Icon"}
 					Position={UDim2.fromScale(0, 0.25)}
@@ -103,7 +106,7 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 			if (!streak) return;
 			setStreak(streak);
 		});
- 
+
 		Events.updateDailyStreak.connect((streak, lastClaimTime) => {
 			setStreak(streak);
 			setLastClaimed(lastClaimTime);
@@ -116,7 +119,7 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 		const thread = task.spawn(() => {
 			while (true) {
 				const timePassed = tick() - lastClaimed;
-				const timeLeft = math.clamp(REWARD_COOLDOWN - timePassed, 0, REWARD_COOLDOWN);
+				const timeLeft = math.clamp(DAILY_REWARD_COOLDOWN - timePassed, 0, DAILY_REWARD_COOLDOWN);
 				setTimeLeft(timeLeft);
 				task.wait(1);
 			}
@@ -197,12 +200,7 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 					key={"Timer"}
 					Position={UDim2.fromScale(0.795, 0)}
 					Size={UDim2.fromScale(0.195, 1)}
-					Text={string.format(
-						"%02d:%02d:%02d",
-						math.floor(timeLeft / 3600),
-						math.floor((timeLeft % 3600) / 60),
-						timeLeft % 60,
-					)}
+					Text={formatShortTime(timeLeft)}
 					TextColor3={Color3.fromRGB(255, 255, 255)}
 					TextScaled={true}
 					TextWrapped={true}

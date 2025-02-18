@@ -187,6 +187,24 @@ export const targetConfig: TargetModule = {
 		itemImage: "rbxassetid://107882679708293",
 		description: "A viking sword.",
 	},
+	"Frozen Teddy": {
+		reqStrength: 5,
+		rarity: 5,
+		rarityType: "Common",
+		baseWeight: new NumberRange(5, 20),
+		basePrice: 10,
+		itemImage: "rbxassetid://107882679708293",
+		description: "I wonder who this belonged to.",
+	},
+	"Frozen Ring": {
+		reqStrength: 5,
+		rarity: 5,
+		rarityType: "Common",
+		baseWeight: new NumberRange(5, 20),
+		basePrice: 10,
+		itemImage: "rbxassetid://107882679708293",
+		description: "I wonder who this belonged to.",
+	},
 };
 
 // Where we store trash items, those that are obtained when the player has 0 luckMult

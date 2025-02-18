@@ -224,7 +224,6 @@ export class TargetService implements OnStart, OnTick {
 				);
 				if (!position) {
 					// Can't dig here probably.
-					warn("Can't dig here.");
 					return;
 				}
 
@@ -245,12 +244,12 @@ export class TargetService implements OnStart, OnTick {
 			const targetDistance = player.Character?.PrimaryPart?.Position.sub(target.position).Magnitude;
 			if (targetDistance === undefined) {
 				// This can happen when their character is destroyed, forex, they fell into void or reset.
-				Events.endDiggingServer.fire(player, target.itemId);
+				this.endDigging(player);
 				return;
 			}
 			// Ensure exploiters can't dig from far away
 			if (targetDistance > gameConstants.DIG_RANGE * 2) {
-				Events.endDiggingServer.fire(player, target.itemId); // End, incase this is a person trying to dig from far away.
+				this.endDigging(player);
 				// If we didn't end then their dig wouldn't end until the timer ran out and they would be stuck.
 				return;
 			}
@@ -260,8 +259,18 @@ export class TargetService implements OnStart, OnTick {
 
 		Signals.detectorInitialized.Connect((player, detector) => {
 			detector.Unequipped.Connect(() => {
-				if (this.getPlayerTarget(player) && !this.playerDiggingTargets.get(player)) {
-					this.endDigging(player);
+				// Sometimes the player will unequip the detector to equip their shovel before they reach the location.
+				// We should NOT end the dig if this happens, and instead make them walk closer to the target.
+				const target = this.getPlayerTarget(player);
+				const character = player.Character;
+				if (!character || !target) return;
+				const distance = character.GetPivot().Position.sub(target.position).Magnitude;
+
+				// If they are too far away, we should end the dig.
+				const TOO_FAR_AWAY = gameConstants.DIG_RANGE * 4;
+				if (distance > TOO_FAR_AWAY && !this.playerDiggingTargets.get(player)) {
+					this.endDigging(player, false);
+					return;
 				}
 			});
 		});
@@ -361,7 +370,7 @@ export class TargetService implements OnStart, OnTick {
 		}
 		this.playerDiggingTargets.delete(player);
 
-		Events.endDiggingServer.fire(player, target?.itemId);
+		Events.endDiggingServer.fire(player, target !== undefined, target?.itemId);
 		const character = player.Character;
 		if (!character || !character.Parent) return;
 		const humanoid = character.WaitForChild("Humanoid") as Humanoid;
@@ -453,7 +462,7 @@ export class TargetService implements OnStart, OnTick {
 
 		const ADDED_LUCK_PERCENT = 0.02;
 		const DETECTOR_LUCK_MODIFIER = 0.05;
-		const LUCK_SKILL_LEVEL_ADDITION = 0.01;
+		const LUCK_SKILL_LEVEL_ADDITION = gameConstants.LUCK_MODIFIER;
 
 		let totalLuck =
 			(playerDetectorConfig.luck * DETECTOR_LUCK_MODIFIER + profile.Data.luck * LUCK_SKILL_LEVEL_ADDITION) *
@@ -483,7 +492,7 @@ export class TargetService implements OnStart, OnTick {
 			name,
 			position: new Vector3(),
 			weight,
-			digProgress: maxProgress / 2, // Start at half progress
+			digProgress: maxProgress / 3, // Start at 1/3 progress
 			maxProgress,
 			activelyDigging: false,
 			itemId: HttpService.GenerateGUID(),

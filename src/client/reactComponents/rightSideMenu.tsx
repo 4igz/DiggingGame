@@ -3,12 +3,10 @@ import { useMotion } from "client/hooks/useMotion";
 import { Events, Functions } from "client/network";
 import { springs } from "client/utils/springs";
 import EternityNum, { IsInf, IsNaN } from "shared/util/eternityNum";
-import { separateWithCommas } from "shared/util/nameUtil";
 import { AnimatedButton } from "./mainUi";
 import { UiController } from "client/controllers/uiController";
 import { RunService, UserInputService } from "@rbxts/services";
 import { gameConstants } from "shared/constants";
-import { set } from "@rbxts/sift/out/Array";
 
 interface MoneyVectorProps {
 	offset: UDim2;
@@ -257,17 +255,15 @@ export const RightSideMenu = (props: MenuProps) => {
 					Position={UDim2.fromScale(0.031, 0.176)}
 					Size={UDim2.fromScale(0.969, 0.211)}
 				>
-					<frame
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						LayoutOrder={1}
-						key={"Gift  Menu"}
-						Position={UDim2.fromScale(0.341, -0.368)}
-						Size={UDim2.fromScale(0.329, 0.981)}
+					<AnimatedButton
+						layoutOrder={1}
+						position={UDim2.fromScale(0.341, -0.368)}
+						size={UDim2.fromScale(0.329, 0.981)}
+						onClick={() => {
+							props.uiController.toggleUi(gameConstants.PLAYTIME_REWARD_UI);
+						}}
 					>
-						<imagebutton
+						<imagelabel
 							AnchorPoint={new Vector2(0.5, 0.5)}
 							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 							BackgroundTransparency={1}
@@ -322,10 +318,10 @@ export const RightSideMenu = (props: MenuProps) => {
 							</textlabel>
 
 							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-						</imagebutton>
+						</imagelabel>
 
 						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-					</frame>
+					</AnimatedButton>
 
 					<frame
 						BackgroundColor3={Color3.fromRGB(255, 255, 255)}

@@ -22,6 +22,8 @@ import { ZoneController } from "./zoneController";
 import CameraShaker from "@rbxts/camera-shaker";
 import { subscribe } from "@rbxts/charm";
 import { inventorySizeAtom, treasureCountAtom } from "client/atoms/inventoryAtoms";
+import { findFurthestPointWithinRadius } from "shared/util/detectorUtil";
+import { observeAttribute } from "shared/util/attributeUtil";
 
 const camera = Workspace.CurrentCamera;
 
@@ -49,14 +51,19 @@ export class ShovelController implements OnStart {
 	private previousDigLocation = new Vector3();
 	private canStartDigging = false;
 	private isInventoryFull = false;
+	private noPositionFound = false;
+	private targetActive = false;
 
 	constructor(private readonly zoneController: ZoneController) {
 		let autoSendDigCD = interval(gameConstants.AUTO_DIG_CLICK_INTERVAL);
+		let animCheckCD = interval(0.1);
 		const AnimationFolder = ReplicatedStorage.WaitForChild("Animations");
 
 		const shovelDiggingAnimation = AnimationFolder.WaitForChild("DiggingAnimationWithEvent");
-		const shovelFullbodyAnimation = AnimationFolder.WaitForChild("ShovelFullbodyIdle");
-		const shovelUpperbodyAnimation = AnimationFolder.WaitForChild("ShovelUpperbodyIdle");
+		const NODIG_shovelFullbodyAnimation = AnimationFolder.WaitForChild("ShovelFullbodyIdleNODIG");
+		const NODIG_shovelUpperbodyAnimation = AnimationFolder.WaitForChild("ShovelUpperbodyIdleNODIG");
+		const CANDIG_shovelFullbodyAnimation = AnimationFolder.WaitForChild("ShovelFullbodyIdleCANDIG");
+		const CANDIG_shovelUpperbodyAnimation = AnimationFolder.WaitForChild("ShovelUpperbodyIdleCANDIG");
 		const DIG_ANIMATION_MARKER = "ShovelHitsDirt";
 
 		const setupCharacter = (character: Model) => {
@@ -83,11 +90,19 @@ export class ShovelController implements OnStart {
 					digTrack.Priority = Enum.AnimationPriority.Action;
 					digTrack.Looped = true;
 
-					const fullIdle = animator.LoadAnimation(shovelFullbodyAnimation as Animation);
+					const fullIdle = animator.LoadAnimation(CANDIG_shovelFullbodyAnimation as Animation);
 					fullIdle.Priority = Enum.AnimationPriority.Idle;
 					fullIdle.Looped = true;
 
-					const upperIdle = animator.LoadAnimation(shovelUpperbodyAnimation as Animation);
+					const upperIdle = animator.LoadAnimation(CANDIG_shovelUpperbodyAnimation as Animation);
+					upperIdle.Priority = Enum.AnimationPriority.Movement;
+					upperIdle.Looped = true;
+
+					const fullIdleNoDigging = animator.LoadAnimation(NODIG_shovelFullbodyAnimation as Animation);
+					fullIdle.Priority = Enum.AnimationPriority.Idle;
+					fullIdle.Looped = true;
+
+					const upperIdleNoDigging = animator.LoadAnimation(NODIG_shovelUpperbodyAnimation as Animation);
 					upperIdle.Priority = Enum.AnimationPriority.Movement;
 					upperIdle.Looped = true;
 
@@ -113,6 +128,8 @@ export class ShovelController implements OnStart {
 						// Stop all idle animations when digging
 						fullIdle.Stop();
 						upperIdle.Stop();
+						fullIdleNoDigging.Stop();
+						upperIdleNoDigging.Stop();
 
 						digTrack.AdjustSpeed(BASE_SPEED);
 						if (!digTrack.IsPlaying) {
@@ -141,16 +158,52 @@ export class ShovelController implements OnStart {
 							return;
 						}
 
+						if (animCheckCD()) {
+							const mapFolder = Workspace.FindFirstChild(zoneController.getCurrentMapName());
+							// Get the spawn bases from the map
+							const spawnBaseFolder = mapFolder?.WaitForChild("SpawnBases");
+
+							if (!spawnBaseFolder) {
+								warn("Spawn base folder not found.");
+								return;
+							}
+
+							const bases = spawnBaseFolder.GetChildren().filter((inst) => inst.IsA("BasePart"));
+
+							if (bases.size() > 0) {
+								const position = findFurthestPointWithinRadius(
+									character.GetPivot().Position,
+									bases,
+									gameConstants.DIG_RANGE,
+								);
+								if (!position) {
+									// Can't dig here probably.
+									this.noPositionFound = true;
+								} else {
+									this.noPositionFound = false;
+								}
+							}
+						}
+
 						const isMoving = humanoid.MoveDirection.Magnitude > 0;
 
 						if (isMoving) {
 							// Use the upper-body idle
-							if (!upperIdle.IsPlaying) upperIdle.Play();
 							if (fullIdle.IsPlaying) fullIdle.Stop();
+							if (fullIdleNoDigging.IsPlaying) fullIdleNoDigging.Stop();
+							if (this.noPositionFound) {
+								if (!upperIdleNoDigging.IsPlaying) upperIdleNoDigging.Play();
+							} else {
+								if (!upperIdle.IsPlaying) upperIdle.Play();
+							}
 						} else {
-							// Use the full-body idle
-							if (!fullIdle.IsPlaying) fullIdle.Play();
+							if (upperIdleNoDigging.IsPlaying) upperIdleNoDigging.Stop();
 							if (upperIdle.IsPlaying) upperIdle.Stop();
+							if (this.noPositionFound) {
+								if (!fullIdleNoDigging.IsPlaying) fullIdleNoDigging.Play();
+							} else {
+								if (!fullIdle.IsPlaying) fullIdle.Play();
+							}
 						}
 					};
 
@@ -214,11 +267,7 @@ export class ShovelController implements OnStart {
 						const currentTime = tick();
 						if (!this.diggingActive) {
 							// "Dig Everywhere" logic here
-							const DIG_EVERYWHERE_MOVE_REQUIREMENT = 1;
-							if (
-								this.previousDigLocation.sub(character.GetPivot().Position).Magnitude >
-								DIG_EVERYWHERE_MOVE_REQUIREMENT
-							) {
+							if (!this.targetActive) {
 								if (this.isInventoryFull) {
 									Signals.inventoryFull.Fire();
 									return;
@@ -244,7 +293,7 @@ export class ShovelController implements OnStart {
 					const thread = task.spawn(() => {
 						ContextActionService.BindAction(
 							actionName,
-							(_, inputState, inputObject) => {
+							(_actionName, inputState, _inputObject) => {
 								if (inputState === Enum.UserInputState.Begin) {
 									Signals.gotDigInput.Fire();
 									shovelAction();
@@ -282,6 +331,13 @@ export class ShovelController implements OnStart {
 						// Also stop idle animations if you want them ended when unequipping the tool
 						upperIdle.Stop();
 						fullIdle.Stop();
+						upperIdle.Destroy();
+						fullIdle.Destroy();
+
+						upperIdleNoDigging.Stop();
+						fullIdleNoDigging.Stop();
+						upperIdleNoDigging.Destroy();
+						fullIdleNoDigging.Destroy();
 					});
 				}
 			});
@@ -291,6 +347,14 @@ export class ShovelController implements OnStart {
 		if (Players.LocalPlayer.Character) {
 			setupCharacter(Players.LocalPlayer.Character);
 		}
+
+		Events.targetSpawnSuccess.connect(() => {
+			this.targetActive = true;
+		});
+
+		Events.targetDespawned.connect(() => {
+			this.targetActive = false;
+		});
 	}
 
 	onStart() {
@@ -396,7 +460,12 @@ export class ShovelController implements OnStart {
 				currentMapFolder?.FindFirstChild("PathfindingModifiers") as Folder,
 			];
 			// const raycast = Workspace.Raycast(target.position, new Vector3(0, -5, 0), params);
-			const [hitPart, hitPosition] = getTopmostPartAtPosition(target.position, params, 5, 10);
+			const [hitPart, hitPosition] = getTopmostPartAtPosition(
+				target.position.add(new Vector3(0, 3, 0)),
+				params,
+				5,
+				15,
+			);
 
 			const craterSize = 5;
 			const craterParts = 12;
@@ -447,15 +516,6 @@ export class ShovelController implements OnStart {
 								progress / maxProgress,
 							),
 						);
-
-						if (progress >= maxProgress * 0.99) {
-							// Play some vfx and sounds when completing digging.
-							setParticleDescendantsEnabled(model);
-							model.SetAttribute("DiggingComplete", true);
-						} else {
-							setParticleDescendantsEnabled(model, false);
-							model.SetAttribute("DiggingComplete", false);
-						}
 					}
 				}),
 				"Disconnect",
@@ -560,7 +620,8 @@ export class ShovelController implements OnStart {
 			digTrove.add(digCon, "Disconnect");
 		});
 
-		Events.endDiggingServer.connect((itemId?: string) => {
+		Events.endDiggingServer.connect((diggingComplete, itemId?: string) => {
+			this.targetActive = false;
 			this.diggingActive = false;
 			this.canStartDigging = false;
 			this.onDiggingComplete.Fire();
@@ -569,11 +630,13 @@ export class ShovelController implements OnStart {
 			const existingModel = digModels.get(itemId);
 			const digTrove = digTroves.get(itemId);
 			if (existingModel && digTrove) {
+				setParticleDescendantsEnabled(existingModel, diggingComplete);
+				existingModel.SetAttribute("DiggingComplete", diggingComplete);
 				digModels.delete(itemId);
 				// Make the dig model jump
 				const primaryPart = existingModel.PrimaryPart;
 				if (primaryPart) {
-					if (existingModel.GetAttribute("DiggingComplete")) {
+					if (diggingComplete) {
 						SoundService.PlayLocalSound(digOutSound);
 
 						// A larger camera bump
@@ -593,34 +656,51 @@ export class ShovelController implements OnStart {
 						const character = Players.LocalPlayer.Character;
 						if (!character || !character.PrimaryPart || !existingModel.PrimaryPart) return;
 
-						const primaryPart = existingModel.PrimaryPart;
-						const mass = primaryPart.AssemblyMass;
-						const THROW_FORCE = 20;
-						const UP_FORCE = 5;
+						const primaryPart =
+							existingModel.PrimaryPart ?? existingModel.FindFirstChildWhichIsA("BasePart");
+						const THROW_FORCE = observeAttribute("DigThrowForce", 20) as number;
+						const UP_FORCE = observeAttribute("DigUpForce", 5) as number;
 
 						// Compute the direction from the object to the player
-						const directionToPlayer = character.PrimaryPart.Position.sub(
-							existingModel.PrimaryPart.Position,
-						).Unit;
+						const directionToPlayer = character
+							.GetPivot()
+							.Position.sub(existingModel.PrimaryPart.Position).Unit;
 
 						// Reverse the direction to throw behind the player
 						const directionToThrow = directionToPlayer.mul(new Vector3(1, UP_FORCE, 1));
 
 						// Combine the backward direction and the deviation, scaling the force
-						const randomForce = directionToThrow.mul(THROW_FORCE);
+						const randomForce = directionToThrow.mul(THROW_FORCE).add(Vector3.one);
 
-						// Adjust the object's position to simulate a throw
+						// Get the floor position of the object
+						const params = new RaycastParams();
+						params.FilterType = Enum.RaycastFilterType.Exclude;
+						params.FilterDescendantsInstances = [
+							character,
+							existingModel,
+							...CollectionService.GetTagged("DigCrater"),
+						];
+						const [, position] = getTopmostPartAtPosition(
+							existingModel.GetAttribute("TrackedOrigin") as Vector3,
+							params,
+							5,
+							10,
+						);
+						const pv = existingModel.GetPivot();
+						const rotation = pv.Rotation;
+
+						// Adjust the object's position to ensure it's above ground
 						existingModel.PivotTo(
-							existingModel.GetPivot().add(new Vector3(0, existingModel.GetExtentsSize().Y * 2, 0)),
+							new CFrame(existingModel.GetAttribute("TrackedOrigin") as Vector3).add(
+								new Vector3(0, existingModel.GetExtentsSize().Y, 0),
+							),
 						);
 						for (const descendant of existingModel.GetDescendants()) {
 							if (descendant.IsA("BasePart")) {
 								descendant.Anchored = false;
 							}
 						}
-						task.defer(() => {
-							primaryPart.ApplyImpulse(randomForce.mul(mass));
-						});
+						primaryPart.ApplyImpulse(randomForce.mul(primaryPart.AssemblyMass));
 					} else {
 						existingModel.Destroy();
 					}

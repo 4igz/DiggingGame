@@ -153,6 +153,7 @@ export class ZoneController implements OnInit, OnRender {
 	onRender() {
 		const player = Players.LocalPlayer;
 		const character = player.Character;
+		const sittingInBoat = player.GetAttribute("SittingInBoatDriverSeat") as boolean;
 		if (character) {
 			const pos = character.GetPivot().Position;
 			if (!this.prevPlayerPos.FuzzyEq(pos, 1)) {
@@ -161,7 +162,7 @@ export class ZoneController implements OnInit, OnRender {
 					const boardParent = billboard.Parent;
 					if (boardParent !== undefined && boardParent.IsA("PVInstance")) {
 						const distance = pos.sub(boardParent.GetPivot().Position).Magnitude;
-						if (distance < this.ZONE_BILLBOARD_DIST_THRESHOLD) {
+						if (distance < this.ZONE_BILLBOARD_DIST_THRESHOLD || !sittingInBoat) {
 							billboard.Enabled = false;
 							continue;
 						} else {

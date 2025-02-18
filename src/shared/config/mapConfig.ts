@@ -9,7 +9,7 @@ export const difficulties = {
 
 interface MapConfig {
 	targetList: Array<keyof typeof targetConfig>;
-	requiredLuck: number;
+	requiredStrength: number;
 	difficulty: keyof typeof difficulties;
 }
 
@@ -24,7 +24,7 @@ export const mapConfig: Record<string, MapConfig> = {
 			"Ancient Artifact",
 			...Object.keys(trashConfig),
 		],
-		requiredLuck: 0,
+		requiredStrength: 0,
 		difficulty: "Easy",
 	},
 
@@ -39,7 +39,7 @@ export const mapConfig: Record<string, MapConfig> = {
 			"Coal artifact",
 			...Object.keys(trashConfig),
 		],
-		requiredLuck: 100,
+		requiredStrength: 100,
 		difficulty: "Medium",
 	},
 
@@ -52,7 +52,7 @@ export const mapConfig: Record<string, MapConfig> = {
 			"Viking sword",
 			...Object.keys(trashConfig),
 		],
-		requiredLuck: 500,
+		requiredStrength: 500,
 		difficulty: "Hard",
 	},
 };

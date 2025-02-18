@@ -26,7 +26,7 @@ export const profileTemplate = {
 	experience: 0,
 
 	// Skills
-	skillPoints: 100,
+	skillPoints: 0,
 	strength: 1,
 	detection: 1,
 	luck: 1,

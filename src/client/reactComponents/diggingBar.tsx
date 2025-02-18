@@ -167,6 +167,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 			});
 
 			const endDiggingConnection = Events.endDiggingServer.connect(() => {
+				fovMotion.spring(defaultFov, springs.default);
 				redScreen.TintColor = whiteTint;
 
 				clickConnection?.Disconnect();
@@ -175,6 +176,8 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 			});
 
 			const endDiggingSignalConnection = Signals.endDigging.Connect(() => {
+				fovMotion.spring(defaultFov, springs.default);
+
 				redScreen.TintColor = whiteTint;
 
 				clickConnection?.Disconnect();
@@ -191,13 +194,14 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 			};
 		} else {
 			setBarProgress.immediate(1);
-			fovMotion.spring(defaultFov, springs.bubbly);
+			fovMotion.spring(defaultFov, springs.slow);
 		}
 	}, [visible]);
 
 	useEffect(() => {
+		if (!visible) return;
 		fovMotion.spring(lerp(fovGoal, defaultFov, barProgress.getValue() / 1), springs.default);
-	}, [barProgress.getValue()]);
+	}, [barProgress.getValue(), visible]);
 
 	useEffect(() => {
 		fovMotion.onStep((value) => {

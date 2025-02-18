@@ -26,6 +26,7 @@ import canDigPopup from "client/reactComponents/canDigPopup";
 import { DailyRewards } from "client/reactComponents/dailyReward";
 import { VolumeMuteButton } from "client/reactComponents/volumeMuteButton";
 import { GamepassController } from "./gamepassController";
+import { PlaytimeRewardsUi } from "client/reactComponents/playTimeRewards";
 
 @Controller({})
 export class UiController implements OnStart {
@@ -62,6 +63,7 @@ export class UiController implements OnStart {
 			gameConstants.MAIN_UI,
 			React.createElement(MainUi),
 			{ uiController: this, gamepassController: this.gamepassController, visible: false },
+			true,
 			true,
 		);
 		this.registerUi(gameConstants.TOOLBAR_UI, React.createElement(Toolbar), {});
@@ -113,6 +115,10 @@ export class UiController implements OnStart {
 		this.registerUi("CanDigIndicator", React.createElement(canDigPopup), {});
 		this.registerUi("VolumeControl", React.createElement(VolumeMuteButton), {});
 		this.registerUi(gameConstants.DAILY_REWARD_UI, React.createElement(DailyRewards), { visible: false });
+		this.registerUi(gameConstants.PLAYTIME_REWARD_UI, React.createElement(PlaytimeRewardsUi), {
+			visible: false,
+			uiController: this,
+		});
 	}
 
 	onStart() {
