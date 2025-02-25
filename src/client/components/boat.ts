@@ -1,3 +1,5 @@
+//!optimize 2
+//!native
 import { OnRender, OnStart } from "@flamework/core";
 import { Component, BaseComponent } from "@flamework/components";
 import { ContextActionService, Players, UserInputService } from "@rbxts/services";
@@ -118,6 +120,9 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 				if (instance.IsA("Tool")) {
 					instance.Parent = Players.LocalPlayer.FindFirstChildOfClass("Backpack");
 				}
+				if (instance.IsA("Sound")) {
+					instance.Volume = 0;
+				}
 			}
 
 			Players.LocalPlayer.SetAttribute("SittingInBoatDriverSeat", true);
@@ -127,6 +132,7 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 			if (userInputState !== Enum.UserInputState.Begin || !this.isSittingInDriverSeat)
 				return Enum.ContextActionResult.Pass;
 			this.isSittingInDriverSeat = false;
+
 			const character = Players.LocalPlayer.Character;
 			const humanoid = character?.FindFirstChild("Humanoid") as Humanoid;
 			if (!character || !character.Parent || !humanoid) return;
@@ -143,6 +149,9 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 			for (const instance of character.GetDescendants()) {
 				if (instance.IsA("BasePart")) {
 					instance.Massless = false;
+				}
+				if (instance.IsA("Sound")) {
+					instance.Volume = 0.65;
 				}
 			}
 
@@ -180,15 +189,18 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 			});
 		};
 
-		const humanoid = Players.LocalPlayer.Character?.FindFirstChild("Humanoid") as Humanoid;
-		if (humanoid) {
-			connectHumanoidDied(humanoid);
-		}
-
 		Players.LocalPlayer.CharacterAdded.Connect((character) => {
 			const humanoid = character.WaitForChild("Humanoid") as Humanoid;
 			connectHumanoidDied(humanoid);
 		});
+
+		const character = Players.LocalPlayer.Character;
+		if (character) {
+			const humanoid = character.WaitForChild("Humanoid") as Humanoid;
+			if (humanoid) {
+				connectHumanoidDied(humanoid);
+			}
+		}
 	}
 
 	onRender(dt: number): void {

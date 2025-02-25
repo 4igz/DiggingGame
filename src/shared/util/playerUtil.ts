@@ -1,3 +1,5 @@
+//!optimize 2
+//!native
 const humanoidCache = new Map<Player, Humanoid>();
 
 export function findPlayerHumanoid(player: Player): Humanoid | undefined {

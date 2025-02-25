@@ -95,7 +95,21 @@ export class DetectorService implements OnStart, OnTick {
 			strength *= 2;
 		}
 		Events.beginDigging(player, target, { strength, shovel: profile.Data.equippedShovel });
-		target.activelyDigging = true;
+
+		Events.replicateDig.except(player, {
+			itemId: target.itemId,
+			name: target.name,
+			position: target.position,
+			digProgress: target.digProgress,
+			owner: player,
+			mapName: target.mapName,
+			maxProgress: target.maxProgress,
+		});
+
+		// Delay the digging process by the player's ping
+		task.delay(player.GetNetworkPing(), () => {
+			target.activelyDigging = true;
+		});
 
 		// Now equip the shovel for the player also.
 		const backpack = player.WaitForChild("Backpack");

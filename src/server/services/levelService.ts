@@ -2,13 +2,59 @@ import { Service, OnStart } from "@flamework/core";
 import { Events, Functions } from "server/network";
 import { ProfileService } from "./profileService";
 import { SkillName } from "shared/networkTypes";
+import { gameConstants } from "shared/constants";
 
 @Service({})
 export class LevelService implements OnStart {
 	constructor(private readonly playerDataService: ProfileService) {}
 
+	onStart() {
+		Functions.getLevelData.setCallback((player: Player) => {
+			const levelData = this.getLevelData(player);
+			return levelData;
+		});
+
+		Events.upgradeSkill.connect((player, skillName: SkillName) => {
+			const playerProfile = this.playerDataService.getProfile(player);
+			if (!playerProfile) return;
+
+			const data = playerProfile.Data;
+			if (data.skillPoints <= 0) return;
+
+			data.skillPoints -= 1;
+			data[skillName] += 1;
+
+			this.playerDataService.setProfile(player, playerProfile);
+
+			Events.updateSkills.fire(player, {
+				strength: data.strength,
+				luck: data.luck,
+				detection: data.detection,
+			});
+			Events.updateLevelUi.fire(
+				player,
+				data.level,
+				data.experience,
+				this.xpForLevel(data.level + 1),
+				data.skillPoints,
+			);
+		});
+
+		Functions.getSkills.setCallback((player: Player) => {
+			const playerProfile = this.playerDataService.getProfile(player);
+			if (!playerProfile) return { strength: 1, luck: 1, detection: 1 };
+
+			const data = playerProfile.Data;
+			return {
+				strength: data.strength,
+				luck: data.luck,
+				detection: data.detection,
+			};
+		});
+	}
+
 	private xpForLevel(level: number): number {
-		return math.floor(100 * math.log(level + 1));
+		return math.floor(gameConstants.BASE_EXP * math.log(level + 1));
 	}
 
 	public addExperience(player: Player, amt: number): void {
@@ -55,50 +101,5 @@ export class LevelService implements OnStart {
 			xpMax: xpForNextLevel,
 			skillPoints: playerProfile.Data.skillPoints,
 		};
-	}
-
-	onStart() {
-		Functions.getLevelData.setCallback((player: Player) => {
-			const levelData = this.getLevelData(player);
-			return levelData;
-		});
-
-		Events.upgradeSkill.connect((player, skillName: SkillName) => {
-			const playerProfile = this.playerDataService.getProfile(player);
-			if (!playerProfile) return;
-
-			const data = playerProfile.Data;
-			if (data.skillPoints <= 0) return;
-
-			data.skillPoints -= 1;
-			data[skillName] += 1;
-
-			this.playerDataService.setProfile(player, playerProfile);
-
-			Events.updateSkills.fire(player, {
-				strength: data.strength,
-				luck: data.luck,
-				detection: data.detection,
-			});
-			Events.updateLevelUi.fire(
-				player,
-				data.level,
-				data.experience,
-				this.xpForLevel(data.level + 1),
-				data.skillPoints,
-			);
-		});
-
-		Functions.getSkills.setCallback((player: Player) => {
-			const playerProfile = this.playerDataService.getProfile(player);
-			if (!playerProfile) return { strength: 1, luck: 1, detection: 1 };
-
-			const data = playerProfile.Data;
-			return {
-				strength: data.strength,
-				luck: data.luck,
-				detection: data.detection,
-			};
-		});
 	}
 }

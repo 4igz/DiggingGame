@@ -1,3 +1,5 @@
+//!optimize 2
+//!native
 // minV and maxV helper functions
 function minV(a: Vector3, b: Vector3): Vector3 {
 	return new Vector3(math.min(a.X, b.X), math.min(a.Y, b.Y), math.min(a.Z, b.Z));
@@ -67,4 +69,3 @@ export function getCollidableExtentsSize(character?: Model): Vector3 | undefined
 
 	return r;
 }
-

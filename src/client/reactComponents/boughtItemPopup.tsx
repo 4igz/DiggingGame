@@ -1,9 +1,12 @@
+//!optimize 2
+//!native
 import React, { useEffect } from "@rbxts/react";
 import { RunService } from "@rbxts/services";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
 import { gameConstants } from "shared/constants";
 import { Rarity } from "shared/networkTypes";
+import { interval } from "shared/util/interval";
 import { shortenNumber, spaceWords } from "shared/util/nameUtil";
 
 const RC = gameConstants.RARITY_COLORS;
@@ -15,10 +18,13 @@ export interface BoughtItemPopupProps {
 	onComplete: () => void;
 }
 
+const ROTATE_INTERVAL = interval(1);
+
 export const BoughtItemPopup = (props: BoughtItemPopupProps) => {
 	const [sizeMotion, setSizeMotion] = useMotion(UDim2.fromScale(0, 0));
 
 	const [spinValue, setSpinValue] = React.useState(0);
+	const [imageRotation, setImageRotation] = useMotion(0);
 
 	const POPUP_TIME = 5;
 
@@ -31,6 +37,21 @@ export const BoughtItemPopup = (props: BoughtItemPopupProps) => {
 			});
 			setSizeMotion.spring(UDim2.fromScale(0, 0), springs.responsive);
 		});
+
+		let currentRotation = imageRotation.getValue();
+		const MAX_ROTATION = 45;
+		const rotationThread = task.spawn(() => {
+			while (true) {
+				// Make image bob back and forth
+				task.wait(1);
+				currentRotation = currentRotation < MAX_ROTATION ? MAX_ROTATION : 0;
+				setImageRotation.spring(currentRotation, springs.bubbly);
+			}
+		});
+
+		return () => {
+			task.cancel(rotationThread);
+		};
 	}, []);
 
 	// Second effect handles the event data
@@ -96,7 +117,7 @@ export const BoughtItemPopup = (props: BoughtItemPopupProps) => {
 					Size={UDim2.fromScale(1, 1)}
 					ZIndex={5}
 					Image={props.itemImage}
-					Rotation={spinValue * -45}
+					Rotation={imageRotation}
 				>
 					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1} />
 				</imagelabel>

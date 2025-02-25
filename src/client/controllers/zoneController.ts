@@ -1,3 +1,5 @@
+//!optimize 2
+//!native
 import { Controller, OnInit, OnRender, OnStart } from "@flamework/core";
 import Signal from "@rbxts/goodsignal";
 import { CollectionService, Lighting, Players, SoundService, TweenService, Workspace } from "@rbxts/services";
@@ -6,104 +8,104 @@ import { Events } from "client/network";
 import { mapConfig } from "shared/config/mapConfig";
 import { gameConstants } from "shared/constants";
 
+const COLOR_CORRECTION_PROPERTIES_TABLE = {
+	Grasslands: {
+		Brightness: 0,
+		Contrast: 0,
+		Saturation: 0.1,
+		TintColor: Color3.fromRGB(255, 255, 255),
+	},
+	Volcano: {
+		Brightness: -0.05,
+		Contrast: 0.05,
+		Saturation: 0,
+		TintColor: Color3.fromRGB(235, 200, 200),
+	},
+	Frozen: {
+		Brightness: 0,
+		Contrast: 0,
+		Saturation: 0,
+		TintColor: Color3.fromRGB(202, 241, 255),
+	},
+	HighSeas: {
+		Brightness: 0,
+		Contrast: 0,
+		Saturation: 0,
+		TintColor: Color3.fromRGB(255, 255, 255),
+	},
+} as Record<keyof typeof mapConfig, Partial<InstanceProperties<ColorCorrectionEffect>>>;
+
+const WATER_COLOR_PROPERTIES_TABLE = {
+	Grasslands: {
+		WaterReflectance: 1,
+		WaterTransparency: 0.5,
+		WaterColor: Color3.fromRGB(60, 127, 211),
+	},
+	Volcano: {
+		WaterReflectance: 0.7,
+		WaterTransparency: 0.5,
+		WaterColor: Color3.fromRGB(15, 30, 45),
+	},
+	Frozen: {
+		WaterReflectance: 0.8,
+		WaterTransparency: 0.4,
+		WaterColor: Color3.fromRGB(130, 165, 200),
+	},
+	HighSeas: {
+		WaterReflectance: 1,
+		WaterTransparency: 0.5,
+		WaterColor: Color3.fromRGB(60, 127, 211),
+	},
+} as Record<keyof typeof mapConfig, Partial<InstanceProperties<Terrain>>>;
+
+const CLOUD_ZONE_PROPERTIES_TABLE = {
+	Grasslands: {
+		Cover: 0.5,
+		Density: 0.7,
+		Color: Color3.fromRGB(255, 255, 255),
+	},
+	Volcano: {
+		Cover: 0.8,
+		Density: 0.15,
+		Color: Color3.fromRGB(33, 33, 33),
+	},
+	Frozen: {
+		Cover: 0.9,
+		Density: 0.7,
+		Color: Color3.fromRGB(255, 255, 255),
+	},
+	HighSeas: {
+		Cover: 0.65,
+		Density: 0.3,
+		Color: Color3.fromRGB(220, 220, 220),
+	},
+} as Record<keyof typeof mapConfig, Partial<InstanceProperties<Clouds>>>;
+
+const AREA_CHANGE_TWEEN_INFO = new TweenInfo(2, Enum.EasingStyle.Quad);
+
+const clouds = Workspace.Terrain.WaitForChild("Clouds") as Clouds;
+const colorCorrection = Lighting.WaitForChild("ZonesCC") as ColorCorrectionEffect;
+const prevPlayerPos = new Vector3();
+
+const areaSounds = SoundService.WaitForChild("Areas") as SoundGroup;
+const isleZoneParts = CollectionService.GetTagged(gameConstants.ISLE_ZONE_TAG).filter((inst) => {
+	return inst.IsA("PVInstance");
+});
+const ZONE_BILLBOARD_DIST_THRESHOLD = 200;
+
+let currentMapName = "Grasslands";
+let isFirstZoneEnter = true;
+let currentPlayingAreaSound: Sound | undefined;
+
 @Controller({})
-export class ZoneController implements OnInit, OnRender {
-	private ZONE_BILLBOARD_DIST_THRESHOLD = 200;
-
-	private isleZoneParts = CollectionService.GetTagged(gameConstants.ISLE_ZONE_TAG).filter((inst) => {
-		return inst.IsA("PVInstance");
-	});
+export class ZoneController implements OnStart, OnRender {
 	public isleZoneMap = new Map<string, Zone>();
-
 	public zonesUpdated = new Signal<() => void>();
 
-	private isFirstZoneEnter = true;
+	constructor() {}
 
-	private areaSounds = SoundService.WaitForChild("Areas") as SoundGroup;
-	private currentPlayingAreaSound: Sound | undefined;
-
-	private CLOUD_ZONE_PROPERTIES_TABLE = {
-		Grasslands: {
-			Cover: 0.5,
-			Density: 0.7,
-			Color: Color3.fromRGB(255, 255, 255),
-		},
-		Volcano: {
-			Cover: 0.8,
-			Density: 0.15,
-			Color: Color3.fromRGB(33, 33, 33),
-		},
-		Frozen: {
-			Cover: 0.9,
-			Density: 0.7,
-			Color: Color3.fromRGB(255, 255, 255),
-		},
-		HighSeas: {
-			Cover: 0.65,
-			Density: 0.3,
-			Color: Color3.fromRGB(220, 220, 220),
-		},
-	} as Record<keyof typeof mapConfig, Partial<InstanceProperties<Clouds>>>;
-
-	private COLOR_CORRECTION_PROPERTIES_TABLE = {
-		Grasslands: {
-			Brightness: 0,
-			Contrast: 0,
-			Saturation: 0.1,
-			TintColor: Color3.fromRGB(255, 255, 255),
-		},
-		Volcano: {
-			Brightness: -0.05,
-			Contrast: 0.05,
-			Saturation: 0,
-			TintColor: Color3.fromRGB(235, 200, 200),
-		},
-		Frozen: {
-			Brightness: 0,
-			Contrast: 0,
-			Saturation: 0,
-			TintColor: Color3.fromRGB(202, 241, 255),
-		},
-		HighSeas: {
-			Brightness: 0,
-			Contrast: 0,
-			Saturation: 0,
-			TintColor: Color3.fromRGB(255, 255, 255),
-		},
-	} as Record<keyof typeof mapConfig, Partial<InstanceProperties<ColorCorrectionEffect>>>;
-
-	private WATER_COLOR_PROPERTIES_TABLE = {
-		Grasslands: {
-			WaterReflectance: 1,
-			WaterTransparency: 0.5,
-			WaterColor: Color3.fromRGB(60, 127, 211),
-		},
-		Volcano: {
-			WaterReflectance: 0.7,
-			WaterTransparency: 0.5,
-			WaterColor: Color3.fromRGB(15, 30, 45),
-		},
-		Frozen: {
-			WaterReflectance: 0.8,
-			WaterTransparency: 0.4,
-			WaterColor: Color3.fromRGB(130, 165, 200),
-		},
-		HighSeas: {
-			WaterReflectance: 1,
-			WaterTransparency: 0.5,
-			WaterColor: Color3.fromRGB(60, 127, 211),
-		},
-	} as Record<keyof typeof mapConfig, Partial<InstanceProperties<Terrain>>>;
-
-	private AREA_CHANGE_TWEEN_INFO = new TweenInfo(2, Enum.EasingStyle.Quad);
-
-	private clouds = Workspace.Terrain.WaitForChild("Clouds") as Clouds;
-	private colorCorrection = Lighting.WaitForChild("ZonesCC") as ColorCorrectionEffect;
-	private currentMapName = "Grasslands";
-	private prevPlayerPos = new Vector3();
-
-	constructor() {
-		this.isleZoneParts.forEach((element) => {
+	onStart() {
+		isleZoneParts.forEach((element) => {
 			// Ensure this zone part is named after its corresponding map in the config.
 			assert(mapConfig[element.Name], `Zone ${element.Name} does not have a corresponding config in mapConfig`);
 			const zone = new Zone(element);
@@ -137,8 +139,8 @@ export class ZoneController implements OnInit, OnRender {
 
 		// This is important because this is how we know that the island has streamed in before we teleport the player to it.
 		Events.teleportToIsland.connect((islandName) => {
-			const island = Workspace.WaitForChild(islandName);
-			const spawnPos = (island.WaitForChild("SpawnLocation") as SpawnLocation).CFrame;
+			const island = CollectionService.GetTagged("Map").filter((instance) => instance.Name === islandName)[0];
+			const spawnPos = (island.WaitForChild("SpawnLocation") as Model).GetPivot();
 			const character = Players.LocalPlayer.Character || Players.LocalPlayer.CharacterAdded.Wait()[0];
 			const goal = spawnPos.add(new Vector3(0, 5, 0));
 			// Wait for HumanoidRootPart so we can ensure that they can be teleported.
@@ -148,21 +150,19 @@ export class ZoneController implements OnInit, OnRender {
 		});
 	}
 
-	onInit() {}
-
 	onRender() {
 		const player = Players.LocalPlayer;
 		const character = player.Character;
 		const sittingInBoat = player.GetAttribute("SittingInBoatDriverSeat") as boolean;
 		if (character) {
 			const pos = character.GetPivot().Position;
-			if (!this.prevPlayerPos.FuzzyEq(pos, 1)) {
+			if (!prevPlayerPos.FuzzyEq(pos, 1)) {
 				for (const billboard of CollectionService.GetTagged("IsleBillboard")) {
 					if (!billboard.IsA("BillboardGui")) continue;
 					const boardParent = billboard.Parent;
 					if (boardParent !== undefined && boardParent.IsA("PVInstance")) {
 						const distance = pos.sub(boardParent.GetPivot().Position).Magnitude;
-						if (distance < this.ZONE_BILLBOARD_DIST_THRESHOLD || !sittingInBoat) {
+						if (distance < ZONE_BILLBOARD_DIST_THRESHOLD || !sittingInBoat) {
 							billboard.Enabled = false;
 							continue;
 						} else {
@@ -179,15 +179,15 @@ export class ZoneController implements OnInit, OnRender {
 	}
 
 	onZoneEnter(zoneName: keyof typeof mapConfig) {
-		let tweenInfo = this.AREA_CHANGE_TWEEN_INFO;
-		if (this.isFirstZoneEnter) {
+		let tweenInfo = AREA_CHANGE_TWEEN_INFO;
+		if (isFirstZoneEnter) {
 			tweenInfo = new TweenInfo(0);
-			this.isFirstZoneEnter = false;
+			isFirstZoneEnter = false;
 		}
-		TweenService.Create(this.clouds, tweenInfo, this.CLOUD_ZONE_PROPERTIES_TABLE[zoneName]).Play();
-		TweenService.Create(this.colorCorrection, tweenInfo, this.COLOR_CORRECTION_PROPERTIES_TABLE[zoneName]).Play();
-		TweenService.Create(Workspace.Terrain, tweenInfo, this.WATER_COLOR_PROPERTIES_TABLE[zoneName]).Play();
-		this.currentMapName = zoneName;
+		TweenService.Create(clouds, tweenInfo, CLOUD_ZONE_PROPERTIES_TABLE[zoneName]).Play();
+		TweenService.Create(colorCorrection, tweenInfo, COLOR_CORRECTION_PROPERTIES_TABLE[zoneName]).Play();
+		TweenService.Create(Workspace.Terrain, tweenInfo, WATER_COLOR_PROPERTIES_TABLE[zoneName]).Play();
+		currentMapName = zoneName;
 		this.playAreaSound(zoneName);
 	}
 
@@ -201,43 +201,39 @@ export class ZoneController implements OnInit, OnRender {
 			}
 		}
 		if (!playerIsInZone) {
+			TweenService.Create(clouds, AREA_CHANGE_TWEEN_INFO, CLOUD_ZONE_PROPERTIES_TABLE.HighSeas).Play();
 			TweenService.Create(
-				this.clouds,
-				this.AREA_CHANGE_TWEEN_INFO,
-				this.CLOUD_ZONE_PROPERTIES_TABLE.HighSeas,
-			).Play();
-			TweenService.Create(
-				this.colorCorrection,
-				this.AREA_CHANGE_TWEEN_INFO,
-				this.COLOR_CORRECTION_PROPERTIES_TABLE.HighSeas,
+				colorCorrection,
+				AREA_CHANGE_TWEEN_INFO,
+				COLOR_CORRECTION_PROPERTIES_TABLE.HighSeas,
 			).Play();
 			TweenService.Create(
 				Workspace.Terrain,
-				this.AREA_CHANGE_TWEEN_INFO,
-				this.WATER_COLOR_PROPERTIES_TABLE.HighSeas,
+				AREA_CHANGE_TWEEN_INFO,
+				WATER_COLOR_PROPERTIES_TABLE.HighSeas,
 			).Play();
 			this.playAreaSound("HighSeas");
 		}
 	}
 
 	playAreaSound(zoneName: keyof typeof mapConfig) {
-		if (this.currentPlayingAreaSound) {
-			this.currentPlayingAreaSound.Stop();
-			this.currentPlayingAreaSound.Destroy();
+		if (currentPlayingAreaSound) {
+			currentPlayingAreaSound.Stop();
+			currentPlayingAreaSound.Destroy();
 		}
-		const sound = this.areaSounds.FindFirstChild(zoneName) as Sound;
+		const sound = areaSounds.FindFirstChild(zoneName) as Sound;
 		if (!sound) {
 			warn(`No sound found for ${zoneName}`);
 			return;
 		}
 		const newSound = sound.Clone();
-		newSound.SoundGroup = this.areaSounds;
+		newSound.SoundGroup = areaSounds;
 		newSound.Parent = Players.LocalPlayer;
 		newSound.Play();
-		this.currentPlayingAreaSound = newSound;
+		currentPlayingAreaSound = newSound;
 	}
 
 	public getCurrentMapName() {
-		return this.currentMapName;
+		return currentMapName;
 	}
 }

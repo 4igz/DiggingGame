@@ -1,3 +1,5 @@
+//!optimize 2
+//!native
 import { useEventListener } from "@rbxts/pretty-react-hooks";
 import { createMotion, Motion, MotionGoal } from "@rbxts/ripple";
 import { Binding, useBinding, useMemo } from "@rbxts/react";

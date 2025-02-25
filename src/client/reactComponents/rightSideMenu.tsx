@@ -1,9 +1,11 @@
+//!optimize 2
+//!native
 import React, { createRef, useEffect, useRef, useState } from "@rbxts/react";
 import { useMotion } from "client/hooks/useMotion";
 import { Events, Functions } from "client/network";
 import { springs } from "client/utils/springs";
 import EternityNum, { IsInf, IsNaN } from "shared/util/eternityNum";
-import { AnimatedButton } from "./mainUi";
+import { AnimatedButton } from "./inventory";
 import { UiController } from "client/controllers/uiController";
 import { RunService, UserInputService } from "@rbxts/services";
 import { gameConstants } from "shared/constants";
@@ -158,12 +160,12 @@ export const RightSideMenu = (props: MenuProps) => {
 				BorderColor3={Color3.fromRGB(0, 0, 0)}
 				BorderSizePixel={0}
 				key={"Menu Container Frame"}
-				Position={UDim2.fromScale(0.972, 0.235)}
-				Size={UDim2.fromScale(0.269, 0.627)}
+				Position={UDim2.fromScale(0.972, 0.293)}
+				Size={UDim2.fromScale(0.211, 0.512)}
 			>
 				<AnimatedButton
 					position={UDim2.fromScale(0.5, 0.5)}
-					size={UDim2.fromScale(0.9, 0.2)}
+					size={UDim2.fromScale(0.658, 0.166)}
 					onClick={() => {
 						// if (animationRunning) return;
 						const creationAmt = math.random(MONEY_VECTOR_CREATION_AMT.Min, MONEY_VECTOR_CREATION_AMT.Max);
@@ -200,7 +202,7 @@ export const RightSideMenu = (props: MenuProps) => {
 						Image={"rbxassetid://128518524234528"}
 						key={"Background"}
 						ScaleType={Enum.ScaleType.Slice}
-						Size={UDim2.fromScale(1, 1)}
+						Size={UDim2.fromScale(1.119, 0.886)}
 						SliceCenter={new Rect(89, 120, 960, 120)}
 					/>
 
@@ -212,8 +214,8 @@ export const RightSideMenu = (props: MenuProps) => {
 						BorderSizePixel={0}
 						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 						key={"Amount"}
-						Position={UDim2.fromScale(0.062, 0.5)}
-						Size={UDim2.fromScale(0.6, 0.7)}
+						Position={UDim2.fromScale(0.05, 0.45)}
+						Size={UDim2.fromScale(0.676, 0.638)}
 						Text={moneyValue}
 						TextColor3={Color3.fromRGB(92, 255, 133)}
 						TextScaled={true}
@@ -237,8 +239,8 @@ export const RightSideMenu = (props: MenuProps) => {
 						Image={"rbxassetid://94511559177860"}
 						key={"Wallet"}
 						AnchorPoint={new Vector2(1, 0)}
-						Position={UDim2.fromScale(1, 0)}
-						Size={UDim2.fromScale(0.5, 1)}
+						Position={UDim2.fromScale(1.2, -0.1)}
+						Size={UDim2.fromScale(0.469, 1.209)}
 					>
 						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1} />
 					</imagelabel>
@@ -253,7 +255,7 @@ export const RightSideMenu = (props: MenuProps) => {
 					BorderSizePixel={0}
 					key={"Items Menu"}
 					Position={UDim2.fromScale(0.031, 0.176)}
-					Size={UDim2.fromScale(0.969, 0.211)}
+					Size={UDim2.fromScale(1.013, 0.221)}
 				>
 					<AnimatedButton
 						layoutOrder={1}

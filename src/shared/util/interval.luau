@@ -1,3 +1,5 @@
+--!optimize 2
+--!native
 local function interval(s, cleanupInterval)
 	local pins = {} -- Table to store last execution time for each ID
 	local lastCleanup = os.clock() -- Tracks the last time cleanup was run

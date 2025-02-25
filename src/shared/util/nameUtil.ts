@@ -1,3 +1,5 @@
+//!optimize 2
+//!native
 export const spaceWords = (str: string) => {
 	const [spaced] = str.gsub("(%l)(%u)", "%1 %2");
 	return spaced;
@@ -43,15 +45,27 @@ export function separateWithCommas(num: number | string): string {
 }
 
 const units = ["", "K", "M", "B", "T", "Q", "Qn", "Sx", "Sp", "Oc", "No", "Dc", "Ud", "Dd", "Td"];
-export function shortenNumber(num: number): string {
+export function shortenNumber(num: number, showDecimal: boolean = true): string {
 	let unitIndex = 0;
 
-	while (num >= 1000 && unitIndex < units.size() - 1) {
+	// Reduce num and increment unitIndex while num >= 1000
+	while (math.abs(num) >= 1000 && unitIndex < units.size() - 1) {
 		num /= 1000;
 		unitIndex++;
 	}
 
-	return `${string.format("%0.1f", num)}${units[unitIndex]}`;
+	if (!showDecimal) {
+		// No decimal portion at all
+		return `${math.floor(num)}${units[unitIndex]}`;
+	}
+
+	// If there's no fractional part, show as integer
+	if (num % 1 === 0) {
+		return `${string.format("%.1f", num)}${units[unitIndex]}`;
+	}
+
+	// Otherwise, show exactly 2 decimals
+	return `${string.format("%.2f", num)}${units[unitIndex]}`;
 }
 
 export function formatTime(timeLeft: number, format: string = "%02d:%02d:%02d"): string {

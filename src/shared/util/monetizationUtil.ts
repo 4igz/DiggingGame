@@ -1,3 +1,6 @@
+//!optimize 2
+//!native
+
 import { MarketplaceService } from "@rbxts/services";
 
 // Define a cache to store developer product info
@@ -11,7 +14,7 @@ const cachedProducts = new Map<number, DeveloperProductInfo | GamePassProductInf
 export async function getDeveloperProductInfo(
 	productId: number,
 	productType: Enum.InfoType.Product | Enum.InfoType.GamePass,
-): Promise<DeveloperProductInfo | GamePassProductInfo> {
+): Promise<DeveloperProductInfo | GamePassProductInfo | undefined> {
 	// Check if the info is already in the cache
 	const cachedInfo = cachedProducts.get(productId);
 	if (cachedInfo) {
@@ -33,8 +36,7 @@ export async function getDeveloperProductInfo(
 		} else {
 			throw `Invalid data for product ID: ${productId}`;
 		}
-	} catch (error) {
-		warn(`[getDeveloperProductInfo] Error fetching product info: ${tostring(error)}`);
-		throw `Unable to retrieve developer product info for ID: ${productId}`;
+	} catch (err) {
+		warn(`[getDeveloperProductInfo] Error fetching product info: ${tostring(err)}`);
 	}
 }

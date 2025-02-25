@@ -1,3 +1,5 @@
+//!optimize 2
+//!native
 import { Controller, OnStart, OnTick } from "@flamework/core";
 import { ContextActionService, Players, ReplicatedStorage, RunService, SoundService, Workspace } from "@rbxts/services";
 import { Events } from "client/network";
@@ -7,47 +9,50 @@ import { Signals } from "shared/signals";
 import { ShovelController } from "./shovelController";
 import { interval } from "shared/util/interval";
 import { subscribe } from "@rbxts/charm";
-import { gameConstants } from "shared/constants";
 import { inventorySizeAtom, treasureCountAtom } from "client/atoms/inventoryAtoms";
 
+const DING_SOUND_INTERVAL = interval(1);
+const RENDER_STEP_ID = "WaypointArrow";
+
+let VFX_FOLDER = ReplicatedStorage.WaitForChild("Assets").WaitForChild("VFX");
+let beepSound = SoundService.WaitForChild("Tools").WaitForChild("DetectorBeep") as Sound;
+let dingSound = SoundService.WaitForChild("UI")?.WaitForChild("DigDing") as Sound;
+let ANIMATION_FOLDER = ReplicatedStorage.WaitForChild("Assets").WaitForChild("Animations");
+let areaIndicatorVFX = VFX_FOLDER.FindFirstChild("DigAreaIndicatorVfx") as BasePart;
+let metalDetectorAnimation = ANIMATION_FOLDER.FindFirstChild("MetalDetector") as Animation;
+let phase = 0;
+let currentBeepSound: Sound | undefined = undefined;
+let areaIndicator: BasePart | undefined;
+let arrowIndicator: BasePart | undefined;
+
 @Controller({})
-export class Detector implements OnStart {
-	private VFX_FOLDER = ReplicatedStorage.WaitForChild("VFX");
-	private ANIMATION_FOLDER = ReplicatedStorage.WaitForChild("Animations");
-	private areaIndicatorVFX = this.VFX_FOLDER.FindFirstChild("DigAreaIndicatorVfx") as BasePart;
-	private beepSound = SoundService.WaitForChild("Tools").WaitForChild("DetectorBeep") as Sound;
-	private areaIndicator: BasePart | undefined;
-	private arrowIndicator?: BasePart; // Cloned from ReplicatedStorage
-	private renderStepId = "WaypointArrow";
-	private metalDetectorAnimation = this.ANIMATION_FOLDER.FindFirstChild("MetalDetector") as Animation;
-
-	private SUCCESSFUL_DIG_DETECT_COOLDOWN = 1;
-
-	private autoDigRunning = false;
-	private isAutoDigging = false;
-	private targetActive = false;
-	private isRolling = false;
-	private isInventoryFull = false;
-	private phase = 0;
-	private currentBeepSound: Sound | undefined = undefined;
-	private awaitingResponse = false;
-
-	private DIG_DING_INTERVAL = interval(1);
-	private dingSound = SoundService.WaitForChild("UI")?.WaitForChild("DigDing") as Sound;
+export class DetectorController implements OnStart {
+	public targetActive = false;
 
 	constructor(private readonly shovelController: ShovelController) {}
 
 	onStart() {
+		let autoDigRunning = false;
+		let isAutoDigging = false;
+		let isRolling = false;
+		let isInventoryFull = false;
+		let awaitingResponse = false;
+
+		let holding = false;
+		let holdStart = 0;
+
+		const HOLD_LENGTH = 0.2;
+		const DETECTION_KEYBINDS = [Enum.KeyCode.ButtonR2, Enum.UserInputType.MouseButton1];
+
 		Signals.setAutoDiggingRunning.Connect((running: boolean) => {
-			this.autoDigRunning = running;
+			autoDigRunning = running;
 		});
 
 		subscribe(treasureCountAtom, (count) => {
-			this.isInventoryFull = count >= inventorySizeAtom();
+			isInventoryFull = count >= inventorySizeAtom();
 		});
 
-		// Detect walking and play animation
-		Players.LocalPlayer.CharacterAdded.Connect((character) => {
+		const setupCharacter = (character: Model) => {
 			let detectorTrack: AnimationTrack | undefined;
 
 			// Cleanup the animation track if the character is removed or the player dies
@@ -76,16 +81,16 @@ export class Detector implements OnStart {
 					const lastSuccessfulDigTime = child.GetAttribute("LastSuccessfulDigTime") as number | undefined;
 					if (!detectorTrack) {
 						const animator = humanoid.WaitForChild("Animator") as Animator;
-						const detectorAnimation = this.metalDetectorAnimation.Clone();
+						const detectorAnimation = metalDetectorAnimation.Clone();
 						detectorTrack = animator.LoadAnimation(detectorAnimation);
 					}
-					let existingBeepSound = child.FindFirstChild(this.beepSound.Name) as Sound | undefined;
+					let existingBeepSound = child.FindFirstChild(beepSound.Name) as Sound | undefined;
 					if (!existingBeepSound) {
-						const clone = this.beepSound.Clone();
+						const clone = beepSound.Clone();
 						clone.Parent = child.FindFirstChildWhichIsA("BasePart") ?? child;
 						existingBeepSound = clone;
 					}
-					this.currentBeepSound = existingBeepSound as Sound;
+					currentBeepSound = existingBeepSound as Sound;
 
 					const trove = new Trove();
 
@@ -96,107 +101,116 @@ export class Detector implements OnStart {
 					const actionName = "DetectorAction";
 
 					const detectorAction = (
-						actionName: string,
+						_actionName: string,
 						inputState: Enum.UserInputState,
-						inputObject: InputObject,
+						_inputObject: InputObject,
 					) => {
-						if (this.isInventoryFull) {
-							Signals.inventoryFull.Fire();
-							return;
-						}
 						if (inputState === Enum.UserInputState.Begin) {
 							if (
-								this.awaitingResponse ||
+								holding ||
+								awaitingResponse ||
 								this.targetActive ||
-								this.isRolling ||
-								(this.isAutoDigging && this.autoDigRunning)
+								isRolling ||
+								(isAutoDigging && autoDigRunning)
 							)
 								return;
-							this.isRolling = true;
-							Events.beginDetectorLuckRoll();
-							Signals.startLuckbar.Fire();
+							if (isInventoryFull) {
+								Signals.inventoryFull.Fire();
+								return;
+							}
+							holding = true;
+							holdStart = tick();
 						} else if (inputState === Enum.UserInputState.End) {
-							if (!this.isRolling || (this.isAutoDigging && this.autoDigRunning)) return;
-							this.isRolling = false;
-							this.awaitingResponse = true;
-							Events.endDetectorLuckRoll();
-							Signals.closeLuckbar.Fire();
+							if (!holding || (isAutoDigging && autoDigRunning)) return;
+							holding = false;
+							if (isRolling) {
+								awaitingResponse = true;
+								Events.endDetectorLuckRoll();
+								Signals.closeLuckbar.Fire();
+							}
 						}
 					};
 
 					// Delay the detector action to prevent accidental detections if the player was just digging
-					const thread = task.delay(
-						tick() - (lastSuccessfulDigTime ?? 0) > this.SUCCESSFUL_DIG_DETECT_COOLDOWN ? 0 : 0.5,
-						() => {
-							ContextActionService.BindAction(
-								actionName,
-								detectorAction,
-								true,
-								Enum.UserInputType.MouseButton1,
-								Enum.KeyCode.ButtonR2,
-							);
+					ContextActionService.BindAction(actionName, detectorAction, true, ...DETECTION_KEYBINDS);
 
-							const button = ContextActionService.GetButton(actionName);
+					// TODO: Configure mobile button
+					const button = ContextActionService.GetButton(actionName);
 
-							// Add a mobile button
+					trove.add(() => {
+						ContextActionService.UnbindAction(actionName);
+					});
 
-							trove.add(() => {
-								ContextActionService.UnbindAction(actionName);
-							});
-						},
-					);
+					const renderStep = RunService.RenderStepped.Connect(() => {
+						if (holding && tick() - holdStart > HOLD_LENGTH) {
+							if (!isRolling) {
+								isRolling = true;
+								Events.beginDetectorLuckRoll();
+								Signals.startLuckbar.Fire();
+							}
+						}
+					});
 
 					// Cleanup indicators when unequipping
 					child.AncestryChanged.Once(() => {
-						if (this.isRolling) {
-							this.isRolling = false;
+						if (isRolling) {
+							isRolling = false;
 							Events.endDetectorLuckRoll();
 							Signals.closeLuckbar.Fire();
 						}
 
-						detectorTrack?.Stop();
-						task.cancel(thread);
+						renderStep.Disconnect();
+
+						cleanupTrack();
 						trove.destroy();
 
 						task.defer(() => {
-							if (!this.shovelController.getDiggingActive() && this.isAutoDigging) {
+							if (!this.shovelController.diggingActive && isAutoDigging) {
 								Signals.forceSetAutoDigging.Fire(false);
 							}
 						});
 					});
 				}
 			});
-		});
+		};
+
+		// Detect walking and play animation
+		Players.LocalPlayer.CharacterAdded.Connect(setupCharacter);
+
+		const character = Players.LocalPlayer.Character;
+		if (character) {
+			setupCharacter(character);
+		}
 
 		Signals.setAutoDiggingEnabled.Connect((enabled) => {
-			this.isAutoDigging = enabled;
+			isAutoDigging = enabled;
 		});
 
 		Events.targetSpawnSuccess.connect(() => {
 			this.targetActive = true;
-			this.awaitingResponse = false;
+			awaitingResponse = false;
 		});
 
 		Events.targetSpawnFailure.connect(() => {
-			this.awaitingResponse = false;
+			awaitingResponse = false;
 			this.targetActive = false;
 		});
 
 		Events.targetDespawned.connect(() => {
-			this.awaitingResponse = false;
+			awaitingResponse = false;
 			this.targetActive = false;
 			this.hideWaypointArrow();
-			if (this.areaIndicator) {
-				this.areaIndicator.Destroy();
-				this.areaIndicator = undefined;
+			if (areaIndicator) {
+				areaIndicator.Destroy();
+				areaIndicator = undefined;
 			}
 		});
 
 		Events.endDiggingServer.connect(() => {
 			this.hideWaypointArrow();
-			if (this.areaIndicator) {
-				this.areaIndicator.Destroy();
-				this.areaIndicator = undefined;
+			if (areaIndicator) {
+				areaIndicator.Destroy();
+				areaIndicator = undefined;
 			}
 		});
 
@@ -211,10 +225,6 @@ export class Detector implements OnStart {
 			// Start tweening the waypoint indicator
 			this.showWaypointArrow(position, detectorCfg.searchRadius);
 		});
-	}
-
-	public getTargetActive() {
-		return this.targetActive;
 	}
 
 	private getLocalPlayerRootPart(): BasePart | undefined {
@@ -234,22 +244,22 @@ export class Detector implements OnStart {
 		}
 
 		// If we haven't cloned our arrow yet, do so
-		if (!this.arrowIndicator) {
+		if (!arrowIndicator) {
 			// This should be your old arrow part with a BillboardGui inside
-			const arrowTemplate = this.VFX_FOLDER.WaitForChild("IndicatorPart") as Part;
-			this.arrowIndicator = arrowTemplate.Clone();
-			this.arrowIndicator.Parent = Workspace;
+			const arrowTemplate = VFX_FOLDER.WaitForChild("IndicatorPart") as Part;
+			arrowIndicator = arrowTemplate.Clone();
+			arrowIndicator.Parent = Workspace;
 		}
 
 		// Make sure we unbind any old render-step so we don't stack multiple
-		RunService.UnbindFromRenderStep(this.renderStepId);
+		RunService.UnbindFromRenderStep(RENDER_STEP_ID);
 
 		let prevSinVal = 0;
 		let lastTimestamp = time();
 
 		// Grab the BillboardGui (or sub-GUIs) from the arrow
-		const billboardGui = this.arrowIndicator.WaitForChild("BillboardGui") as BillboardGui;
-		const dot = billboardGui.WaitForChild("Dot") as ImageLabel;
+		const billboardGui = arrowIndicator.WaitForChild("BillboardGui") as BillboardGui;
+		const dot = billboardGui.WaitForChild("Arrow") as ImageLabel;
 		const exclamationMarkBlur = billboardGui.WaitForChild("ExclamationMarkBlur") as Frame;
 		const exclamationMark = exclamationMarkBlur.WaitForChild("ExclamationMark") as ImageLabel;
 		const shovel = exclamationMarkBlur.WaitForChild("Shovel") as ImageLabel;
@@ -259,9 +269,9 @@ export class Detector implements OnStart {
 		if (!character || !character.Parent) return;
 
 		// Setup the arrow to update every frame
-		RunService.BindToRenderStep(this.renderStepId, Enum.RenderPriority.Input.Value + 1, () => {
+		RunService.BindToRenderStep(RENDER_STEP_ID, Enum.RenderPriority.Input.Value + 1, () => {
 			const camera = Workspace.CurrentCamera ?? undefined;
-			if (!camera || !this.arrowIndicator) return;
+			if (!camera || !arrowIndicator) return;
 			let detector = character.FindFirstChildOfClass("Tool");
 			detector = detector && metalDetectorConfig[detector.Name] ? detector : undefined;
 
@@ -272,16 +282,16 @@ export class Detector implements OnStart {
 			// Place the arrow about 5 studs in front of the player, in direction of the waypoint
 			if (distance > 0) {
 				const arrowPos = playerRootPart.Position.add(offset.Unit.mul(5));
-				this.arrowIndicator.CFrame = new CFrame(arrowPos);
+				arrowIndicator.CFrame = new CFrame(arrowPos);
 			} else {
 				// If somehow the waypoint is exactly at the player, just match positions
-				this.arrowIndicator.CFrame = new CFrame(playerRootPart.Position);
+				arrowIndicator.CFrame = new CFrame(playerRootPart.Position);
 			}
 
 			const isNearby = distance < detectorSearchRadius;
 
 			// Randomize the area indicator position, but use a set seed so each target has the same area
-			if (isNearby && !this.areaIndicator) {
+			if (isNearby && !areaIndicator) {
 				const rng = new Random(targetPos.X + targetPos.Y + targetPos.Z);
 				const randomAngle = rng.NextNumber() * 2 * math.pi;
 				const randomRadius = math.sqrt(rng.NextNumber()) * (detectorSearchRadius / 4); // Reduced radius to center the target
@@ -289,12 +299,13 @@ export class Detector implements OnStart {
 				const offsetZ = math.sin(randomAngle) * randomRadius;
 				const offsetPosition = new Vector3(offsetX, 0, offsetZ);
 				const finalPosition = targetPos.add(offsetPosition).add(new Vector3(0, 1, 0));
-				const areaIndicator = this.areaIndicator ?? this.areaIndicatorVFX.Clone();
-				areaIndicator.Size = new Vector3(detectorSearchRadius, 0.001, detectorSearchRadius);
-				areaIndicator.SetAttribute("OriginalPosition", finalPosition);
-				areaIndicator.Position = finalPosition;
-				areaIndicator.Parent = Workspace;
-				this.areaIndicator = areaIndicator;
+
+				const currentAreaIndicator = areaIndicator ?? areaIndicatorVFX.Clone();
+				currentAreaIndicator.Size = new Vector3(detectorSearchRadius, 0.001, detectorSearchRadius);
+				currentAreaIndicator.SetAttribute("OriginalPosition", finalPosition);
+				currentAreaIndicator.Position = finalPosition;
+				currentAreaIndicator.Parent = Workspace;
+				areaIndicator = currentAreaIndicator;
 			}
 
 			// Rotate the arrow to match the angle from camera to waypoint
@@ -333,7 +344,7 @@ export class Detector implements OnStart {
 				shovel.Visible = true;
 
 				// Snap arrow onto the exact waypoint position
-				this.arrowIndicator.CFrame = new CFrame(targetPos);
+				arrowIndicator.CFrame = new CFrame(targetPos);
 				canDig = true;
 			}
 
@@ -350,10 +361,10 @@ export class Detector implements OnStart {
 
 			// 1) Accumulate 'phase' by blinkSpeed * deltaTime
 			//    This ensures we smoothly continue the wave from last frame.
-			this.phase += blinkSpeed * deltaTime;
+			phase += blinkSpeed * deltaTime;
 
 			// 2) Evaluate the sine
-			const sinVal = math.sin(this.phase);
+			const sinVal = math.sin(phase);
 
 			// 3) Modify sine to transparency
 			// Increase the base transparency and reduce the amplitude
@@ -371,7 +382,7 @@ export class Detector implements OnStart {
 
 			// 4) Check zero-crossing (- => +) for beep & blink
 			if (sinVal <= 0 && prevSinVal > 0 && !canDig) {
-				if (this.currentBeepSound) this.currentBeepSound.Play();
+				if (currentBeepSound) currentBeepSound.Play();
 
 				const blinkVfx = detector?.FindFirstChild("Blink") as Instance;
 				if (blinkVfx) {
@@ -383,8 +394,8 @@ export class Detector implements OnStart {
 				}
 			} else if (canDig) {
 				// Play ding sound to say that they can dig every second.
-				if (this.DIG_DING_INTERVAL()) {
-					SoundService.PlayLocalSound(this.dingSound);
+				if (DING_SOUND_INTERVAL()) {
+					SoundService.PlayLocalSound(dingSound);
 				}
 			}
 			prevSinVal = sinVal;
@@ -393,12 +404,12 @@ export class Detector implements OnStart {
 
 	public hideWaypointArrow() {
 		// Unbind our render-step
-		RunService.UnbindFromRenderStep(this.renderStepId);
+		RunService.UnbindFromRenderStep(RENDER_STEP_ID);
 
 		// Destroy the arrow if needed
-		if (this.arrowIndicator) {
-			this.arrowIndicator.Destroy();
-			this.arrowIndicator = undefined;
+		if (arrowIndicator) {
+			arrowIndicator.Destroy();
+			arrowIndicator = undefined;
 		}
 	}
 }

@@ -1,9 +1,15 @@
-import React, { useEffect } from "@rbxts/react";
+//!optimize 2
+//!native
+import React, { createRef, useEffect } from "@rbxts/react";
 import { Events, Functions } from "client/network";
 import { dailyRewards, DAILY_REWARD_COOLDOWN } from "shared/config/dailyRewardConfig";
-import { REWARD_IMAGES } from "shared/constants";
+import { gameConstants, REWARD_IMAGES } from "shared/constants";
 import { RewardType } from "shared/networkTypes";
 import { formatShortTime } from "shared/util/nameUtil";
+import { ExitButton } from "./inventory";
+import { UiController } from "client/controllers/uiController";
+import { useMotion } from "client/hooks/useMotion";
+import { springs } from "client/utils/springs";
 
 interface RewardProps {
 	day: number;
@@ -88,6 +94,7 @@ const DailyReward = (props: RewardProps) => {
 
 interface DailyRewardsProps {
 	visible: boolean;
+	uiController: UiController;
 }
 
 export const DailyRewards = (props: DailyRewardsProps) => {
@@ -95,6 +102,9 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 	const [timeLeft, setTimeLeft] = React.useState(0);
 	const [streak, setStreak] = React.useState(0);
 	const [visible, setVisible] = React.useState(false);
+	const [popInSz, popInMotion] = useMotion(UDim2.fromScale(0, 0));
+
+	const menuRef = createRef<Frame>();
 
 	useEffect(() => {
 		Functions.getLastDailyClaimTime().then((time) => {
@@ -134,6 +144,14 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 		setVisible(props.visible);
 	}, [props.visible]);
 
+	React.useEffect(() => {
+		if (visible) {
+			popInMotion.spring(UDim2.fromScale(0.538, 0.465), springs.responsive);
+		} else {
+			popInMotion.immediate(UDim2.fromScale(0, 0));
+		}
+	}, [visible]);
+
 	return (
 		<frame
 			AnchorPoint={new Vector2(0.5, 0.5)}
@@ -143,9 +161,17 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 			BorderSizePixel={0}
 			key={"Daily Reward Container"}
 			Position={UDim2.fromScale(0.5, 0.5)}
-			Size={UDim2.fromScale(0.538, 0.465)}
+			Size={popInSz}
 			Visible={visible}
+			ref={menuRef}
 		>
+			<ExitButton
+				uiName={gameConstants.DAILY_REWARD_UI}
+				uiController={props.uiController}
+				menuRefToClose={menuRef}
+				isMenuVisible={visible}
+			/>
+
 			<imagelabel
 				AnchorPoint={new Vector2(0.5, 0.5)}
 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}

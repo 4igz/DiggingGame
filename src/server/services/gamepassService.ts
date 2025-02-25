@@ -1,4 +1,4 @@
-import { Service, OnStart } from "@flamework/core";
+import { Service, OnStart, OnInit } from "@flamework/core";
 import Object from "@rbxts/object-utils";
 import { MarketplaceService } from "@rbxts/services";
 import { gameConstants } from "shared/constants";
@@ -13,6 +13,7 @@ const CREATOR_NAME = "xFrozen A2";
 @Service({})
 export class GamepassService implements OnStart {
 	constructor(private readonly profileService: ProfileService) {}
+
 	private gamepassIdToName = new Map(
 		Object.values(gameConstants.GAMEPASS_IDS).map((value, index) => [
 			value,
@@ -64,7 +65,7 @@ export class GamepassService implements OnStart {
 
 		// Valiate all gamepasses in gameConstants.GAMEPASS_IDS are valid and owned by the game 😃
 		for (const [id, name] of this.gamepassIdToName) {
-			Promise.defer(() => {
+			task.defer(() => {
 				try {
 					const info = MarketplaceService.GetProductInfo(id, Enum.InfoType.GamePass);
 

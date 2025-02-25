@@ -1,16 +1,17 @@
+//!optimize 2
+//!native
 import { Controller, OnStart } from "@flamework/core";
 import { Players, ReplicatedStorage, TweenService, Workspace } from "@rbxts/services";
 import { Events } from "client/network";
-import { gameConstants } from "shared/constants";
 import { emitUsingAttributes } from "shared/util/vfxUtil";
 
-const vfx = ReplicatedStorage.WaitForChild("VFX") as Folder;
+const vfx = ReplicatedStorage.WaitForChild("Assets").WaitForChild("VFX") as Folder;
 const detectorEffectTextContainer = vfx.FindFirstChild("DetectorEffectTextVfx") as Part;
 const levelUpVfx = vfx.FindFirstChild("LevelUpVfx")?.FindFirstChild("fx") as Attachment;
 
 @Controller({})
-export class LevelUp {
-	constructor() {
+export class LevelUp implements OnStart {
+	onStart(): void {
 		Events.levelUp.connect((newLevel) => {
 			const character = Players.LocalPlayer.Character;
 			if (!character) return;

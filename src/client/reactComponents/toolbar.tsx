@@ -1,3 +1,5 @@
+//!optimize 2
+//!native
 import React from "@rbxts/react";
 import { Players, SoundService, UserInputService } from "@rbxts/services";
 import { Trove } from "@rbxts/trove";
@@ -5,7 +7,6 @@ import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
 import { shovelConfig } from "shared/config/shovelConfig";
 import { fullTargetConfig } from "shared/config/targetConfig";
 import { ItemType } from "shared/networkTypes";
-import { eq } from "shared/util/eternityNum";
 
 interface ToolbarItemProps {
 	icon: string;
@@ -15,12 +16,6 @@ interface ToolbarItemProps {
 	tool: Tool;
 	itemType: ItemType;
 	equipToolByOrder: (order: number) => void;
-}
-
-function spaceWords(input: string): string {
-	// If a lowercase letter precedes an uppercase letter, insert a space between them.
-	const [result] = input.gsub("(%l)(%u)", "%1 %2");
-	return result;
 }
 
 const ToolbarItemComponent: React.FC<ToolbarItemProps> = (props) => {
@@ -42,6 +37,7 @@ const ToolbarItemComponent: React.FC<ToolbarItemProps> = (props) => {
 			}}
 		>
 			<uicorner key={"UICorner"} CornerRadius={new UDim(0.08, 0)} />
+			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 
 			<imagelabel
 				AnchorPoint={new Vector2(0.5, 0.5)}

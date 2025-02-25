@@ -1,12 +1,14 @@
+//!optimize 2
+//!native
 import React, { useEffect } from "@rbxts/react";
-import { AnimatedButton } from "./mainUi";
+import { AnimatedButton } from "./inventory";
 import { SoundService } from "@rbxts/services";
 
 const areasSoundGroup = SoundService.WaitForChild("Areas") as SoundGroup;
 const areasStartVolume = areasSoundGroup.Volume;
 
-const mutedImage = "rbxassetid://124146564458868";
-const playingImage = "rbxassetid://80637397486717";
+const mutedImage = "rbxassetid://105294387354233";
+const playingImage = "rbxassetid://70506456828196";
 
 export const VolumeMuteButton = () => {
 	const [muted, setMuted] = React.useState(false);

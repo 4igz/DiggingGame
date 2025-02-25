@@ -1,31 +1,60 @@
+//!optimize 2
+//!native
 import React, { createRef, useEffect, useState } from "@rbxts/react";
-import { AnimatedButton, ExitButton } from "./mainUi";
+import { AnimatedButton, ExitButton } from "./inventory";
 import { UiController } from "client/controllers/uiController";
 import { gameConstants, REWARD_IMAGES } from "shared/constants";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
-import { Reward } from "shared/networkTypes";
 import { PlaytimeReward, timePlayedRewards } from "shared/config/timePlayedConfig";
 import { interval } from "shared/util/interval";
-import { formatShortTime } from "shared/util/nameUtil";
+import { formatShortTime, shortenNumber } from "shared/util/nameUtil";
 import { Events, Functions } from "client/network";
+import { AnimatedProductButton } from "./gamepassShop";
+import { ProductType } from "shared/config/shopConfig";
+import { getDeveloperProductInfo } from "shared/util/monetizationUtil";
 
 const SEC_INTERVAL = interval(1);
 
-const RewardSlot = (props: { cfg: PlaytimeReward; order: number; timerRunning: boolean }) => {
-	const [timeLeft, setTimeLeft] = useState(props.cfg.unlockTime - time());
+const enabledGradient = new ColorSequence([
+	new ColorSequenceKeypoint(0, Color3.fromRGB(255, 255, 255)),
+	new ColorSequenceKeypoint(0.479, Color3.fromRGB(123, 255, 207)),
+	new ColorSequenceKeypoint(1, Color3.fromRGB(74, 255, 101)),
+]);
+
+const disabledGradient = new ColorSequence([
+	new ColorSequenceKeypoint(0, Color3.fromRGB(255, 255, 255)),
+	new ColorSequenceKeypoint(0.479, Color3.fromRGB(123, 202, 255)),
+	new ColorSequenceKeypoint(1, Color3.fromRGB(52, 106, 255)),
+]);
+
+const RewardSlot = (props: {
+	order: number;
+	cfg: PlaytimeReward;
+	timerRunning: boolean;
+	serverClaimed: boolean | undefined;
+	requiredTime: number;
+	onClaimed: (index: number) => void;
+}) => {
+	const [timeLeft, setTimeLeft] = useState(props.requiredTime - time());
+	const [serverAllowedToClaim, setServerAllowedToClaim] = useState(false);
 	const [claimed, setClaimed] = useState(false);
 
 	useEffect(() => {
 		const thread = task.spawn(() => {
 			if (!props.timerRunning) return;
-			while (time() < props.cfg.unlockTime) {
+			if (claimed) {
+				setClaimed(false);
+			}
+			while (time() < props.requiredTime && props.timerRunning) {
 				task.wait();
 				if (SEC_INTERVAL(props.order)) {
-					setTimeLeft(props.cfg.unlockTime - time());
+					setTimeLeft(props.requiredTime - time());
 				}
 			}
-			setTimeLeft(0);
+			if (time() >= props.requiredTime && !claimed) {
+				setTimeLeft(0);
+			}
 		});
 
 		return () => {
@@ -33,71 +62,161 @@ const RewardSlot = (props: { cfg: PlaytimeReward; order: number; timerRunning: b
 		};
 	}, [timeLeft, props.timerRunning]);
 
+	useEffect(() => {
+		if (props.serverClaimed) {
+			setServerAllowedToClaim(true);
+			setTimeLeft(0);
+		}
+	}, [props.serverClaimed]);
+
 	return (
-		<AnimatedButton
-			size={UDim2.fromScale(0.224, 0.306)}
-			layoutOrder={props.order}
-			onClick={() => {
-				if (!claimed && time() >= props.cfg.unlockTime) {
-					setClaimed(true);
-					Functions.claimPlaytimeReward(props.order).then((result) => {
-						// The hope is that this never happens, but just incase for some reason they get out of sync, then it will reset the claimed state
-						if (!result) {
-							setClaimed(false);
-							return;
+		<frame
+			AnchorPoint={new Vector2(0.5, 0.5)}
+			BackgroundTransparency={1}
+			key={"1"}
+			Position={UDim2.fromScale(0.5, 0.5)}
+			Size={UDim2.fromScale(0.224, 0.306)}
+			ZIndex={10}
+		>
+			<AnimatedButton
+				size={UDim2.fromScale(1, 1)}
+				onClick={() => {
+					if (!claimed && (serverAllowedToClaim || time() >= props.requiredTime)) {
+						setClaimed(true);
+						if (serverAllowedToClaim) {
+							setServerAllowedToClaim(false);
 						}
 
-						// TODO: Add a UI notification for the player that they claimed the reward.
-						
-					});
-				}
-			}}
-		>
-			<imagelabel
-				AnchorPoint={new Vector2(0.5, 0.5)}
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				Image={"rbxassetid://112251593272565"}
-				key={"Background"}
-				Position={UDim2.fromScale(0.526, 0.513)}
-				ScaleType={Enum.ScaleType.Slice}
-				Size={UDim2.fromScale(1.05, 1.03)}
-				SliceCenter={new Rect(100, 259, 901, 259)}
-			/>
+						Functions.claimPlaytimeReward(props.order).then((result) => {
+							// The hope is that this never happens, but just incase for some reason they get out of sync and the server rejects, then it will reset the claimed state
+							if (!result) {
+								warn("Failed to claim reward, resetting claimed state.");
+								setClaimed(false);
+								return;
+							}
 
-			<imagelabel
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				Image={REWARD_IMAGES[props.cfg.rewardType]}
-				key={"Icon"}
-				Position={UDim2.fromScale(0.322, 0.12)}
-				ScaleType={Enum.ScaleType.Fit}
-				Size={UDim2.fromScale(0.397, 0.57)}
-			/>
+							props.onClaimed(props.order);
 
-			<textlabel
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-				key={"Timer"}
-				Position={UDim2.fromScale(0.046, 0.628)}
-				Size={UDim2.fromScale(0.954, 0.231)}
-				Text={`${!claimed ? (timeLeft > 0 ? formatShortTime(timeLeft) : "CLAIM") : "CLAIMED"}`}
-				TextColor3={Color3.fromRGB(253, 253, 253)}
-				TextScaled={true}
-				TextWrapped={true}
+							// TODO: Add a UI notification for the player that they claimed the reward.
+						});
+					}
+				}}
 			>
-				<uistroke key={"UIStroke"} Thickness={3} />
+				<imagelabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					Image={"rbxassetid://115335272426529"}
+					key={".$Background"}
+					Position={UDim2.fromScale(0.526, 0.513)}
+					ScaleType={Enum.ScaleType.Slice}
+					Size={UDim2.fromScale(1.05, 1.03)}
+					SliceCenter={new Rect(100, 259, 901, 259)}
+				>
+					<uigradient key={"UIGradient"} Color={claimed ? enabledGradient : disabledGradient} Rotation={90} />
+				</imagelabel>
 
-				<uipadding key={"UIPadding"} PaddingLeft={new UDim(0.19, 0)} PaddingRight={new UDim(0.19, 0)} />
-			</textlabel>
-		</AnimatedButton>
+				<textlabel
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					key={".$Timer"}
+					Position={UDim2.fromScale(0.046, 0.596)}
+					Size={UDim2.fromScale(0.954, 0.294)}
+					Text={`${!claimed ? (timeLeft > 0 ? formatShortTime(timeLeft) : "CLAIM") : "CLAIMED"}`}
+					TextColor3={Color3.fromRGB(205, 255, 148)}
+					TextScaled={true}
+					TextWrapped={true}
+				>
+					<uistroke key={"UIStroke"} Thickness={3} />
+
+					<uipadding key={"UIPadding"} PaddingLeft={new UDim(0.19, 0)} PaddingRight={new UDim(0.19, 0)} />
+				</textlabel>
+
+				<imagelabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					Image={"rbxassetid://114978900536475"}
+					key={"Check"}
+					Position={UDim2.fromScale(0.498, 0.35)}
+					ScaleType={Enum.ScaleType.Fit}
+					Size={UDim2.fromScale(0.662, 0.645)}
+					SliceCenter={new Rect(100, 259, 901, 259)}
+					ZIndex={99}
+					Visible={claimed}
+				/>
+
+				<frame
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					key={"Prize"}
+					Position={UDim2.fromScale(0.5, 0.5)}
+					Size={UDim2.fromScale(1, 1)}
+					Visible={props.cfg.rewardAmount !== undefined}
+				>
+					<textlabel
+						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+						BackgroundTransparency={1}
+						BorderColor3={Color3.fromRGB(0, 0, 0)}
+						BorderSizePixel={0}
+						FontFace={new Font("rbxasset://fonts/families/FredokaOne.json")}
+						key={"mm"}
+						Position={UDim2.fromScale(0.568, 0.371)}
+						Size={UDim2.fromScale(0.241, 0.227)}
+						Text={`x${shortenNumber(props.cfg.rewardAmount ?? 0, false)}`}
+						TextColor3={Color3.fromRGB(253, 253, 253)}
+						TextScaled={true}
+						TextWrapped={true}
+						TextXAlignment={Enum.TextXAlignment.Left}
+						ZIndex={2}
+					>
+						<uistroke key={"UIStroke"} Thickness={2} />
+
+						<textlabel
+							AnchorPoint={new Vector2(0.5, 0.5)}
+							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+							BackgroundTransparency={1}
+							BorderColor3={Color3.fromRGB(0, 0, 0)}
+							BorderSizePixel={0}
+							FontFace={new Font("rbxasset://fonts/families/FredokaOne.json")}
+							key={"mm"}
+							Position={UDim2.fromScale(0.5, 0.43)}
+							Size={UDim2.fromScale(1, 1)}
+							Text={`x${shortenNumber(props.cfg.rewardAmount ?? 0, false)}`}
+							TextColor3={Color3.fromRGB(253, 253, 253)}
+							TextScaled={true}
+							TextWrapped={true}
+							TextXAlignment={Enum.TextXAlignment.Left}
+							ZIndex={2}
+						>
+							<uistroke key={"UIStroke"} Thickness={2} />
+						</textlabel>
+					</textlabel>
+
+					<imagelabel
+						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+						BackgroundTransparency={1}
+						BorderColor3={Color3.fromRGB(0, 0, 0)}
+						BorderSizePixel={0}
+						Image={REWARD_IMAGES[props.cfg.rewardType]}
+						key={"Icon"}
+						Position={UDim2.fromScale(0.298, 0.0603)}
+						ScaleType={Enum.ScaleType.Fit}
+						Size={UDim2.fromScale(0.426, 0.613)}
+					/>
+				</frame>
+			</AnimatedButton>
+		</frame>
 	);
 };
 
@@ -109,19 +228,48 @@ interface PlaytimeRewardsProps {
 export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 	const [popInSz, popInMotion] = useMotion(UDim2.fromScale(0, 0));
 	const [visible, setVisible] = useState(false);
+	const [claimedAll, setClaimedAll] = useState(false);
+	const [allowClaimAll, setAllowClaimAll] = useState(false);
+	const [playTimeRewardsDPInfo, setPlayTimeRewardsDPInfo] = useState<DeveloperProductInfo>();
+	const [startTime, setStartTime] = useState(time());
+	const [claimed, setClaimed] = useState(new Map<number, boolean>());
 	const menuRef = createRef<Frame>();
 
 	useEffect(() => {
 		setVisible(props.visible);
 	}, [props.visible]);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		if (visible) {
-			popInMotion.spring(UDim2.fromScale(0.727, 0.606), springs.responsive);
+			popInMotion.spring(UDim2.fromScale(0.604, 0.791), springs.responsive);
 		} else {
 			popInMotion.immediate(UDim2.fromScale(0, 0));
 		}
+
+		getDeveloperProductInfo(
+			gameConstants.DEVPRODUCT_IDS["Unlock All Playtime Rewards"],
+			Enum.InfoType.Product,
+		).then((info) => {
+			if (info !== undefined) {
+				setPlayTimeRewardsDPInfo(info as DeveloperProductInfo);
+			}
+		});
 	}, [visible]);
+
+	useEffect(() => {
+		Events.boughtPlaytimeRewardSkip.connect(() => {
+			setAllowClaimAll(true);
+		});
+	}, []);
+
+	useEffect(() => {
+		if (claimedAll) {
+			setClaimed(new Map());
+			setStartTime(time());
+			setAllowClaimAll(false);
+			setClaimedAll(false);
+		}
+	}, [claimedAll]);
 
 	return (
 		<frame
@@ -152,6 +300,7 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 				menuRefToClose={menuRef}
 				uiController={props.uiController}
 				uiName={gameConstants.PLAYTIME_REWARD_UI}
+				isMenuVisible={visible}
 			/>
 
 			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.74} />
@@ -229,7 +378,35 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 				/>
 
 				{timePlayedRewards.map((cfg, i) => {
-					return <RewardSlot cfg={cfg} order={i} timerRunning={visible} />;
+					return (
+						<RewardSlot
+							requiredTime={cfg.unlockTime + startTime}
+							cfg={cfg}
+							order={i}
+							timerRunning={!allowClaimAll && visible}
+							serverClaimed={allowClaimAll}
+							onClaimed={(index) => {
+								const newClaimed = claimed.set(index, true);
+								setClaimed(newClaimed);
+
+								if (claimed.size() >= timePlayedRewards.size()) {
+									let allClaimed = true;
+
+									// Ensure all rewards are claimed
+									for (const [_, value] of claimed) {
+										if (!value) {
+											allClaimed = false;
+											break;
+										}
+									}
+
+									if (allClaimed) {
+										setClaimedAll(true);
+									}
+								}
+							}}
+						/>
+					);
 				})}
 			</frame>
 
@@ -267,15 +444,12 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 					/>
 				</textlabel>
 
-				<frame
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					LayoutOrder={2}
-					key={"Buy Btn Frame"}
-					Position={UDim2.fromScale(0.157, 0.458)}
-					Size={UDim2.fromScale(0.862, 0.565)}
+				<AnimatedProductButton
+					productId={gameConstants.DEVPRODUCT_IDS["Unlock All Playtime Rewards"]}
+					productType={ProductType.DevProduct}
+					predicate={() => !allowClaimAll}
+					position={UDim2.fromScale(0.157, 0.458)}
+					size={UDim2.fromScale(0.862, 0.565)}
 				>
 					<imagebutton
 						AnchorPoint={new Vector2(0.5, 0.5)}
@@ -336,7 +510,7 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 								key={"Timer"}
 								Position={UDim2.fromScale(0.534, 0.5)}
 								Size={UDim2.fromScale(0.202, 0.98)}
-								Text={"99"}
+								Text={allowClaimAll ? "Claimed" : tostring(playTimeRewardsDPInfo?.PriceInRobux)}
 								TextColor3={Color3.fromRGB(255, 255, 255)}
 								TextScaled={true}
 								TextWrapped={true}
@@ -353,7 +527,7 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 							</textlabel>
 						</frame>
 					</imagebutton>
-				</frame>
+				</AnimatedProductButton>
 
 				<uilistlayout
 					key={"UIListLayout"}

@@ -5,9 +5,13 @@ import { Signals } from "shared/signals";
 import { Events } from "server/network";
 import { GamepassService } from "./gamepassService";
 import { gameConstants } from "shared/constants";
+import Signal from "@rbxts/goodsignal";
+import { EN } from "shared/networkTypes";
 
 @Service({})
 export class MoneyService implements OnStart {
+	public moneyChanged = new Signal<(player: Player, amount: EN) => void>();
+
 	constructor(private readonly profileService: ProfileService, private readonly gamepassService: GamepassService) {}
 
 	onStart() {
@@ -32,11 +36,12 @@ export class MoneyService implements OnStart {
 			amount *= 2;
 		}
 
-		profile.Data.money = EternityNum.toString(
-			EternityNum.add(EternityNum.fromString(profile.Data.money), EternityNum.fromNumber(amount)),
-		);
+		const moneyEN = EternityNum.add(EternityNum.fromString(profile.Data.money), EternityNum.fromNumber(amount));
+
+		profile.Data.money = EternityNum.toString(moneyEN);
 		this.profileService.setProfile(player, profile);
 		Events.updateMoney.fire(player, profile.Data.money);
+		this.moneyChanged.Fire(player, moneyEN);
 	}
 
 	takeMoney(player: Player, amount: number) {

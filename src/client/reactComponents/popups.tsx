@@ -1,3 +1,5 @@
+//!optimize 2
+//!native
 import React, { useEffect } from "@rbxts/react";
 import { Events } from "client/network";
 import { fullTargetConfig } from "shared/config/targetConfig";

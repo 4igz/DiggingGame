@@ -1,10 +1,14 @@
+//!optimize 2
+//!native
 import { Controller, OnStart } from "@flamework/core";
-import { Players, ReplicatedStorage } from "@rbxts/services";
+import { Players, ReplicatedStorage, StarterPlayer } from "@rbxts/services";
 import { fullTargetConfig } from "shared/config/targetConfig";
 
-const AnimationFolder = ReplicatedStorage.WaitForChild("Animations");
+const AnimationFolder = ReplicatedStorage.WaitForChild("Assets").WaitForChild("Animations");
 
-@Controller({})
+@Controller({
+	loadOrder: 2,
+})
 export class TreasureAnimationController implements OnStart {
 	onStart() {
 		Players.LocalPlayer.CharacterAdded.Connect((character) => {

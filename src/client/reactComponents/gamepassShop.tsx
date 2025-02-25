@@ -1,5 +1,7 @@
+//!optimize 2
+//!native
 import React, { createRef } from "@rbxts/react";
-import { AnimatedButton, ExitButton } from "./mainUi";
+import { AnimatedButton, ExitButton } from "./inventory";
 import { UiController } from "client/controllers/uiController";
 import { gameConstants } from "shared/constants";
 import { useMotion } from "client/hooks/useMotion";
@@ -1188,6 +1190,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 					uiController={props.uiController}
 					uiName={gameConstants.GAMEPASS_SHOP_UI}
 					menuRefToClose={menuRef}
+					isMenuVisible={visible}
 				/>
 
 				<scrollingframe

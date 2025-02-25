@@ -1,7 +1,10 @@
+//!optimize 2
+//!native
 import React, { useEffect } from "@rbxts/react";
 import { RunService } from "@rbxts/services";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
+import { fullTargetConfig } from "shared/config/targetConfig";
 import { gameConstants } from "shared/constants";
 import { Rarity } from "shared/networkTypes";
 import { shortenNumber } from "shared/util/nameUtil";
@@ -9,7 +12,7 @@ import { shortenNumber } from "shared/util/nameUtil";
 const RC = gameConstants.RARITY_COLORS;
 
 export interface SoldItemPopupProps {
-	itemName?: string;
+	itemName?: keyof typeof fullTargetConfig;
 	itemRarity?: Rarity;
 	sellCount?: number;
 	sellAmount: number;
@@ -23,6 +26,7 @@ export const SoldItemPopup = (props: SoldItemPopupProps) => {
 	const [sizeMotion, setSizeMotion] = useMotion(UDim2.fromScale(0, 0));
 
 	const [spinValue, setSpinValue] = React.useState(0);
+	const [imageRotation, setImageRotation] = useMotion(0);
 
 	const POPUP_TIME = 5;
 
@@ -35,6 +39,21 @@ export const SoldItemPopup = (props: SoldItemPopupProps) => {
 			});
 			setSizeMotion.spring(UDim2.fromScale(0, 0), springs.responsive);
 		});
+
+		let currentRotation = imageRotation.getValue();
+		const MAX_ROTATION = 45;
+		const rotationThread = task.spawn(() => {
+			while (true) {
+				// Make image bob back and forth
+				task.wait(1);
+				currentRotation = currentRotation < MAX_ROTATION ? MAX_ROTATION : 0;
+				setImageRotation.spring(currentRotation, springs.bubbly);
+			}
+		});
+
+		return () => {
+			task.cancel(rotationThread);
+		};
 	}, []);
 
 	// Second effect handles the event data
@@ -98,8 +117,8 @@ export const SoldItemPopup = (props: SoldItemPopupProps) => {
 					key={"ItemImage"}
 					Size={UDim2.fromScale(1, 1)}
 					ZIndex={5}
-					Image={"rbxassetid://96446480715038"}
-					Rotation={spinValue * -180}
+					Image={props.itemName ? fullTargetConfig[props.itemName].itemImage : "rbxassetid://96446480715038"}
+					Rotation={imageRotation}
 				>
 					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1} />
 				</imagelabel>

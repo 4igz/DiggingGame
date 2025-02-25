@@ -1,3 +1,5 @@
+//!optimize 2
+//!native
 import { Workspace } from "@rbxts/services";
 
 /**
@@ -39,6 +41,7 @@ export function getTopmostPartAtPosition(
 		}
 
 		// Update the new origin slightly below the last hit position to continue checking
-		currentOrigin = new Vector3(hitPosition.X, hitPosition.Y - 1, hitPosition.Z);
+		params.AddToFilter(hitPart);
+		currentOrigin = new Vector3(hitPosition.X, hitPosition.Y, hitPosition.Z);
 	}
 }

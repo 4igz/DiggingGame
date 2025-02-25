@@ -1,0 +1,106 @@
+-- Compiled with roblox-ts v3.0.0
+local BASE_SHOVEL_STRENGTH = 10
+local shovelConfig = {
+	StarterShovel = {
+		strengthMult = 1,
+		rarityType = "Common",
+		itemImage = "rbxassetid://86157037222201",
+		shopOrder = -2,
+		price = 0,
+	},
+	CommonShovel = {
+		strengthMult = 2,
+		rarityType = "Common",
+		itemImage = "rbxassetid://94770951918498",
+		shopOrder = 1,
+		price = 350,
+	},
+	SilverShovel = {
+		strengthMult = 3,
+		rarityType = "Common",
+		itemImage = "rbxassetid://84978234143786",
+		shopOrder = 2,
+		price = 2000,
+	},
+	GoldShovel = {
+		strengthMult = 4,
+		rarityType = "Uncommon",
+		itemImage = "rbxassetid://133385114213421",
+		shopOrder = 3,
+		price = 7500,
+	},
+	DiamondShovel = {
+		strengthMult = 5,
+		rarityType = "Uncommon",
+		itemImage = "rbxassetid://80305961963756",
+		shopOrder = 4,
+		price = 20000,
+	},
+	AmethystShovel = {
+		strengthMult = 6,
+		rarityType = "Uncommon",
+		itemImage = "rbxassetid://137452283112320",
+		shopOrder = 5,
+		price = 75000,
+	},
+	RubyShovel = {
+		strengthMult = 7,
+		rarityType = "Rare",
+		itemImage = "rbxassetid://128554784882437",
+		shopOrder = 6,
+		price = 150000,
+	},
+	EnchantedShovel = {
+		strengthMult = 8,
+		rarityType = "Rare",
+		itemImage = "rbxassetid://137008399562821",
+		shopOrder = 7,
+		price = 300000,
+	},
+	HeavenlyShovel = {
+		strengthMult = 9,
+		rarityType = "Epic",
+		itemImage = "rbxassetid://115558690172113",
+		shopOrder = 8,
+		price = 600000,
+	},
+	DemonicShovel = {
+		strengthMult = 10,
+		rarityType = "Epic",
+		itemImage = "rbxassetid://77934386944359",
+		shopOrder = 9,
+		price = 1250000,
+	},
+	CyberShovel = {
+		strengthMult = 11,
+		rarityType = "Legendary",
+		itemImage = "rbxassetid://129273316911656",
+		shopOrder = 10,
+		price = 3000000,
+	},
+	AlienShovel = {
+		strengthMult = 12,
+		rarityType = "Legendary",
+		itemImage = "rbxassetid://109719408760835",
+		shopOrder = 11,
+		price = 7500000,
+	},
+	MonsterShovel = {
+		strengthMult = 13,
+		rarityType = "Mythical",
+		itemImage = "rbxassetid://76160408546441",
+		shopOrder = 12,
+		price = 22500000,
+	},
+	PureShovel = {
+		strengthMult = 14,
+		rarityType = "Secret",
+		itemImage = "rbxassetid://117172719154128",
+		shopOrder = 13,
+		price = 50000000,
+	},
+}
+return {
+	BASE_SHOVEL_STRENGTH = BASE_SHOVEL_STRENGTH,
+	shovelConfig = shovelConfig,
+}

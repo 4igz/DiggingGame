@@ -1,3 +1,5 @@
+//!optimize 2
+//!native
 import React, { Dispatch, useEffect } from "@rbxts/react";
 import { UiController } from "client/controllers/uiController";
 import { useMotion } from "client/hooks/useMotion";
@@ -5,8 +7,8 @@ import { Events, Functions } from "client/network";
 import { springs } from "client/utils/springs";
 import { gameConstants } from "shared/constants";
 import { Item, ItemType, Rarity } from "shared/networkTypes";
-import { separateWithCommas, spaceWords } from "shared/util/nameUtil";
-import { ExitButton } from "./mainUi";
+import { separateWithCommas, shortenNumber, spaceWords } from "shared/util/nameUtil";
+import { AnimatedButton, ExitButton } from "./inventory";
 
 const SHOP_MENUS = {
 	MetalDetectors: "Detectors",
@@ -219,7 +221,7 @@ interface GenericItemProps {
 	stats: ItemStat[]; // List of stats to display
 	image: string;
 	owned: boolean;
-	itemType: Exclude<Exclude<Exclude<ItemType, "Target">, "Boats">, "Potions">;
+	itemType: Exclude<ItemType, "Target" | "Boats" | "Potions">;
 	price: number;
 	order: number;
 }
@@ -248,73 +250,27 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 			LayoutOrder={props.order}
 			key={"Item"}
 			Position={UDim2.fromScale(0.601, 0)}
-			Size={sz.map((s) => {
-				return UDim2.fromScale(0.329 * s, 1.01 * s);
-			})}
+			Size={UDim2.fromScale(0.329, 1.01)}
 		>
-			<imagebutton
-				AnchorPoint={new Vector2(0.5, 0.5)}
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				Image={
-					gameConstants.RARITY_BACKGROUND_IMAGES[props.rarity] ??
-					gameConstants.RARITY_BACKGROUND_IMAGES["Common"]
-				}
+			<AnimatedButton
 				key={"Item Container"}
-				Position={UDim2.fromScale(0.5, 0.5)}
-				Size={UDim2.fromScale(1, 0.949)}
-				Event={{
-					MouseButton1Click: () => {
-						Events.buyItem(itemType, itemName);
-						setPressed(true);
-						task.delay(0.1, () => setPressed(false));
-					},
-					MouseEnter: () => setIsHovered(true),
-					MouseLeave: () => setIsHovered(false),
+				position={UDim2.fromScale(0.5, 0.5)}
+				size={UDim2.fromScale(1, 0.95)}
+				scales={new NumberRange(0.98, 1.02)}
+				onClick={() => {
+					if (owned) return;
+					Events.buyItem(itemType, itemName);
 				}}
 			>
 				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.748} />
 
-				<textlabel
-					Text={`$${separateWithCommas(props.price)}`}
+				<imagelabel
+					Image={gameConstants.RARITY_BACKGROUND_IMAGE}
+					ImageColor3={gameConstants.RARITY_COLORS[props.rarity]}
 					BackgroundTransparency={1}
-					Font={Enum.Font.BuilderSansBold}
-					AnchorPoint={new Vector2(0.5, 0.5)}
-					Size={UDim2.fromScale(0.5, 0.1)}
-					Position={UDim2.fromScale(0.5, 0.95)}
-					TextColor3={Color3.fromRGB(255, 173, 0)}
-					TextScaled={true}
-					ZIndex={16}
-					Visible={!owned}
-				>
-					<uistroke Thickness={2} Color={Color3.fromRGB(255, 255, 255)} />
-				</textlabel>
-
-				<frame
 					Size={UDim2.fromScale(1, 1)}
-					BackgroundTransparency={owned ? 0.75 : 1}
-					BackgroundColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					key={"Overlay"}
-					Visible={owned}
-					ZIndex={15}
-				>
-					<textlabel
-						Text={"OWNED"}
-						Font={Enum.Font.BuilderSansBold}
-						TextScaled={true}
-						TextColor3={Color3.fromRGB(255, 255, 255)}
-						Size={UDim2.fromScale(0.9, 0.9)}
-						BackgroundTransparency={1}
-						Position={UDim2.fromScale(0.5, 0.5)}
-						AnchorPoint={new Vector2(0.5, 0.5)}
-					>
-						<uistroke Thickness={2} />
-					</textlabel>
-					<uicorner key={"UICorner"} CornerRadius={new UDim(0.1, 0)} />
-				</frame>
+					ZIndex={0}
+				/>
 
 				<frame
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -322,8 +278,8 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 					BorderColor3={Color3.fromRGB(0, 0, 0)}
 					BorderSizePixel={0}
 					key={"Stats"}
-					Position={UDim2.fromScale(0.0923, 0.069)}
-					Size={UDim2.fromScale(0.472, 0.374)}
+					Position={UDim2.fromScale(0.0922, 0.0714)}
+					Size={UDim2.fromScale(0.446, 0.5)}
 					ZIndex={2}
 				>
 					{stats.map((stat) => {
@@ -372,7 +328,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 									key={"Amount"}
 									Position={UDim2.fromScale(0.808, 0.382)}
 									Size={UDim2.fromScale(1.02, 0.763)}
-									Text={`x${string.format("%.1f", stat.value)}`}
+									Text={`x${shortenNumber(tonumber(stat.value) ?? 0)}`}
 									TextColor3={Color3.fromRGB(255, 255, 255)}
 									TextScaled={true}
 									TextWrapped={true}
@@ -432,7 +388,28 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							TextWrapped={true}
 							TextXAlignment={Enum.TextXAlignment.Right}
 						>
-							<uistroke key={"UIStroke"} Thickness={2} />
+							<uistroke key={"UIStroke"} Thickness={1.9} />
+
+							<textlabel
+								AnchorPoint={new Vector2(0.5, 0.5)}
+								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+								BackgroundTransparency={1}
+								BorderColor3={Color3.fromRGB(0, 0, 0)}
+								BorderSizePixel={0}
+								FontFace={
+									new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+								}
+								key={"Rarity"}
+								Position={UDim2.fromScale(0.5, 0.43)}
+								Size={UDim2.fromScale(1, 1)}
+								Text={props.rarity}
+								TextColor3={gameConstants.RARITY_COLORS[props.rarity]}
+								TextScaled={true}
+								TextWrapped={true}
+								TextXAlignment={Enum.TextXAlignment.Right}
+							>
+								<uistroke key={"UIStroke"} Thickness={1.9} />
+							</textlabel>
 						</textlabel>
 
 						<uilistlayout
@@ -452,82 +429,132 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							key={"Name"}
 							Position={UDim2.fromScale(0.499, 0.709)}
 							Size={UDim2.fromScale(1.02, 0.521)}
-							Text={spaceWords(props.itemName)}
+							Text={`${spaceWords(props.itemName)}`}
 							TextColor3={Color3.fromRGB(255, 255, 255)}
 							TextScaled={true}
 							TextWrapped={true}
 							TextXAlignment={Enum.TextXAlignment.Right}
 						>
-							<uistroke key={"UIStroke"} Thickness={2} />
+							<uistroke key={"UIStroke"} Thickness={3} />
+
+							<textlabel
+								AnchorPoint={new Vector2(0.5, 0.5)}
+								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+								BackgroundTransparency={1}
+								BorderColor3={Color3.fromRGB(0, 0, 0)}
+								BorderSizePixel={0}
+								FontFace={
+									new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+								}
+								LayoutOrder={1}
+								key={"Name"}
+								Position={UDim2.fromScale(0.5, 0.45)}
+								Size={UDim2.fromScale(1, 1)}
+								Text={`${spaceWords(props.itemName)}`}
+								TextColor3={Color3.fromRGB(255, 255, 255)}
+								TextScaled={true}
+								TextWrapped={true}
+								TextXAlignment={Enum.TextXAlignment.Right}
+							>
+								<uistroke key={"UIStroke"} Thickness={3} />
+							</textlabel>
 						</textlabel>
 					</frame>
+				</frame>
 
-					{/* <frame
+				<frame
+					BackgroundColor3={Color3.fromRGB(0, 0, 0)}
+					BackgroundTransparency={0.45}
+					BorderSizePixel={0}
+					key={"Owned Overlay"}
+					Size={UDim2.fromScale(1, 1)}
+					ZIndex={15}
+					Visible={owned}
+				>
+					<uicorner key={"UICorner"} CornerRadius={new UDim(0.1, 0)} />
+
+					<imagelabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
 						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 						BackgroundTransparency={1}
 						BorderColor3={Color3.fromRGB(0, 0, 0)}
 						BorderSizePixel={0}
-						key={"Rating"}
-						Position={UDim2.fromScale(0.586, 0.13)}
-						Size={UDim2.fromScale(0.4, 0.333)}
+						Image={"rbxassetid://114978900536475"}
+						key={"Check"}
+						Position={UDim2.fromScale(0.53, 0.376)}
+						ScaleType={Enum.ScaleType.Fit}
+						Size={UDim2.fromScale(0.335, 0.208)}
+						SliceCenter={new Rect(100, 259, 901, 259)}
+					/>
+
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						FontFace={
+							new Font(
+								"rbxasset://fonts/families/BuilderSans.json",
+								Enum.FontWeight.Bold,
+								Enum.FontStyle.Normal,
+							)
+						}
+						key={"1"}
+						Position={UDim2.fromScale(0.508, 0.538)}
+						Size={UDim2.fromScale(0.9, 0.9)}
+						Text={"OWNED"}
+						TextColor3={Color3.fromRGB(0, 0, 0)}
+						TextScaled={true}
+						TextWrapped={true}
 					>
-						<uilistlayout
-							key={"UIListLayout"}
-							FillDirection={Enum.FillDirection.Horizontal}
-							HorizontalAlignment={Enum.HorizontalAlignment.Right}
-							SortOrder={Enum.SortOrder.LayoutOrder}
-							VerticalAlignment={Enum.VerticalAlignment.Center}
-						/>
+						<uistroke key={"1"} Thickness={5} />
 
-						<imagelabel
-							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+						<textlabel
+							AnchorPoint={new Vector2(0.5, 0.5)}
 							BackgroundTransparency={1}
-							BorderColor3={Color3.fromRGB(0, 0, 0)}
-							BorderSizePixel={0}
-							Image={"rbxassetid://92942300911296"}
-							key={"Star"}
-							Position={UDim2.fromScale(0.768, 0)}
-							ScaleType={Enum.ScaleType.Fit}
-							Size={UDim2.fromScale(0.333, 0.8)}
-						/>
-
-						<imagelabel
-							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-							BackgroundTransparency={1}
-							BorderColor3={Color3.fromRGB(0, 0, 0)}
-							BorderSizePixel={0}
-							Image={"rbxassetid://92942300911296"}
-							key={"Star"}
-							Position={UDim2.fromScale(0.768, 0)}
-							ScaleType={Enum.ScaleType.Fit}
-							Size={UDim2.fromScale(0.333, 0.8)}
-						/>
-
-						<imagelabel
-							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-							BackgroundTransparency={1}
-							BorderColor3={Color3.fromRGB(0, 0, 0)}
-							BorderSizePixel={0}
-							Image={"rbxassetid://92942300911296"}
-							key={"Star"}
-							Position={UDim2.fromScale(0.768, 0)}
-							ScaleType={Enum.ScaleType.Fit}
-							Size={UDim2.fromScale(0.333, 0.8)}
-						/>
-					</frame> */}
+							FontFace={
+								new Font(
+									"rbxasset://fonts/families/BuilderSans.json",
+									Enum.FontWeight.Bold,
+									Enum.FontStyle.Normal,
+								)
+							}
+							key={"1"}
+							Position={UDim2.fromScale(0.5, 0.49)}
+							Size={UDim2.fromScale(1, 1)}
+							Text={"OWNED"}
+							TextColor3={Color3.fromRGB(255, 255, 255)}
+							TextScaled={true}
+							TextWrapped={true}
+						>
+							<uistroke key={"1"} Thickness={5} />
+						</textlabel>
+					</textlabel>
 				</frame>
 
-				<imagelabel
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+				<imagelabel BackgroundTransparency={1} Image={props.image} Size={UDim2.fromScale(1, 1)} ZIndex={0} />
+
+				<textlabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					Image={props.image}
-					key={"ItemRender"}
-					Size={UDim2.fromScale(1, 1)}
-					ZIndex={0}
-				/>
-			</imagebutton>
+					FontFace={
+						new Font(
+							"rbxasset://fonts/families/BuilderSans.json",
+							Enum.FontWeight.Bold,
+							Enum.FontStyle.Normal,
+						)
+					}
+					key={"1"}
+					Position={UDim2.fromScale(0.5, 0.971)}
+					Size={UDim2.fromScale(0.551, 0.11)}
+					Text={`$${separateWithCommas(props.price)}`}
+					TextColor3={Color3.fromRGB(92, 255, 133)}
+					TextScaled={true}
+					TextWrapped={true}
+					ZIndex={16}
+					Visible={!owned}
+				>
+					<uistroke Color={Color3.fromRGB(23, 30, 52)} key={"1"} Thickness={4.6} />
+				</textlabel>
+			</AnimatedButton>
 		</frame>
 	);
 };
@@ -540,7 +567,9 @@ interface ShopProps {
 export const ShopComponent: React.FC<ShopProps> = (props) => {
 	const [visible, setVisible] = React.useState(props.visible);
 	const [selectedShop, setSelectedShop] = React.useState<keyof typeof SHOP_MENUS | "">("");
-	const [shopContent, setShopContent] = React.useState<Array<Exclude<Item, { type: "Potions" }> & { owned: boolean }>>([]);
+	const [shopContent, setShopContent] = React.useState<
+		Array<Exclude<Item, { type: "Potions" }> & { owned: boolean }>
+	>([]);
 	const [popInSz, popInMotion] = useMotion(UDim2.fromScale(0, 0));
 	const menuRef = React.createRef<Frame>();
 
@@ -599,10 +628,17 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 
 	React.useEffect(() => {
 		if (visible) {
-			popInMotion.spring(UDim2.fromScale(0.727, 0.606), springs.responsive);
+			popInMotion.spring(UDim2.fromScale(0.631, 0.704), springs.responsive);
 		} else {
 			popInMotion.immediate(UDim2.fromScale(0, 0));
-			setSelectedShop("");
+
+			const unsub = popInMotion.onComplete(() => {
+				setSelectedShop("");
+			});
+
+			return () => {
+				unsub();
+			};
 		}
 	}, [visible]);
 
@@ -635,9 +671,7 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 				uiController={props.uiController}
 				uiName={gameConstants.SHOP_UI}
 				menuRefToClose={menuRef}
-				onClick={() => {
-					setSelectedShop("");
-				}}
+				isMenuVisible={visible}
 			/>
 
 			<frame

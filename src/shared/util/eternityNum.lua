@@ -1,3 +1,5 @@
+--!optimize 2
+--!native
 --[[
 	Creator: @FoundForces
 	Name: EternityNum

@@ -1,0 +1,133 @@
+Date : 2025-02-21 12:02:17
+Directory : c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src
+Total : 92 files,  17543 codes, 1203 comments, 2267 blanks, all 21013 lines
+
+Languages
++----------------+------------+------------+------------+------------+------------+
+| language       | files      | code       | comment    | blank      | total      |
++----------------+------------+------------+------------+------------+------------+
+| TypeScript JSX |         24 |      9,806 |        320 |        907 |     11,033 |
+| TypeScript     |         61 |      5,879 |        843 |      1,158 |      7,880 |
+| Luau           |          7 |      1,858 |         40 |        202 |      2,100 |
++----------------+------------+------------+------------+------------+------------+
+
+Directories
++------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                                       | files      | code       | comment    | blank      | total      |
++------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                          |         92 |     17,543 |      1,203 |      2,267 |     21,013 |
+| client                                                                                                     |         41 |     12,543 |        546 |      1,377 |     14,466 |
+| client (Files)                                                                                             |          2 |          8 |          0 |          6 |         14 |
+| client\atoms                                                                                               |          1 |          4 |          1 |          2 |          7 |
+| client\components                                                                                          |          2 |        237 |         17 |         57 |        311 |
+| client\controllers                                                                                         |         10 |      2,477 |        190 |        396 |      3,063 |
+| client\hooks                                                                                               |          2 |         59 |         18 |         19 |         96 |
+| client\reactComponents                                                                                     |         23 |      9,747 |        320 |        895 |     10,962 |
+| client\utils                                                                                               |          1 |         11 |          0 |          2 |         13 |
+| server                                                                                                     |         17 |      2,015 |        142 |        414 |      2,571 |
+| server (Files)                                                                                             |          3 |         48 |          8 |         18 |         74 |
+| server\services                                                                                            |         14 |      1,967 |        134 |        396 |      2,497 |
+| shared                                                                                                     |         34 |      2,985 |        515 |        476 |      3,976 |
+| shared (Files)                                                                                             |          5 |        348 |         21 |         53 |        422 |
+| shared\config                                                                                              |         14 |        997 |         27 |         62 |      1,086 |
+| shared\util                                                                                                |         15 |      1,640 |        467 |        361 |      2,468 |
++------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++------------------------------------------------------------------------------------------------------------+----------------+------------+------------+------------+------------+
+| filename                                                                                                   | language       | code       | comment    | blank      | total      |
++------------------------------------------------------------------------------------------------------------+----------------+------------+------------+------------+------------+
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\atoms\inventoryAtoms.ts                    | TypeScript     |          4 |          1 |          2 |          7 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\components\boat.ts                         | TypeScript     |        178 |         17 |         45 |        240 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\components\treasure.tsx                    | TypeScript JSX |         59 |          0 |         12 |         71 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\autoDigController.ts           | TypeScript     |        247 |         43 |         45 |        335 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\detectorController.ts          | TypeScript     |        321 |         40 |         64 |        425 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\gamepassController.ts          | TypeScript     |         18 |          4 |          5 |         27 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\levelUpController.ts           | TypeScript     |         43 |          2 |          7 |         52 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\promptController.ts            | TypeScript     |        462 |         13 |         65 |        540 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\shopController.ts              | TypeScript     |        211 |          1 |         36 |        248 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\shovelController.ts            | TypeScript     |        712 |         63 |        128 |        903 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\treasureAnimationController.ts | TypeScript     |         28 |          0 |          5 |         33 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\uiController.ts                | TypeScript     |        216 |         19 |         21 |        256 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\zoneController.ts              | TypeScript     |        219 |          5 |         20 |        244 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\hooks\useMotion.ts                         | TypeScript     |         19 |          0 |          8 |         27 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\hooks\usePx.ts                             | TypeScript     |         40 |         18 |         11 |         69 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\network.ts                                 | TypeScript     |          3 |          0 |          2 |          5 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\boatShop.tsx               | TypeScript JSX |        430 |         55 |         34 |        519 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\boughtItemPopup.tsx        | TypeScript JSX |        137 |          2 |         19 |        158 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\canDigPopup.tsx            | TypeScript JSX |         33 |          1 |          8 |         42 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\dailyReward.tsx            | TypeScript JSX |        286 |          0 |         26 |        312 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\diggingBar.tsx             | TypeScript JSX |        453 |          8 |         61 |        522 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\gamepassShop.tsx           | TypeScript JSX |      2,171 |          9 |        172 |      2,352 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\isleEnterPopup.tsx         | TypeScript JSX |        259 |          7 |         27 |        293 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\itemAddedPopup.tsx         | TypeScript JSX |        157 |          2 |         19 |        178 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\itemViewport.tsx           | TypeScript JSX |         74 |         10 |         15 |         99 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\luckBar.tsx                | TypeScript JSX |        232 |          2 |         28 |        262 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\mainUi.tsx                 | TypeScript JSX |      2,486 |         96 |        167 |      2,749 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\playTimeRewards.tsx        | TypeScript JSX |        388 |          2 |         35 |        425 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\popups.tsx                 | TypeScript JSX |        140 |          5 |         14 |        159 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\richBillboardText.tsx      | TypeScript JSX |         42 |          0 |          5 |         47 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\rightSideMenu.tsx          | TypeScript JSX |        424 |         10 |         45 |        479 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\sell.tsx                   | TypeScript JSX |        364 |          0 |         39 |        403 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\shop.tsx                   | TypeScript JSX |        728 |         57 |         57 |        842 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\sidebar.tsx                | TypeScript JSX |        203 |          2 |         18 |        223 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\soldItemPopup.tsx          | TypeScript JSX |        148 |          2 |         19 |        169 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\targetCompass.tsx          | TypeScript JSX |        210 |          0 |         21 |        231 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\toolbar.tsx                | TypeScript JSX |        306 |         50 |         52 |        408 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\typeWritingBillboard.tsx   | TypeScript JSX |         48 |          0 |          8 |         56 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\volumeMuteButton.tsx       | TypeScript JSX |         28 |          0 |          6 |         34 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\runtime.client.ts                          | TypeScript     |          5 |          0 |          4 |          9 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\utils\springs.ts                           | TypeScript     |         11 |          0 |          2 |         13 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\network.ts                                 | TypeScript     |          3 |          0 |          2 |          5 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\profileTemplate.ts                         | TypeScript     |         40 |          8 |         13 |         61 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\runtime.server.ts                          | TypeScript     |          5 |          0 |          3 |          8 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\analyticsService.ts               | TypeScript     |         18 |          3 |          3 |         24 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\boatService.ts                    | TypeScript     |        175 |          8 |         30 |        213 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\detectorService.ts                | TypeScript     |        138 |         12 |         31 |        181 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\devproductService.ts              | TypeScript     |         90 |          0 |         18 |        108 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\gamepassService.ts                | TypeScript     |         69 |          6 |         15 |         90 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\inventoryService.ts               | TypeScript     |        430 |          6 |         85 |        521 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\leaderstatService.ts              | TypeScript     |         38 |          1 |          6 |         45 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\levelService.ts                   | TypeScript     |         87 |          0 |         19 |        106 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\moneyService.ts                   | TypeScript     |         42 |          3 |          8 |         53 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\profileService.ts                 | TypeScript     |         60 |          1 |         10 |         71 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\rewardsService.ts                 | TypeScript     |        127 |          2 |         20 |        149 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\shovelService.ts                  | TypeScript     |         47 |          0 |          8 |         55 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\targetService.ts                  | TypeScript     |        566 |         91 |        134 |        791 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\zoneService.ts                    | TypeScript     |         80 |          1 |          9 |         90 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\boatConfig.ts                       | TypeScript     |         61 |          0 |         12 |         73 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\dailyRewardConfig.ts                | TypeScript     |         11 |          1 |          3 |         15 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\devproducts.ts                      | TypeScript     |        108 |         16 |          6 |        130 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\mapConfig.d.ts                      | TypeScript     |          8 |          0 |          4 |         12 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\mapConfig.lua                       | Luau           |         71 |          1 |          2 |         74 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\metalDetectorConfig.d.ts            | TypeScript     |         13 |          0 |          5 |         18 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\metalDetectorConfig.lua             | Luau           |        124 |          1 |          1 |        126 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\potionConfig.ts                     | TypeScript     |         30 |          0 |          4 |         34 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\shopConfig.ts                       | TypeScript     |         52 |          0 |          3 |         55 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\shovelConfig.d.ts                   | TypeScript     |         11 |          0 |          5 |         16 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\shovelConfig.lua                    | Luau           |        105 |          1 |          1 |        107 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\targetConfig.d.ts                   | TypeScript     |         14 |          1 |          6 |         21 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\targetConfig.lua                    | Luau           |        365 |          6 |          4 |        375 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\timePlayedConfig.ts                 | TypeScript     |         24 |          0 |          6 |         30 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\constants.d.ts                             | TypeScript     |         61 |          1 |         18 |         80 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\constants.lua                              | Luau           |        118 |          5 |         14 |        137 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\network.ts                                 | TypeScript     |         98 |          2 |          6 |        106 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\networkTypes.ts                            | TypeScript     |         47 |         11 |         12 |         70 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\signals.ts                                 | TypeScript     |         24 |          2 |          3 |         29 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\attributeUtil.ts                      | TypeScript     |         11 |          0 |          2 |         13 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\castingUtil.ts                        | TypeScript     |         24 |         14 |          7 |         45 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\characterUtil.ts                      | TypeScript     |         41 |         19 |         11 |         71 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\crossPlatformUtil.ts                  | TypeScript     |         13 |          0 |          3 |         16 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\detectorUtil.ts                       | TypeScript     |         42 |         22 |         13 |         77 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\eternityNum.d.ts                      | TypeScript     |         56 |        282 |         62 |        400 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\eternityNum.lua                       | Luau           |      1,049 |         22 |        172 |      1,243 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\interval.d.ts                         | TypeScript     |          1 |          5 |          1 |          7 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\interval.luau                         | Luau           |         26 |          4 |          8 |         38 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\monetizationUtil.ts                   | TypeScript     |         26 |          9 |          6 |         41 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\nameUtil.ts                           | TypeScript     |         60 |          7 |         15 |         82 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\pather.ts                             | TypeScript     |        209 |         57 |         44 |        310 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\playerUtil.ts                         | TypeScript     |         19 |          3 |          5 |         27 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\targetUtil.ts                         | TypeScript     |         41 |         23 |          9 |         73 |
+| c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\vfxUtil.ts                            | TypeScript     |         22 |          0 |          3 |         25 |
+| Total                                                                                                      |                |     17,543 |      1,203 |      2,267 |     21,013 |
++------------------------------------------------------------------------------------------------------------+----------------+------------+------------+------------+------------+

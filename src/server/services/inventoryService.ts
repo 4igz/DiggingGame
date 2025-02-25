@@ -1,7 +1,7 @@
-import { Service, OnStart, OnTick } from "@flamework/core";
+import { Service, OnStart, OnTick, OnInit } from "@flamework/core";
 import { LoadedProfile, ProfileService } from "./profileService";
 import { Item, ItemType, Target, TargetItem } from "shared/networkTypes";
-import { Players, ReplicatedStorage, ServerStorage } from "@rbxts/services";
+import { CollectionService, Players, ReplicatedStorage, ServerStorage } from "@rbxts/services";
 import { Events, Functions } from "server/network";
 import { metalDetectorConfig, MetalDetectorModule } from "shared/config/metalDetectorConfig";
 import { shovelConfig, ShovelModule } from "shared/config/shovelConfig";
@@ -14,14 +14,34 @@ import { potionConfig } from "shared/config/potionConfig";
 import { interval } from "shared/util/interval";
 import { gameConstants } from "shared/constants";
 
-const DetectorFolder = ReplicatedStorage.WaitForChild("MetalDetectors") as Folder;
-const ShovelFolder = ReplicatedStorage.WaitForChild("Shovels") as Folder;
+const DetectorFolder = ServerStorage.WaitForChild("MetalDetectors") as Folder;
+const ShovelFolder = ServerStorage.WaitForChild("Shovels") as Folder;
 const TargetToolFolder = ServerStorage.WaitForChild("TargetTools") as Folder;
 const ShovelAccessoryFolder = ServerStorage.WaitForChild("ShovelAccessories") as Folder;
 
 type InventoryKeys<T> = {
 	[K in keyof T]: T[K] extends Array<string> | Array<TargetItem> ? K : never;
 }[keyof T];
+
+const inventoryConfigMap: Record<
+	ItemType,
+	{
+		inventoryKey: InventoryKeys<ProfileTemplate>;
+		config: TargetModule | ShovelModule | MetalDetectorModule | typeof boatConfig | typeof potionConfig;
+	}
+> = {
+	MetalDetectors: { inventoryKey: "detectorInventory", config: metalDetectorConfig },
+	Shovels: { inventoryKey: "shovelInventory", config: shovelConfig },
+	Target: { inventoryKey: "targetInventory", config: fullTargetConfig },
+	Boats: {
+		inventoryKey: "targetInventory",
+		config: boatConfig,
+	},
+	Potions: {
+		inventoryKey: "potionInventory",
+		config: potionConfig,
+	},
+};
 
 @Service({})
 export class InventoryService implements OnStart, OnTick {
@@ -30,25 +50,52 @@ export class InventoryService implements OnStart, OnTick {
 	constructor(private readonly profileService: ProfileService, private readonly moneyService: MoneyService) {}
 
 	onStart() {
-		const inventoryConfigMap: Record<
-			ItemType,
-			{
-				inventoryKey: InventoryKeys<ProfileTemplate>;
-				config: TargetModule | ShovelModule | MetalDetectorModule | typeof boatConfig | typeof potionConfig;
+		for (const tool of DetectorFolder.GetChildren()) {
+			if (tool.IsA("Tool")) {
+				if (metalDetectorConfig[tool.Name] === undefined) {
+					warn(`Detector tool ${tool.Name} is missing from the metalDetectorConfig`);
+					continue;
+				}
+				CollectionService.AddTag(tool, "Detector");
 			}
-		> = {
-			MetalDetectors: { inventoryKey: "detectorInventory", config: metalDetectorConfig },
-			Shovels: { inventoryKey: "shovelInventory", config: shovelConfig },
-			Target: { inventoryKey: "targetInventory", config: fullTargetConfig },
-			Boats: {
-				inventoryKey: "targetInventory",
-				config: boatConfig,
-			},
-			Potions: {
-				inventoryKey: "potionInventory",
-				config: potionConfig,
-			},
-		};
+		}
+
+		for (const tool of ShovelFolder.GetChildren()) {
+			if (tool.IsA("Tool")) {
+				if (shovelConfig[tool.Name] === undefined) {
+					warn(`Shovel tool ${tool.Name} is missing from the shovelConfig`);
+					continue;
+				}
+			}
+		}
+
+		Players.PlayerAdded.Connect((player) => {
+			player.CharacterAdded.Connect((character) => {
+				const toolMotorContainer = character.WaitForChild("RightHand") as BasePart;
+				const motor = new Instance("Motor6D");
+				motor.Enabled = false;
+				motor.Part0 = toolMotorContainer;
+				motor.Name = "ToolMotor";
+				motor.Parent = toolMotorContainer;
+
+				character.ChildAdded.Connect((child) => {
+					if (child.IsA("Tool") && shovelConfig[child.Name]) {
+						const handle = child.WaitForChild("Shovel") as BasePart;
+						motor.Part1 = handle;
+						motor.Enabled = true;
+
+						child.AncestryChanged.Once(() => {
+							motor.Part1 = undefined;
+							motor.Enabled = false;
+						});
+					}
+				});
+			});
+		});
+
+		Players.PlayerRemoving.Connect((player) => {
+			this.potionDrinkers = this.potionDrinkers.filter((p) => p !== player);
+		});
 
 		this.profileService.onProfileLoaded.Connect((player: Player, profile) => {
 			if (profile.Data.activePotions.size() > 0) {
@@ -267,34 +314,6 @@ export class InventoryService implements OnStart, OnTick {
 
 			return profile.Data.ownedBoats;
 		});
-
-		Players.PlayerAdded.Connect((player) => {
-			player.CharacterAdded.Connect((character) => {
-				const toolMotorContainer = character.WaitForChild("RightHand") as BasePart;
-				const motor = new Instance("Motor6D");
-				motor.Enabled = false;
-				motor.Part0 = toolMotorContainer;
-				motor.Name = "ToolMotor";
-				motor.Parent = toolMotorContainer;
-
-				character.ChildAdded.Connect((child) => {
-					if (child.IsA("Tool") && shovelConfig[child.Name]) {
-						const handle = child.WaitForChild("Shovel") as BasePart;
-						motor.Part1 = handle;
-						motor.Enabled = true;
-
-						child.AncestryChanged.Once(() => {
-							motor.Part1 = undefined;
-							motor.Enabled = false;
-						});
-					}
-				});
-			});
-
-			Players.PlayerRemoving.Connect((player) => {
-				this.potionDrinkers = this.potionDrinkers.filter((p) => p !== player);
-			});
-		});
 	}
 
 	private POTION_SEC_INTERVAL = interval(1);
@@ -399,6 +418,17 @@ export class InventoryService implements OnStart, OnTick {
 
 		if (profile.Data.equippedTreasure) {
 			this.addToolToBackpack(backpack, character, TargetToolFolder, profile.Data.equippedTreasure);
+		} else {
+			character.GetChildren().forEach((child) => {
+				if (child.IsA("Tool") && fullTargetConfig[child.Name]) {
+					child.Destroy();
+				}
+			});
+			backpack.GetChildren().forEach((child) => {
+				if (child.IsA("Tool") && fullTargetConfig[child.Name]) {
+					child.Destroy();
+				}
+			});
 		}
 	}
 
@@ -491,8 +521,17 @@ export class InventoryService implements OnStart, OnTick {
 		if (profile) {
 			const index = profile.Data.targetInventory.findIndex((invItem) => invItem.itemId === itemId);
 			if (index !== -1) {
+				const target = profile.Data.targetInventory[index];
 				profile.Data.targetInventory.remove(index);
 				Events.updateTreasureCount(player, profile.Data.targetInventory.size());
+
+				if (profile.Data.equippedTreasure === target.name) {
+					if (!profile.Data.targetInventory.find((item) => item.name === target.name)) {
+						profile.Data.equippedTreasure = "";
+						this.giveTools(player, profile);
+					}
+				}
+
 				this.profileService.setProfile(player, profile);
 			}
 		}

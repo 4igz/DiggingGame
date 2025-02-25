@@ -1,3 +1,5 @@
+//!optimize 2
+//!native
 import { Controller, OnRender, OnStart } from "@flamework/core";
 import { CollectionService, Players, ReplicatedStorage, TweenService } from "@rbxts/services";
 import { UiController } from "./uiController";
@@ -9,12 +11,13 @@ import { Events } from "client/network";
 import { ItemType } from "shared/networkTypes";
 import Object from "@rbxts/object-utils";
 
+const NPC_TAG = "NPC";
+
+let currentOpenMenu: string | undefined;
+const registeredShops = new Set<Instance>();
 @Controller({})
 export class ShopController implements OnStart, OnRender {
 	constructor(private readonly uiController: UiController) {}
-
-	private NPC_TAG = "NPC";
-	private currentOpenMenu: string | undefined;
 
 	onStart() {
 		const PROMPT_DIALOGS = {
@@ -28,9 +31,10 @@ export class ShopController implements OnStart, OnRender {
 			return acc;
 		}, {} as Record<keyof typeof PROMPT_DIALOGS, boolean>);
 
-		const AnimationFolder = ReplicatedStorage.WaitForChild("Animations");
+		const AnimationFolder = ReplicatedStorage.WaitForChild("Assets").WaitForChild("Animations");
 
 		const createShopPrompt = (part: BasePart, shopType: keyof typeof PROMPT_DIALOGS) => {
+			if (registeredShops.has(part)) return;
 			// Create a prompt that will open the sell ui when triggered
 			const prompt = new Instance("ProximityPrompt");
 			prompt.ActionText = "Open";
@@ -77,7 +81,7 @@ export class ShopController implements OnStart, OnRender {
 				idleTrack.Looped = true;
 				idleTrack.Play();
 
-				CollectionService.AddTag(npc, this.NPC_TAG);
+				CollectionService.AddTag(npc, NPC_TAG);
 
 				prompt.PromptShown.Connect(() => {
 					TweenService.Create(
@@ -105,7 +109,7 @@ export class ShopController implements OnStart, OnRender {
 				prompt.Triggered.Connect(() => {
 					prompt.Enabled = false;
 					talkTrack.Play();
-					this.currentOpenMenu = shopType;
+					currentOpenMenu = shopType;
 					if (dialogPlayed[shopType]) {
 						prompt.Enabled = true;
 						this.uiController.toggleUi(shopType as string);
@@ -119,6 +123,7 @@ export class ShopController implements OnStart, OnRender {
 							part,
 							onFinish: () => {
 								task.wait(0.5);
+								dialogRoot.unmount();
 								prompt.Enabled = true;
 								dialogPlayed[shopType] = true;
 								this.uiController.toggleUi(shopType as string);
@@ -126,6 +131,8 @@ export class ShopController implements OnStart, OnRender {
 						}),
 					);
 				});
+
+				registeredShops.add(part);
 			}
 		};
 
@@ -209,7 +216,7 @@ export class ShopController implements OnStart, OnRender {
 	}
 
 	onRender(): void {
-		if (this.currentOpenMenu) {
+		if (currentOpenMenu) {
 			const character = Players.LocalPlayer?.Character;
 			if (!character) return;
 			const position = character.GetPivot().Position;
@@ -218,8 +225,8 @@ export class ShopController implements OnStart, OnRender {
 				nearestNPC &&
 				nearestNPC.GetPivot().Position.sub(position).Magnitude > gameConstants.SHOP_PROMPT_RANGE * 1.2
 			) {
-				this.uiController.closeUi(this.currentOpenMenu);
-				this.currentOpenMenu = undefined;
+				this.uiController.closeUi(currentOpenMenu);
+				currentOpenMenu = undefined;
 			}
 		}
 	}
@@ -233,7 +240,7 @@ export class ShopController implements OnStart, OnRender {
 		let nearestNPC: Model | undefined;
 		let nearestDistance = math.huge;
 
-		for (const npcModel of CollectionService.GetTagged(this.NPC_TAG)) {
+		for (const npcModel of CollectionService.GetTagged(NPC_TAG)) {
 			if (!npcModel.IsA("Model")) continue;
 			const distance = npcModel.GetPivot().Position.sub(pos).Magnitude;
 			if (distance < nearestDistance) {

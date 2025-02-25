@@ -1,4 +1,4 @@
-import { Service, OnStart, OnTick } from "@flamework/core";
+import { Service, OnStart, OnTick, OnInit } from "@flamework/core";
 import { MarketplaceService, Players } from "@rbxts/services";
 import { getDevProduct, handlePurchase } from "shared/config/devproducts";
 import { Signals } from "shared/signals";
@@ -11,7 +11,7 @@ import { LevelService } from "./levelService";
 const SEC = interval(1);
 
 @Service({})
-export class DevproductService implements OnStart, OnTick {
+export class DevproductService implements OnStart, OnTick, OnInit {
 	private trackedServerLuckMultipliers = new Map<Player, number>();
 
 	constructor(private readonly profileService: ProfileService, private readonly levelService: LevelService) {}
@@ -29,18 +29,7 @@ export class DevproductService implements OnStart, OnTick {
 		return true;
 	}
 
-	public giveLuckMultiplier(player: Player, length: number) {
-		const timeLeft = (this.trackedServerLuckMultipliers.get(player) ?? 0) + length;
-
-		this.trackedServerLuckMultipliers.set(player, timeLeft);
-		Events.updateServerLuckMultiplier(player, 1, timeLeft);
-	}
-
-	onStart() {
-		Players.PlayerRemoving.Connect((player) => {
-			this.trackedServerLuckMultipliers.delete(player);
-		});
-
+	onInit(): void | Promise<void> {
 		MarketplaceService.ProcessReceipt = (receiptInfo) => {
 			const player = Players.GetPlayerByUserId(receiptInfo.PlayerId);
 			if (!player) return Enum.ProductPurchaseDecision.NotProcessedYet;
@@ -50,6 +39,20 @@ export class DevproductService implements OnStart, OnTick {
 
 			return handlePurchase(player, receiptInfo.ProductId);
 		};
+	}
+
+	onStart() {
+		Signals.buyServerLuckMultiplier.Connect((player) => {
+			const lmTimeLeft =
+				(this.trackedServerLuckMultipliers.get(player) ?? 0) + gameConstants.SERVER_LUCK_MULTIPLIER_DURATION;
+
+			this.trackedServerLuckMultipliers.set(player, lmTimeLeft);
+			Events.updateServerLuckMultiplier(player, 1, lmTimeLeft);
+		});
+
+		Players.PlayerRemoving.Connect((player) => {
+			this.trackedServerLuckMultipliers.delete(player);
+		});
 
 		Signals.resetSkills.Connect((player) => {
 			const profile = this.profileService.getProfile(player);
@@ -75,14 +78,6 @@ export class DevproductService implements OnStart, OnTick {
 			Events.updateMultiDigLevel(player, profile.Data.multiDigLevel);
 		});
 
-		Signals.buyServerLuckMultiplier.Connect((player) => {
-			const lmTimeLeft =
-				(this.trackedServerLuckMultipliers.get(player) ?? 0) + gameConstants.SERVER_LUCK_MULTIPLIER_DURATION;
-
-			this.trackedServerLuckMultipliers.set(player, lmTimeLeft);
-			Events.updateServerLuckMultiplier(player, 1, lmTimeLeft);
-		});
-
 		Functions.getMultiDigLevel.setCallback((player: Player) => {
 			return this.profileService.getProfile(player)?.Data.multiDigLevel ?? 0;
 		});
@@ -99,6 +94,13 @@ export class DevproductService implements OnStart, OnTick {
 				Events.updateServerLuckMultiplier(player, 1, timeLeft - 1);
 			}
 		}
+	}
+
+	public giveLuckMultiplier(player: Player, length: number) {
+		const timeLeft = (this.trackedServerLuckMultipliers.get(player) ?? 0) + length;
+
+		this.trackedServerLuckMultipliers.set(player, timeLeft);
+		Events.updateServerLuckMultiplier(player, 1, timeLeft);
 	}
 
 	serverLuckMultiplier(player: Player) {

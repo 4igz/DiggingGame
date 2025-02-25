@@ -1,3 +1,5 @@
+//!optimize 2
+//!native
 import React, { createRef, useEffect, useState } from "@rbxts/react";
 import { ZoneController } from "client/controllers/zoneController";
 import { useMotion } from "client/hooks/useMotion";
@@ -6,7 +8,7 @@ import { difficulties, mapConfig } from "shared/config/mapConfig";
 import { fullTargetConfig, trashConfig } from "shared/config/targetConfig";
 import { gameConstants } from "shared/constants";
 import { Rarity } from "shared/networkTypes";
-import { AnimatedButton } from "./mainUi";
+import { AnimatedButton } from "./inventory";
 
 interface ItemProps {
 	itemName: string;

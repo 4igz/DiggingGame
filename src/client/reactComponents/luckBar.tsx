@@ -1,7 +1,10 @@
+//!optimize 2
+//!native
 import Object from "@rbxts/object-utils";
 import React, { useEffect, useState } from "@rbxts/react";
 import { Players, ReplicatedStorage, RunService, SoundService, TweenService, Workspace } from "@rbxts/services";
 import { useMotion } from "client/hooks/useMotion";
+import { usePx } from "client/hooks/usePx";
 import { springs } from "client/utils/springs";
 import { gameConstants, ROLL_TYPES } from "shared/constants";
 import { Signals } from "shared/signals";
@@ -20,7 +23,7 @@ const camera = Workspace.CurrentCamera;
 const defaultFov = camera?.FieldOfView ?? 70;
 const fovGoal = 60;
 
-const vfx = ReplicatedStorage.WaitForChild("VFX") as Folder;
+const vfx = ReplicatedStorage.WaitForChild("Assets").WaitForChild("VFX") as Folder;
 const detectorEffectTextContainer = vfx.FindFirstChild("DetectorEffectTextVfx") as Part;
 const highRollVfx = vfx.FindFirstChild("HighRollContainer")?.FindFirstChild("fx") as Attachment;
 const lowRollVfx = vfx.FindFirstChild("LowRollContainer")?.FindFirstChild("fx") as Attachment;
@@ -37,6 +40,8 @@ export default function LuckBar(props: LuckBarProps) {
 	const [paused, setPaused] = useState(false);
 	const [startTime, setStartTime] = useState(0);
 	const [, fovMotion] = useMotion(defaultFov);
+
+	const px = usePx();
 
 	useEffect(() => {
 		fovMotion.onStep((value) => {
@@ -202,7 +207,7 @@ export default function LuckBar(props: LuckBarProps) {
 						BorderSizePixel={0}
 						key={"Luck Meter"}
 						Position={UDim2.fromScale(1.4, 0)}
-						Size={UDim2.fromOffset(100, 50)}
+						Size={UDim2.fromOffset(px(100), px(50))}
 						AnchorPoint={new Vector2(0, 0.5)}
 					>
 						<uilistlayout

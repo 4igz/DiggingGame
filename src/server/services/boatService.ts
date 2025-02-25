@@ -1,6 +1,6 @@
-import { Service, OnStart } from "@flamework/core";
+import { Service, OnStart, OnInit } from "@flamework/core";
 import Object from "@rbxts/object-utils";
-import { HttpService, PhysicsService, Players, ServerStorage, Workspace } from "@rbxts/services";
+import { CollectionService, HttpService, PhysicsService, Players, ServerStorage, Workspace } from "@rbxts/services";
 import { Events, Functions } from "server/network";
 import { mapConfig } from "shared/config/mapConfig";
 import { ProfileService } from "./profileService";
@@ -15,7 +15,11 @@ export class BoatService implements OnStart {
 	private boatOwners = new Map<string, Player>();
 	private boatModelFolder = ServerStorage.WaitForChild("BoatModels");
 
-	constructor(private readonly profileService: ProfileService) {
+	constructor(private readonly profileService: ProfileService) {}
+
+	onStart() {
+		const boatSpawnCooldown = interval(1);
+
 		PhysicsService.RegisterCollisionGroup(gameConstants.BOAT_COLGROUP);
 		PhysicsService.CollisionGroupSetCollidable(gameConstants.BOAT_COLGROUP, gameConstants.BOAT_COLGROUP, false); // Boats can't collide with another.
 
@@ -36,7 +40,7 @@ export class BoatService implements OnStart {
 
 		// Initialize boat spawns
 		for (const mapName of Object.keys(mapConfig)) {
-			const map = Workspace.FindFirstChild(mapName);
+			const map = CollectionService.GetTagged("Map").filter((instance) => instance.Name === mapName)[0];
 			if (!map) {
 				warn(`Couldn't find map for Map: ${mapName} when trying to create boat spawns.`);
 				continue;
@@ -82,10 +86,10 @@ export class BoatService implements OnStart {
 				}
 			}
 		}
-	}
 
-	onStart() {
-		const boatSpawnCooldown = interval(1);
+		Functions.getOwnsBoat.setCallback((player, boatId) => {
+			return this.boatOwners.get(boatId) === player;
+		});
 
 		Events.spawnBoat.connect((player, boatName) => {
 			if (!boatSpawnCooldown(player.UserId)) {
@@ -142,23 +146,19 @@ export class BoatService implements OnStart {
 				}
 			}
 		});
-
-		Functions.getOwnsBoat.setCallback((player, boatId) => {
-			return this.boatOwners.get(boatId) === player;
-		});
 	}
 
 	getUnoccupiedBoatSpawn(player: Player, mapName: keyof typeof mapConfig): PVInstance | undefined {
 		const boatSpawns = this.boatSpawns.get(mapName);
 		if (!boatSpawns) {
-			// This is a weird bug, but it's better to handle it just incase.
 			warn(`Couldn't find boat spawns for map: ${mapName}`);
 			return;
 		}
+
 		const playerPos = player.Character?.GetPivot().Position;
 		if (!playerPos) return;
-		// Loop through all existing boats, and see if any of them are colliding with boat spawns.
-		// Return the first unoccupied boat spawn.
+
+		// Only need special logic if there are boats already spawned
 		if (this.spawnedBoats.size() > 0) {
 			let closestSpawn: PVInstance | undefined;
 			let minDistance = math.huge;
@@ -167,6 +167,7 @@ export class BoatService implements OnStart {
 				const spawnPos = spawn.GetPivot().Position;
 				let occupied = false;
 
+				// Check if this spawn is occupied by any existing boat
 				for (const [, boat] of this.spawnedBoats) {
 					const boatPos = boat.GetPivot().Position;
 					const boatSize = boat.GetExtentsSize();
@@ -180,6 +181,7 @@ export class BoatService implements OnStart {
 					}
 				}
 
+				// If spawn isn't occupied, see if it’s closer than our current best
 				if (!occupied) {
 					const distance = spawnPos.sub(playerPos).Magnitude;
 					if (distance < minDistance) {
@@ -187,10 +189,12 @@ export class BoatService implements OnStart {
 						closestSpawn = spawn;
 					}
 				}
-
-				return closestSpawn;
 			}
+
+			// Return the best candidate after checking all spawns
+			return closestSpawn;
 		} else {
+			// If no boats are spawned, just pick the closest spawn
 			let closestSpawn: PVInstance | undefined;
 			let closestDistance = math.huge;
 

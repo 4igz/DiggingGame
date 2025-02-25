@@ -1,8 +1,9 @@
+//!optimize 2
+//!native
 import Signal from "@rbxts/goodsignal";
-import { Workspace, PathfindingService, Players, CollectionService } from "@rbxts/services";
+import { PathfindingService, Players, CollectionService } from "@rbxts/services";
 import { findPlayerHumanoid } from "./playerUtil";
 import { getCollidableExtentsSize } from "./characterUtil";
-import { last } from "@rbxts/sift/out/Array";
 import { gameConstants } from "shared/constants";
 
 const raycastParams = new RaycastParams();

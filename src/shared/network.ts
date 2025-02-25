@@ -1,5 +1,5 @@
 import { Networking } from "@flamework/networking";
-import { Item, ItemType, PlayerDigInfo, SkillName, Target } from "./networkTypes";
+import { Item, ItemType, NetworkedTarget, PlayerDigInfo, QuestProgress, SkillName, Target } from "./networkTypes";
 import { MetalDetector, metalDetectorConfig } from "./config/metalDetectorConfig";
 import { Shovel, shovelConfig } from "./config/shovelConfig";
 import { fullTargetConfig, targetConfig } from "./config/targetConfig";
@@ -7,6 +7,7 @@ import { gameConstants } from "./constants";
 import { mapConfig } from "./config/mapConfig";
 import { BoatConfig, boatConfig } from "./config/boatConfig";
 import { potionConfig } from "./config/potionConfig";
+import { questConfig, QuestRewardType } from "./config/questConfig";
 
 interface ClientToServerEvents {
 	dig: () => void;
@@ -30,10 +31,14 @@ interface ClientToServerEvents {
 	spawnBoat: (boatName: keyof typeof boatConfig) => void;
 	teleportSuccess: () => void;
 	claimDailyReward: () => void;
+	startNextQuest: (questName: keyof typeof questConfig) => void;
+
+	// Anti exploit event
+	selfReport: (flag: string) => void;
 }
 
 interface ServerToClientEvents {
-	beginDigging: (target: Target, digInfo: PlayerDigInfo) => void;
+	beginDigging: (target: NetworkedTarget, digInfo: PlayerDigInfo) => void;
 	endDiggingServer: (diggingComplete: boolean, itemId?: string) => void;
 	targetAdded: (itemName: keyof typeof fullTargetConfig, weight: number, mapName: keyof typeof mapConfig) => void;
 	updateLuckRoll: (roll: number, serverTime: number) => void;
@@ -68,12 +73,16 @@ interface ServerToClientEvents {
 	boughtItem: (itemName: string, itemType: ItemType, itemConfig: Shovel | MetalDetector | BoatConfig) => void;
 	purchaseFailed: (itemType: ItemType) => void;
 	teleportToIsland: (islandName: keyof typeof mapConfig) => void;
-	canDig(bool: boolean): void;
 	updateDailyStreak: (streak: number, lastClaimTime: number) => void;
 	updateInventorySize: (size: number) => void;
 	updateTreasureCount: (count: number) => void;
 	updateOwnedGamepasses: (ownedGamepasses: Map<keyof typeof gameConstants.GAMEPASS_IDS, boolean>) => void;
 	levelUp: (newLevel: number) => void;
+	boughtPlaytimeRewardSkip: () => void;
+	updateQuestProgress: (questProgress: Map<keyof typeof questConfig, QuestProgress>) => void;
+	profileReady: () => void;
+	replicateDig: (target: NetworkedTarget) => void;
+	endDigReplication: (itemId: string) => void;
 }
 
 interface ClientToServerFunctions {
@@ -97,6 +106,10 @@ interface ClientToServerFunctions {
 	getDailyStreak: () => number | undefined;
 	getInventorySize: () => number;
 	claimPlaytimeReward: (rewardIndex: number) => boolean;
+	getQuestProgress: () => Map<keyof typeof questConfig, QuestProgress> | undefined;
+	isQuestComplete: (questName: keyof typeof questConfig) => boolean;
+	requestTurnInQuest: (questName: keyof typeof questConfig) => boolean;
+	requestDigging: () => boolean;
 }
 
 interface ServerToClientFunctions {}

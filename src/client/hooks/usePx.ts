@@ -1,3 +1,5 @@
+//!optimize 2
+//!native
 import { useCamera, useDebounceState, useEventListener } from "@rbxts/pretty-react-hooks";
 import { useMemo } from "@rbxts/react";
 

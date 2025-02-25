@@ -1,4 +1,6 @@
-import { GuiService, UserInputService } from "@rbxts/services";
+//!optimize 2
+//!native
+import { UserInputService } from "@rbxts/services";
 
 type Platforms = "Mobile" | "PC" | "Console" | "Unknown";
 

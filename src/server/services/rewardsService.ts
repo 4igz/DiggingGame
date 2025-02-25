@@ -1,4 +1,4 @@
-import { Service, OnStart } from "@flamework/core";
+import { Service, OnStart, OnInit } from "@flamework/core";
 import { Events, Functions } from "server/network";
 import { ProfileService } from "./profileService";
 import { dailyRewards, DAILY_REWARD_COOLDOWN } from "shared/config/dailyRewardConfig";
@@ -7,26 +7,57 @@ import { DevproductService } from "./devproductService";
 import { Players } from "@rbxts/services";
 import { Reward } from "shared/networkTypes";
 import { timePlayedRewards } from "shared/config/timePlayedConfig";
+import { Signals } from "shared/signals";
 
 @Service({})
 export class DailyRewardsService implements OnStart {
 	private playerJoinTimes = new Map<Player, number>();
+	private playerRewardClaimMap = new Map<Player, Map<number, boolean | undefined>>();
 
 	constructor(
 		private readonly profileService: ProfileService,
 		private readonly moneyService: MoneyService,
 		private readonly devproductService: DevproductService,
-	) {
+	) {}
+
+	onStart() {
 		Players.PlayerAdded.Connect((player) => {
 			this.playerJoinTimes.set(player, tick());
+			this.playerRewardClaimMap.set(player, new Map());
 		});
 
 		Players.PlayerRemoving.Connect((player) => {
 			this.playerJoinTimes.delete(player);
+			this.playerRewardClaimMap.delete(player);
 		});
-	}
 
-	onStart() {
+		Signals.unlockPlaytimeRewards.Connect((player) => {
+			const plrJoinTime = this.playerJoinTimes.get(player);
+			this.playerJoinTimes.set(player, plrJoinTime! - timePlayedRewards[timePlayedRewards.size() - 1].unlockTime);
+			Events.boughtPlaytimeRewardSkip(player);
+		});
+
+		// Quickly test all rewards to make sure they're valid
+		for (const reward of [...dailyRewards, ...timePlayedRewards]) {
+			switch (reward.rewardType) {
+				case "Money":
+					assert(
+						reward.rewardAmount !== undefined,
+						"rewardAmount must be specfied on daily streak when rewardType is 'Money'`",
+					);
+					break;
+				case "LuckMultiplier":
+					if (reward.rewardLength === undefined) {
+						error(
+							`rewardLength must be specified on daily streak when rewardType is '${reward.rewardType}'`,
+						);
+					}
+					break;
+				default:
+					error(`Unknown reward type: ${reward.rewardType}`);
+			}
+		}
+
 		Events.claimDailyReward.connect((player) => {
 			const profile = this.profileService.getProfile(player);
 			if (!profile) return;
@@ -69,7 +100,18 @@ export class DailyRewardsService implements OnStart {
 				return false;
 			}
 
+			const claimed = this.playerRewardClaimMap.get(player)!;
+			if (claimed.get(rewardIndex)) {
+				return false;
+			}
+
+			claimed.set(rewardIndex, true);
 			this.claimReward(player, rewardCfg);
+
+			const claimedAll = timePlayedRewards.every((reward, index) => claimed.get(index));
+			if (claimedAll) {
+				this.playerRewardClaimMap.set(player, new Map());
+			}
 
 			return true;
 		});
@@ -103,27 +145,6 @@ export class DailyRewardsService implements OnStart {
 
 			return profile.Data.dailyStreak;
 		});
-
-		// Quickly test all rewards to make sure they're valid
-		for (const reward of [...dailyRewards, ...timePlayedRewards]) {
-			switch (reward.rewardType) {
-				case "Money":
-					assert(
-						reward.rewardAmount !== undefined,
-						"rewardAmount must be specfied on daily streak when rewardType is 'Money'`",
-					);
-					break;
-				case "LuckMultiplier":
-					if (reward.rewardLength === undefined) {
-						error(
-							`rewardLength must be specified on daily streak when rewardType is '${reward.rewardType}'`,
-						);
-					}
-					break;
-				default:
-					error(`Unknown reward type: ${reward.rewardType}`);
-			}
-		}
 	}
 
 	claimReward(player: Player, reward: Reward) {

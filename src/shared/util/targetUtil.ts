@@ -1,3 +1,5 @@
+//!optimize 2
+//!native
 import { mapConfig } from "shared/config/mapConfig"; // your map data
 import { targetConfig, trashConfig } from "shared/config/targetConfig";
 
@@ -67,6 +69,6 @@ export function getOneInXChance(itemName: string, mapName: string, addLuck: numb
 	const probability = itemWeight / totalWeight;
 
 	// Convert to "1 in X"
-	const oneInX = math.round(1 / probability);
+	const oneInX = math.ceil(1 / probability);
 	return oneInX;
 }

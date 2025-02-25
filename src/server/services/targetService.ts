@@ -1,6 +1,14 @@
-import { Service, OnStart, OnTick } from "@flamework/core";
-import { CollectionService, HttpService, PhysicsService, Players, RunService } from "@rbxts/services";
-import { Events } from "server/network";
+import { Service, OnStart, OnTick, OnInit } from "@flamework/core";
+import {
+	CollectionService,
+	HttpService,
+	PhysicsService,
+	Players,
+	ReplicatedStorage,
+	RunService,
+	ServerStorage,
+} from "@rbxts/services";
+import { Events, Functions } from "server/network";
 import { gameConstants } from "shared/constants";
 import {
 	fullTargetConfig,
@@ -27,6 +35,9 @@ import { ZoneService } from "./zoneService";
 
 const Maps = CollectionService.GetTagged("Map");
 
+const targetTools = ServerStorage.WaitForChild("TargetTools");
+const targetModels = ReplicatedStorage.WaitForChild("Assets").WaitForChild("TargetModels");
+
 @Service({})
 export class TargetService implements OnStart, OnTick {
 	// Here we store all active targets in a map to track them.
@@ -38,8 +49,6 @@ export class TargetService implements OnStart, OnTick {
 	private playerLastSuccessfulDigCooldown: Set<Player> = new Set();
 
 	private rng = new Random(tick());
-
-	private readonly SUCCESSFUL_DIG_COOLDOWN = 1; // Prevent player from immediately digging again after just finishing digging
 
 	constructor(
 		private readonly profileService: ProfileService,
@@ -66,15 +75,21 @@ export class TargetService implements OnStart, OnTick {
 			gameConstants.PLAYER_COLGROUP,
 			false,
 		);
+		PhysicsService.CollisionGroupSetCollidable(gameConstants.PLAYER_COLGROUP, gameConstants.PLAYER_COLGROUP, false);
 
-		this.zoneService.ChangedMap.Connect((player, zoneName) => {
-			const target = this.getPlayerTarget(player);
-			if (target && target.mapName !== zoneName) {
-				this.activeTargets = this.activeTargets.filter((t) => t !== target);
-				this.playerDiggingTargets.delete(player);
-				Events.targetDespawned.fire(player);
+		// Do some tests to make sure everything is in order.
+		// Check if each target has a corresponding tool in TargetTools
+		for (const model of targetModels.GetChildren()) {
+			const targetName = model.Name;
+			const tool = targetTools.FindFirstChild(targetName);
+			if (!tool) {
+				warn(`Target model '${targetName}' missing tool in ${targetTools.GetFullName()}`);
 			}
-		});
+			if (!fullTargetConfig[targetName]) {
+				warn(`Target model '${targetName}' missing config`);
+			}
+			CollectionService.AddTag(model, "Treasure");
+		}
 
 		Players.PlayerRemoving.Connect((player) => {
 			const target = this.getPlayerTarget(player);
@@ -82,10 +97,19 @@ export class TargetService implements OnStart, OnTick {
 				const idx = this.activeTargets.findIndex((t) => t === target);
 				if (idx !== -1) {
 					this.activeTargets.remove(idx);
-					Events.targetDespawned.fire(player);
-					this.playerDiggingTargets.delete(player);
-					this.playerDigCooldown.delete(player);
+					// TODO: Replication event to remove the target from listening clients
 				}
+				this.playerDiggingTargets.delete(player);
+				this.playerDigCooldown.delete(player);
+			}
+		});
+
+		this.zoneService.changedMap.Connect((player, zoneName) => {
+			const target = this.getPlayerTarget(player);
+			if (target && target.mapName !== zoneName) {
+				this.activeTargets = this.activeTargets.filter((t) => t !== target);
+				this.playerDiggingTargets.delete(player);
+				Events.targetDespawned.fire(player);
 			}
 		});
 
@@ -169,94 +193,6 @@ export class TargetService implements OnStart, OnTick {
 			Events.soldAllItems(player, count, total);
 		});
 
-		Events.endDiggingClient.connect((player) => {
-			this.endDigging(player);
-		});
-
-		Events.dig.connect((player) => {
-			// Check if the player is already digging
-			if (this.playerDigCooldown.get(player)) {
-				return;
-			}
-			if (this.playerLastSuccessfulDigCooldown.has(player)) return;
-
-			let target = this.getPlayerTarget(player);
-			if (!target) {
-				// If the player has no target, it's likely because they're digging without detecting anything first.
-				// Realistically, just digging in a a random spot would rarely yield anything of value.
-				// We'll spawn a target, but it won't be good.
-				const targetResult = this.createTarget(player, 0); // Spawn with 0 luck, which means it will be a trash item.
-				if (targetResult === undefined) return;
-				const [target, mapName] = targetResult;
-				const character = player.Character;
-				if (!character) return;
-
-				const map = Maps.find((map) => map.Name === mapName) as Folder | undefined;
-				if (!map) return;
-
-				const profile = this.profileService.getProfile(player);
-				if (!profile) return;
-
-				// Check if inventory is full before we try doing anything
-				if (profile.Data.targetInventory.size() >= profile.Data.inventorySize) {
-					// This should only happen if their data is out of sync with the server
-					// So sync them up here
-					Events.updateInventorySize(player, profile.Data.inventorySize);
-					return;
-				}
-
-				const shovel = character.FindFirstChild(profile.Data.equippedShovel) as Tool;
-
-				if (!shovel) {
-					// They are trying to dig without a shovel equipped.
-					// This is likely due to latency
-					return;
-				}
-
-				// Get the spawn bases from the map
-				const spawnBaseFolder = map.WaitForChild("SpawnBases");
-
-				const bases = spawnBaseFolder.GetChildren().filter((inst) => inst.IsA("BasePart"));
-				const position = findFurthestPointWithinRadius(
-					character.GetPivot().Position,
-					bases,
-					gameConstants.DIG_RANGE,
-				);
-				if (!position) {
-					// Can't dig here probably.
-					return;
-				}
-
-				target.position = position;
-				target.base = spawnBaseFolder.GetChildren()[
-					this.rng.NextInteger(0, spawnBaseFolder.GetChildren().size() - 1)
-				] as BasePart;
-				target.mapName = map.Name;
-
-				// Add the target to the active targets
-				this.activeTargets.push(target);
-				Events.targetSpawnSuccess.fire(player, position);
-
-				// Start digging immediately:
-				Signals.startDigging.Fire(player, target);
-				return;
-			}
-			const targetDistance = player.Character?.PrimaryPart?.Position.sub(target.position).Magnitude;
-			if (targetDistance === undefined) {
-				// This can happen when their character is destroyed, forex, they fell into void or reset.
-				this.endDigging(player);
-				return;
-			}
-			// Ensure exploiters can't dig from far away
-			if (targetDistance > gameConstants.DIG_RANGE * 2) {
-				this.endDigging(player);
-				// If we didn't end then their dig wouldn't end until the timer ran out and they would be stuck.
-				return;
-			}
-
-			this.dig(player, target);
-		});
-
 		Signals.detectorInitialized.Connect((player, detector) => {
 			detector.Unequipped.Connect(() => {
 				// Sometimes the player will unequip the detector to equip their shovel before they reach the location.
@@ -269,17 +205,115 @@ export class TargetService implements OnStart, OnTick {
 				// If they are too far away, we should end the dig.
 				const TOO_FAR_AWAY = gameConstants.DIG_RANGE * 4;
 				if (distance > TOO_FAR_AWAY && !this.playerDiggingTargets.get(player)) {
-					this.endDigging(player, false);
+					this.endDigging(player, true, false);
 					return;
 				}
 			});
 		});
+
+		Events.endDiggingClient.connect((player) => {
+			this.endDigging(player, true);
+		});
+
+		// "Dig Everywhere" dig request
+		Functions.requestDigging.setCallback((player) => {
+			if (this.playerLastSuccessfulDigCooldown.has(player)) return false;
+			if (this.getPlayerTarget(player)) return false; // Why requesting to dig if they already have a target?
+
+			const profile = this.profileService.getProfile(player);
+			if (!profile) return false;
+
+			// If the player has no target, it's likely because they're digging without detecting anything first.
+			// Realistically, just digging in a a random spot would rarely yield anything of value.
+			// We'll spawn a target, but it won't be good.
+			const targetResult = this.createTarget(player, profile.Data.luck * gameConstants.LUCK_MODIFIER, true); // Spawn with 0 luck, which means it will be a trash item.
+			if (targetResult === undefined) return false;
+			const [target, mapName] = targetResult;
+			const character = player.Character;
+			if (!character) return false;
+
+			const map = Maps.find((map) => map.Name === mapName) as Folder | undefined;
+			if (!map) return false;
+
+			// Check if inventory is full before we try doing anything
+			if (profile.Data.targetInventory.size() >= profile.Data.inventorySize) {
+				// This should only happen if their data is out of sync with the server
+				// So sync them up here
+				Events.updateInventorySize(player, profile.Data.inventorySize);
+				return false;
+			}
+
+			const shovel = character.FindFirstChild(profile.Data.equippedShovel) as Tool;
+
+			if (!shovel) {
+				// They are trying to dig without a shovel equipped.
+				// This is likely due to latency
+				return false;
+			}
+
+			const spawnBaseFolder = map.WaitForChild("SpawnBases");
+
+			const bases = spawnBaseFolder.GetChildren().filter((inst) => inst.IsA("BasePart"));
+			const position = findFurthestPointWithinRadius(
+				character.GetPivot().Position,
+				bases,
+				gameConstants.DIG_RANGE,
+			);
+			if (!position) {
+				// Can't dig here probably.
+				return false;
+			}
+
+			target.position = position;
+			target.mapName = map.Name;
+
+			// Add the target to the active targets
+			this.activeTargets.push(target);
+			Events.targetSpawnSuccess.fire(player, position);
+
+			// Start digging immediately:
+			Signals.startDigging.Fire(player, target);
+
+			return true;
+		});
+
+		Events.dig.connect((player) => {
+			if (this.playerDigCooldown.get(player)) {
+				return;
+			}
+
+			let target = this.getPlayerTarget(player);
+			if (!target) {
+				return;
+			}
+			const targetDistance = player.Character?.GetPivot().Position.sub(target.position).Magnitude;
+			if (targetDistance === undefined) {
+				// This can happen when their character is destroyed, forex, they fell into void or reset.
+				this.endDigging(player, true);
+				return;
+			}
+			// Ensure exploiters can't dig from far away
+			if (targetDistance > gameConstants.DIG_RANGE * 2) {
+				// If we didn't end here, then their dig wouldn't end until the timer ran out and they would be stuck.
+				this.endDigging(player, true);
+				return;
+			}
+
+			this.dig(player, target);
+		});
 	}
 
-	onTick(): void {
+	onTick(deltaTime: number): void {
 		for (const [_player, target] of this.playerDiggingTargets) {
 			if (!target.activelyDigging) continue;
-			target.digProgress = math.max(0, target.digProgress - target.maxProgress * gameConstants.BAR_DECREASE_RATE);
+			target.digProgress = math.max(
+				0,
+				target.digProgress - target.maxProgress * gameConstants.BAR_DECREASE_RATE * deltaTime,
+			);
+
+			if (target.digProgress <= 0) {
+				this.endDigging(target.owner, true);
+			}
 		}
 	}
 
@@ -303,6 +337,7 @@ export class TargetService implements OnStart, OnTick {
 			if (!targetResult) continue;
 			const [extraTarget] = targetResult;
 			this.inventoryService.addItemToTargetInventory(player, extraTarget);
+			this.levelService.addExperience(player, extraTarget.weight * 10);
 		}
 
 		// Add experience to the player
@@ -311,7 +346,7 @@ export class TargetService implements OnStart, OnTick {
 
 		this.playerLastSuccessfulDigCooldown.add(player);
 
-		task.delay(this.SUCCESSFUL_DIG_COOLDOWN, () => {
+		task.delay(gameConstants.SUCCESSFUL_DIG_COOLDOWN, () => {
 			this.playerLastSuccessfulDigCooldown.delete(player);
 		});
 	}
@@ -336,6 +371,15 @@ export class TargetService implements OnStart, OnTick {
 
 		target.digProgress += digStrength;
 		const maxProgress = target.maxProgress;
+		Events.replicateDig.except(player, {
+			itemId: target.itemId,
+			name: target.name,
+			position: target.position,
+			digProgress: target.digProgress,
+			owner: player,
+			mapName: target.mapName,
+			maxProgress,
+		});
 
 		// Check if the target is fully dug
 		if (target.digProgress >= maxProgress) {
@@ -353,24 +397,22 @@ export class TargetService implements OnStart, OnTick {
 		});
 	}
 
-	public endDigging(player: Player, reparentDetector = true) {
+	public endDigging(player: Player, failed: boolean = false, reparentDetector: boolean = true) {
 		const profile = this.profileService.getProfile(player);
 		if (!profile) return;
 		const target = this.getPlayerTarget(player);
 
-		if (target && this.activeTargets.includes(target)) {
+		const active = this.activeTargets.findIndex((t) => t === target);
+		if (target && active !== -1) {
 			// Remove the target from the active targets
-			const idx = this.activeTargets.findIndex((t) => t === target);
-			if (idx !== -1) {
-				this.activeTargets.remove(idx);
-				Events.targetDespawned.fire(player);
-			} else {
-				warn("Failed to remove target from active targets. Player may have dug up the same target twice.");
-			}
+			this.activeTargets.remove(active);
+			Events.targetDespawned.fire(player);
+			Events.endDigReplication.except(player, target.itemId);
 		}
+
 		this.playerDiggingTargets.delete(player);
 
-		Events.endDiggingServer.fire(player, target !== undefined, target?.itemId);
+		Events.endDiggingServer.fire(player, !failed, target?.itemId);
 		const character = player.Character;
 		if (!character || !character.Parent) return;
 		const humanoid = character.WaitForChild("Humanoid") as Humanoid;
@@ -379,7 +421,7 @@ export class TargetService implements OnStart, OnTick {
 		// Equip the metal detector back from their backpack and unequip the shovel
 		const backpack = player.WaitForChild("Backpack");
 		const shovel = character.FindFirstChild(profile.Data.equippedShovel);
-		if (shovel && shovel.IsA("Tool") && (target?.usedLuckMult ?? 0) > 0) {
+		if (shovel && shovel.IsA("Tool") && !target?.usingDigEverywhere && reparentDetector) {
 			shovel.Parent = backpack;
 			const detector = backpack.FindFirstChild(profile.Data.equippedDetector) as Tool;
 			if (detector) {
@@ -418,7 +460,7 @@ export class TargetService implements OnStart, OnTick {
 		const randomScaleFactor = 0.75 + math.random() * 0.25; // Essentially ensures that the target is within 0.75-1x the detectors range
 		const adjustedRadius = radius * randomScaleFactor;
 
-		const playerPosition = player.Character?.PrimaryPart?.Position;
+		const playerPosition = player.Character?.GetPivot().Position;
 
 		if (!playerPosition) return false;
 
@@ -437,9 +479,6 @@ export class TargetService implements OnStart, OnTick {
 		if (!target) return false;
 
 		target.position = position;
-		target.base = spawnBaseFolder.GetChildren()[
-			this.rng.NextInteger(0, spawnBaseFolder.GetChildren().size() - 1)
-		] as BasePart;
 		target.mapName = map.Name;
 
 		// Add the target to the active targets
@@ -451,7 +490,11 @@ export class TargetService implements OnStart, OnTick {
 		return true;
 	}
 
-	private createTarget(player: Player, luckMult: number): [Target, keyof typeof mapConfig] | undefined {
+	private createTarget(
+		player: Player,
+		luckMult: number,
+		includeTrash: boolean = false,
+	): [Target, keyof typeof mapConfig] | undefined {
 		const profile = this.profileService.getProfile(player);
 
 		if (!profile) {
@@ -473,7 +516,7 @@ export class TargetService implements OnStart, OnTick {
 
 		totalLuck = math.clamp(totalLuck, 0, 1);
 
-		const targetData = this.rollTarget(profile.Data.currentMap, totalLuck);
+		const targetData = this.rollTargetUsingWeights(profile.Data.currentMap, totalLuck, includeTrash);
 
 		if (!targetData) {
 			return;
@@ -485,9 +528,9 @@ export class TargetService implements OnStart, OnTick {
 		const weightRange = targetConfig.baseWeight.Max - targetConfig.baseWeight.Min;
 		const adjustedWeight = targetConfig.baseWeight.Min + weightRange * totalLuck;
 		const weight = this.rng.NextNumber(targetConfig.baseWeight.Min, adjustedWeight);
-		const maxProgress = weight * 20;
+		const maxProgress = weight * gameConstants.DIG_PROGRESS_MULTIPLIER;
 
-		const targetInstance = {
+		const targetInstance: Target = {
 			...targetConfig,
 			name,
 			position: new Vector3(),
@@ -497,20 +540,20 @@ export class TargetService implements OnStart, OnTick {
 			activelyDigging: false,
 			itemId: HttpService.GenerateGUID(),
 
-			// We dont use these unless they are assigned and I don't want to fight the typechecker with partial types
-			base: undefined as unknown as BasePart,
 			mapName: profile.Data.currentMap,
 
 			usedLuckMult: luckMult,
 			owner: player,
+			usingDigEverywhere: includeTrash,
 		};
 
 		return [targetInstance, profile.Data.currentMap];
 	}
 
-	private rollTarget(
+	private rollTargetUsingWeights(
 		currentMap: keyof typeof mapConfig,
 		addLuck: number,
+		includeTrash: boolean,
 	): [keyof typeof fullTargetConfig, TargetConfig] | undefined {
 		// Retrieve the player's profile
 		// Retrieve the map data based on the player's current map
@@ -524,7 +567,7 @@ export class TargetService implements OnStart, OnTick {
 		const cumulativeMap = new Map<keyof typeof fullTargetConfig, number>();
 
 		// If luck is 0, they are getting trash buddy
-		const cfg = addLuck > 0 ? targetConfig : trashConfig;
+		const cfg = includeTrash ? fullTargetConfig : targetConfig;
 
 		// Adjust weights with scaling
 		for (const [name, targetInfo] of pairs(cfg)) {
@@ -572,136 +615,5 @@ export class TargetService implements OnStart, OnTick {
 
 		// Return the selected target and its configuration
 		return [selectedTarget, cfg[selectedTarget]];
-	}
-
-	private _rollTarget2(
-		currentMap: keyof typeof mapConfig,
-		addLuck: number,
-	): [keyof typeof fullTargetConfig, TargetConfig] | undefined {
-		// 1) Retrieve the map data
-		const mapData = mapConfig[currentMap];
-		if (!mapData || !mapData.targetList) {
-			return undefined;
-		}
-
-		// If luck is 0, they are getting "trash" items, else normal items
-		const cfg = addLuck > 0 ? targetConfig : trashConfig;
-
-		// 2) Compute each item's weight and build a cumulative sum
-		let totalWeight = 0;
-		const cumulativeMap = new Map<keyof typeof fullTargetConfig, number>();
-
-		for (const [name, targetInfo] of pairs(cfg)) {
-			// Skip items not in this map’s targetList
-			if (!mapData.targetList.includes(name)) continue;
-
-			// Example formula: weight = (1 / rarity) * addLuck
-			// (Feel free to tweak or clamp addLuck as needed.)
-			const weight = (1 / targetInfo.rarity) * (addLuck > 0 ? addLuck : 1);
-
-			if (weight <= 0) continue; // Avoid weird edge cases
-
-			totalWeight += weight;
-			cumulativeMap.set(name, totalWeight);
-		}
-
-		if (cumulativeMap.size() === 0) {
-			warn("No valid targets for the map:", currentMap);
-			return undefined;
-		}
-
-		// 3) Roll a random number in [0, totalWeight)
-		const roll = this.rng.NextNumber(0, totalWeight);
-
-		// 4) Find the first item whose cumulative weight is >= roll
-		// Convert to an array, then sort ascending by the cumulative sum
-		let sortedCumulative: [keyof typeof fullTargetConfig, number][] = [...Object.entries(cumulativeMap)];
-		sortedCumulative = Sift.Array.sort(sortedCumulative, (a, b) => a[1] > b[1]);
-
-		let selectedTarget: keyof typeof fullTargetConfig | undefined;
-
-		for (const [name, cumulative] of sortedCumulative) {
-			if (roll <= cumulative) {
-				selectedTarget = name;
-				break;
-			}
-		}
-
-		if (!selectedTarget) {
-			// Theoretically shouldn't happen if totalWeight is correct,
-			// but just in case:
-			warn("Roll failed to match any target, roll =", roll);
-			return undefined;
-		}
-
-		// 5) Return the chosen item + config
-		return [selectedTarget, cfg[selectedTarget]];
-	}
-
-	private rollTargetWithLuck(
-		currentMap: keyof typeof mapConfig,
-		luck: number = 1,
-	): [string, TargetConfig] | undefined {
-		// Luck should be a positive number from 1 -> ∞ or 0 if rolling trash items.
-		if ((luck < 1 && luck > 0) || luck < 0) {
-			warn("Potentially invalid luck value:", luck);
-		}
-
-		// Retrieve the player's profile
-		// Retrieve the map data based on the player's current map
-		const mapData = mapConfig[currentMap];
-		if (!mapData || !mapData.targetList) {
-			return undefined;
-		}
-		// 1) Build a map of itemName → weight = (1 / rarity).
-		//    Also accumulate totalWeight for all items.
-		let totalWeight = 0;
-		const weightMap = new Map<string, number>();
-
-		let mapTargets = Sift.Array.shuffle(mapData.targetList);
-		if (luck > 0) {
-			mapTargets = mapTargets.filter((name) => targetConfig[name] !== undefined); // Filter out trash items
-		}
-
-		const targets: Record<string, TargetConfig> = {};
-
-		mapTargets.forEach((element: string) => {
-			targets[element] = fullTargetConfig[element];
-		});
-
-		for (const [itemName, config] of Object.entries(targets)) {
-			if (config.rarity <= 0) {
-				// Edge case: avoid dividing by zero or negative
-				continue;
-			}
-			const weight = 1 / config.rarity;
-			weightMap.set(itemName, weight);
-			totalWeight += weight;
-		}
-
-		// 2) Generate a random float [0, totalWeight], then divide by luck
-		const rawRoll = math.random() * totalWeight;
-		const scaledRoll = rawRoll / luck;
-
-		// 3) We want to find an item whose (weight) is > scaledRoll,
-		//    but among those, it has the smallest weight.
-		//    (Same logic as your Lua code.)
-		let chosenItem: string | undefined = undefined;
-		let smallestWeightAboveRoll = math.huge;
-
-		for (const [itemName, weight] of Object.entries(weightMap)) {
-			if (scaledRoll < weight && weight < smallestWeightAboveRoll) {
-				smallestWeightAboveRoll = weight;
-				chosenItem = itemName;
-			}
-		}
-
-		// 4) If nothing matched, it means scaledRoll was bigger than all item weights
-		if (chosenItem === undefined) {
-			return undefined;
-		}
-
-		// Return the item name + the config
-		return [chosenItem, targets[chosenItem]];
 	}
 }

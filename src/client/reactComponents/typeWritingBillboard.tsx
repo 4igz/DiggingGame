@@ -1,3 +1,5 @@
+//!optimize 2
+//!native
 import React, { useEffect, useState } from "@rbxts/react";
 
 interface TypewriterBillboardProps {
@@ -23,13 +25,14 @@ const TypewriterBillboard: React.FC<TypewriterBillboardProps> = (props) => {
 				setDisplayedText(props.text.sub(0, index));
 				task.wait(interval);
 			}
-			if (props.onFinish) {
-				props.onFinish();
-				setDisplayedText("");
-			}
+			task.defer(() => {
+				props.onFinish?.();
+			});
 		});
 
-		return () => task.cancel(typewriterTask);
+		return () => {
+			if (coroutine.status(typewriterTask) === "running") task.cancel(typewriterTask);
+		};
 	}, [props.text, props.typingSpeed, props.resetTrigger]);
 
 	return (

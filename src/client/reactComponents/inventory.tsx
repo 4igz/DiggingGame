@@ -1,4 +1,6 @@
-import React, { createRef, Dispatch, SetStateAction, useEffect, useState } from "@rbxts/react";
+//!optimize 2
+//!native
+import React, { createRef, Dispatch, useEffect, useState } from "@rbxts/react";
 import { UiController } from "client/controllers/uiController";
 import { gameConstants } from "shared/constants";
 import { Item, type ItemType, Rarity, SkillName } from "shared/networkTypes";
@@ -20,6 +22,7 @@ import { atom } from "@rbxts/charm";
 import { inventorySizeAtom, treasureCountAtom } from "client/atoms/inventoryAtoms";
 import { Signals } from "shared/signals";
 import { GamepassController } from "client/controllers/gamepassController";
+import { getOrderFromRarity } from "shared/util/rarityUtil";
 
 export function capitalizeWords(str: string): string {
 	return str
@@ -129,7 +132,6 @@ interface GenericItemProps {
 	itemType: Exclude<ItemType, "Target">;
 	stats: ItemStat[]; // List of stats to display
 	isEquipped: boolean;
-	count: number;
 }
 
 const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
@@ -138,6 +140,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 	const [isPressed, setPressed] = React.useState(false);
 	const [size, sizeMotion] = useMotion(1);
 	const [MIN_SCALE, MAX_SCALE] = [0.95, 1.05];
+	const [orderModifier, setOrderModifier] = React.useState(0);
 
 	useEffect(() => {
 		// sizeMotion.spring(isHovered ? START_SZ.add(SZ_INC) : START_SZ, springs.bubbly);
@@ -148,61 +151,45 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 	// 	sizeMotion.spring(isPressed ? MIN_SCALE : isHovered ? MAX_SCALE : 1, springs.bubbly);
 	// }, [isPressed]);
 
+	useEffect(() => {
+		// Get either strength or luck stat and set the order modifier based on that
+		const stat = stats.find((s) => s.key === "strength" || s.key === "luck");
+		if (stat) {
+			setOrderModifier(tonumber(stat.value) ?? 0);
+		}
+	}, []);
+
 	return (
 		<frame
+			AnchorPoint={new Vector2(0.5, 0.5)}
 			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 			BackgroundTransparency={1}
 			BorderColor3={Color3.fromRGB(0, 0, 0)}
 			BorderSizePixel={0}
-			LayoutOrder={
-				rarity === "Secret"
-					? 1
-					: rarity === "Mythical"
-					? 2
-					: rarity === "Legendary"
-					? 3
-					: rarity === "Rare"
-					? 4
-					: rarity === "Uncommon"
-					? 5
-					: 6
-			}
+			LayoutOrder={getOrderFromRarity(rarity, orderModifier)}
 			key={"Item"}
 			Position={UDim2.fromScale(0, 0.5)}
 			Size={size.map((s) => {
 				return UDim2.fromScale(0.33 * s, 1.01 * s);
 			})}
-			AnchorPoint={new Vector2(0.5, 0.5)}
 		>
-			{/* For some reason this constraint breaks the automatic scaling? */}
-			{/* <uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.709} /> */}
-
-			<imagelabel
-				Image={"rbxassetid://131799908550131"}
-				Size={UDim2.fromScale(0.25, 0.2)}
-				BackgroundTransparency={1}
-				Visible={isEquipped}
-				ZIndex={10}
-				AnchorPoint={new Vector2(1, 0)}
-				Position={new UDim2(1, -10, 0, 10)}
-			/>
-
 			<imagebutton
+				Active={true}
 				AnchorPoint={new Vector2(0.5, 0.5)}
 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 				BackgroundTransparency={1}
 				BorderColor3={Color3.fromRGB(0, 0, 0)}
 				BorderSizePixel={0}
-				Image={gameConstants.RARITY_BACKGROUND_IMAGES[rarity]}
+				Image={gameConstants.RARITY_BACKGROUND_IMAGE}
+				ImageColor3={gameConstants.RARITY_COLORS[rarity]}
 				key={"Item Container"}
 				Position={UDim2.fromScale(0.5, 0.5)}
 				Size={UDim2.fromScale(1, 0.949)}
-				Active={!isEquipped}
 				Event={{
 					MouseButton1Click: () => {
 						// Equip the item
 						if (itemType === "Shovels" || itemType === "MetalDetectors") {
-							Events.equipItem(itemType as Exclude<Exclude<ItemType, "Target">, "Boats">, itemName);
+							Events.equipItem(itemType as Exclude<ItemType, "Target" | "Boats">, itemName);
 						} else if (itemType === "Potions") {
 							Events.drinkPotion(itemName);
 						}
@@ -214,7 +201,9 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 				}}
 			>
 				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.748} />
-				<imagelabel Image={itemImage} Size={UDim2.fromScale(1, 1)} BackgroundTransparency={1} />
+
+				<imagelabel BackgroundTransparency={1} Image={itemImage} key={"2"} Size={UDim2.fromScale(1, 1)} />
+
 				<frame
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
@@ -222,7 +211,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 					BorderSizePixel={0}
 					key={"Stats"}
 					Position={UDim2.fromScale(0.0923, 0.069)}
-					Size={UDim2.fromScale(0.472, 0.374)}
+					Size={UDim2.fromScale(0.446, 0.353)}
 				>
 					<uilistlayout
 						key={"UIListLayout"}
@@ -238,12 +227,12 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 								BorderColor3={Color3.fromRGB(0, 0, 0)}
 								BorderSizePixel={0}
 								key={stat.key}
-								Size={UDim2.fromScale(0.902, 0.27)}
+								Size={UDim2.fromScale(0.902, 0.4)}
 							>
 								<uilistlayout
 									key={"UIListLayout"}
 									FillDirection={Enum.FillDirection.Horizontal}
-									Padding={new UDim(0.1, 0)}
+									Padding={new UDim(0.05, 0)}
 									SortOrder={Enum.SortOrder.LayoutOrder}
 									VerticalAlignment={Enum.VerticalAlignment.Center}
 								/>
@@ -253,12 +242,23 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 									BackgroundTransparency={1}
 									BorderColor3={Color3.fromRGB(0, 0, 0)}
 									BorderSizePixel={0}
-									Image={stat.icon ?? "rbxassetid://100052274681629"}
 									key={"Icon"}
 									Position={UDim2.fromScale(0.287, 0.0263)}
 									ScaleType={Enum.ScaleType.Fit}
 									Size={UDim2.fromScale(0.3, 0.947)}
-								/>
+								>
+									<imagelabel
+										BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+										BackgroundTransparency={1}
+										BorderColor3={Color3.fromRGB(0, 0, 0)}
+										BorderSizePixel={0}
+										Image={stat.icon ?? "rbxassetid://85733831609212"}
+										key={"Icon"}
+										Position={UDim2.fromScale(-0.115, -0.0498)}
+										ScaleType={Enum.ScaleType.Fit}
+										Size={UDim2.fromScale(1.17, 1.05)}
+									/>
+								</imagelabel>
 
 								<textlabel
 									AnchorPoint={new Vector2(0.5, 0.5)}
@@ -276,13 +276,13 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 									key={"Amount"}
 									Position={UDim2.fromScale(0.808, 0.382)}
 									Size={UDim2.fromScale(1.02, 0.763)}
-									Text={`x${string.format("%.1f", stat.value)}`}
+									Text={`x${shortenNumber(tonumber(stat.value) ?? 0)}`}
 									TextColor3={Color3.fromRGB(255, 255, 255)}
 									TextScaled={true}
 									TextWrapped={true}
 									TextXAlignment={Enum.TextXAlignment.Left}
 								>
-									<uistroke key={"UIStroke"} Thickness={2} />
+									<uistroke key={"UIStroke"} Thickness={3} />
 
 									<uipadding
 										key={"UIPadding"}
@@ -294,6 +294,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 						);
 					})}
 				</frame>
+
 				<frame
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
@@ -313,6 +314,12 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 						Size={UDim2.fromScale(0.958, 0.533)}
 						ZIndex={2}
 					>
+						<uilistlayout
+							key={"UIListLayout"}
+							SortOrder={Enum.SortOrder.LayoutOrder}
+							VerticalAlignment={Enum.VerticalAlignment.Bottom}
+						/>
+
 						<textlabel
 							AnchorPoint={new Vector2(0.5, 0.5)}
 							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -324,19 +331,34 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							Position={UDim2.fromScale(0.508, 0.26)}
 							Size={UDim2.fromScale(1.02, 0.438)}
 							Text={props.rarity}
-							TextColor3={gameConstants.RARITY_COLORS[props.rarity]}
+							TextColor3={Color3.fromRGB(0, 0, 0)}
 							TextScaled={true}
 							TextWrapped={true}
 							TextXAlignment={Enum.TextXAlignment.Right}
 						>
-							<uistroke key={"UIStroke"} Thickness={2} />
-						</textlabel>
+							<uistroke key={"UIStroke"} Thickness={1.9} />
 
-						<uilistlayout
-							key={"UIListLayout"}
-							SortOrder={Enum.SortOrder.LayoutOrder}
-							VerticalAlignment={Enum.VerticalAlignment.Bottom}
-						/>
+							<textlabel
+								AnchorPoint={new Vector2(0.5, 0.5)}
+								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+								BackgroundTransparency={1}
+								BorderColor3={Color3.fromRGB(0, 0, 0)}
+								BorderSizePixel={0}
+								FontFace={
+									new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+								}
+								key={"Rarity"}
+								Position={UDim2.fromScale(0.5, 0.43)}
+								Size={UDim2.fromScale(1, 1)}
+								Text={props.rarity}
+								TextColor3={gameConstants.RARITY_COLORS[props.rarity]}
+								TextScaled={true}
+								TextWrapped={true}
+								TextXAlignment={Enum.TextXAlignment.Right}
+							>
+								<uistroke key={"UIStroke"} Thickness={1.9} />
+							</textlabel>
+						</textlabel>
 
 						<textlabel
 							AnchorPoint={new Vector2(0.5, 0.5)}
@@ -355,65 +377,117 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							TextWrapped={true}
 							TextXAlignment={Enum.TextXAlignment.Right}
 						>
-							<uistroke key={"UIStroke"} Thickness={2} />
+							<uistroke key={"UIStroke"} Thickness={3} />
+
+							<textlabel
+								AnchorPoint={new Vector2(0.5, 0.5)}
+								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+								BackgroundTransparency={1}
+								BorderColor3={Color3.fromRGB(0, 0, 0)}
+								BorderSizePixel={0}
+								FontFace={
+									new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+								}
+								LayoutOrder={1}
+								key={"Name"}
+								Position={UDim2.fromScale(0.5, 0.45)}
+								Size={UDim2.fromScale(1, 1)}
+								Text={spaceWords(props.itemName)}
+								TextColor3={Color3.fromRGB(255, 255, 255)}
+								TextScaled={true}
+								TextWrapped={true}
+								TextXAlignment={Enum.TextXAlignment.Right}
+								Visible={true}
+							>
+								<uistroke key={"UIStroke"} Thickness={3} />
+							</textlabel>
 						</textlabel>
 					</frame>
-
-					{/* <frame
-										BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-										BackgroundTransparency={1}
-										BorderColor3={Color3.fromRGB(0, 0, 0)}
-										BorderSizePixel={0}
-										key={"Rating"}
-										Position={UDim2.fromScale(0.586, 0.13)}
-										Size={UDim2.fromScale(0.4, 0.333)}
-									>
-										<uilistlayout
-											key={"UIListLayout"}
-											FillDirection={Enum.FillDirection.Horizontal}
-											HorizontalAlignment={Enum.HorizontalAlignment.Right}
-											SortOrder={Enum.SortOrder.LayoutOrder}
-											VerticalAlignment={Enum.VerticalAlignment.Center}
-										/>
-				
-										<imagelabel
-											BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-											BackgroundTransparency={1}
-											BorderColor3={Color3.fromRGB(0, 0, 0)}
-											BorderSizePixel={0}
-											Image={"rbxassetid://92942300911296"}
-											key={"Star"}
-											Position={UDim2.fromScale(0.768, 0)}
-											ScaleType={Enum.ScaleType.Fit}
-											Size={UDim2.fromScale(0.333, 0.8)}
-										/>
-				
-										<imagelabel
-											BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-											BackgroundTransparency={1}
-											BorderColor3={Color3.fromRGB(0, 0, 0)}
-											BorderSizePixel={0}
-											Image={"rbxassetid://92942300911296"}
-											key={"Star"}
-											Position={UDim2.fromScale(0.768, 0)}
-											ScaleType={Enum.ScaleType.Fit}
-											Size={UDim2.fromScale(0.333, 0.8)}
-										/>
-				
-										<imagelabel
-											BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-											BackgroundTransparency={1}
-											BorderColor3={Color3.fromRGB(0, 0, 0)}
-											BorderSizePixel={0}
-											Image={"rbxassetid://92942300911296"}
-											key={"Star"}
-											Position={UDim2.fromScale(0.768, 0)}
-											ScaleType={Enum.ScaleType.Fit}
-											Size={UDim2.fromScale(0.333, 0.8)}
-										/>
-									</frame> */}
 				</frame>
 			</imagebutton>
+
+			<frame
+				AnchorPoint={new Vector2(0.5, 0.5)}
+				BackgroundColor3={Color3.fromRGB(0, 0, 0)}
+				BackgroundTransparency={0.45}
+				BorderSizePixel={0}
+				key={"1"}
+				Position={UDim2.fromScale(0.5, 0.5)}
+				Size={UDim2.fromScale(1, 0.949)}
+				ZIndex={15}
+				Visible={isEquipped}
+			>
+				<textlabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundTransparency={1}
+					FontFace={
+						new Font(
+							"rbxasset://fonts/families/BuilderSans.json",
+							Enum.FontWeight.Bold,
+							Enum.FontStyle.Normal,
+						)
+					}
+					key={"1"}
+					Position={UDim2.fromScale(0.508, 0.599)}
+					Size={UDim2.fromScale(0.777, 0.777)}
+					Text={"EQUIPPED"}
+					TextColor3={Color3.fromRGB(23, 30, 52)}
+					TextScaled={true}
+					TextWrapped={true}
+					ZIndex={11}
+				>
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						FontFace={
+							new Font(
+								"rbxasset://fonts/families/BuilderSans.json",
+								Enum.FontWeight.Bold,
+								Enum.FontStyle.Normal,
+							)
+						}
+						key={"1"}
+						Position={UDim2.fromScale(0.5, 0.46)}
+						Size={UDim2.fromScale(1, 1)}
+						Text={"EQUIPPED"}
+						TextColor3={Color3.fromRGB(255, 255, 255)}
+						TextScaled={true}
+						TextWrapped={true}
+						ZIndex={11}
+					>
+						<uistroke Color={Color3.fromRGB(23, 30, 52)} key={"1"} Thickness={5} />
+
+						<uigradient
+							key={"UIGradient"}
+							Color={
+								new ColorSequence([
+									new ColorSequenceKeypoint(0, Color3.fromRGB(169, 255, 208)),
+									new ColorSequenceKeypoint(1, Color3.fromRGB(93, 255, 93)),
+								])
+							}
+							Rotation={90}
+						/>
+					</textlabel>
+
+					<uistroke Color={Color3.fromRGB(23, 30, 52)} key={"1"} Thickness={5} />
+				</textlabel>
+
+				<uicorner key={"UICorner"} CornerRadius={new UDim(0.1, 0)} />
+
+				<imagelabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					Image={"rbxassetid://114978900536475"}
+					key={"Check"}
+					Position={UDim2.fromScale(0.653, 0.426)}
+					ScaleType={Enum.ScaleType.Fit}
+					Size={UDim2.fromScale(0.406, 0.253)}
+					SliceCenter={new Rect(100, 259, 901, 259)}
+				/>
+			</frame>
 		</frame>
 	);
 };
@@ -439,6 +513,7 @@ const TreasureItemComponent: React.FC<TreasureItemComponentProps> = ({
 }) => {
 	return (
 		<AnimatedButton
+			layoutOrder={getOrderFromRarity(rarity)}
 			position={UDim2.fromScale(-1.69e-7, -0.0175)}
 			size={UDim2.fromScale(0.179, 0.39)}
 			scales={new NumberRange(0.975, 1.025)}
@@ -470,6 +545,7 @@ const TreasureItemComponent: React.FC<TreasureItemComponentProps> = ({
 					Position={UDim2.fromScale(0.0923, 0.069)}
 					Size={UDim2.fromScale(0.472, 0.374)}
 					ZIndex={3}
+					Visible={count === 1}
 				>
 					<uilistlayout
 						key={"UIListLayout"}
@@ -552,6 +628,7 @@ const TreasureItemComponent: React.FC<TreasureItemComponentProps> = ({
 					TextColor3={Color3.fromRGB(255, 255, 255)}
 					TextScaled={true}
 					TextXAlignment={Enum.TextXAlignment.Left}
+					Visible={count > 1}
 					ZIndex={10}
 				>
 					<uistroke key={"UIStroke"} Thickness={2} />
@@ -741,7 +818,7 @@ const CategoryButton = (props: CategoryButtonProps) => {
 					BackgroundTransparency={1}
 					BorderColor3={Color3.fromRGB(0, 0, 0)}
 					BorderSizePixel={0}
-					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					Font={Enum.Font.BuilderSansBold}
 					LayoutOrder={1}
 					key={"Title"}
 					Position={UDim2.fromScale(1, 1)}
@@ -750,10 +827,30 @@ const CategoryButton = (props: CategoryButtonProps) => {
 					TextColor3={Color3.fromRGB(255, 255, 255)}
 					TextScaled={true}
 					TextWrapped={true}
-					TextXAlignment={Enum.TextXAlignment.Center}
+					TextXAlignment={Enum.TextXAlignment.Left}
 					ZIndex={10}
 				>
 					<uistroke key={"UIStroke"} Thickness={3} />
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+						BackgroundTransparency={1}
+						BorderColor3={Color3.fromRGB(0, 0, 0)}
+						BorderSizePixel={0}
+						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						LayoutOrder={1}
+						key={"Title"}
+						Position={UDim2.fromScale(0.5, 0.46)}
+						Size={UDim2.fromScale(1, 1)}
+						Text={title}
+						TextColor3={Color3.fromRGB(255, 255, 255)}
+						TextScaled={true}
+						TextWrapped={true}
+						TextXAlignment={Enum.TextXAlignment.Left}
+						ZIndex={11}
+					>
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(7, 7, 7)} Thickness={3} />
+					</textlabel>
 
 					<uipadding
 						key={"UIPadding"}
@@ -1160,22 +1257,32 @@ export const SellAllBtn = (props: SellAllBtnProps) => {
 					BorderSizePixel={0}
 					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 					key={"Label"}
-					Position={UDim2.fromScale(0.5, 0.5)}
-					Size={UDim2.fromScale(0.684, 0.524)}
+					Position={UDim2.fromScale(0.5, 0.507)}
+					Size={UDim2.fromScale(0.718, 0.66)}
 					Text={"Sell All"}
-					TextColor3={Color3.fromRGB(255, 255, 255)}
+					TextColor3={Color3.fromRGB(1, 75, 33)}
 					TextScaled={true}
 					TextWrapped={true}
 				>
 					<uistroke key={"UIStroke"} Color={Color3.fromRGB(1, 75, 33)} Thickness={3} />
 
-					<uipadding
-						key={"UIPadding"}
-						PaddingBottom={new UDim(0.071, 0)}
-						PaddingLeft={new UDim(0.226, 0)}
-						PaddingRight={new UDim(0.226, 0)}
-						PaddingTop={new UDim(0.071, 0)}
-					/>
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+						BackgroundTransparency={1}
+						BorderColor3={Color3.fromRGB(0, 0, 0)}
+						BorderSizePixel={0}
+						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						key={"Label"}
+						Position={UDim2.fromScale(0.5, 0.43)}
+						Size={UDim2.fromScale(1, 1)}
+						Text={"Sell All"}
+						TextColor3={Color3.fromRGB(255, 255, 255)}
+						TextScaled={true}
+						TextWrapped={true}
+					>
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(1, 75, 33)} Thickness={3} />
+					</textlabel>
 				</textlabel>
 			</imagebutton>
 		</AnimatedButton>
@@ -1187,6 +1294,7 @@ interface ExitButtonProps {
 	uiName: string;
 	menuRefToClose?: React.RefObject<Frame>;
 	onClick?: () => void;
+	isMenuVisible: boolean;
 }
 
 export const ExitButton = (props: ExitButtonProps) => {
@@ -1268,31 +1376,6 @@ export const ExitButton = (props: ExitButtonProps) => {
 			ZIndex={100}
 			Active={!isPressed}
 		>
-			<textlabel
-				key={"TextLabel"}
-				AnchorPoint={new Vector2(0.5, 0.5)}
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-				Position={UDim2.fromScale(0.5, 0.5)}
-				Size={UDim2.fromScale(0.518, 0.518)}
-				Text={"X"}
-				TextColor3={Color3.fromRGB(255, 255, 255)}
-				TextScaled={true}
-				TextWrapped={true}
-				ZIndex={105}
-			>
-				<uipadding
-					key={"UIPadding"}
-					PaddingBottom={new UDim(0.0843, 0)}
-					PaddingLeft={new UDim(0.294, 0)}
-					PaddingRight={new UDim(0.294, 0)}
-					PaddingTop={new UDim(0.0843, 0)}
-				/>
-			</textlabel>
-
 			<imagebutton
 				AnchorPoint={new Vector2(0.5, 0.5)}
 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -1301,13 +1384,16 @@ export const ExitButton = (props: ExitButtonProps) => {
 				BorderSizePixel={0}
 				Image={"rbxassetid://105623320030835"}
 				key={"ExitBtn"}
-				Position={UDim2.fromScale(0.466, 0.527)}
+				Position={UDim2.fromScale(0.5, 0.5)}
 				ScaleType={Enum.ScaleType.Slice}
 				Selectable={false}
 				Size={UDim2.fromScale(0.824, 0.87)}
 				SliceCenter={new Rect(0.5, 0.5, 0.5, 0.5)}
 				SliceScale={0.4}
 				ZIndex={100}
+				// Setting modal allows player to move mouse if in first person, prevents them from getting stuck in menus if they were in first person.
+				Modal={true}
+				Active={props.isMenuVisible}
 				Event={{
 					MouseButton1Click: exit,
 					MouseEnter: () => setIsHovered(true),
@@ -1316,7 +1402,24 @@ export const ExitButton = (props: ExitButtonProps) => {
 						setPressed(false);
 					},
 				}}
-			/>
+			>
+				<textlabel
+					key={"TextLabel"}
+					BackgroundTransparency={1}
+					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					Size={UDim2.fromScale(0.6, 0.6)}
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					Position={UDim2.fromScale(0.5, 0.5)}
+					Text={"X"}
+					TextColor3={Color3.fromRGB(255, 255, 255)}
+					TextScaled={true}
+					TextWrapped={true}
+					TextXAlignment={Enum.TextXAlignment.Center}
+					TextYAlignment={Enum.TextYAlignment.Center}
+					ZIndex={105}
+				/>
+				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.89} />
+			</imagebutton>
 		</frame>
 	);
 };
@@ -1540,68 +1643,61 @@ interface MainUiProps {
 
 const cachedInventories = {} as Record<ItemType, InventoryItemProps[]>;
 
-export const MainUi = (props: MainUiProps) => {
-	const [visible, setVisible] = React.useState(false);
-	const [enabledMenu, setEnabledMenu] = React.useState(MENUS.Inventory);
-	const [inventory, setInventory] = React.useState<InventoryItemProps[]>([]);
-	const [skillState, setSkills] = React.useState<Record<SkillName, number>>();
+export const InventoryComponent = (props: MainUiProps) => {
 	const [levelState, setLevelState] = React.useState<
 		{ level: number; xp: number; xpMax: number; skillPoints: number } | undefined
 	>();
 	const [selectedInventoryType, setSelectedInventoryType] = React.useState<ItemType>("MetalDetectors");
+	const [unlockedTreasures, setUnlockedTreasures] = useState<Set<keyof typeof targetConfig>>();
+	const [skillState, setSkills] = React.useState<Record<SkillName, number>>();
+	const [inventory, setInventory] = React.useState<InventoryItemProps[]>([]);
+	const [targetInventoryUsedSize, setTargetInventoryUsedSize] = useState(0);
+	const [enabledMenu, setEnabledMenu] = React.useState(MENUS.Inventory);
 	const [popInSz, popInMotion] = useMotion(UDim2.fromScale(0, 0));
-	const [loading, setLoading] = React.useState(false);
-	const [loadingSpring, setLoadingSpring] = useMotion(1);
 	const [selectedIndexItem, setSelectedIndexItem] = useState<{
 		targetName: keyof typeof targetConfig | "";
 		mapName: keyof typeof mapConfig | "";
 	}>({ targetName: "", mapName: "" });
-	const [unlockedTreasures, setUnlockedTreasures] = useState<Set<keyof typeof targetConfig>>();
-	const [targetInventoryUsedSize, setTargetInventoryUsedSize] = useState(0);
+	const [loading, setLoading] = React.useState(false);
+	const [loadingSpring, setLoadingSpring] = useMotion(1);
 	const [targetInventoryCapacity, setTargetInventoryCapacity] = useState(
 		gameConstants.TARGET_INVENTORY_DEFAULT_CAPACITY,
 	);
+	const [visible, setVisible] = React.useState(false);
 	const menuRef = createRef<Frame>();
 
 	const px = usePx();
 
-	const DetectorFolder = ReplicatedStorage.WaitForChild("MetalDetectors") as Folder;
-	const ShovelFolder = ReplicatedStorage.WaitForChild("Shovels") as Folder;
-
-	function updateInventory([equipped, inv]: [
-		{
-			equippedShovel: keyof typeof shovelConfig;
-			equippedDetector: keyof typeof metalDetectorConfig;
-			equippedTreasure: keyof typeof fullTargetConfig;
-		},
-		Array<Item>,
-	]) {
+	function updateInventory(
+		inventoryType: ItemType,
+		[equipped, inv]: [
+			{
+				equippedShovel: keyof typeof shovelConfig;
+				equippedDetector: keyof typeof metalDetectorConfig;
+				equippedTreasure: keyof typeof fullTargetConfig;
+			},
+			Array<Item>,
+		],
+		shouldSetInventory: boolean = true,
+	) {
 		const newInventory: InventoryItemProps[] = [];
 
+		if (inventoryType === "Target") {
+			setTargetInventoryUsedSize(inv.size());
+		}
+
 		inv.forEach((item) => {
-			if (item.type !== selectedInventoryType) return;
+			if (item.type !== inventoryType) return;
 			if (newInventory.find((invItem) => invItem.itemName === item.name)) return;
 			const stats: InventoryItemProps["stats"] = [];
 
 			if (item.type === "MetalDetectors") {
-				const detector = DetectorFolder.FindFirstChild(item.name) as Model;
-				if (!detector) {
-					warn("Detector not found in folder:", item.name);
-					return;
-				}
-
 				// Populate stats
 				stats.push(
 					{ key: "detectionDistance", value: item.strength, icon: "rbxassetid://136640572681412" },
 					{ key: "luck", value: item.luck, icon: "rbxassetid://85733831609212" },
 				);
 			} else if (item.type === "Shovels") {
-				const shovel = ShovelFolder.FindFirstChild(item.name) as Model;
-				if (!shovel) {
-					warn("Shovel not found in folder:", item.name);
-					return;
-				}
-
 				// Populate stats
 				stats.push({
 					key: "strength",
@@ -1636,8 +1732,10 @@ export const MainUi = (props: MainUiProps) => {
 			});
 		});
 
-		cachedInventories[selectedInventoryType] = newInventory;
-		setInventory(newInventory);
+		cachedInventories[inventoryType] = newInventory;
+		if (shouldSetInventory) {
+			setInventory(newInventory);
+		}
 	}
 
 	React.useEffect(() => {
@@ -1663,12 +1761,7 @@ export const MainUi = (props: MainUiProps) => {
 			setInventory(cache ?? []);
 			Functions.getInventory(selectedInventoryType).then((items) => {
 				setLoading(false);
-				updateInventory(items);
-
-				if (selectedInventoryType === "Target") {
-					const [, inv] = items;
-					setTargetInventoryUsedSize(inv.size());
-				}
+				updateInventory(selectedInventoryType, items);
 			});
 		} else if (enabledMenu === MENUS.Skills) {
 			Functions.getSkills().then((skills) => {
@@ -1703,19 +1796,57 @@ export const MainUi = (props: MainUiProps) => {
 	}, [targetInventoryUsedSize]);
 
 	React.useEffect(() => {
-		Events.updateInventory.connect((inventoryType, inv) => {
-			if (inventoryType === selectedInventoryType) {
-				updateInventory(inv);
-			}
+		Signals.inventoryFull.Connect(() => {
+			setEnabledMenu(MENUS.Inventory);
+			setSelectedInventoryType("Target");
 		});
+
+		const preloadInventories = () => {
+			for (const inventory of ["MetalDetectors", "Shovels", "Potions", "Target"] as const) {
+				Functions.getInventory(inventory).then((items) => {
+					updateInventory(inventory, items, false);
+
+					if (selectedInventoryType === "Target") {
+						const [, inv] = items;
+						setTargetInventoryUsedSize(inv.size());
+					}
+				});
+			}
+		};
+
+		// Retroload inventories incase the profile is ready before the component is mounted.
+		preloadInventories();
+
+		Events.profileReady.connect(() => {
+			preloadInventories();
+		});
+
+		// This is part of my `renameRemotes` "security" measure. It will deter script kiddies, but not a fully determined exploiter.
+		// Read `renameRemotes` in server/services/security for more information on how they might get around it and why it's not foolproof (or literally foolproof).
+		// It hides the "id" attribute which would help the exploiter identify the remote in the Events/Functions table.
+		// It's attempting to hide in plain sight here.
+		for (const remote of ReplicatedStorage.GetDescendants()) {
+			if (remote.GetAttribute("id") !== undefined) {
+				remote.SetAttribute("id", undefined);
+			}
+		}
 	}, []);
 
 	React.useEffect(() => {
+		const connection = Events.updateInventory.connect((inventoryType, inv) => {
+			updateInventory(selectedInventoryType, inv, inventoryType === selectedInventoryType);
+		});
+
+		return () => {
+			connection.Disconnect();
+		};
+	}, [selectedInventoryType]);
+
+	React.useEffect(() => {
 		if (visible) {
-			popInMotion.spring(UDim2.fromScale(0.72, 0.75), springs.responsive);
+			popInMotion.spring(UDim2.fromScale(0.8, 0.792), springs.responsive);
 		} else {
 			const connection = Signals.inventoryFull.Connect(() => {
-				print("Inventory full!");
 				if (visible) {
 					connection?.Disconnect();
 					return;
@@ -1771,7 +1902,7 @@ export const MainUi = (props: MainUiProps) => {
 			BorderColor3={Color3.fromRGB(0, 0, 0)}
 			BorderSizePixel={0}
 			key={"Container"}
-			Position={UDim2.fromScale(0.45, 0.45)}
+			Position={UDim2.fromScale(0.48, 0.45)}
 			Size={popInSz}
 			Visible={visible}
 			ref={menuRef}
@@ -1787,6 +1918,8 @@ export const MainUi = (props: MainUiProps) => {
 				Size={UDim2.fromScale(0.695, 0.857)}
 				ZIndex={10}
 			>
+				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.64} />
+
 				<imagelabel
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -1800,10 +1933,15 @@ export const MainUi = (props: MainUiProps) => {
 					Size={UDim2.fromScale(1, 1)}
 					SliceCenter={new Rect(0.100000001, 0.100000001, 0.100000001, 0.100000001)}
 				>
-					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.66} />
+					{/* <uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.66} /> */}
 				</imagelabel>
 
-				<ExitButton uiController={props.uiController} uiName={gameConstants.MAIN_UI} menuRefToClose={menuRef} />
+				<ExitButton
+					uiController={props.uiController}
+					uiName={gameConstants.MAIN_UI}
+					menuRefToClose={menuRef}
+					isMenuVisible={visible}
+				/>
 
 				<frame
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -1834,7 +1972,7 @@ export const MainUi = (props: MainUiProps) => {
 							key={"EmptyMessage"}
 							Position={UDim2.fromScale(0.5, 0.5)}
 							Size={UDim2.fromScale(0.719, 0.389)}
-							Visible={false}
+							Visible={selectedInventoryType === "Target" && targetInventoryUsedSize === 0}
 						>
 							<textlabel
 								AnchorPoint={new Vector2(0.5, 0.5)}
@@ -2076,8 +2214,6 @@ export const MainUi = (props: MainUiProps) => {
 							gamepassController={props.gamepassController}
 						/>
 					</frame>
-
-					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.74} />
 				</frame>
 
 				{/* Skills Page */}
@@ -2321,6 +2457,7 @@ export const MainUi = (props: MainUiProps) => {
 						key={"Index Container"}
 						Position={UDim2.fromScale(0, 0.166)}
 						Size={UDim2.fromScale(0.671, 0.831)}
+						ClipsDescendants={true}
 					>
 						<uicorner key={"UICorner"} CornerRadius={new UDim(0.0314, 0)} />
 
@@ -2354,7 +2491,7 @@ export const MainUi = (props: MainUiProps) => {
 							<uilistlayout
 								key={"UIListLayout"}
 								FillDirection={Enum.FillDirection.Horizontal}
-								Padding={new UDim(0.005, 0)}
+								Padding={new UDim(0.25, 0)}
 								SortOrder={Enum.SortOrder.LayoutOrder}
 								Wraps={true}
 							/>
@@ -2556,6 +2693,7 @@ export const MainUi = (props: MainUiProps) => {
 													selectedIndexItem.targetName,
 													selectedIndexItem.mapName,
 												),
+												false,
 										  )}`
 										: ""
 								}
@@ -2631,7 +2769,7 @@ export const MainUi = (props: MainUiProps) => {
 				BorderColor3={Color3.fromRGB(0, 0, 0)}
 				BorderSizePixel={0}
 				key={"Categories"}
-				Position={UDim2.fromScale(0.13, 0.537)}
+				Position={UDim2.fromScale(0.16, 0.58)}
 				Size={UDim2.fromScale(0.295, 0.842)}
 			>
 				<uilistlayout

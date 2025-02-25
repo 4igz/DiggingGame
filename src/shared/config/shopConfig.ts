@@ -1,3 +1,5 @@
+//!optimize 2
+//!native
 export enum ProductType {
 	GamePass,
 	DevProduct,

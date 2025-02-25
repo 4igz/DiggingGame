@@ -13,40 +13,7 @@ const Maps = CollectionService.GetTagged("Map");
 export class ShovelService implements OnStart {
 	constructor(private readonly profileService: ProfileService) {}
 
-	onStart() {
-		const canDigInterval = interval(0.5);
-
-		Players.PlayerAdded.Connect((player) => {
-			player.CharacterAdded.Connect((character) => {
-				character.ChildAdded.Connect((instance) => {
-					if (!this.instanceIsShovel) return;
-
-					while (instance.Parent === character) {
-						task.wait();
-						if (!canDigInterval(player.UserId)) continue;
-						const profile = this.profileService.getProfile(player);
-						if (!profile) break;
-						const map = Maps.find((map) => map.Name === profile.Data.currentMap) as Folder | undefined;
-						if (!map) break;
-						const bases = map.FindFirstChild("SpawnBases") as Folder | undefined;
-						if (!bases) break;
-
-						if (
-							findFurthestPointWithinRadius(
-								character.GetPivot().Position,
-								bases.GetChildren() as BasePart[],
-								gameConstants.DIG_RANGE,
-							)
-						) {
-							Events.canDig.fire(player, true);
-						} else {
-							Events.canDig.fire(player, false);
-						}
-					}
-				});
-			});
-		});
-	}
+	onStart() {}
 
 	instanceIsShovel(instance: Instance) {
 		return instance.IsA("Tool") && shovelConfig[instance.Name] !== undefined;

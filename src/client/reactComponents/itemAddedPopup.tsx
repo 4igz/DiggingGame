@@ -1,3 +1,5 @@
+//!optimize 2
+//!native
 import React, { useEffect } from "@rbxts/react";
 import { RunService } from "@rbxts/services";
 import { useMotion } from "client/hooks/useMotion";
@@ -19,10 +21,13 @@ export interface TreasurePopupProps {
 	onComplete: () => void;
 }
 
+const MAX_IMAGE_ROTATION = 25;
+
 export const TreasureAddedPopup = (props: TreasurePopupProps) => {
 	const [sizeMotion, setSizeMotion] = useMotion(UDim2.fromScale(0, 0));
 
 	const [spinValue, setSpinValue] = React.useState(0);
+	const [imageRotation, setImageRotation] = useMotion(-MAX_IMAGE_ROTATION);
 
 	const POPUP_TIME = 5;
 
@@ -35,6 +40,20 @@ export const TreasureAddedPopup = (props: TreasurePopupProps) => {
 			});
 			setSizeMotion.spring(UDim2.fromScale(0, 0), springs.responsive);
 		});
+
+		let currentRotation = imageRotation.getValue();
+		const rotationThread = task.spawn(() => {
+			while (true) {
+				// Make image bob back and forth
+				task.wait(0.6);
+				currentRotation = currentRotation < MAX_IMAGE_ROTATION ? MAX_IMAGE_ROTATION : -MAX_IMAGE_ROTATION;
+				setImageRotation.spring(currentRotation, springs.bubbly);
+			}
+		});
+
+		return () => {
+			task.cancel(rotationThread);
+		};
 	}, []);
 
 	// Second effect handles the event data
@@ -99,7 +118,7 @@ export const TreasureAddedPopup = (props: TreasurePopupProps) => {
 					Size={UDim2.fromScale(1, 1)}
 					ZIndex={5}
 					Image={props.itemImage}
-					Rotation={spinValue * -180}
+					Rotation={imageRotation}
 				>
 					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1} />
 				</imagelabel>
@@ -142,6 +161,7 @@ export const TreasureAddedPopup = (props: TreasurePopupProps) => {
 								RC[props.itemRarity].G * 255,
 						  )},${math.round(RC[props.itemRarity].B * 255)})">1 in ${shortenNumber(
 								getOneInXChance(props.itemName, props.mapName),
+								false,
 						  )} ${props.itemName}</font> at <font color="rgb(100,125,255)"><b>${string.format(
 								"%.2f",
 								props.itemWeight,

@@ -1,3 +1,5 @@
+//!optimize 2
+//!native
 import { atom } from "@rbxts/charm";
 import { gameConstants } from "shared/constants";
 

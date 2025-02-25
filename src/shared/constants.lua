@@ -1,0 +1,142 @@
+--!optimize 2
+--!native
+-- Compiled with roblox-ts v3.0.0
+local TS = require(game:GetService("ReplicatedStorage"):WaitForChild("rbxts_include"):WaitForChild("RuntimeLib"))
+local metalDetectorConfig =
+	TS.import(script, game:GetService("ReplicatedStorage"), "TS", "config", "metalDetectorConfig").metalDetectorConfig
+local shovelConfig =
+	TS.import(script, game:GetService("ReplicatedStorage"), "TS", "config", "shovelConfig").shovelConfig
+local ROLL_TYPES = {
+	Bad = "Bad..",
+	Okay = "Okay.",
+	Great = "Great!",
+	Wow = "Wow!!",
+	Super = "Super!!",
+	Perfect = "PERFECT!!",
+}
+local REWARD_IMAGES = {
+	Money = "rbxassetid://96446480715038",
+	LuckMultiplier = "rbxassetid://83833460426334",
+}
+local gameConstants = {
+	DIG_BAR_UI = "DiggingBar",
+	SIDEBAR_UI = "SidebarUi",
+	INVENTORY_MENU = "BackpackUi",
+	TOOLBAR_UI = "ToolbarUi",
+	MAIN_UI = "MainUi",
+	RIGHT_SIDE_HUD = "Money",
+	SELL_UI = "SellUi",
+	SHOP_UI = "ShopUi",
+	LUCKBAR_UI = "LuckBar",
+	COMPASS_UI = "CompassUi",
+	GAMEPASS_SHOP_UI = "GamepassShop",
+	POPUP_UI = "ItemPopupUi",
+	ISLE_POPUP_UI = "ZonePopupUi",
+	BOAT_SHOP_UI = "BoatShopUi",
+	DAILY_REWARD_UI = "DailyRewardUi",
+	PLAYTIME_REWARD_UI = "PlaytimeRewardUi",
+	DIALOG_PROMPT = "DialogPromptUi",
+
+	-- Collision Groups
+	PLAYER_COLGROUP = "Player",
+	NOCHARACTERCOLLISION_COLGROUP = "NoCollideWithCharacters",
+	BOAT_COLGROUP = "Boat",
+
+	-- CS Tags
+	SPAWN_TAG = "MapSpawn",
+	ISLE_ZONE_TAG = "IsleZone",
+
+	-- Gameplay constants
+	DIG_PROGRESS_MULTIPLIER = 20,
+	SHOP_PROMPT_RANGE = 10,
+	AUTO_DIG_FAILURE_THRESHOLD = 5,
+	SERVER_LUCK_MULTIPLIER_DURATION = 60 * 60,
+	MAX_MULTIDIG_LEVEL = 6,
+	DIG_RANGE = 5,
+	DIG_TIME_SEC = 0.01,
+	AUTO_DIG_CLICK_INTERVAL = 0.1,
+	POTION_DURATION = 300,
+	TARGET_INVENTORY_DEFAULT_CAPACITY = 100,
+	BAR_DECREASE_RATE = 0.0005,
+	HIGH_ROLL_THRESHOLD = 6.5,
+	BASE_EXP = 100,
+	SUCCESSFUL_DIG_COOLDOWN = 1, -- Prevent player from immediately digging again after just finishing digging
+	MAX_DIG_REPLICATE_DISTANCE = 200,
+
+	-- Skills modifiers
+	STRENGTH_MODIFIER = 0.1,
+	DETECTION_MODIFIER = 0.1,
+	LUCK_MODIFIER = 0.1,
+
+	SHOP_CONFIGS = {
+		MetalDetectors = metalDetectorConfig,
+		Shovels = shovelConfig,
+	},
+
+	DEVPRODUCT_IDS = {
+		RefundPoints = 0,
+		x2Luck = 2683149065,
+		StarterPack = 2683148216,
+		MoreDigging = 2683148761,
+		MediumPack = 2683148387,
+		["1k Money Pack"] = 2683146655,
+		["2.5k Money Pack"] = 2683146887,
+		["7.5k Money Pack"] = 2683147047,
+		["15k Money Pack"] = 2683147418,
+		["40k Money Pack"] = 2683147564,
+		["75k Medium Money Pack"] = 2683147732,
+		["250k Big Money Pack"] = 2683147863,
+		["1M Massive Money Pack"] = 2683148034,
+		["Unlock All Playtime Rewards"] = 3221367930,
+	},
+
+	GAMEPASS_IDS = {
+		x2Strength = 1014663108,
+		x2Cash = 1015008881,
+		BiggerBackpack = 1014776887,
+		SellEverywhere = 1014879019,
+	},
+
+	MAP_THEME_COLORS = {
+		Grasslands = Color3.new(0.03, 0.86, 0),
+		Volcano = Color3.new(0.86, 0.03, 0),
+		Frozen = Color3.fromRGB(15, 151, 255),
+	},
+
+	ROLL_LUCK_VALUES = {
+		Bad = 0,
+		Okay = 3,
+		Great = 4.5,
+		Wow = 6.5,
+		Super = 9,
+		Perfect = 9.9,
+	},
+
+	ROLL_COLORS = {
+		Bad = ColorSequence.new(Color3.new(1, 1, 1), Color3.new(0.35, 0.35, 0.35)),
+		Okay = ColorSequence.new(Color3.new(0.2, 1, 0), Color3.new(0, 0.9, 0)),
+		Great = ColorSequence.new(Color3.new(0, 1, 1), Color3.new(0, 0.8, 0.8)),
+		Wow = ColorSequence.new(Color3.new(1, 0, 1), Color3.new(0.8, 0, 0.8)),
+		Super = ColorSequence.new(Color3.new(1, 0.5, 0), Color3.new(1, 0.77, 0)),
+		Perfect = ColorSequence.new(Color3.new(1, 0.15, 0), Color3.new(1, 0.37, 0)),
+	},
+
+	RARITY_COLORS = {
+		Common = Color3.new(1, 1, 1),
+		Uncommon = Color3.new(0, 1, 0),
+		Rare = Color3.new(0, 0, 1),
+		Epic = Color3.new(0.5, 0, 1),
+		Legendary = Color3.new(1, 0.5, 0),
+		Mythical = Color3.new(1, 0, 0),
+		Secret = Color3.new(0.3, 0.3, 0.3),
+	},
+
+	RARITY_BACKGROUND_IMAGE = "rbxassetid://83809962362409",
+
+	MULTI_DIG_ANIMATION_SPRITESHEET = "rbxassetid://80311363716942",
+}
+return {
+	ROLL_TYPES = ROLL_TYPES,
+	REWARD_IMAGES = REWARD_IMAGES,
+	gameConstants = gameConstants,
+}

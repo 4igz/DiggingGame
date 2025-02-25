@@ -1,4 +1,4 @@
-import { Service, OnStart } from "@flamework/core";
+import { Service, OnStart, OnInit } from "@flamework/core";
 import { CollectionService, Players, Workspace } from "@rbxts/services";
 import { Zone } from "@rbxts/zone-plus";
 import { mapConfig } from "shared/config/mapConfig";
@@ -6,14 +6,30 @@ import { gameConstants } from "shared/constants";
 import { ProfileService } from "./profileService";
 import Signal from "@rbxts/goodsignal";
 import { Events } from "server/network";
+import Object from "@rbxts/object-utils";
 
 @Service({})
-export class ZoneService {
+export class ZoneService implements OnStart {
 	private zoneMap: Map<string, Zone> = new Map();
 	private spawnedPlayers: Set<Player> = new Set();
-	public ChangedMap = new Signal<(player: Player, zoneName: keyof typeof mapConfig) => void>();
+	public changedMap = new Signal<(player: Player, zoneName: keyof typeof mapConfig) => void>();
 
-	constructor(private readonly profileService: ProfileService) {
+	constructor(private readonly profileService: ProfileService) {}
+
+	onStart(): void {
+		for (const mapName of Object.keys(mapConfig)) {
+			const map = CollectionService.GetTagged("Map").filter((instance) => instance.Name === mapName)[0];
+			if (!map) {
+				warn(`Couldn't find map for Map: ${mapName} when trying to create zone spawns.`);
+				continue;
+			}
+			const zoneSpawnFolder = map.FindFirstChild("SpawnLocation");
+			if (!zoneSpawnFolder) {
+				warn(`Couldn't find SpawnLocation for Map: ${mapName}`);
+				continue;
+			}
+		}
+
 		for (const zonePart of CollectionService.GetTagged(gameConstants.ISLE_ZONE_TAG)) {
 			if (zonePart.IsA("PVInstance")) {
 				const zone = new Zone(zonePart);
@@ -21,17 +37,6 @@ export class ZoneService {
 				this.zoneMap.set(zonePart.Name, zone);
 			}
 		}
-
-		this.profileService.onProfileLoaded.Connect((player, profile) => {
-			if (player.Character) {
-				this.spawnPlayer(player, profile.Data.currentMap);
-			}
-			player.CharacterAdded.Connect((char) => {
-				const currentProfile = this.profileService.getProfile(player);
-				if (!currentProfile) return;
-				this.spawnPlayer(player, currentProfile.Data.currentMap);
-			});
-		});
 
 		Events.teleportSuccess.connect((player) => {
 			if (!this.spawnedPlayers.has(player)) {
@@ -46,11 +51,44 @@ export class ZoneService {
 		Players.PlayerRemoving.Connect((player) => {
 			this.spawnedPlayers.delete(player);
 		});
+
+		// Incase profile loaded before zone service
+		for (const [player, profile] of this.profileService.getLoadedProfiles()) {
+			if (player.Character) {
+				this.spawnPlayer(player, profile.Data.currentMap);
+			}
+			player.CharacterAdded.Connect((char) => {
+				const currentProfile = this.profileService.getProfile(player);
+				if (!currentProfile) return;
+				this.spawnPlayer(player, currentProfile.Data.currentMap);
+			});
+		}
+
+		this.profileService.onProfileLoaded.Connect((player, profile) => {
+			if (player.Character) {
+				this.spawnPlayer(player, profile.Data.currentMap);
+			}
+			player.CharacterAdded.Connect((char) => {
+				const currentProfile = this.profileService.getProfile(player);
+				if (!currentProfile) return;
+				this.spawnPlayer(player, currentProfile.Data.currentMap);
+			});
+		});
+	}
+
+	async streamSpawn(player: Player, zoneName: keyof typeof mapConfig) {
+		const map = CollectionService.GetTagged("Map").filter((instance) => instance.Name === zoneName)[0];
+		const spawn = map.FindFirstChild("SpawnLocation") as Model;
+		if (!spawn) {
+			warn(`SpawnLocation not found for zone ${zoneName}`);
+			return;
+		}
+		player.RequestStreamAroundAsync(spawn.GetPivot().Position);
 	}
 
 	spawnPlayer(player: Player, zoneName: keyof typeof mapConfig) {
-		const map = Workspace.WaitForChild(zoneName);
-		const spawn = map.FindFirstChild("SpawnLocation") as SpawnLocation;
+		const map = CollectionService.GetTagged("Map").filter((instance) => instance.Name === zoneName)[0];
+		const spawn = map.FindFirstChild("SpawnLocation") as Model;
 		if (!spawn) {
 			warn(`SpawnLocation not found for zone ${zoneName}`);
 			return;
@@ -62,7 +100,7 @@ export class ZoneService {
 				humanoid.WalkSpeed = 0;
 			}
 		});
-		player.RequestStreamAroundAsync(spawn.Position);
+		this.streamSpawn(player, zoneName);
 		Events.teleportToIsland(player, zoneName);
 	}
 
@@ -70,20 +108,11 @@ export class ZoneService {
 		if (!this.spawnedPlayers.has(player)) return;
 		const profile = this.profileService.getProfile(player);
 		if (!profile) {
-			const connection = this.profileService.onProfileLoaded.Connect((plr) => {
-				if (!player.IsDescendantOf(Players)) {
-					connection.Disconnect();
-					return;
-				}
-				if (plr !== player) return;
-				this.onZoneEntered(player, zoneName);
-				connection.Disconnect();
-			});
 			return;
 		}
 		if (profile.Data.currentMap === zoneName) return;
 		profile.Data.currentMap = zoneName;
 		this.profileService.setProfile(player, profile);
-		this.ChangedMap.Fire(player, zoneName);
+		this.changedMap.Fire(player, zoneName);
 	}
 }

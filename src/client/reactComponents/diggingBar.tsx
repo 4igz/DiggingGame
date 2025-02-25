@@ -1,16 +1,19 @@
+//!optimize 2
+//!native
 import React, { ReactNode, useEffect, useState } from "@rbxts/react";
-import { RunService, UserInputService, Lighting, Workspace } from "@rbxts/services";
+import { RunService, UserInputService, Lighting, Workspace, Players } from "@rbxts/services";
 import { useMotion } from "client/hooks/useMotion";
 import { Events } from "client/network";
 import { springs } from "client/utils/springs";
 import { gameConstants } from "shared/constants";
-import { PlayerDigInfo, Target } from "shared/networkTypes";
+import { NetworkedTarget, PlayerDigInfo, Target } from "shared/networkTypes";
 
 import { BASE_SHOVEL_STRENGTH, shovelConfig } from "shared/config/shovelConfig";
 import { Signals } from "shared/signals";
 import { ShovelController } from "client/controllers/shovelController";
 import CameraShaker, { CameraShakeInstance } from "@rbxts/camera-shaker";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
+import { interval } from "shared/util/interval";
 
 export interface DiggingBarProps {
 	target?: Target;
@@ -35,11 +38,17 @@ const fovGoal = 50;
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
+const FPS = 60;
+const ProgressDecreaseRate = 1 / FPS;
+const ProgressDecreaseCooldown = interval(ProgressDecreaseRate);
+
 export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 	const [barProgress, setBarProgress] = useMotion(1);
 	const [rotation, setRotation] = useMotion(0);
 	const [cycle, setCycle] = useState(0);
 	const [fov, fovMotion] = useMotion(defaultFov);
+	const [target, setTarget] = useState<NetworkedTarget>();
+	const [digInfo, setDigInfo] = useState<PlayerDigInfo>();
 
 	const [scale, setScale] = useMotion(1);
 
@@ -70,14 +79,12 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 
 	useEffect(() => {
 		if (visible) {
-			const target = props.target;
-			const digInfo = props.digInfo;
 			if (!target || !digInfo) {
 				warn("DiggingBar requires a target and digInfo to be passed");
 				return;
 			}
-			const cfg = shovelConfig[props.digInfo.shovel];
-			const increment = props.digInfo.strength + cfg.strengthMult * BASE_SHOVEL_STRENGTH;
+			const cfg = shovelConfig[digInfo.shovel];
+			const increment = digInfo.strength + cfg.strengthMult * BASE_SHOVEL_STRENGTH;
 
 			// Create mock data for the target
 			let progress = target.digProgress;
@@ -85,7 +92,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 			let spawnedTask: thread | undefined = undefined;
 
 			const clickConnection = Signals.gotDigInput.Connect(() => {
-				if (!props.shovelController.getCanStartDigging()) return;
+				if (!props.shovelController.canStartDigging) return;
 				Events.dig();
 
 				// Since the server is rate limited by this same timer, we should
@@ -161,9 +168,15 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				}
 
 				// Make bar decrease over time
-				const DECREASE_RATE = gameConstants.BAR_DECREASE_RATE;
-				progress = progress - target.maxProgress * DECREASE_RATE;
-				progress = math.clamp(progress, 0, target.maxProgress);
+
+				// Sync to server FPS
+				if (ProgressDecreaseCooldown(target.itemId)) {
+					if (progress > 0 && progress < target.maxProgress) {
+						const DECREASE_RATE = gameConstants.BAR_DECREASE_RATE;
+						progress = progress - target.maxProgress * DECREASE_RATE;
+					}
+					progress = math.clamp(progress, 0, target.maxProgress);
+				}
 			});
 
 			const endDiggingConnection = Events.endDiggingServer.connect(() => {
@@ -195,8 +208,10 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 		} else {
 			setBarProgress.immediate(1);
 			fovMotion.spring(defaultFov, springs.slow);
+			setTarget(undefined);
+			setDigInfo(undefined);
 		}
-	}, [visible]);
+	}, [visible, target]);
 
 	useEffect(() => {
 		if (!visible) return;
@@ -206,6 +221,16 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 	useEffect(() => {
 		fovMotion.onStep((value) => {
 			camera!.FieldOfView = value;
+		});
+
+		Events.beginDigging.connect((target: NetworkedTarget, digInfo: PlayerDigInfo) => {
+			setTarget(target);
+			setDigInfo(digInfo);
+			setVisible(true);
+		});
+
+		Events.endDiggingServer.connect(() => {
+			setVisible(false);
 		});
 	}, []);
 

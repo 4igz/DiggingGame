@@ -1,3 +1,5 @@
+//!optimize 2
+//!native
 import { OnStart } from "@flamework/core";
 import { Component, BaseComponent } from "@flamework/components";
 import ReactRoblox from "@rbxts/react-roblox";
@@ -14,7 +16,7 @@ interface TreasureComponent extends Instance {}
 @Component({
 	tag: "Treasure",
 })
-export class Treasure extends BaseComponent<Attributes, TreasureComponent> implements OnStart {
+export class Treasure extends BaseComponent<Attributes, TreasureComponent> {
 	constructor() {
 		super();
 		const name = this.instance.Name;
@@ -48,23 +50,21 @@ export class Treasure extends BaseComponent<Attributes, TreasureComponent> imple
 				error("No adornee found for treasure display.");
 			}
 
+			const chance = getOneInXChance(name, getMapFromTarget(name) ?? "Grasslands");
+
 			return (
 				<RichBillboardText
-					text={`1 in <font color="rgb(100,125,255)"><b>${shortenNumber(
-						getOneInXChance(name, getMapFromTarget(name) ?? "Grasslands"),
-					)}</b></font>`}
+					text={`1 in <font color="rgb(100,125,255)"><b>${shortenNumber(chance, false)}</b></font>`}
 					adornee={adornee}
 					isRichText={true}
 					offsetWorldSpace={new Vector3(0, 1, 0)}
 					font={Enum.Font.GothamMedium}
 					bbgSize={new UDim2(4, 0, 1, 0)}
-					enabled={(this.instance.IsA("Tool") && true) || enabled}
+					enabled={(this.instance.IsA("Tool") && true) || (enabled && chance > 0)}
 				/>
 			);
 		};
 
 		root.render(ReactRoblox.createPortal(<Billboard />, this.instance));
 	}
-
-	onStart() {}
 }

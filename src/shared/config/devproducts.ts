@@ -1,3 +1,5 @@
+//!optimize 2
+//!native
 import { gameConstants } from "shared/constants";
 import { Signals } from "shared/signals";
 
@@ -94,6 +96,13 @@ export const developerProducts: DeveloperProduct[] = [
 		name: "x2 Luck",
 		grantReward: (player) => {
 			Signals.buyServerLuckMultiplier.Fire(player);
+		},
+	},
+	{
+		id: IDS["Unlock All Playtime Rewards"],
+		name: "Unlock All Playtime Rewards",
+		grantReward: (player) => {
+			Signals.unlockPlaytimeRewards.Fire(player);
 		},
 	},
 	// {

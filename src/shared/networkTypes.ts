@@ -1,8 +1,10 @@
+import { DataType } from "@rbxts/flamework-binary-serializer";
 import { boatConfig, BoatConfig } from "./config/boatConfig";
 import { MetalDetector } from "./config/metalDetectorConfig";
 import { PotionConfig } from "./config/potionConfig";
 import { Shovel, shovelConfig } from "./config/shovelConfig";
 import { targetConfig, TargetConfig } from "./config/targetConfig";
+import { mapConfig } from "./config/mapConfig";
 
 // What is actually saved in the player profile and replicated.
 export interface TargetItem {
@@ -19,12 +21,27 @@ export interface Target extends TargetConfig, TargetItem {
 	digProgress: number;
 	maxProgress: number;
 	activelyDigging: boolean;
-	base: BasePart;
 	mapName: string;
 	owner: Player;
 
 	/** The luck multiplier originally used to detect this target. */
 	usedLuckMult: number;
+	usingDigEverywhere: boolean;
+}
+
+export interface NetworkedTarget {
+	position: Vector3;
+	digProgress: number;
+	name: keyof typeof targetConfig;
+	maxProgress: number;
+	itemId: string;
+	mapName: keyof typeof mapConfig;
+	owner: Player;
+}
+
+export interface QuestProgress {
+	active: boolean;
+	stage: number;
 }
 
 export interface PlayerDigInfo {

@@ -1,21 +1,22 @@
 import { mapConfig } from "shared/config/mapConfig";
 import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
-import { TargetItem } from "shared/networkTypes";
+import { QuestProgress, TargetItem } from "shared/networkTypes";
 import { shovelConfig } from "shared/config/shovelConfig";
-import { fullTargetConfig, targetConfig } from "shared/config/targetConfig";
+import { targetConfig } from "shared/config/targetConfig";
 import Object from "@rbxts/object-utils";
 import { gameConstants } from "shared/constants";
 import { boatConfig } from "shared/config/boatConfig";
-import { last } from "@rbxts/sift/out/Array";
 import { potionConfig } from "shared/config/potionConfig";
+import { questConfig } from "shared/config/questConfig";
 
-// Define the profile template and let TypeScript infer its type
+export const PROFILE_STORE_NAME = "pre_v10";
+
 export const profileTemplate = {
 	equippedShovel: "StarterShovel" as keyof typeof shovelConfig,
 	equippedDetector: "StarterDetector" as keyof typeof metalDetectorConfig,
 	equippedTreasure: "" as keyof typeof targetConfig,
 	currentMap: "Grasslands" as keyof typeof mapConfig,
-	money: "0;10000",
+	money: "0;0",
 
 	// Dailies
 	lastDailyClaimed: 0,
@@ -41,14 +42,25 @@ export const profileTemplate = {
 
 	targetInventory: new Array<TargetItem>(),
 	previouslyFoundTargets: new Set<keyof typeof targetConfig>(),
-	detectorInventory: ["StarterDetector", "CommonDetector"] as Array<keyof typeof metalDetectorConfig>,
-	shovelInventory: ["StarterShovel", "SilverShovel"] as Array<keyof typeof shovelConfig>,
-	potionInventory: ["Small Luck Potion", "Large Luck Potion"] as Array<keyof typeof potionConfig>,
+	detectorInventory: ["StarterDetector"] as Array<keyof typeof metalDetectorConfig>,
+	shovelInventory: ["StarterShovel"] as Array<keyof typeof shovelConfig>,
+	potionInventory: [] as Array<keyof typeof potionConfig>,
 
 	ownedBoats: new Map(Object.keys(boatConfig).map((boatName) => [boatName, false])),
 	ownedGamepasses: new Map(Object.keys(gameConstants.GAMEPASS_IDS).map((id) => [id, false])),
 
+	questProgress: new Map<keyof typeof questConfig, QuestProgress>(
+		Object.keys(questConfig).map((questName) => [questName, { stage: 0, active: false }]),
+	),
+
+	// This being marked means that the player is an exploiter, and is either going to be marked for future ban waves, or will not show up on leaderboards.
+	isExploiter: false,
+
+	banTimes: 0,
+
+	// Analytics
 	isFirstJoin: true, // Replicated to client, then set to false. Subsequent joins will replicate false.
+	firedWrongEventDataTimes: 0,
 };
 
 // Export the inferred type for use in other files

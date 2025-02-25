@@ -1,3 +1,5 @@
+//!optimize 2
+//!native
 /**
  * Finds the furthest point within a radius from a starting position across multiple parts.
  * Optimized by first checking if the part's center is within the radius.
