@@ -1,9 +1,8 @@
 //!optimize 2
-//!native
 import React, { createRef, useEffect, useState } from "@rbxts/react";
 import { AnimatedButton, ExitButton } from "./inventory";
 import { UiController } from "client/controllers/uiController";
-import { gameConstants, REWARD_IMAGES } from "shared/constants";
+import { gameConstants, REWARD_IMAGES } from "shared/gameConstants";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
 import { PlaytimeReward, timePlayedRewards } from "shared/config/timePlayedConfig";
@@ -87,18 +86,20 @@ const RewardSlot = (props: {
 							setServerAllowedToClaim(false);
 						}
 
-						Functions.claimPlaytimeReward(props.order).then((result) => {
-							// The hope is that this never happens, but just incase for some reason they get out of sync and the server rejects, then it will reset the claimed state
-							if (!result) {
-								warn("Failed to claim reward, resetting claimed state.");
-								setClaimed(false);
-								return;
-							}
+						Functions.claimPlaytimeReward(props.order)
+							.then((result) => {
+								// The hope is that this never happens, but just incase for some reason they get out of sync and the server rejects, then it will reset the claimed state
+								if (!result) {
+									warn("Failed to claim reward, resetting claimed state.");
+									setClaimed(false);
+									return;
+								}
 
-							props.onClaimed(props.order);
+								props.onClaimed(props.order);
 
-							// TODO: Add a UI notification for the player that they claimed the reward.
-						});
+								// TODO: Add a UI notification for the player that they claimed the reward.
+							})
+							.catch(warn);
 					}
 				}}
 			>
@@ -190,7 +191,7 @@ const RewardSlot = (props: {
 							BorderSizePixel={0}
 							FontFace={new Font("rbxasset://fonts/families/FredokaOne.json")}
 							key={"mm"}
-							Position={UDim2.fromScale(0.5, 0.43)}
+							Position={UDim2.fromScale(0.5, 0.46)}
 							Size={UDim2.fromScale(1, 1)}
 							Text={`x${shortenNumber(props.cfg.rewardAmount ?? 0, false)}`}
 							TextColor3={Color3.fromRGB(253, 253, 253)}

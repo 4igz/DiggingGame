@@ -1,14 +1,21 @@
 import { Service, OnStart } from "@flamework/core";
 import { Events, Functions } from "server/network";
-import { ProfileService } from "./profileService";
 import { questConfig } from "shared/config/questConfig";
 import Object from "@rbxts/object-utils";
-import { MoneyService } from "./moneyService";
+import { ProfileService } from "../backend/profileService";
+import { MoneyService } from "../backend/moneyService";
 import { LevelService } from "./levelService";
 import { InventoryService } from "./inventoryService";
+import { QuestProgress } from "shared/networkTypes";
 
 @Service({})
 export class QuestService implements OnStart {
+	private QUEST_RESET_TIME = 86400; // 24 hours
+
+	private readonly DEFAULT_QUEST_PROGRESS = new Map<keyof typeof questConfig, QuestProgress>(
+		Object.keys(questConfig).map((questName) => [questName, { stage: 0, active: false }]),
+	);
+
 	constructor(
 		private readonly profileService: ProfileService,
 		private readonly moneyService: MoneyService,
@@ -52,13 +59,11 @@ export class QuestService implements OnStart {
 				Events.updateQuestProgress.fire(player, profile.Data.questProgress);
 				// Technically we don't need to set the profile here, but it's good practice to show where the profile is being modified by calling this method.
 				this.profileService.setProfile(player, profile);
-				print(`Started quest ${questline} stage ${questProgress.stage + 1} for ${player.Name}`);
 			}
 		});
 
 		Functions.requestTurnInQuest.setCallback((player, questName) => {
-			const profile = this.profileService.getProfile(player);
-			if (!profile) return false;
+			const profile = this.profileService.getProfileLoaded(player).expect();
 			const questProgress = profile.Data.questProgress.get(questName);
 			if (!questProgress) {
 				return false;
@@ -79,8 +84,7 @@ export class QuestService implements OnStart {
 		});
 
 		Functions.isQuestComplete.setCallback((player, questName) => {
-			const profile = this.profileService.getProfile(player);
-			if (!profile) return false;
+			const profile = this.profileService.getProfileLoaded(player).expect();
 			const questProgress = profile.Data.questProgress.get(questName);
 			if (!questProgress) {
 				warn("No quest progress found for", questName);
@@ -90,12 +94,19 @@ export class QuestService implements OnStart {
 		});
 
 		Functions.getQuestProgress.setCallback((player) => {
-			const profile = this.profileService.getProfile(player);
-			if (!profile) return;
+			const profile = this.profileService.getProfileLoaded(player).expect();
 			return profile.Data.questProgress;
 		});
 
 		this.profileService.onProfileLoaded.Connect((player, profile) => {
+			const lastReset = profile.Data.lastQuestReset;
+
+			if (tick() - lastReset > this.QUEST_RESET_TIME) {
+				profile.Data.questProgress = this.DEFAULT_QUEST_PROGRESS;
+				profile.Data.lastQuestReset = tick();
+				this.profileService.setProfile(player, profile);
+			}
+
 			Events.updateQuestProgress.fire(player, profile.Data.questProgress);
 		});
 	}

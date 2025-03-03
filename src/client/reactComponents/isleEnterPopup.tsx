@@ -1,12 +1,11 @@
 //!optimize 2
-//!native
 import React, { createRef, useEffect, useState } from "@rbxts/react";
 import { ZoneController } from "client/controllers/zoneController";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
 import { difficulties, mapConfig } from "shared/config/mapConfig";
 import { fullTargetConfig, trashConfig } from "shared/config/targetConfig";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 import { Rarity } from "shared/networkTypes";
 import { AnimatedButton } from "./inventory";
 

@@ -34,7 +34,7 @@ export class RenameRemotes implements OnInit {
 						instance.Name = newName;
 					}
 				}
-				task.wait(5);
+				task.wait(120);
 			}
 		});
 	}

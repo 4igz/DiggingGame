@@ -1,5 +1,4 @@
 //!optimize 2
-//!native
 import { Reward } from "shared/networkTypes";
 
 // 18 hours

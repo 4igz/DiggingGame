@@ -1,5 +1,4 @@
 //!optimize 2
-//!native
 import React, { RefObject } from "@rbxts/react";
 
 interface BillboardGuiProps {

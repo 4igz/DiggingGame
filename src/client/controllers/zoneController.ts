@@ -1,12 +1,11 @@
 //!optimize 2
-//!native
 import { Controller, OnInit, OnRender, OnStart } from "@flamework/core";
 import Signal from "@rbxts/goodsignal";
 import { CollectionService, Lighting, Players, SoundService, TweenService, Workspace } from "@rbxts/services";
 import { Zone } from "@rbxts/zone-plus";
 import { Events } from "client/network";
 import { mapConfig } from "shared/config/mapConfig";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 
 const COLOR_CORRECTION_PROPERTIES_TABLE = {
 	Grasslands: {
@@ -85,7 +84,8 @@ const AREA_CHANGE_TWEEN_INFO = new TweenInfo(2, Enum.EasingStyle.Quad);
 
 const clouds = Workspace.Terrain.WaitForChild("Clouds") as Clouds;
 const colorCorrection = Lighting.WaitForChild("ZonesCC") as ColorCorrectionEffect;
-const prevPlayerPos = new Vector3();
+let prevPlayerPos = new Vector3();
+let prevSittingInBoat = false; // or undefined initially
 
 const areaSounds = SoundService.WaitForChild("Areas") as SoundGroup;
 const isleZoneParts = CollectionService.GetTagged(gameConstants.ISLE_ZONE_TAG).filter((inst) => {
@@ -153,25 +153,30 @@ export class ZoneController implements OnStart, OnRender {
 	onRender() {
 		const player = Players.LocalPlayer;
 		const character = player.Character;
-		const sittingInBoat = player.GetAttribute("SittingInBoatDriverSeat") as boolean;
-		if (character) {
-			const pos = character.GetPivot().Position;
-			if (!prevPlayerPos.FuzzyEq(pos, 1)) {
-				for (const billboard of CollectionService.GetTagged("IsleBillboard")) {
-					if (!billboard.IsA("BillboardGui")) continue;
-					const boardParent = billboard.Parent;
-					if (boardParent !== undefined && boardParent.IsA("PVInstance")) {
-						const distance = pos.sub(boardParent.GetPivot().Position).Magnitude;
-						if (distance < ZONE_BILLBOARD_DIST_THRESHOLD || !sittingInBoat) {
-							billboard.Enabled = false;
-							continue;
-						} else {
-							billboard.Enabled = true;
-						}
-						const distanceText = billboard.FindFirstChild("Distance") as TextLabel;
-						if (distanceText) {
-							distanceText.Text = `${math.floor(distance)}m`;
-						}
+		if (!character) return;
+
+		// Current state
+		const sittingInBoat = player.GetAttribute(gameConstants.BOAT_DRIVER_SITTING) as boolean;
+		const currentPos = character.GetPivot().Position;
+
+		// Check if we need to run updates
+		// 1) position changed more than 1 stud
+		// 2) in-boat status changed (true -> false or false -> true)
+		for (const billboard of CollectionService.GetTagged("IsleBillboard")) {
+			if (!billboard.IsA("BillboardGui")) continue;
+			const boardParent = billboard.Parent;
+			if (boardParent && boardParent.IsA("PVInstance")) {
+				const distance = currentPos.sub(boardParent.GetPivot().Position).Magnitude;
+
+				// If we're either below threshold or NOT in boat → disable
+				if (distance < ZONE_BILLBOARD_DIST_THRESHOLD || !sittingInBoat) {
+					billboard.Enabled = false;
+				} else {
+					billboard.Enabled = true;
+					// Update distance text if exists
+					const distanceText = billboard.FindFirstChild("Distance") as TextLabel;
+					if (distanceText) {
+						distanceText.Text = `${math.floor(distance)}m`;
 					}
 				}
 			}

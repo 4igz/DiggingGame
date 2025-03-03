@@ -1,7 +1,6 @@
 //!optimize 2
-//!native
 import { atom } from "@rbxts/charm";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 
 // Essentially global state to keep track of the treasure count between scripts.
 export const treasureCountAtom = atom(0);

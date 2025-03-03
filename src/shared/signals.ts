@@ -1,5 +1,4 @@
 //!optimize 2
-//!native
 import Signal from "@rbxts/goodsignal";
 import { Target } from "./networkTypes";
 
@@ -12,17 +11,20 @@ export const Signals = {
 	giveMultiDig: new Signal<(player: Player) => void>(),
 	buyServerLuckMultiplier: new Signal<(player: Player) => void>(),
 	unlockPlaytimeRewards: new Signal<(player: Player) => void>(),
-	/** Used to circumvent a cyclical dependency on TargetService->DetectorService<- */
 	startDigging: new Signal<(player: Player, target: Target) => void>(),
 
 	// Client only signals:
+	requestingNewPather: new Signal<() => void>(),
 	gotDigInput: new Signal<() => void>(),
 	inventoryFull: new Signal<() => void>(),
-	endDigging: new Signal<() => void>(),
+	endDigging: new Signal<(diggingComplete: boolean) => void>(),
 	autoDig: new Signal<() => void>(),
 	setCanDig: new Signal<(canDig: boolean) => void>(),
+	clientStartedDigging: new Signal<() => void>(),
 	setShovelEquipped: new Signal<(equipped: boolean) => void>(),
 	dig: new Signal<() => void>(),
+	setDetectorHintEnabled: new Signal<(enabled: boolean) => void>(),
+	setUiToggled: new Signal<(name: string, enabled: boolean, setProp: boolean) => void>(),
 	forceSetAutoDigging: new Signal<(enabled: boolean) => void>(),
 	setAutoDiggingEnabled: new Signal<(enabled: boolean) => void>(),
 	setAutoDiggingRunning: new Signal<(running: boolean) => void>(),

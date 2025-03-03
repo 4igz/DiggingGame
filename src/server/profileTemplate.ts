@@ -4,19 +4,21 @@ import { QuestProgress, TargetItem } from "shared/networkTypes";
 import { shovelConfig } from "shared/config/shovelConfig";
 import { targetConfig } from "shared/config/targetConfig";
 import Object from "@rbxts/object-utils";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 import { boatConfig } from "shared/config/boatConfig";
 import { potionConfig } from "shared/config/potionConfig";
 import { questConfig } from "shared/config/questConfig";
 
-export const PROFILE_STORE_NAME = "pre_v10";
+export const PROFILE_STORE_NAME = "pre_v15";
 
 export const profileTemplate = {
 	equippedShovel: "StarterShovel" as keyof typeof shovelConfig,
 	equippedDetector: "StarterDetector" as keyof typeof metalDetectorConfig,
 	equippedTreasure: "" as keyof typeof targetConfig,
 	currentMap: "Grasslands" as keyof typeof mapConfig,
-	money: "0;0",
+	money: "0;1000",
+
+	treasuresDug: 0,
 
 	// Dailies
 	lastDailyClaimed: 0,
@@ -52,9 +54,13 @@ export const profileTemplate = {
 	questProgress: new Map<keyof typeof questConfig, QuestProgress>(
 		Object.keys(questConfig).map((questName) => [questName, { stage: 0, active: false }]),
 	),
+	lastQuestReset: 0,
 
 	// This being marked means that the player is an exploiter, and is either going to be marked for future ban waves, or will not show up on leaderboards.
+	// We might also use this flag to be more strict on them when it comes to serverside checks.
 	isExploiter: false,
+	exploitReasons: new Array<string>(),
+	selfReports: 0,
 
 	banTimes: 0,
 

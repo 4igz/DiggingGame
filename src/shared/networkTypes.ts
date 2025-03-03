@@ -24,6 +24,8 @@ export interface Target extends TargetConfig, TargetItem {
 	mapName: string;
 	owner: Player;
 
+	base?: BasePart;
+
 	/** The luck multiplier originally used to detect this target. */
 	usedLuckMult: number;
 	usingDigEverywhere: boolean;
@@ -37,6 +39,7 @@ export interface NetworkedTarget {
 	itemId: string;
 	mapName: keyof typeof mapConfig;
 	owner: Player;
+	base?: BasePart;
 }
 
 export interface QuestProgress {

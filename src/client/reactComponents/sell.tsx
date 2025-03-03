@@ -1,11 +1,10 @@
 //!optimize 2
-//!native
 import React from "@rbxts/react";
 import { UiController } from "client/controllers/uiController";
 import { useMotion } from "client/hooks/useMotion";
 import { Events, Functions } from "client/network";
 import { springs } from "client/utils/springs";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 import { TargetItem } from "shared/networkTypes";
 import { AnimatedButton, ExitButton, SellAllBtn } from "./inventory";
 import { fullTargetConfig } from "shared/config/targetConfig";
@@ -109,14 +108,22 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 	}, [visible]);
 
 	React.useEffect(() => {
-		Functions.getInventory("Target").then(([_, targets]) => {
-			setShopContent(targets as TargetItem[]);
-		});
-		Events.profileReady.connect(() => {
-			Functions.getInventory("Target").then(([_, targets]) => {
+		Functions.getInventory("Target")
+			.then(([_, targets]) => {
 				setShopContent(targets as TargetItem[]);
+			})
+			.catch((e) => {
+				warn(e);
 			});
-		});
+		// Events.profileReady.connect(() => {
+		// 	Functions.getInventory("Target")
+		// 		.then(([_, targets]) => {
+		// 			setShopContent(targets as TargetItem[]);
+		// 		})
+		// 		.catch((e) => {
+		// 			warn(e);
+		// 		});
+		// });
 		Events.updateInventory.connect((invType, [_, inventory]) => {
 			if (invType !== "Target") return;
 			setShopContent(inventory as TargetItem[]);

@@ -1,11 +1,9 @@
 //!optimize 2
-//!native
 import React, { useEffect } from "@rbxts/react";
 import { Events } from "client/network";
 import { fullTargetConfig } from "shared/config/targetConfig";
 import { TreasureAddedPopup, TreasurePopupProps } from "./itemAddedPopup";
 import { SoldItemPopup, SoldItemPopupProps } from "./soldItemPopup";
-import { Item } from "shared/networkTypes";
 import { BoughtItemPopup, BoughtItemPopupProps } from "./boughtItemPopup";
 
 const POPUP_TYPES = {

@@ -1,7 +1,7 @@
 //!optimize 2
 //!native
 import { mapConfig } from "shared/config/mapConfig"; // your map data
-import { targetConfig, trashConfig } from "shared/config/targetConfig";
+import { fullTargetConfig, targetConfig, trashConfig } from "shared/config/targetConfig";
 
 /**
  * Returns the first map where a given target item appears.
@@ -40,16 +40,12 @@ export function getOneInXChance(itemName: string, mapName: string, addLuck: numb
 		return 0;
 	}
 
-	// 2) Pick which config we should consider (trashConfig or targetConfig)
-	const cfg = addLuck > 0 ? targetConfig : trashConfig;
+	const cfg = trashConfig[itemName] ? fullTargetConfig : targetConfig;
 
-	// 3) If the item isn't even allowed on this map, it's effectively 0 chance
 	if (!allowedItems.includes(itemName as keyof typeof cfg)) {
 		return 0;
 	}
 
-	// 4) Calculate the total "adjusted weight" for all allowed items
-	//    using weight = (1 / rarity)^addLuck
 	let totalWeight = 0;
 	for (const [name, info] of pairs(cfg)) {
 		if (allowedItems.includes(name)) {

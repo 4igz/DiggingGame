@@ -1,5 +1,4 @@
 //!optimize 2
-//!native
 import React, { useEffect, useState } from "@rbxts/react";
 
 interface TypewriterBillboardProps {

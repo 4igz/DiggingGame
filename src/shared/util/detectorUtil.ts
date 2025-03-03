@@ -15,8 +15,9 @@ export function findFurthestPointWithinRadius(
 	parts: Array<BasePart>,
 	radius: number,
 	sampleDensity = 30, // Adjust density for precision
-): Vector3 | undefined {
+): [Vector3 | undefined, BasePart | undefined] {
 	let furthestPoint: Vector3 | undefined = undefined;
+	let chosenPart: BasePart | undefined = undefined;
 	let maxDistance = 0;
 
 	for (const part of parts) {
@@ -43,12 +44,13 @@ export function findFurthestPointWithinRadius(
 				if (distance <= radius && distance > maxDistance) {
 					maxDistance = distance;
 					furthestPoint = samplePoint;
+					chosenPart = part;
 				}
 			}
 		}
 	}
 
-	return furthestPoint;
+	return [furthestPoint, chosenPart];
 }
 
 // Same function as used on client and server to compute luck. Synced via ping and Workspace.GetServerTimeNow().

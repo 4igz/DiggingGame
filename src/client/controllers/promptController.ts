@@ -1,5 +1,4 @@
 //!optimize 2
-//!native
 import { Controller, OnStart } from "@flamework/core";
 
 import { UserInputService, ProximityPromptService, TweenService, TextService, Players } from "@rbxts/services";

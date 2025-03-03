@@ -1,18 +1,19 @@
 //!optimize 2
-//!native
 import Object from "@rbxts/object-utils";
 import React, { useEffect, useState } from "@rbxts/react";
 import { Players, ReplicatedStorage, RunService, SoundService, TweenService, Workspace } from "@rbxts/services";
+import { UiController } from "client/controllers/uiController";
 import { useMotion } from "client/hooks/useMotion";
 import { usePx } from "client/hooks/usePx";
 import { springs } from "client/utils/springs";
-import { gameConstants, ROLL_TYPES } from "shared/constants";
+import { gameConstants, ROLL_TYPES } from "shared/gameConstants";
 import { Signals } from "shared/signals";
 import { computeLuckValue } from "shared/util/detectorUtil";
 import { emitUsingAttributes } from "shared/util/vfxUtil";
 
 interface LuckBarProps {
 	visible: boolean;
+	uiController: UiController;
 }
 
 function lerp(a: number, b: number, t: number): number {
@@ -94,6 +95,8 @@ export default function LuckBar(props: LuckBarProps) {
 	}, [paused, startTime, visible]);
 
 	useEffect(() => {
+		props.uiController.setGuiEnabled(gameConstants.LUCKBAR_UI, visible);
+
 		setLuckSz.immediate(currentLuck / maxLuck);
 
 		const flooredLuck = math.floor(currentLuck);

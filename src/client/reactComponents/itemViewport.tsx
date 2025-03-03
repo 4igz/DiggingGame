@@ -1,5 +1,4 @@
 //!optimize 2
-//!native
 import React from "@rbxts/react";
 import { RunService } from "@rbxts/services";
 

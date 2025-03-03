@@ -1,8 +1,12 @@
 import { ItemType } from "shared/networkTypes";
 import { fullTargetConfig, targetConfig } from "./targetConfig";
 
-export const QUEST_ACCEPT: "QUEST_ACCEPT";
-export const QUEST_DECLINE: "QUEST_DECLINE";
+export const QUEST_ACCEPT: 1;
+export const QUEST_DECLINE: 2;
+export const TALK: 3;
+export const IDLE: 4;
+
+export type Key = typeof QUEST_ACCEPT | typeof QUEST_DECLINE | typeof TALK | typeof IDLE;
 
 type QuestRewardType = "Money" | "Experience" | ItemType | "None";
 type QuestType = "Collect";
@@ -25,3 +29,5 @@ export type QuestConfig = {
 };
 
 export const questConfig: Record<string, QuestConfig[]>;
+
+export const npcAnimationConfig: Record<keyof typeof questConfig, Record<Key, string>>;

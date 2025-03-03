@@ -1,11 +1,12 @@
 //!optimize 2
-//!native
 import { OnRender, OnStart } from "@flamework/core";
 import { Component, BaseComponent } from "@flamework/components";
 import { ContextActionService, Players, UserInputService } from "@rbxts/services";
-import { Functions } from "client/network";
+import { Events, Functions } from "client/network";
 import { boatConfig, DEFAULT_BOAT_SPEED, DEFAULT_BOAT_TURN_SPEED } from "shared/config/boatConfig";
 import { is } from "@rbxts/sift/out/Array";
+import { gameConstants } from "shared/gameConstants";
+import { ObjectPool } from "shared/util/objectPool";
 
 interface Attributes {
 	boatId: string; // Assigned by the server to indicate the boat's unique ID
@@ -36,7 +37,13 @@ interface PlayerModule {
 
 interface Controls {
 	GetMoveVector(this: Controls): Vector3;
+	Disable(): void;
+	Enable(): void;
 }
+
+const highlightPool = new ObjectPool(() => {
+	return new Instance("Highlight");
+}, 1);
 
 @Component({
 	tag: "Boat",
@@ -69,15 +76,12 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 		Functions.getOwnsBoat(this.attributes.boatId).then((isOwner) => {
 			this.isOwner = isOwner;
 
-			if (!isOwner) {
-				ownerSeatPrompt.Enabled = false;
-				return;
-			}
+			ownerSeatPrompt.Enabled = isOwner;
 
 			// Create a flashing highlight for the boat to indicate that it's the player's boat
 			// and help point out its location in the world.
 
-			const highlight = new Instance("Highlight");
+			const highlight = highlightPool.acquire();
 			highlight.Parent = this.instance;
 
 			const period = 5; // Time in seconds for a full oscillation
@@ -86,9 +90,9 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 			while (this.isOwner && this.instance.Parent && !this.isSittingInDriverSeat) {
 				elapsedTime += task.wait();
 				const phase = (elapsedTime % period) / halfPeriod;
-				highlight.FillTransparency = phase <= 1 ? phase : 2 - phase;
+				highlight.FillTransparency = phase <= 1 ? 0.5 + phase * 0.5 : 0.5 + (2 - phase) * 0.5;
 			}
-			highlight.Destroy();
+			highlightPool.release(highlight);
 		});
 
 		let playingTrack: AnimationTrack | undefined = undefined;
@@ -101,31 +105,47 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 			const humanoid = character?.FindFirstChild("Humanoid") as Humanoid;
 			const animator = humanoid.FindFirstChild("Animator") as Animator;
 			if (!character || !character.Parent || !hrp || !humanoid || !animator) return;
-			this.isSittingInDriverSeat = true;
 
-			ownerSeatPrompt.Enabled = false;
-
-			character.PivotTo(ownerSeat.CFrame.add(ownerSeat.ExtentsSize.mul(new Vector3(0, 1, 0))));
-			weld.Part1 = hrp;
 			playingTrack = animator.LoadAnimation(sitAnim);
 			playingTrack.Priority = Enum.AnimationPriority.Action4;
+
+			// Immediately sit for snappiness. But we won't know that the player is actually sitting until the server tells us it's okay.
+			// So sit for the responsiveness, but until the server validates this action, disable controls.
+			character.PivotTo(ownerSeat.CFrame.add(ownerSeat.ExtentsSize.mul(Vector3.yAxis.div(2))));
+			weld.Part1 = hrp;
 			playingTrack.Play();
+			this.controls.Disable();
 
-			humanoid.ChangeState(Enum.HumanoidStateType.Physics);
+			Functions.sitInBoat(this.attributes.boatId)
+				.then((success) => {
+					this.controls.Enable();
+					if (!success) {
+						weld.Part1 = undefined;
+						playingTrack?.Stop();
+						ownerSeatPrompt.Enabled = this.isOwner;
+						return;
+					}
+					this.isSittingInDriverSeat = true;
 
-			for (const instance of character.GetDescendants()) {
-				if (instance.IsA("BasePart")) {
-					instance.Massless = true;
-				}
-				if (instance.IsA("Tool")) {
-					instance.Parent = Players.LocalPlayer.FindFirstChildOfClass("Backpack");
-				}
-				if (instance.IsA("Sound")) {
-					instance.Volume = 0;
-				}
-			}
+					ownerSeatPrompt.Enabled = false;
 
-			Players.LocalPlayer.SetAttribute("SittingInBoatDriverSeat", true);
+					humanoid.ChangeState(Enum.HumanoidStateType.Physics);
+
+					for (const instance of character.GetDescendants()) {
+						if (instance.IsA("BasePart")) {
+							instance.Massless = true;
+						}
+						if (instance.IsA("Tool")) {
+							instance.Parent = Players.LocalPlayer.FindFirstChildOfClass("Backpack");
+						}
+						if (instance.IsA("Sound")) {
+							instance.Volume = 0;
+						}
+					}
+
+					Players.LocalPlayer.SetAttribute(gameConstants.BOAT_DRIVER_SITTING, true);
+				})
+				.catch(warn);
 		});
 
 		const exitBoatAction = (userInputState: Enum.UserInputState) => {
@@ -137,8 +157,9 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 			const humanoid = character?.FindFirstChild("Humanoid") as Humanoid;
 			if (!character || !character.Parent || !humanoid) return;
 
-			weld.Part1 = undefined;
+			Events.exitBoat(this.attributes.boatId);
 			character.PivotTo(ownerSeat.CFrame.add(new Vector3(0, 1, 0)));
+			weld.Part1 = undefined;
 
 			ownerSeatPrompt.Enabled = this.isOwner;
 			if (playingTrack && playingTrack.IsPlaying) {
@@ -155,7 +176,7 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 				}
 			}
 
-			Players.LocalPlayer.SetAttribute("SittingInBoatDriverSeat", false);
+			Players.LocalPlayer.SetAttribute(gameConstants.BOAT_DRIVER_SITTING, false);
 
 			this.currentVelocity = new Vector3(0, 0, 0);
 			this.currentAngularVelocity = new Vector3(0, 0, 0);
@@ -204,6 +225,25 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 	}
 
 	onRender(dt: number): void {
+		if (!this.isOwner) return;
+		const rootPart = this.instance.PrimaryPart; // Assuming the boat is a Model with a PrimaryPart
+		if (!rootPart) return;
+
+		// Get current CFrame
+		const currentCFrame = rootPart.CFrame;
+
+		const forwardVector = currentCFrame.LookVector;
+
+		// Construct a new upright CFrame with the correct yaw
+		const uprightCFrame = CFrame.lookAt(
+			currentCFrame.Position, // Preserve current position
+			currentCFrame.Position.add(forwardVector), // Preserve forward direction
+			new Vector3(0, 1, 0), // Force the up vector to be world-up (Y-axis)
+		);
+
+		// Apply the corrected CFrame
+		rootPart.CFrame = uprightCFrame;
+
 		const wakeSpeedThreshold = 25; // Define a threshold for enabling the wake
 
 		const currentSpeed = this.instance.Physics.AssemblyLinearVelocity.Magnitude;
@@ -213,7 +253,11 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 			this.instance.Hull.OuterWake.Enabled = false;
 		}
 
-		if (!this.isOwner || !this.isSittingInDriverSeat) return;
+		if (!this.isSittingInDriverSeat) return;
+		// const character = Players.LocalPlayer.Character;
+		// if (!character) return;
+		// const ownerSeat = this.instance.OwnerSeat;
+		// character.PivotTo(ownerSeat.CFrame.add(new Vector3(0, 1, 0)));
 		const Vf = this.instance.Physics.ForceAttachment.LinearVelocity;
 
 		let moveVector = this.controls.GetMoveVector();

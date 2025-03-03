@@ -1,8 +1,7 @@
 //!optimize 2
-//!native
 import React, { createRef, Dispatch, useEffect, useState } from "@rbxts/react";
 import { UiController } from "client/controllers/uiController";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 import { Item, type ItemType, Rarity, SkillName } from "shared/networkTypes";
 import { Events, Functions } from "client/network";
 import { MarketplaceService, Players, ReplicatedStorage, SoundService, UserInputService } from "@rbxts/services";
@@ -16,13 +15,12 @@ import { mapConfig } from "shared/config/mapConfig";
 import Object from "@rbxts/object-utils";
 import { usePx } from "client/hooks/usePx";
 import { getOneInXChance } from "shared/util/targetUtil";
-import { set } from "@rbxts/sift/out/Array";
 import { potionConfig } from "shared/config/potionConfig";
-import { atom } from "@rbxts/charm";
 import { inventorySizeAtom, treasureCountAtom } from "client/atoms/inventoryAtoms";
 import { Signals } from "shared/signals";
 import { GamepassController } from "client/controllers/gamepassController";
 import { getOrderFromRarity } from "shared/util/rarityUtil";
+import { Networking, NetworkingFunctionError } from "@flamework/networking";
 
 export function capitalizeWords(str: string): string {
 	return str
@@ -1189,6 +1187,7 @@ const InventorySelectorTab = (props: InventorySelectorTabProps) => {
 					LayoutOrder={1}
 					Position={UDim2.fromScale(0.5, 0.5)}
 					Size={UDim2.fromScale(1, 1)}
+					ScaleType={Enum.ScaleType.Fit}
 				>
 					<imagelabel
 						AnchorPoint={new Vector2(0.5, 0.5)}
@@ -1244,7 +1243,7 @@ export const SellAllBtn = (props: SellAllBtnProps) => {
 				Image={"rbxassetid://92239062767450"}
 				key={"Sell All Btn"}
 				Position={UDim2.fromScale(0.5, 0.5)}
-				ScaleType={Enum.ScaleType.Slice}
+				ScaleType={Enum.ScaleType.Fit}
 				Size={UDim2.fromScale(1, 1)}
 				SliceCenter={new Rect(40, 86, 544, 87)}
 				SliceScale={0.3}
@@ -1385,7 +1384,7 @@ export const ExitButton = (props: ExitButtonProps) => {
 				Image={"rbxassetid://105623320030835"}
 				key={"ExitBtn"}
 				Position={UDim2.fromScale(0.5, 0.5)}
-				ScaleType={Enum.ScaleType.Slice}
+				ScaleType={Enum.ScaleType.Fit}
 				Selectable={false}
 				Size={UDim2.fromScale(0.824, 0.87)}
 				SliceCenter={new Rect(0.5, 0.5, 0.5, 0.5)}
@@ -1418,7 +1417,7 @@ export const ExitButton = (props: ExitButtonProps) => {
 					TextYAlignment={Enum.TextYAlignment.Center}
 					ZIndex={105}
 				/>
-				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.89} />
+				{/* <uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.89} /> */}
 			</imagebutton>
 		</frame>
 	);
@@ -1439,7 +1438,7 @@ const IndexPageItem = (props: IndexPageItemProps) => {
 	}
 
 	return (
-		<frame Size={UDim2.fromScale(0.25, 0.4)} BackgroundTransparency={1} LayoutOrder={itemCfg.rarity}>
+		<frame Size={UDim2.fromScale(0.25, 0.343)} BackgroundTransparency={1} LayoutOrder={itemCfg.rarity}>
 			<AnimatedButton
 				size={UDim2.fromScale(1, 1)}
 				scales={new NumberRange(0.95, 1.05)}
@@ -1447,7 +1446,7 @@ const IndexPageItem = (props: IndexPageItemProps) => {
 			>
 				{/* Background Color Image, used for rarity. */}
 				<imagelabel
-					Size={UDim2.fromScale(0.95, 0.95)}
+					Size={UDim2.fromScale(1, 1)}
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					Position={UDim2.fromScale(0.5, 0.5)}
 					ScaleType={Enum.ScaleType.Fit}
@@ -1458,6 +1457,7 @@ const IndexPageItem = (props: IndexPageItemProps) => {
 					<imagelabel
 						Size={UDim2.fromScale(1, 1)}
 						BackgroundTransparency={1}
+						ScaleType={Enum.ScaleType.Fit}
 						Image={fullTargetConfig[props.itemName].itemImage}
 					>
 						<uigradient Color={new ColorSequence(Color3.fromRGB(0, 0, 0))} Enabled={!props.unlocked} />
@@ -1538,6 +1538,10 @@ const RefundPointFrame = () => {
 						MouseLeave: () => setIsHovered(false),
 						MouseButton1Click: () => {
 							// TODO: Prompt refund point devproduct
+							MarketplaceService.PromptProductPurchase(
+								Players.LocalPlayer,
+								gameConstants.DEVPRODUCT_IDS.RefundPoints,
+							);
 							setPressed(true);
 							task.delay(0.1, () => setPressed(false));
 						},
@@ -1643,6 +1647,8 @@ interface MainUiProps {
 
 const cachedInventories = {} as Record<ItemType, InventoryItemProps[]>;
 
+const inventoryRequests: Array<Promise<void>> = [];
+
 export const InventoryComponent = (props: MainUiProps) => {
 	const [levelState, setLevelState] = React.useState<
 		{ level: number; xp: number; xpMax: number; skillPoints: number } | undefined
@@ -1665,8 +1671,6 @@ export const InventoryComponent = (props: MainUiProps) => {
 	);
 	const [visible, setVisible] = React.useState(false);
 	const menuRef = createRef<Frame>();
-
-	const px = usePx();
 
 	function updateInventory(
 		inventoryType: ItemType,
@@ -1758,36 +1762,31 @@ export const InventoryComponent = (props: MainUiProps) => {
 			if (cache === undefined) {
 				setLoading(true);
 			}
+
+			// While we wait for the updated inventory to arrive, set it to a cached version if it exists.
 			setInventory(cache ?? []);
-			Functions.getInventory(selectedInventoryType).then((items) => {
-				setLoading(false);
-				updateInventory(selectedInventoryType, items);
-			});
-		} else if (enabledMenu === MENUS.Skills) {
-			Functions.getSkills().then((skills) => {
-				setSkills(skills);
-			});
-			Functions.getLevelData().then((levelData) => {
-				setLevelState(levelData);
-			});
-			const skillCon = Events.updateSkills.connect((skills) => {
-				setSkills(skills);
-			});
-			const levelCon = Events.updateLevelUi.connect((level, xp, xpMax, skillPoints) => {
-				setLevelState({ level, xp, xpMax, skillPoints });
-			});
 
-			return () => {
-				skillCon.Disconnect();
-				levelCon.Disconnect();
-			};
-		} else if (enabledMenu === MENUS.Index) {
-			Functions.getUnlockedTargets().then(setUnlockedTreasures);
-			const connection = Events.updateUnlockedTargets.connect(setUnlockedTreasures);
+			// If any outgoing inventory requests are still pending, cancel them.
+			for (const [i, request] of Object.entries(inventoryRequests)) {
+				request.cancel();
+				inventoryRequests.remove(i);
+			}
 
-			return () => {
-				connection.Disconnect();
-			};
+			inventoryRequests.push(
+				Functions.getInventory(selectedInventoryType)
+					.then((items) => {
+						updateInventory(selectedInventoryType, items, true);
+					})
+					.catch((e: NetworkingFunctionError) => {
+						if (e === NetworkingFunctionError.Cancelled) {
+							return;
+						}
+						warn("Error getting inventory", e);
+					})
+					.finally(() => {
+						setLoading(false);
+					}),
+			);
 		}
 	}, [visible, enabledMenu, selectedInventoryType]);
 
@@ -1796,45 +1795,8 @@ export const InventoryComponent = (props: MainUiProps) => {
 	}, [targetInventoryUsedSize]);
 
 	React.useEffect(() => {
-		Signals.inventoryFull.Connect(() => {
-			setEnabledMenu(MENUS.Inventory);
-			setSelectedInventoryType("Target");
-		});
-
-		const preloadInventories = () => {
-			for (const inventory of ["MetalDetectors", "Shovels", "Potions", "Target"] as const) {
-				Functions.getInventory(inventory).then((items) => {
-					updateInventory(inventory, items, false);
-
-					if (selectedInventoryType === "Target") {
-						const [, inv] = items;
-						setTargetInventoryUsedSize(inv.size());
-					}
-				});
-			}
-		};
-
-		// Retroload inventories incase the profile is ready before the component is mounted.
-		preloadInventories();
-
-		Events.profileReady.connect(() => {
-			preloadInventories();
-		});
-
-		// This is part of my `renameRemotes` "security" measure. It will deter script kiddies, but not a fully determined exploiter.
-		// Read `renameRemotes` in server/services/security for more information on how they might get around it and why it's not foolproof (or literally foolproof).
-		// It hides the "id" attribute which would help the exploiter identify the remote in the Events/Functions table.
-		// It's attempting to hide in plain sight here.
-		for (const remote of ReplicatedStorage.GetDescendants()) {
-			if (remote.GetAttribute("id") !== undefined) {
-				remote.SetAttribute("id", undefined);
-			}
-		}
-	}, []);
-
-	React.useEffect(() => {
 		const connection = Events.updateInventory.connect((inventoryType, inv) => {
-			updateInventory(selectedInventoryType, inv, inventoryType === selectedInventoryType);
+			updateInventory(inventoryType, inv, inventoryType === selectedInventoryType);
 		});
 
 		return () => {
@@ -1878,11 +1840,64 @@ export const InventoryComponent = (props: MainUiProps) => {
 	}, [loading]);
 
 	React.useEffect(() => {
-		Functions.getInventorySize().then((size) => {
-			setTargetInventoryCapacity(size);
-			inventorySizeAtom(size);
+		Signals.inventoryFull.Connect(() => {
+			setEnabledMenu(MENUS.Inventory);
+			setSelectedInventoryType("Target");
 		});
 
+		const preloadInventories = () => {
+			for (const inventory of ["MetalDetectors", "Shovels", "Potions", "Target"] as const) {
+				Functions.getInventory(inventory)
+					.then((items) => {
+						if (!items) {
+							// Profile probably not ready yet.
+							return;
+						}
+						updateInventory(inventory, items, false);
+
+						if (selectedInventoryType === "Target") {
+							const [, inv] = items;
+							setTargetInventoryUsedSize(inv.size());
+						}
+					})
+					.catch((e) => {
+						warn(e);
+					});
+			}
+		};
+
+		// Retroload inventories incase the profile is ready before the component is mounted.
+		preloadInventories();
+
+		Functions.getSkills()
+			.then((skills) => {
+				setSkills(skills);
+			})
+			.catch(warn);
+		Functions.getLevelData()
+			.then((levelData) => {
+				setLevelState(levelData);
+			})
+			.catch(warn);
+
+		Events.updateSkills.connect((skills) => {
+			setSkills(skills);
+		});
+		Events.updateLevelUi.connect((level, xp, xpMax, skillPoints) => {
+			setLevelState({ level, xp, xpMax, skillPoints });
+		});
+
+		Functions.getUnlockedTargets().then(setUnlockedTreasures).catch(warn);
+		Events.updateUnlockedTargets.connect(setUnlockedTreasures);
+
+		Functions.getInventorySize()
+			.then((size) => {
+				setTargetInventoryCapacity(size);
+				inventorySizeAtom(size);
+			})
+			.catch(warn);
+
+		// Events.updateInventorySize: (size: number) => void;
 		Events.updateInventorySize.connect((size) => {
 			setTargetInventoryCapacity(size);
 			inventorySizeAtom(size);
@@ -1892,6 +1907,16 @@ export const InventoryComponent = (props: MainUiProps) => {
 			setTargetInventoryUsedSize(count);
 			treasureCountAtom(count);
 		});
+
+		// This is part of my `renameRemotes` "security" measure. It will deter script kiddies, but not a fully determined exploiter.
+		// Read `renameRemotes` in server/services/security for more information on how they might get around it and why it's not foolproof (or literally foolproof).
+		// It hides the "id" attribute which would help the exploiter identify the remote in the Events/Functions table.
+		// It's attempting to hide in plain sight here.
+		for (const remote of ReplicatedStorage.GetDescendants()) {
+			if (remote.GetAttribute("id") !== undefined) {
+				remote.SetAttribute("id", undefined);
+			}
+		}
 	}, []);
 
 	return (
@@ -1929,7 +1954,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 					Image={"rbxassetid://133515423550411"}
 					key={"Background"}
 					Position={UDim2.fromScale(0.5, 0.5)}
-					ScaleType={Enum.ScaleType.Slice}
+					ScaleType={Enum.ScaleType.Fit}
 					Size={UDim2.fromScale(1, 1)}
 					SliceCenter={new Rect(0.100000001, 0.100000001, 0.100000001, 0.100000001)}
 				>
@@ -2491,40 +2516,39 @@ export const InventoryComponent = (props: MainUiProps) => {
 							<uilistlayout
 								key={"UIListLayout"}
 								FillDirection={Enum.FillDirection.Horizontal}
-								Padding={new UDim(0.25, 0)}
+								Padding={new UDim(0, 0)}
 								SortOrder={Enum.SortOrder.LayoutOrder}
 								Wraps={true}
 							/>
-							<uipadding
-								key={"UIPadding"}
-								PaddingBottom={new UDim(0.01, 0)}
-								PaddingLeft={new UDim(0.01, 0)}
-								PaddingRight={new UDim(0.01, 0)}
-								PaddingTop={new UDim(0.01, 0)}
-							/>
+
+							{Object.entries(mapConfig).map(([isleName, isleCfg]) => {
+								return (
+									<textlabel
+										Text={` ---${isleName}`}
+										BackgroundTransparency={1}
+										Font={Enum.Font.BuilderSansBold}
+										TextColor3={gameConstants.MAP_THEME_COLORS[isleName]}
+										TextXAlignment={Enum.TextXAlignment.Left}
+										Size={new UDim2(1, 0, 0.1, 0)}
+										LayoutOrder={isleCfg.order}
+										TextYAlignment={Enum.TextYAlignment.Bottom}
+										TextScaled={true}
+									/>
+								);
+							})}
+
 							{Object.entries(mapConfig).map(([isleName, isleCfg]) => {
 								return (
 									<frame
 										BackgroundTransparency={1}
 										Size={UDim2.fromScale(1, 0.75)}
 										key={isleName}
-										// AutomaticSize={Enum.AutomaticSize.Y}
+										LayoutOrder={isleCfg.order}
 									>
 										<uilistlayout
 											Wraps={true}
 											FillDirection={Enum.FillDirection.Horizontal}
 											SortOrder={Enum.SortOrder.LayoutOrder}
-										/>
-										<textlabel
-											Text={` ---${isleName}`}
-											BackgroundTransparency={1}
-											Font={Enum.Font.BuilderSansBold}
-											TextColor3={gameConstants.MAP_THEME_COLORS[isleName]}
-											TextXAlignment={Enum.TextXAlignment.Left}
-											Size={new UDim2(1, 0, 0, px(30))}
-											LayoutOrder={-1}
-											TextYAlignment={Enum.TextYAlignment.Bottom}
-											TextScaled={true}
 										/>
 										{isleCfg.targetList.map((itemName) => {
 											if (trashConfig[itemName]) return undefined; // Ignore trash items

@@ -89,3 +89,22 @@ export function formatShortTime(timeLeft: number): string {
 		return `${seconds}s`;
 	}
 }
+
+/**
+ * Generates a random alphanumeric string of the given length.
+ * This avoids using HttpService.GenerateGUID() to prevent
+ * naive string-matching for GUID patterns.
+ */
+const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-+=[]{}|;:,.<>?_";
+export function randomString(length = 16): string {
+	let result = "";
+
+	// Loop 'length' times, picking random characters each time
+	for (let i = 0; i < length; i++) {
+		// Roblox-TS compiles this to Lua, so we use math.random and string.sub
+		const randomIndex = math.random(1, chars.size());
+		result += string.sub(chars, randomIndex, randomIndex);
+	}
+
+	return result;
+}

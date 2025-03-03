@@ -1,9 +1,8 @@
 //!optimize 2
-//!native
 import React, { createRef } from "@rbxts/react";
 import { AnimatedButton, ExitButton } from "./inventory";
 import { UiController } from "client/controllers/uiController";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
 import { MarketplaceService, Players, ReplicatedStorage } from "@rbxts/services";
@@ -357,6 +356,8 @@ const DigProduct = (props: MoreDiggingProduct) => {
 
 			Functions.getMultiDigLevel().then((level) => {
 				setDigLevel(level);
+			}).catch((e)=>{
+				warn(e);
 			});
 
 			const connection = Events.updateMultiDigLevel.connect((level) => {

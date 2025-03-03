@@ -1,14 +1,16 @@
+//!optimize 2
+//!native
 import { Service, OnStart, OnTick } from "@flamework/core";
-import { CollectionService, Players, Workspace } from "@rbxts/services";
+import {  Workspace } from "@rbxts/services";
 import { TargetService } from "./targetService";
-import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 import { Events } from "server/network";
 import { Target } from "shared/networkTypes";
-import { ProfileService } from "./profileService";
-import { GamepassService } from "./gamepassService";
+import { ProfileService } from "../backend/profileService";
+import { GamepassService } from "../backend/gamepassService";
 import { Signals } from "shared/signals";
 import { computeLuckValue } from "shared/util/detectorUtil";
+import Signal from "@rbxts/goodsignal";
 
 @Service({})
 export class DetectorService implements OnStart, OnTick {
@@ -17,6 +19,7 @@ export class DetectorService implements OnStart, OnTick {
 	private luckRolls: Map<number, number> = new Map();
 	private rolling: Map<number, { start: number; current: number }> = new Map();
 	private readonly VISUALIZATION_RATE = 1; // seconds
+	public startedDigging = new Signal<(player: Player, target: Target) => void>();
 
 	constructor(
 		private readonly targetService: TargetService,
@@ -94,7 +97,22 @@ export class DetectorService implements OnStart, OnTick {
 		if (this.gamepassService.ownsGamepass(player, gameConstants.GAMEPASS_IDS.x2Strength)) {
 			strength *= 2;
 		}
-		Events.beginDigging(player, target, { strength, shovel: profile.Data.equippedShovel });
+		this.targetService.playerStartedDiggingTimes.set(player, tick() + player.GetNetworkPing());
+		Events.beginDigging(
+			player,
+			{
+				itemId: target.itemId,
+				name: target.name,
+				position: target.position,
+				owner: player,
+				digProgress: target.digProgress,
+				mapName: target.mapName,
+				maxProgress: target.maxProgress,
+				base: target.base,
+			},
+			{ strength, shovel: profile.Data.equippedShovel },
+		);
+		this.startedDigging.Fire(player, target);
 
 		Events.replicateDig.except(player, {
 			itemId: target.itemId,
@@ -104,6 +122,7 @@ export class DetectorService implements OnStart, OnTick {
 			owner: player,
 			mapName: target.mapName,
 			maxProgress: target.maxProgress,
+			base: target.base,
 		});
 
 		// Delay the digging process by the player's ping

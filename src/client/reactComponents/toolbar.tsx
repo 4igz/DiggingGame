@@ -1,12 +1,13 @@
 //!optimize 2
-//!native
-import React from "@rbxts/react";
-import { Players, SoundService, UserInputService } from "@rbxts/services";
+import React, { useEffect, useState } from "@rbxts/react";
+import { Players, RunService, SoundService, UserInputService } from "@rbxts/services";
 import { Trove } from "@rbxts/trove";
 import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
 import { shovelConfig } from "shared/config/shovelConfig";
 import { fullTargetConfig } from "shared/config/targetConfig";
+import { gameConstants } from "shared/gameConstants";
 import { ItemType } from "shared/networkTypes";
+import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 
 interface ToolbarItemProps {
 	icon: string;
@@ -14,9 +15,12 @@ interface ToolbarItemProps {
 	isEquipped: boolean;
 	order: number;
 	tool: Tool;
+	platform?: string;
 	itemType: ItemType;
 	equipToolByOrder: (order: number) => void;
 }
+
+const MOBILE_TOOLBAR_SCALE = 1.5;
 
 const ToolbarItemComponent: React.FC<ToolbarItemProps> = (props) => {
 	return (
@@ -28,7 +32,7 @@ const ToolbarItemComponent: React.FC<ToolbarItemProps> = (props) => {
 			key={"ToolBtn"}
 			ScaleType={Enum.ScaleType.Fit}
 			Selectable={false}
-			Size={UDim2.fromScale(0.0896, 1)}
+			Size={UDim2.fromScale(0.09 * (props.platform === "Mobile" ? MOBILE_TOOLBAR_SCALE : 1), 1)}
 			LayoutOrder={props.order}
 			Event={{
 				MouseButton1Click: () => {
@@ -100,13 +104,17 @@ const ToolbarItemComponent: React.FC<ToolbarItemProps> = (props) => {
 
 export const Toolbar = () => {
 	const [items, setItems] = React.useState<Array<ToolbarItemProps>>([]);
+	const [platform, setPlatform] = useState(getPlayerPlatform());
 
-	const equipSound = ((): Sound | undefined => {
-		const toolsFolder = SoundService.FindFirstChild("Tools");
-		if (!toolsFolder) return undefined;
-		const sfx = toolsFolder.FindFirstChild("Equip") as Sound | undefined;
-		return sfx;
-	})(); // a bit *IIFE* but it works
+	useEffect(() => {
+		const connection = UserInputService.LastInputTypeChanged.Connect(() => {
+			setPlatform(getPlayerPlatform());
+		});
+
+		return () => {
+			connection.Disconnect();
+		};
+	}, []);
 
 	const equipToolByOrder = (order: number) => {
 		setItems((prev) => {
@@ -118,44 +126,96 @@ export const Toolbar = () => {
 
 			// 2) Validate backpack/character
 			const localPlayer = Players.LocalPlayer;
-			if (localPlayer.GetAttribute("SittingInBoatDriverSeat") === true) return prev;
+			if (localPlayer.GetAttribute(gameConstants.BOAT_DRIVER_SITTING) === true) return prev;
 			const backpack = localPlayer.FindFirstChild("Backpack");
 			const character = localPlayer.Character;
 			if (!character || !backpack) {
 				return prev;
 			}
 
+			const equipSound = ((): Sound | undefined => {
+				const toolsFolder = SoundService.FindFirstChild("Tools");
+				if (!toolsFolder) return undefined;
+				const sfx = toolsFolder.FindFirstChild("Equip") as Sound | undefined;
+				return sfx;
+			})(); // a bit *IIFE* but it works
+
 			// 3) Play SFX if we have one
 			if (equipSound) {
 				SoundService.PlayLocalSound(equipSound);
 			}
 
-			// 4) Unequip everything else first
-			for (const child of character.GetChildren()) {
-				if (child.IsA("Tool") && child !== item.tool) {
-					child.Parent = backpack;
-				}
-			}
+			let wasEquipped = false;
 
-			// 5) Toggle: If this item is currently equipped, unequip it; otherwise equip.
 			if (item.tool.Parent === character) {
 				item.tool.Parent = backpack;
 			} else {
-				// Safeguard: ensure none of the tool’s parts are anchored.
+				// Safeguard: ensure tools are set up properly.
+				const handle = item.tool.FindFirstChild("Handle");
+
+				if (!handle) {
+					const toolMotor = character.FindFirstChild("RightHand")?.FindFirstChild("ToolMotor") as
+						| Motor6D
+						| undefined;
+					if (!toolMotor) return prev;
+					const toolMainPart = item.tool.FindFirstChildWhichIsA("BasePart") as BasePart | undefined;
+					if (!toolMainPart) return prev;
+
+					const tempWeld = new Instance("Weld");
+					tempWeld.Part0 = toolMotor.Part0;
+					tempWeld.Part1 = toolMainPart;
+					tempWeld.Parent = character.PrimaryPart;
+
+					let changedAncestry: RBXScriptConnection | undefined;
+
+					const enabledConnection = toolMotor.GetPropertyChangedSignal("Enabled").Connect(() => {
+						for (const descendant of item.tool.GetDescendants()) {
+							if (descendant.IsA("BasePart")) {
+								descendant.Transparency = 0;
+							}
+						}
+						tempWeld?.Destroy();
+						enabledConnection?.Disconnect();
+						changedAncestry?.Disconnect();
+					});
+
+					changedAncestry = item.tool.AncestryChanged.Connect((_, parent) => {
+						if (parent !== character) {
+							enabledConnection?.Disconnect();
+							changedAncestry?.Disconnect();
+							tempWeld?.Destroy();
+							for (const descendant of item.tool.GetDescendants()) {
+								if (descendant.IsA("BasePart")) {
+									descendant.Transparency = 0;
+								}
+							}
+						}
+					});
+				}
+
 				for (const descendant of item.tool.GetDescendants()) {
 					if (descendant.IsA("BasePart")) {
 						descendant.Anchored = false;
 						descendant.Massless = true;
+						descendant.CanCollide = false;
+						descendant.Transparency = handle ? 0 : 1;
 					}
 				}
+
+				// 4) Unequip everything else first
+				for (const child of character.GetChildren()) {
+					if (child.IsA("Tool") && child !== item.tool) {
+						child.Parent = backpack;
+					}
+				}
+
+				wasEquipped = true;
 				item.tool.Parent = character;
 			}
 
-			const isNowEquipped = item.tool.Parent === character;
-
 			// 6) Return a new array, updating this item's isEquipped
 			return prev.map((other) =>
-				other.order === order ? { ...other, isEquipped: isNowEquipped } : { ...other, isEquipped: false },
+				other.order === order ? { ...other, isEquipped: wasEquipped } : { ...other, isEquipped: false },
 			);
 		});
 	};
@@ -384,7 +444,7 @@ export const Toolbar = () => {
 			AnchorPoint={new Vector2(0.5, 1)}
 			BackgroundTransparency={1}
 			Position={UDim2.fromScale(0.5, 1)}
-			Size={UDim2.fromScale(0.75, 0.15)}
+			Size={UDim2.fromScale(0.75, 0.15 * (platform === "Mobile" ? MOBILE_TOOLBAR_SCALE : 1))}
 			ZIndex={1}
 		>
 			<uilistlayout
@@ -396,7 +456,7 @@ export const Toolbar = () => {
 				SortOrder={Enum.SortOrder.LayoutOrder}
 			/>
 			{items.map((item, index) => (
-				<ToolbarItemComponent key={`ToolbarItem_${index}`} {...item} />
+				<ToolbarItemComponent key={`ToolbarItem_${index}`} platform={platform} {...item} />
 			))}
 		</frame>
 	);

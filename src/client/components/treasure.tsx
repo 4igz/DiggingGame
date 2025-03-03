@@ -1,11 +1,9 @@
 //!optimize 2
-//!native
-import { OnStart } from "@flamework/core";
 import { Component, BaseComponent } from "@flamework/components";
 import ReactRoblox from "@rbxts/react-roblox";
 import { RichBillboardText } from "client/reactComponents/richBillboardText";
 import React, { useEffect } from "@rbxts/react";
-import { fullTargetConfig } from "shared/config/targetConfig";
+import { fullTargetConfig, trashConfig } from "shared/config/targetConfig";
 import { shortenNumber } from "shared/util/nameUtil";
 import { getMapFromTarget, getOneInXChance } from "shared/util/targetUtil";
 
@@ -52,9 +50,12 @@ export class Treasure extends BaseComponent<Attributes, TreasureComponent> {
 
 			const chance = getOneInXChance(name, getMapFromTarget(name) ?? "Grasslands");
 
+			const isTrash = trashConfig[name] !== undefined;
+			const color = isTrash ? "rgb(255,100,100)" : "rgb(100,125,255)";
+
 			return (
 				<RichBillboardText
-					text={`1 in <font color="rgb(100,125,255)"><b>${shortenNumber(chance, false)}</b></font>`}
+					text={`1 in <font color="${color}"><b>${shortenNumber(chance, false)}</b></font>`}
 					adornee={adornee}
 					isRichText={true}
 					offsetWorldSpace={new Vector3(0, 1, 0)}

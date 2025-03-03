@@ -1,12 +1,15 @@
 import { Service, OnStart } from "@flamework/core";
 import { Events, Functions } from "server/network";
-import { ProfileService } from "./profileService";
 import { SkillName } from "shared/networkTypes";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
+import { ProfileService } from "../backend/profileService";
+import Signal from "@rbxts/goodsignal";
 
 @Service({})
 export class LevelService implements OnStart {
 	constructor(private readonly playerDataService: ProfileService) {}
+
+	public leveledUp = new Signal<(player: Player, level: number) => void>();
 
 	onStart() {
 		Functions.getLevelData.setCallback((player: Player) => {
@@ -41,8 +44,7 @@ export class LevelService implements OnStart {
 		});
 
 		Functions.getSkills.setCallback((player: Player) => {
-			const playerProfile = this.playerDataService.getProfile(player);
-			if (!playerProfile) return { strength: 1, luck: 1, detection: 1 };
+			const playerProfile = this.playerDataService.getProfileLoaded(player).expect();
 
 			const data = playerProfile.Data;
 			return {
@@ -54,7 +56,7 @@ export class LevelService implements OnStart {
 	}
 
 	private xpForLevel(level: number): number {
-		return math.floor(gameConstants.BASE_EXP * math.log(level + 1));
+		return math.floor(gameConstants.BASE_EXP * math.pow(level, gameConstants.LEVEL_INCREASE_EXPONENT));
 	}
 
 	public addExperience(player: Player, amt: number): void {
@@ -73,6 +75,7 @@ export class LevelService implements OnStart {
 				data.level += 1;
 				data.skillPoints += 1;
 				Events.levelUp.fire(player, data.level);
+				this.leveledUp.Fire(player, data.level);
 			} else {
 				break;
 			}
@@ -89,8 +92,7 @@ export class LevelService implements OnStart {
 	}
 
 	public getLevelData(player: Player): { level: number; xp: number; xpMax: number; skillPoints: number } {
-		const playerProfile = this.playerDataService.getProfile(player);
-		if (!playerProfile) return { level: 1, xp: 0, xpMax: this.xpForLevel(2), skillPoints: 0 };
+		const playerProfile = this.playerDataService.getProfileLoaded(player).expect();
 
 		const level = playerProfile.Data.level;
 		const xpForNextLevel = this.xpForLevel(level + 1);

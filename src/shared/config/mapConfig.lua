@@ -31,6 +31,7 @@ local mapConfig = {
 		}, Object.keys(trashConfig)),
 		requiredStrength = 0,
 		difficulty = "Easy",
+		order = 1,
 	},
 	Volcano = {
 		targetList = Sift.Array.concat({
@@ -48,7 +49,8 @@ local mapConfig = {
 			"Obsidian crown",
 		}, Object.keys(trashConfig)),
 		requiredStrength = 100,
-		difficulty = "Medium",
+		difficulty = "Easy",
+		order = 2,
 	},
 	Frozen = {
 		targetList = Sift.Array.concat({
@@ -61,12 +63,13 @@ local mapConfig = {
 			"Topaz amulet",
 			"Gift",
 			"Small gift",
-			"Mammoth bone",
+			"Mammoth tusk",
 			"Diamond yeti",
 			"Viking helmet",
 		}, Object.keys(trashConfig)),
 		requiredStrength = 500,
-		difficulty = "Hard",
+		difficulty = "Easy",
+		order = 3,
 	},
 }
 return {

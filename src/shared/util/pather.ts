@@ -4,7 +4,9 @@ import Signal from "@rbxts/goodsignal";
 import { PathfindingService, Players, CollectionService } from "@rbxts/services";
 import { findPlayerHumanoid } from "./playerUtil";
 import { getCollidableExtentsSize } from "./characterUtil";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
+import { Signals } from "shared/signals";
+import { Trove } from "@rbxts/trove";
 
 const raycastParams = new RaycastParams();
 raycastParams.FilterType = Enum.RaycastFilterType.Exclude;
@@ -24,20 +26,17 @@ export class Pather {
 	private originPoint?: Vector3;
 	private agentCanFollowPath = false;
 
-	// Connections that we might need to disconnect upon cleanup:
-	private diedConn?: RBXScriptConnection;
-	private seatedConn?: RBXScriptConnection;
-	private teleportedConn?: RBXScriptConnection;
-	private blockedConn?: RBXScriptConnection;
-
 	// Our path's list of waypoints, plus an index of which waypoint we're on
 	private pointList: PathWaypoint[] = [];
 	private currentWaypointIndex = 0;
 	private recomputing = false;
+	private destroyed = false;
 
 	// Exposed signals that consumers can listen to
 	public Finished = new Signal();
 	public PathFailed = new Signal();
+
+	private trove = new Trove();
 
 	constructor(endPoint: Vector3) {
 		this.targetPoint = endPoint;
@@ -67,16 +66,34 @@ export class Pather {
 		this.agentCanFollowPath = true;
 
 		// Create the Path object
-		this.pathResult = PathfindingService.CreatePath({
-			AgentRadius: 2.25, //agentRadius,
-			AgentHeight: 5, //agentHeight,
-			AgentCanJump: agentCanJump,
-			AgentCanClimb: true,
-			Costs: {
-				PFAvoid: 20,
-				Water: 20,
-			},
-		});
+		this.pathResult = this.trove.add(
+			PathfindingService.CreatePath({
+				AgentRadius: 2.25, //agentRadius,
+				AgentHeight: 5, //agentHeight,
+				AgentCanJump: agentCanJump,
+				AgentCanClimb: true,
+				Costs: {
+					PFAvoid: 20,
+					Water: 20,
+				},
+			}),
+		);
+
+		this.trove.add(
+			Signals.clientStartedDigging.Connect(() => {
+				this.trove.clean();
+				this.Destroy();
+			}),
+			"Disconnect",
+		);
+
+		this.trove.add(
+			Signals.requestingNewPather.Connect(() => {
+				this.trove.clean();
+				this.Destroy();
+			}),
+			"Disconnect",
+		);
 
 		// Compute the path right away (optional; you could do this lazily)
 		this.computePath();
@@ -101,9 +118,12 @@ export class Pather {
 
 		// Listen for path blocked if we got a valid path
 		if (this.pathComputed) {
-			this.blockedConn = this.pathResult.Blocked.Connect((blockedWaypointIdx) => {
-				this.onPathBlocked(blockedWaypointIdx);
-			});
+			this.trove.add(
+				this.pathResult.Blocked.Connect((blockedWaypointIdx) => {
+					this.onPathBlocked(blockedWaypointIdx);
+				}),
+				"Disconnect",
+			);
 		}
 	}
 
@@ -151,17 +171,19 @@ export class Pather {
 	 * Cleans up any existing connections and stops pathing.
 	 */
 	public Destroy() {
+		if (this.destroyed) {
+			return;
+		}
+		this.trove.clean();
+		this.destroyed = true;
 		CollectionService.GetTagged("PathfindingWaypoint").forEach((part) => part.Destroy());
 
 		this.started = false;
 		this.cancelled = true;
 		this.pointList = [];
 
-		this.pathResult?.Destroy();
-		this.blockedConn?.Disconnect();
-		this.diedConn?.Disconnect();
-		this.seatedConn?.Disconnect();
-		this.teleportedConn?.Disconnect();
+		this.PathFailed.Fire();
+		this.PathFailed.DisconnectAll();
 	}
 
 	/**
@@ -180,14 +202,6 @@ export class Pather {
 	}
 
 	/**
-	 * Convenience check to see if the path is valid (i.e., successful).
-	 */
-	public isValidPath(): boolean {
-		this.computePath();
-		return this.pathComputed && this.agentCanFollowPath;
-	}
-
-	/**
 	 * Called if the path is interrupted by some external event
 	 * (like dying, being seated, or teleported).
 	 */
@@ -198,19 +212,26 @@ export class Pather {
 	}
 
 	/**
-	 * Begin following the path. If no valid path, fires PathFailed.
+	 * Begin following the path. If no valid path, fires PathFailed and returns false immediately.
+	 * If the path is valid, returns true, but keep in mind it can fail later (PathFailed).
 	 */
-	public start() {
+	public start(): boolean {
 		if (!this.agentCanFollowPath) {
-			this.PathFailed.Fire();
-			return;
+			return false; // <— Return false if agent can't follow.
 		}
 		if (this.started) {
-			return;
+			return this.pathComputed && this.pointList.size() > 1;
 		}
 		this.started = true;
 
-		// Start a loop to check if the player gets stuck
+		// If we never successfully computed a path, or if the path has fewer than 2 waypoints,
+		// we consider the path invalid from the get-go.
+		if (!this.pathComputed || this.pointList.size() < 2) {
+			return false; // <— Return false if path is invalid.
+		}
+
+		// Path is valid enough to attempt
+		// Start a loop to check for stalling, etc.
 		task.spawn(() => {
 			while (this.isActive()) {
 				const currentWaypoint = this.currentWaypointIndex;
@@ -220,28 +241,33 @@ export class Pather {
 					this.currentWaypointIndex === currentWaypoint &&
 					this.humanoid?.FloorMaterial !== Enum.Material.Air
 				) {
-					// Player is stuck at the same waypoint for more than 2 seconds
-					// Let's force a jump to try to get them unstuck
 					this.humanoid?.ChangeState(Enum.HumanoidStateType.Jumping);
 				}
 			}
 		});
 
-		// If we have at least 2 waypoints, let's begin moving
-		if (this.pointList.size() > 1 && this.humanoid && this.humanoid.RootPart) {
-			// Connect events for interruption
-			this.seatedConn = this.humanoid.Seated.Connect(() => this.onPathInterrupted());
-			this.diedConn = this.humanoid.Died.Connect(() => this.onPathInterrupted());
-			this.teleportedConn = this.humanoid.RootPart.GetPropertyChangedSignal("CFrame").Connect(() =>
-				this.onPathInterrupted(),
+		// We already know pointList.size() > 1 here
+		if (this.humanoid && this.humanoid.RootPart) {
+			// Connect interruption events
+			this.trove.add(
+				this.humanoid.Seated.Connect(() => this.onPathInterrupted()),
+				"Disconnect",
+			);
+			this.trove.add(
+				this.humanoid.Died.Connect(() => this.onPathInterrupted()),
+				"Disconnect",
+			);
+			this.trove.add(
+				this.humanoid.RootPart.GetPropertyChangedSignal("CFrame").Connect(() => this.onPathInterrupted()),
+				"Disconnect",
 			);
 
-			// Typically, index 0 is the start position; index 1 is the first real destination
 			this.currentWaypointIndex = 1;
 			this.moveToNextWaypoint();
-		} else {
-			this.PathFailed.Fire();
 		}
+
+		// <— Return true since we have at least begun a valid path.
+		return true;
 	}
 
 	/**

@@ -19,6 +19,7 @@ export function getTopmostPartAtPosition(
 	raycastParams?: RaycastParams,
 	maxCheckHeight = 1000,
 	rayLength = 5000,
+	checkBelowPart?: BasePart,
 ): [Part | undefined, Vector3 | undefined] {
 	const origin = new Vector3(position.X, position.Y + maxCheckHeight, position.Z);
 	const direction = new Vector3(0, -rayLength, 0);
@@ -26,6 +27,7 @@ export function getTopmostPartAtPosition(
 
 	// Keep raycasting until we find a non-transparent part or hit nothing
 	let currentOrigin = origin;
+	let hitCheckPart = checkBelowPart === undefined;
 	while (true) {
 		const raycastResult = Workspace.Raycast(currentOrigin, direction, params);
 
@@ -37,11 +39,17 @@ export function getTopmostPartAtPosition(
 		const hitPosition = raycastResult.Position;
 
 		if (hitPart.Transparency < 1) {
-			return [hitPart, hitPosition]; // Found a visible part
+			if (hitCheckPart) {
+				return [hitPart, hitPosition]; // Found a visible part
+			}
+		}
+
+		if (checkBelowPart && hitPart === checkBelowPart) {
+			hitCheckPart = true;
 		}
 
 		// Update the new origin slightly below the last hit position to continue checking
 		params.AddToFilter(hitPart);
-		currentOrigin = new Vector3(hitPosition.X, hitPosition.Y, hitPosition.Z);
+		currentOrigin = new Vector3(hitPosition.X, hitPosition.Y + maxCheckHeight, hitPosition.Z);
 	}
 }

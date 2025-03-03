@@ -1,4 +1,6 @@
-import { Service, OnStart, OnTick, OnInit } from "@flamework/core";
+//!optimize 2
+//!native
+import { Service, OnStart } from "@flamework/core";
 import {
 	CollectionService,
 	HttpService,
@@ -9,37 +11,39 @@ import {
 	ServerStorage,
 } from "@rbxts/services";
 import { Events, Functions } from "server/network";
-import { gameConstants } from "shared/constants";
-import {
-	fullTargetConfig,
-	TargetConfig as TargetConfig,
-	targetConfig,
-	TargetModule,
-	trashConfig,
-} from "shared/config/targetConfig";
-import { ProfileService } from "./profileService";
+import { gameConstants } from "shared/gameConstants";
+import { fullTargetConfig, TargetConfig as TargetConfig, targetConfig } from "shared/config/targetConfig";
+import { ProfileService } from "../backend/profileService";
 import { BASE_SHOVEL_STRENGTH, shovelConfig } from "shared/config/shovelConfig";
 import { Target } from "shared/networkTypes";
 import { InventoryService } from "./inventoryService";
 import { BASE_DETECTOR_STRENGTH, metalDetectorConfig } from "shared/config/metalDetectorConfig";
-import { LevelService } from "./levelService";
+import { LevelService } from "../gameplay/levelService";
 import { mapConfig } from "shared/config/mapConfig";
 import { findFurthestPointWithinRadius } from "shared/util/detectorUtil";
-import { MoneyService } from "./moneyService";
+import { MoneyService } from "../backend/moneyService";
 import { Signals } from "shared/signals";
-import { GamepassService } from "./gamepassService";
-import { DevproductService } from "./devproductService";
-import Object from "@rbxts/object-utils";
-import Sift from "@rbxts/sift";
-import { ZoneService } from "./zoneService";
+import { GamepassService } from "../backend/gamepassService";
+import { DevproductService } from "../backend/devproductService";
+import { ZoneService } from "../backend/zoneService";
+import { numberSerializer } from "shared/network";
+import Signal from "@rbxts/goodsignal";
 
 const Maps = CollectionService.GetTagged("Map");
 
 const targetTools = ServerStorage.WaitForChild("TargetTools");
 const targetModels = ReplicatedStorage.WaitForChild("Assets").WaitForChild("TargetModels");
 
+const debugWarningsEnabled = true;
+
+const debugWarn = (message: string) => {
+	if (RunService.IsStudio() && debugWarningsEnabled) {
+		warn(`[TargetService]: ${message}`);
+	}
+};
+
 @Service({})
-export class TargetService implements OnStart, OnTick {
+export class TargetService implements OnStart {
 	// Here we store all active targets in a map to track them.
 	// The key is a unique identifier for the target, and the value is the target itself.
 	// This allows us to track targets on the server with the client having no knowledge of the targets whereabouts.
@@ -47,8 +51,11 @@ export class TargetService implements OnStart, OnTick {
 	public playerDigCooldown: Map<Player, boolean> = new Map();
 	public playerDiggingTargets: Map<Player, Target> = new Map();
 	private playerLastSuccessfulDigCooldown: Set<Player> = new Set();
+	public playerStartedDiggingTimes: Map<Player, number> = new Map();
 
 	private rng = new Random(tick());
+
+	public dugTreasures = new Signal<(player: Player, newTreasuresDugAmount: number) => void>();
 
 	constructor(
 		private readonly profileService: ProfileService,
@@ -83,10 +90,10 @@ export class TargetService implements OnStart, OnTick {
 			const targetName = model.Name;
 			const tool = targetTools.FindFirstChild(targetName);
 			if (!tool) {
-				warn(`Target model '${targetName}' missing tool in ${targetTools.GetFullName()}`);
+				debugWarn(`Target model '${targetName}' missing tool in ${targetTools.GetFullName()}`);
 			}
 			if (!fullTargetConfig[targetName]) {
-				warn(`Target model '${targetName}' missing config`);
+				debugWarn(`Target model '${targetName}' missing config`);
 			}
 			CollectionService.AddTag(model, "Treasure");
 		}
@@ -94,13 +101,10 @@ export class TargetService implements OnStart, OnTick {
 		Players.PlayerRemoving.Connect((player) => {
 			const target = this.getPlayerTarget(player);
 			if (target) {
-				const idx = this.activeTargets.findIndex((t) => t === target);
-				if (idx !== -1) {
-					this.activeTargets.remove(idx);
-					// TODO: Replication event to remove the target from listening clients
-				}
+				this.endDigging(player, true, false); // ensure we despawn the target if they leave while digging
 				this.playerDiggingTargets.delete(player);
 				this.playerDigCooldown.delete(player);
+				this.playerLastSuccessfulDigCooldown.delete(player);
 			}
 		});
 
@@ -175,12 +179,10 @@ export class TargetService implements OnStart, OnTick {
 				return acc + item.weight * cfg.basePrice;
 			}, 0);
 			this.moneyService.giveMoney(player, total);
-			profile.Data.targetInventory = [];
+			profile.Data.targetInventory.clear();
+			profile.Data.equippedTreasure = "";
 			this.profileService.setProfile(player, profile);
-			if (profile.Data.equippedTreasure !== "") {
-				this.inventoryService.equipTreasure(player, profile.Data.equippedTreasure);
-			}
-			profile = this.profileService.getProfile(player);
+			this.inventoryService.equipTreasure(player, profile.Data.equippedTreasure);
 
 			Events.updateInventory(player, "Target", [
 				{
@@ -205,6 +207,7 @@ export class TargetService implements OnStart, OnTick {
 				// If they are too far away, we should end the dig.
 				const TOO_FAR_AWAY = gameConstants.DIG_RANGE * 4;
 				if (distance > TOO_FAR_AWAY && !this.playerDiggingTargets.get(player)) {
+					debugWarn("Player unequipped detector too far away from target, cancelling this treasure.");
 					this.endDigging(player, true, false);
 					return;
 				}
@@ -220,8 +223,7 @@ export class TargetService implements OnStart, OnTick {
 			if (this.playerLastSuccessfulDigCooldown.has(player)) return false;
 			if (this.getPlayerTarget(player)) return false; // Why requesting to dig if they already have a target?
 
-			const profile = this.profileService.getProfile(player);
-			if (!profile) return false;
+			const profile = this.profileService.getProfileLoaded(player).expect();
 
 			// If the player has no target, it's likely because they're digging without detecting anything first.
 			// Realistically, just digging in a a random spot would rarely yield anything of value.
@@ -239,6 +241,7 @@ export class TargetService implements OnStart, OnTick {
 			if (profile.Data.targetInventory.size() >= profile.Data.inventorySize) {
 				// This should only happen if their data is out of sync with the server
 				// So sync them up here
+				// Events.updateInventorySize: (size: number) => void;
 				Events.updateInventorySize(player, profile.Data.inventorySize);
 				return false;
 			}
@@ -254,7 +257,7 @@ export class TargetService implements OnStart, OnTick {
 			const spawnBaseFolder = map.WaitForChild("SpawnBases");
 
 			const bases = spawnBaseFolder.GetChildren().filter((inst) => inst.IsA("BasePart"));
-			const position = findFurthestPointWithinRadius(
+			const [position, spawnBase] = findFurthestPointWithinRadius(
 				character.GetPivot().Position,
 				bases,
 				gameConstants.DIG_RANGE,
@@ -266,6 +269,7 @@ export class TargetService implements OnStart, OnTick {
 
 			target.position = position;
 			target.mapName = map.Name;
+			target.base = spawnBase;
 
 			// Add the target to the active targets
 			this.activeTargets.push(target);
@@ -277,44 +281,145 @@ export class TargetService implements OnStart, OnTick {
 			return true;
 		});
 
-		Events.dig.connect((player) => {
-			if (this.playerDigCooldown.get(player)) {
+		Functions.requestNextTarget.setCallback((player) => {
+			const target =
+				this.getPlayerTarget(player) ?? (this.spawnTarget(player, 10) && this.getPlayerTarget(player));
+			if (!target) {
+				Events.targetSpawnFailure.fire(player);
 				return;
 			}
 
-			let target = this.getPlayerTarget(player);
+			return {
+				itemId: target.itemId,
+				name: target.name,
+				position: target.position,
+				digProgress: target.digProgress,
+				owner: player,
+				mapName: target.mapName,
+				maxProgress: target.maxProgress,
+			};
+		});
+
+		// let latestClientUpdateId = 0;
+
+		// Events.dig.connect((player, serializedBatch) => {
+		// 	if (this.playerDigCooldown.get(player)) {
+		// 		return;
+		// 	}
+		// 	const MAX_BATCH_SZ = math.ceil(gameConstants.BATCH_SEND_INTERVAL / gameConstants.DIG_TIME_SEC);
+		// 	const batch = batchSerializer.deserialize(serializedBatch as buffer);
+
+		// 	const currentUpdateId = latestClientUpdateId;
+		// 	let batchAcc = 0;
+		// 	for (const { id, batchNum } of batch) {
+		// 		if (id <= latestClientUpdateId) continue;
+		// 		latestClientUpdateId = id;
+		// 		if (batchAcc >= MAX_BATCH_SZ) break;
+		// 		batchAcc += batchNum;
+		// 	}
+		// 	batchAcc = math.min(batchAcc, MAX_BATCH_SZ);
+
+		// 	if (currentUpdateId === latestClientUpdateId) {
+		// 		return;
+		// 	}
+		// 	Events.confirmRecievedDigBatch.fire(player, latestClientUpdateId);
+
+		// 	let target = this.getPlayerTarget(player);
+		// 	if (!target) {
+		// 		return;
+		// 	}
+		// 	const targetDistance = player.Character?.GetPivot().Position.sub(target.position).Magnitude;
+		// 	if (targetDistance === undefined) {
+		// 		// This can happen when their character is destroyed, forex, they fell into void or reset.
+		// 		debugWarn("Player character destroyed while digging, cancelling this treasure.");
+		// 		this.endDigging(player, true);
+		// 		return;
+		// 	}
+		// 	// Ensure exploiters can't dig from far away
+		// 	if (targetDistance > gameConstants.DIG_RANGE * 4) {
+		// 		// If we didn't end here, then their dig wouldn't end until the timer ran out and they would be stuck.
+		// 		debugWarn("Player too far away from target to dig, cancelling this treasure.");
+		// 		this.endDigging(player, true);
+		// 		return;
+		// 	}
+
+		// 	this.dig(player, target, batchAcc);
+		// });
+
+		Events.replicateDigProgress.connect((player, progress) => {
+			const deserializedProgress = numberSerializer.deserialize(progress as buffer);
+			const playerTarget = this.getPlayerTarget(player);
+			if (!playerTarget) return;
+			Events.replicateDig.except(player, {
+				itemId: playerTarget.itemId,
+				name: playerTarget.name,
+				position: playerTarget.position,
+				digProgress: deserializedProgress,
+				owner: player,
+				mapName: playerTarget.mapName,
+				maxProgress: playerTarget.maxProgress,
+				base: playerTarget.base,
+			});
+		});
+
+		// Just trust the client and check if it was finished in a possible timeframe.
+		Events.finishedDigging.connect((player) => {
+			const target = this.getPlayerTarget(player);
 			if (!target) {
 				return;
 			}
-			const targetDistance = player.Character?.GetPivot().Position.sub(target.position).Magnitude;
-			if (targetDistance === undefined) {
-				// This can happen when their character is destroyed, forex, they fell into void or reset.
-				this.endDigging(player, true);
-				return;
-			}
-			// Ensure exploiters can't dig from far away
-			if (targetDistance > gameConstants.DIG_RANGE * 2) {
-				// If we didn't end here, then their dig wouldn't end until the timer ran out and they would be stuck.
-				this.endDigging(player, true);
-				return;
-			}
 
-			this.dig(player, target);
+			const possible = this.digWasPossible(player, target);
+
+			this.endDigging(player, !possible);
+			if (possible) {
+				this.digSuccess(player, target);
+			}
 		});
 	}
 
-	onTick(deltaTime: number): void {
-		for (const [_player, target] of this.playerDiggingTargets) {
-			if (!target.activelyDigging) continue;
-			target.digProgress = math.max(
-				0,
-				target.digProgress - target.maxProgress * gameConstants.BAR_DECREASE_RATE * deltaTime,
-			);
+	private digWasPossible(player: Player, target: Target): boolean {
+		const profile = this.profileService.getProfileLoaded(player).expect();
 
-			if (target.digProgress <= 0) {
-				this.endDigging(target.owner, true);
-			}
+		const startedTime = this.playerStartedDiggingTimes.get(player);
+		if (!startedTime) return false;
+
+		const elapsedTime = tick() - startedTime;
+
+		const digStrength = this.getDigStrength(player);
+		const shovelStrength = shovelConfig[profile.Data.equippedShovel].strengthMult * BASE_SHOVEL_STRENGTH;
+		const totalStrength = digStrength + shovelStrength;
+
+		const FRAME_TIME = 1 / 60; // Blanket Assume 60 FPS
+		const maxClickSpeed = gameConstants.DIG_TIME_SEC * 0.9;
+		const maxHealth = target.maxProgress;
+		const startHealth = target.digProgress;
+		const totalHealth = maxHealth - startHealth;
+
+		const framesPerClick = maxClickSpeed / FRAME_TIME;
+		const decayPerClick = gameConstants.BAR_DECREASE_RATE * framesPerClick;
+
+		const effectiveStrength = totalStrength - decayPerClick;
+		if (effectiveStrength <= 0) {
+			return false;
 		}
+
+		const totalClicks = totalHealth / effectiveStrength;
+		const totalTime = totalClicks * maxClickSpeed;
+		const timeDifference = elapsedTime - totalTime;
+
+		let possible = timeDifference > 0;
+
+		return possible;
+	}
+
+	public getDigStrength(player: Player): number {
+		const profile = this.profileService.getProfileLoaded(player).expect();
+		let strength = profile.Data.strength;
+		if (this.gamepassService.ownsGamepass(player, gameConstants.GAMEPASS_IDS.x2Strength)) {
+			strength *= 2;
+		}
+		return strength;
 	}
 
 	public getPlayerTarget(player: Player): Target | undefined {
@@ -323,22 +428,28 @@ export class TargetService implements OnStart, OnTick {
 
 	private digSuccess(player: Player, target: Target) {
 		// Final modifications
-		const profile = this.profileService.getProfile(player);
-		if (!profile) return;
+		const profile = this.profileService.getProfileLoaded(player).expect();
 
 		// Add the target to the player's inventory
 		this.inventoryService.addItemToTargetInventory(player, target);
+		profile.Data.treasuresDug++;
 
 		// For multi-dig, we will spawn another random target and give it to them for each level.
 		const multiDigLevel = profile.Data.multiDigLevel;
 
 		for (let i = 0; i < multiDigLevel; i++) {
+			const invSz = profile.Data.targetInventory.size();
+			if (invSz >= profile.Data.inventorySize) break;
 			const targetResult = this.createTarget(player, target.usedLuckMult);
-			if (!targetResult) continue;
+			if (!targetResult) break;
 			const [extraTarget] = targetResult;
 			this.inventoryService.addItemToTargetInventory(player, extraTarget);
 			this.levelService.addExperience(player, extraTarget.weight * 10);
+			profile.Data.treasuresDug++;
 		}
+
+		this.profileService.setProfile(player, profile);
+		this.dugTreasures.Fire(player, profile.Data.treasuresDug);
 
 		// Add experience to the player
 		// TODO: Take rarity, or if it's trash into account.
@@ -351,51 +462,52 @@ export class TargetService implements OnStart, OnTick {
 		});
 	}
 
-	private dig(player: Player, target: Target) {
-		const character = player.Character;
-		if (!character || !character.Parent) return;
+	// private dig(player: Player, target: Target, batchNum: number) {
+	// 	const character = player.Character;
+	// 	if (!character || !character.Parent) return;
 
-		const profile = this.profileService.getProfile(player);
-		if (!profile) return;
-		this.playerDigCooldown.set(player, true);
+	// 	const profile = this.profileService.getProfile(player);
+	// 	if (!profile) return;
+	// 	this.playerDigCooldown.set(player, true);
 
-		const cfg = shovelConfig[profile.Data.equippedShovel];
-		assert(cfg, `Shovel config for ${profile.Data.equippedShovel} not found`);
+	// 	const cfg = shovelConfig[profile.Data.equippedShovel];
+	// 	assert(cfg, `Shovel config for ${profile.Data.equippedShovel} not found`);
 
-		// Update the digging progress by incrementing the digProgress
-		let digStrength = profile.Data.strength + cfg.strengthMult * BASE_SHOVEL_STRENGTH;
+	// 	// Update the digging progress by incrementing the digProgress
+	// 	let digStrength = profile.Data.strength + cfg.strengthMult * BASE_SHOVEL_STRENGTH * batchNum;
 
-		if (this.gamepassService.ownsGamepass(player, gameConstants.GAMEPASS_IDS.x2Strength)) {
-			digStrength *= 2;
-		}
+	// 	if (this.gamepassService.ownsGamepass(player, gameConstants.GAMEPASS_IDS.x2Strength)) {
+	// 		digStrength *= 2;
+	// 	}
 
-		target.digProgress += digStrength;
-		const maxProgress = target.maxProgress;
-		Events.replicateDig.except(player, {
-			itemId: target.itemId,
-			name: target.name,
-			position: target.position,
-			digProgress: target.digProgress,
-			owner: player,
-			mapName: target.mapName,
-			maxProgress,
-		});
+	// 	target.digProgress += digStrength;
+	// 	const maxProgress = target.maxProgress;
+	// 	Events.replicateDig.broadcast({
+	// 		itemId: target.itemId,
+	// 		name: target.name,
+	// 		position: target.position,
+	// 		digProgress: target.digProgress,
+	// 		owner: player,
+	// 		mapName: target.mapName,
+	// 		base: target.base,
+	// 		maxProgress,
+	// 	});
 
-		// Check if the target is fully dug
-		if (target.digProgress >= maxProgress) {
-			// Remove the target from the active targets
-			target.activelyDigging = false;
-			// print(`${player.Name} dug up ${target.name} with weight ${target.weight}`);
+	// 	// Check if the target is fully dug
+	// 	if (target.digProgress >= maxProgress) {
+	// 		// Remove the target from the active targets
+	// 		target.activelyDigging = false;
+	// 		// print(`${player.Name} dug up ${target.name} with weight ${target.weight}`);
 
-			this.endDigging(player);
-			this.digSuccess(player, target);
-		}
+	// 		this.endDigging(player);
+	// 		this.digSuccess(player, target);
+	// 	}
 
-		// End dig cooldown
-		task.delay(gameConstants.DIG_TIME_SEC, () => {
-			this.playerDigCooldown.set(player, false);
-		});
-	}
+	// 	// End dig cooldown
+	// 	task.delay(gameConstants.DIG_TIME_SEC, () => {
+	// 		this.playerDigCooldown.set(player, false);
+	// 	});
+	// }
 
 	public endDigging(player: Player, failed: boolean = false, reparentDetector: boolean = true) {
 		const profile = this.profileService.getProfile(player);
@@ -407,12 +519,24 @@ export class TargetService implements OnStart, OnTick {
 			// Remove the target from the active targets
 			this.activeTargets.remove(active);
 			Events.targetDespawned.fire(player);
-			Events.endDigReplication.except(player, target.itemId);
+			Events.endDigReplication.except(player, {
+				itemId: target.itemId,
+				name: target.name,
+				position: target.position,
+				digProgress: target.digProgress,
+				owner: player,
+				mapName: target.mapName,
+				maxProgress: target.maxProgress,
+				base: target.base,
+			});
 		}
 
+		this.playerStartedDiggingTimes.delete(player);
 		this.playerDiggingTargets.delete(player);
 
-		Events.endDiggingServer.fire(player, !failed, target?.itemId);
+		if (target) {
+			Events.endDiggingServer.fire(player, !failed, target?.itemId);
+		}
 		const character = player.Character;
 		if (!character || !character.Parent) return;
 		const humanoid = character.WaitForChild("Humanoid") as Humanoid;
@@ -464,7 +588,7 @@ export class TargetService implements OnStart, OnTick {
 
 		if (!playerPosition) return false;
 
-		const position = findFurthestPointWithinRadius(
+		const [position, spawnBase] = findFurthestPointWithinRadius(
 			playerPosition,
 			spawnBaseFolder.GetChildren().filter((inst) => inst.IsA("BasePart")),
 			adjustedRadius,
@@ -480,6 +604,7 @@ export class TargetService implements OnStart, OnTick {
 
 		target.position = position;
 		target.mapName = map.Name;
+		target.base = spawnBase;
 
 		// Add the target to the active targets
 		this.activeTargets.push(target);
@@ -541,6 +666,8 @@ export class TargetService implements OnStart, OnTick {
 			itemId: HttpService.GenerateGUID(),
 
 			mapName: profile.Data.currentMap,
+
+			base: undefined,
 
 			usedLuckMult: luckMult,
 			owner: player,

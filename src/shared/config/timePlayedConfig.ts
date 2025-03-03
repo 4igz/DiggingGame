@@ -1,5 +1,4 @@
 //!optimize 2
-//!native
 import { Reward } from "shared/networkTypes";
 
 export interface PlaytimeReward extends Reward {

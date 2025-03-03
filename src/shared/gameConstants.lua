@@ -19,33 +19,6 @@ local REWARD_IMAGES = {
 	LuckMultiplier = "rbxassetid://83833460426334",
 }
 local gameConstants = {
-	DIG_BAR_UI = "DiggingBar",
-	SIDEBAR_UI = "SidebarUi",
-	INVENTORY_MENU = "BackpackUi",
-	TOOLBAR_UI = "ToolbarUi",
-	MAIN_UI = "MainUi",
-	RIGHT_SIDE_HUD = "Money",
-	SELL_UI = "SellUi",
-	SHOP_UI = "ShopUi",
-	LUCKBAR_UI = "LuckBar",
-	COMPASS_UI = "CompassUi",
-	GAMEPASS_SHOP_UI = "GamepassShop",
-	POPUP_UI = "ItemPopupUi",
-	ISLE_POPUP_UI = "ZonePopupUi",
-	BOAT_SHOP_UI = "BoatShopUi",
-	DAILY_REWARD_UI = "DailyRewardUi",
-	PLAYTIME_REWARD_UI = "PlaytimeRewardUi",
-	DIALOG_PROMPT = "DialogPromptUi",
-
-	-- Collision Groups
-	PLAYER_COLGROUP = "Player",
-	NOCHARACTERCOLLISION_COLGROUP = "NoCollideWithCharacters",
-	BOAT_COLGROUP = "Boat",
-
-	-- CS Tags
-	SPAWN_TAG = "MapSpawn",
-	ISLE_ZONE_TAG = "IsleZone",
-
 	-- Gameplay constants
 	DIG_PROGRESS_MULTIPLIER = 20,
 	SHOP_PROMPT_RANGE = 10,
@@ -53,15 +26,20 @@ local gameConstants = {
 	SERVER_LUCK_MULTIPLIER_DURATION = 60 * 60,
 	MAX_MULTIDIG_LEVEL = 6,
 	DIG_RANGE = 5,
-	DIG_TIME_SEC = 0.01,
-	AUTO_DIG_CLICK_INTERVAL = 0.1,
+	DIG_TIME_SEC = 1 / 20,
+	BATCH_SEND_INTERVAL = 1 / 3,
+	AUTO_DIG_CLICK_INTERVAL = 0.2,
 	POTION_DURATION = 300,
-	TARGET_INVENTORY_DEFAULT_CAPACITY = 100,
-	BAR_DECREASE_RATE = 0.0005,
+	BAR_DECREASE_RATE = 0.05,
 	HIGH_ROLL_THRESHOLD = 6.5,
-	BASE_EXP = 100,
 	SUCCESSFUL_DIG_COOLDOWN = 1, -- Prevent player from immediately digging again after just finishing digging
 	MAX_DIG_REPLICATE_DISTANCE = 200,
+
+	-- Player Stats
+	LEVEL_INCREASE_EXPONENT = 1.01, -- math.floor(BASE_EXP * currentLevel^LEVEL_INCREASE_EXPONENT)
+	BASE_EXP = 100,
+
+	TARGET_INVENTORY_DEFAULT_CAPACITY = 100,
 
 	-- Skills modifiers
 	STRENGTH_MODIFIER = 0.1,
@@ -74,11 +52,11 @@ local gameConstants = {
 	},
 
 	DEVPRODUCT_IDS = {
-		RefundPoints = 0,
 		x2Luck = 2683149065,
 		StarterPack = 2683148216,
 		MoreDigging = 2683148761,
 		MediumPack = 2683148387,
+		RefundPoints = 3226810394,
 		["1k Money Pack"] = 2683146655,
 		["2.5k Money Pack"] = 2683146887,
 		["7.5k Money Pack"] = 2683147047,
@@ -134,6 +112,40 @@ local gameConstants = {
 	RARITY_BACKGROUND_IMAGE = "rbxassetid://83809962362409",
 
 	MULTI_DIG_ANIMATION_SPRITESHEET = "rbxassetid://80311363716942",
+
+	-- UI registry names
+	DIG_BAR_UI = "DiggingBar",
+	SIDEBAR_UI = "SidebarUi",
+	INVENTORY_MENU = "BackpackUi",
+	TOOLBAR_UI = "ToolbarUi",
+	MAIN_UI = "MainUi",
+	RIGHT_SIDE_HUD = "Money",
+	SELL_UI = "SellUi",
+	SHOP_UI = "ShopUi",
+	LUCKBAR_UI = "LuckBar",
+	COMPASS_UI = "CompassUi",
+	GAMEPASS_SHOP_UI = "GamepassShop",
+	POPUP_UI = "ItemPopupUi",
+	ISLE_POPUP_UI = "ZonePopupUi",
+	BOAT_SHOP_UI = "BoatShopUi",
+	DAILY_REWARD_UI = "DailyRewardUi",
+	PLAYTIME_REWARD_UI = "PlaytimeRewardUi",
+	DIALOG_PROMPT = "DialogPromptUi",
+	DETECTOR_HINT_TEXT = "DetectorHintText",
+
+	-- Attributes
+	BOAT_DRIVER_SITTING = "SittingInBoatDriverSeat",
+	AREA_INDICATOR_POS = "OriginalPosition",
+	TREASURE_MODEL_ORIGIN = "TrackedOrigin",
+
+	-- Collision Groups
+	PLAYER_COLGROUP = "Player",
+	NOCHARACTERCOLLISION_COLGROUP = "NoCollideWithCharacters",
+	BOAT_COLGROUP = "Boat",
+
+	-- CS Tags
+	SPAWN_TAG = "MapSpawn",
+	ISLE_ZONE_TAG = "IsleZone",
 }
 return {
 	ROLL_TYPES = ROLL_TYPES,

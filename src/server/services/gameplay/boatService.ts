@@ -1,19 +1,25 @@
-import { Service, OnStart, OnInit } from "@flamework/core";
+//!optimize 2
+//!native
+import { Service, OnStart, OnTick } from "@flamework/core";
 import Object from "@rbxts/object-utils";
 import { CollectionService, HttpService, PhysicsService, Players, ServerStorage, Workspace } from "@rbxts/services";
 import { Events, Functions } from "server/network";
 import { mapConfig } from "shared/config/mapConfig";
-import { ProfileService } from "./profileService";
 import { boatConfig } from "shared/config/boatConfig";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 import { interval } from "shared/util/interval";
+import { ProfileService } from "../backend/profileService";
 
 @Service({})
-export class BoatService implements OnStart {
+export class BoatService implements OnStart, OnTick {
 	private boatSpawns = new Map<keyof typeof mapConfig, Array<PVInstance>>();
 	private spawnedBoats = new Map<string, Model>();
 	private boatOwners = new Map<string, Player>();
 	private boatModelFolder = ServerStorage.WaitForChild("BoatModels");
+	private lastActiveBoatTimes = new Map<string, number>();
+	private activeBoats = new Set<string>();
+
+	private BOAT_DESPAWN_TIMER = 15;
 
 	constructor(private readonly profileService: ProfileService) {}
 
@@ -34,6 +40,7 @@ export class BoatService implements OnStart {
 					boat.Destroy();
 					this.spawnedBoats.delete(boatId);
 					this.boatOwners.delete(boatId);
+					this.lastActiveBoatTimes.delete(boatId);
 				}
 			}
 		});
@@ -139,6 +146,7 @@ export class BoatService implements OnStart {
 			boat.PivotTo(unoccupiedBoatSpawn?.GetPivot().add(new Vector3(0, boat.GetExtentsSize().Y / 2, 0)));
 			boat.Parent = Workspace;
 			this.spawnedBoats.set(boatId, boat);
+			this.lastActiveBoatTimes.set(boatId, tick());
 
 			for (const descendant of boat.GetDescendants()) {
 				if (descendant.IsA("BasePart")) {
@@ -146,6 +154,80 @@ export class BoatService implements OnStart {
 				}
 			}
 		});
+
+		Functions.sitInBoat.setCallback((player, boatId) => {
+			const boat = this.spawnedBoats.get(boatId);
+			if (!boat) return error(`Boat ${boatId} doesn't exist`);
+
+			const character = player.Character;
+			if (!character) return error("Player doesn't have a character");
+
+			const humanoid = character.WaitForChild("Humanoid", 1) as Humanoid;
+			if (!humanoid) return error("Player doesn't have a humanoid");
+
+			const hrp = character.PrimaryPart as BasePart;
+			if (!hrp) return error("Player doesn't have a primary part");
+
+			const ownerSeat = boat.FindFirstChild("OwnerSeat") as Part;
+			if (!ownerSeat) return error(`Boat ${boat.Name} doesn't have an owner seat`);
+
+			const weld = ownerSeat.FindFirstChildOfClass("WeldConstraint") as WeldConstraint;
+			if (!weld) return error(`Owner seat for boat ${boat.Name} doesn't have a weld constraint`);
+
+			character.PivotTo(ownerSeat.CFrame.add(ownerSeat.ExtentsSize.mul(Vector3.yAxis.div(2))));
+			weld.Part1 = hrp;
+			this.lastActiveBoatTimes.set(boatId, tick());
+			this.activeBoats.add(boatId);
+
+			return true;
+		});
+
+		Events.exitBoat.connect((player, boatId) => {
+			const boat = this.spawnedBoats.get(boatId);
+			if (!boat) return;
+
+			const profile = this.profileService.getProfile(player);
+			if (!profile) return;
+
+			const character = player.Character;
+			if (!character) return;
+
+			const humanoid = character.FindFirstChild("Humanoid") as Humanoid;
+			if (!humanoid) return;
+
+			const hrp = character.PrimaryPart as Part;
+			if (!hrp) return;
+
+			const ownerSeat = boat.FindFirstChild("OwnerSeat") as Part;
+			if (!ownerSeat) return;
+
+			const weld = ownerSeat.FindFirstChildOfClass("WeldConstraint") as WeldConstraint;
+			if (!weld) return;
+
+			// Client removes the weld, but the server validates that.
+			weld.Part1 = undefined;
+			this.lastActiveBoatTimes.set(boatId, tick());
+			this.activeBoats.delete(boatId);
+		});
+	}
+
+	onTick() {
+		for (const boatId of this.activeBoats) {
+			this.lastActiveBoatTimes.set(boatId, tick());
+		}
+
+		for (const [boatId, lastActiveTime] of this.lastActiveBoatTimes) {
+			if (tick() - lastActiveTime > this.BOAT_DESPAWN_TIMER) {
+				const boat = this.spawnedBoats.get(boatId);
+				if (boat) {
+					boat.Destroy();
+					this.spawnedBoats.delete(boatId);
+					this.boatOwners.delete(boatId);
+					this.lastActiveBoatTimes.delete(boatId);
+					this.activeBoats.delete(boatId);
+				}
+			}
+		}
 	}
 
 	getUnoccupiedBoatSpawn(player: Player, mapName: keyof typeof mapConfig): PVInstance | undefined {

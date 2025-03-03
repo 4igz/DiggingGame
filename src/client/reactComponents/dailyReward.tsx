@@ -1,9 +1,8 @@
 //!optimize 2
-//!native
 import React, { createRef, useEffect } from "@rbxts/react";
 import { Events, Functions } from "client/network";
 import { dailyRewards, DAILY_REWARD_COOLDOWN } from "shared/config/dailyRewardConfig";
-import { gameConstants, REWARD_IMAGES } from "shared/constants";
+import { gameConstants, REWARD_IMAGES } from "shared/gameConstants";
 import { RewardType } from "shared/networkTypes";
 import { formatShortTime } from "shared/util/nameUtil";
 import { ExitButton } from "./inventory";
@@ -110,12 +109,12 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 		Functions.getLastDailyClaimTime().then((time) => {
 			if (!time) return; // If this happens, it's likely the player left before the profile could be loaded
 			setLastClaimed(time);
-		});
+		}).catch(warn);
 
 		Functions.getDailyStreak().then((streak) => {
 			if (!streak) return;
 			setStreak(streak);
-		});
+		}).catch(warn);
 
 		Events.updateDailyStreak.connect((streak, lastClaimTime) => {
 			setStreak(streak);

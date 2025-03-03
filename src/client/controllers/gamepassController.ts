@@ -1,26 +1,34 @@
 //!optimize 2
-//!native
 import { Controller, OnStart } from "@flamework/core";
 import { Events, Functions } from "client/network";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 
-const gamepasses: Map<keyof typeof gameConstants.GAMEPASS_IDS, boolean> = new Map();
+let clientGamepasses: Map<keyof typeof gameConstants.GAMEPASS_IDS, boolean> = new Map();
 
 @Controller({})
 export class GamepassController implements OnStart {
 	onStart() {
 		// Allow gamepasses to be replicated and stored as state here.
-		Functions.getOwnedGamepasses().then((gamepasses) => {
-			gamepasses = gamepasses;
-		});
+		Functions.getOwnedGamepasses()
+			.then((gamepasses) => {
+				clientGamepasses = gamepasses;
+			})
+			.catch((e) => {
+				warn(e);
+			});
 
 		// Listen for gamepass updates.
 		Events.updateOwnedGamepasses.connect((gamepasses) => {
-			gamepasses = gamepasses;
+			clientGamepasses = gamepasses;
 		});
 	}
 
 	getOwnsGamepass(gamepassName: keyof typeof gameConstants.GAMEPASS_IDS): boolean {
-		return gamepasses.get(gamepassName) ?? false;
+		const result = clientGamepasses.get(gamepassName);
+		if (result === undefined) {
+			warn(`Gamepass ${gamepassName} not found in gamepasses`);
+			return false;
+		}
+		return result;
 	}
 }

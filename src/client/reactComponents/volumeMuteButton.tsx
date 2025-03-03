@@ -1,5 +1,4 @@
 //!optimize 2
-//!native
 import React, { useEffect } from "@rbxts/react";
 import { AnimatedButton } from "./inventory";
 import { SoundService } from "@rbxts/services";

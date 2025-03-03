@@ -1,5 +1,4 @@
 //!optimize 2
-//!native
 import React, { createRef, useEffect, useRef, useState } from "@rbxts/react";
 import { useMotion } from "client/hooks/useMotion";
 import { Events, Functions } from "client/network";
@@ -8,7 +7,7 @@ import EternityNum, { IsInf, IsNaN } from "shared/util/eternityNum";
 import { AnimatedButton } from "./inventory";
 import { UiController } from "client/controllers/uiController";
 import { RunService, UserInputService } from "@rbxts/services";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 
 interface MoneyVectorProps {
 	offset: UDim2;
@@ -140,9 +139,13 @@ export const RightSideMenu = (props: MenuProps) => {
 	};
 
 	React.useEffect(() => {
-		Functions.getMoneyShortString.invoke().then((money) => {
-			updateMoneyValue(money);
-		});
+		Functions.getMoneyShortString()
+			.then((money) => {
+				updateMoneyValue(money);
+			})
+			.catch((e) => {
+				warn(e);
+			});
 		Events.updateMoney.connect((newAmount) => {
 			updateMoneyValue(newAmount);
 		});

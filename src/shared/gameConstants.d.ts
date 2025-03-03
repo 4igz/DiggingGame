@@ -32,6 +32,11 @@ export declare const gameConstants: {
 	readonly DAILY_REWARD_UI: string;
 	readonly PLAYTIME_REWARD_UI: string;
 	readonly DIALOG_PROMPT: string;
+	readonly DETECTOR_HINT_TEXT: string;
+
+	readonly BOAT_DRIVER_SITTING: "SittingInBoatDriverSeat";
+	readonly AREA_INDICATOR_POS: "OriginalPosition";
+	readonly TREASURE_MODEL_ORIGIN: "TrackedOrigin";
 
 	readonly PLAYER_COLGROUP: string;
 	readonly NOCHARACTERCOLLISION_COLGROUP: string;
@@ -47,13 +52,16 @@ export declare const gameConstants: {
 	readonly MAX_MULTIDIG_LEVEL: number;
 	readonly DIG_RANGE: number;
 	readonly DIG_TIME_SEC: number; // Ratelimit the speed of digging
+	readonly BATCH_SEND_INTERVAL: number;
 	readonly AUTO_DIG_CLICK_INTERVAL: number; // Seconds between each auto dig click
 	readonly POTION_DURATION: number; // 5 minutes
 	readonly TARGET_INVENTORY_DEFAULT_CAPACITY: number;
 	readonly BAR_DECREASE_RATE: number;
 	readonly BASE_EXP: number;
-	readonly SUCCESSFUL_DIG_COOLDOWN: 1; // Prevent player from immediately digging again after just finishing digging
+	readonly SUCCESSFUL_DIG_COOLDOWN: number; // Prevent player from immediately digging again after just finishing digging
 	readonly MAX_DIG_REPLICATE_DISTANCE: number;
+
+	readonly LEVEL_INCREASE_EXPONENT: number;
 
 	readonly STRENGTH_MODIFIER: number;
 	readonly DETECTION_MODIFIER: number;

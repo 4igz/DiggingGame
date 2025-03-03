@@ -1,20 +1,23 @@
 //!optimize 2
-//!native
 import React, { Dispatch, useEffect } from "@rbxts/react";
 import { UiController } from "client/controllers/uiController";
 import { useMotion } from "client/hooks/useMotion";
 import { Events, Functions } from "client/network";
 import { springs } from "client/utils/springs";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 import { Item, ItemType, Rarity } from "shared/networkTypes";
 import { separateWithCommas, shortenNumber, spaceWords } from "shared/util/nameUtil";
 import { AnimatedButton, ExitButton } from "./inventory";
+import Object from "@rbxts/object-utils";
+import { NetworkingFunctionError } from "@flamework/networking";
 
 const SHOP_MENUS = {
 	MetalDetectors: "Detectors",
 	Store: "Store",
 	Shovels: "Shovels",
 };
+
+const outgoingShopRequests = new Array<Promise<void>>();
 
 interface SelectionButtonProps {
 	setSelectedShop: Dispatch<keyof typeof SHOP_MENUS>;
@@ -564,6 +567,11 @@ interface ShopProps {
 	uiController: UiController;
 }
 
+const cachedShops = new Map<
+	keyof typeof SHOP_MENUS | "",
+	Array<Exclude<Item, { type: "Potions" }> & { owned: boolean }>
+>();
+
 export const ShopComponent: React.FC<ShopProps> = (props) => {
 	const [visible, setVisible] = React.useState(props.visible);
 	const [selectedShop, setSelectedShop] = React.useState<keyof typeof SHOP_MENUS | "">("");
@@ -573,35 +581,56 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 	const [popInSz, popInMotion] = useMotion(UDim2.fromScale(0, 0));
 	const menuRef = React.createRef<Frame>();
 
+	const updateShopContent = (shopName: typeof selectedShop, items: Array<Item>, setSelected: boolean = false) => {
+		if (shopName === "" || shopName === "Store") return;
+
+		const shopConfig = gameConstants.SHOP_CONFIGS[shopName];
+		const content: Array<Item & { owned: boolean }> = [];
+
+		for (const [itemName, itemConfig] of pairs(shopConfig)) {
+			content.push({
+				...itemConfig,
+				owned: false,
+				type: selectedShop,
+				name: itemName,
+			} as Item & { owned: boolean });
+		}
+
+		const newContent = content
+			.filter((item) => item.type !== "Potions")
+			.map((item) => {
+				const foundItem = items.find((i) => i.name === item.name);
+				if (foundItem) {
+					return { ...item, owned: true };
+				}
+				return item;
+			});
+
+		cachedShops.set(shopName, newContent);
+		setShopContent(newContent);
+	};
+
 	React.useEffect(() => {
 		if (selectedShop === "") {
 			setShopContent([]);
 		} else if (selectedShop === "MetalDetectors" || selectedShop === "Shovels") {
-			const shopConfig = gameConstants.SHOP_CONFIGS[selectedShop];
-			const content: Array<Item & { owned: boolean }> = [];
+			setShopContent(cachedShops.get(selectedShop) ?? []);
 
-			for (const [itemName, itemConfig] of pairs(shopConfig)) {
-				content.push({
-					...itemConfig,
-					owned: false,
-					type: selectedShop,
-					name: itemName,
-				} as Item & { owned: boolean });
+			for (const [i, request] of Object.entries(outgoingShopRequests)) {
+				request.cancel();
+				outgoingShopRequests.remove(i);
 			}
 
-			Functions.getInventory(selectedShop).then(([_, items]) => {
-				setShopContent(
-					content
-						.filter((item) => item.type !== "Potions")
-						.map((item) => {
-							const foundItem = items.find((i) => i.name === item.name);
-							if (foundItem) {
-								return { ...item, owned: true };
-							}
-							return item;
-						}),
-				);
-			});
+			outgoingShopRequests.push(
+				Functions.getInventory(selectedShop)
+					.then(([_, items]) => {
+						updateShopContent(selectedShop, items, true);
+					})
+					.catch((e: NetworkingFunctionError) => {
+						if (e === NetworkingFunctionError.Cancelled) return;
+						warn(e);
+					}),
+			);
 		} else if (selectedShop === "Store") {
 			props.uiController.toggleUi(gameConstants.GAMEPASS_SHOP_UI);
 		}
@@ -641,6 +670,32 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 			};
 		}
 	}, [visible]);
+
+	React.useEffect(() => {
+		// Events.profileReady.connect(() => {
+		// 	for (const shopType of Object.keys(SHOP_MENUS)) {
+		// 		if (shopType === "Store") continue;
+		// 		Functions.getInventory(shopType)
+		// 			.then(([_, items]) => {
+		// 				updateShopContent(shopType, items);
+		// 			})
+		// 			.catch((e) => {
+		// 				warn(e);
+		// 			});
+		// 	}
+		// });
+		for (const shopType of Object.keys(SHOP_MENUS)) {
+			if (shopType === "Store") continue;
+			Functions.getInventory(shopType)
+				.then(([_, items]) => {
+					// Profile already ready (high latency)
+					updateShopContent(shopType, items);
+				})
+				.catch((e) => {
+					warn(e);
+				});
+		}
+	}, []);
 
 	return (
 		<frame

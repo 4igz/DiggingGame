@@ -1,11 +1,10 @@
 //!optimize 2
-//!native
 import React, { Dispatch, useEffect } from "@rbxts/react";
 import { UiController } from "client/controllers/uiController";
 import { useMotion } from "client/hooks/useMotion";
 import { Events, Functions } from "client/network";
 import { springs } from "client/utils/springs";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 import { Rarity } from "shared/networkTypes";
 import { separateWithCommas, shortenNumber, spaceWords } from "shared/util/nameUtil";
 import { ExitButton } from "./inventory";
@@ -700,10 +699,9 @@ export const BoatShopComponent: React.FC<ShopProps> = (props) => {
 	React.useEffect(() => {
 		if (visible) {
 			popInMotion.spring(UDim2.fromScale(0.631, 0.704), springs.responsive);
-			// TODO: Fetch owned boats
 			Functions.getOwnedBoats().then((ownedBoats) => {
 				setOwnedBoats(ownedBoats);
-			});
+			}).catch(warn);
 
 			const connection = Events.updateBoatInventory.connect((ownedBoats) => {
 				setOwnedBoats(ownedBoats);
@@ -716,6 +714,22 @@ export const BoatShopComponent: React.FC<ShopProps> = (props) => {
 			popInMotion.immediate(UDim2.fromScale(0, 0));
 		}
 	}, [visible]);
+
+	React.useEffect(() => {
+		// Events.profileReady.connect(() => {
+		// 	Functions.getOwnedBoats().then((ownedBoats) => {
+		// 		if (ownedBoats) {
+		// Profile ready after render (low latency).
+		// 			setOwnedBoats(ownedBoats);
+		// 		}
+		// 	});
+		// });
+		Functions.getOwnedBoats()
+			.then((ownedBoats) => {
+				setOwnedBoats(ownedBoats);
+			})
+			.catch(warn);
+	}, []);
 
 	return (
 		<frame

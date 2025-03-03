@@ -1,14 +1,14 @@
 //!optimize 2
-//!native
 import { Controller, OnStart } from "@flamework/core";
-import { CollectionService, Players, UserInputService } from "@rbxts/services";
-import { Events } from "client/network";
+import { CollectionService, Players, RunService, UserInputService } from "@rbxts/services";
+import { Events, Functions } from "client/network";
 import { Pather } from "shared/util/pather";
 import { ShovelController } from "./shovelController";
 import { DetectorController } from "./detectorController";
 import { Signals } from "shared/signals";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 import { inventorySizeAtom, treasureCountAtom } from "client/atoms/inventoryAtoms";
+import { debugWarn } from "shared/util/logUtil";
 
 interface MovementKeyMap {
 	[keyCode: number]: boolean;
@@ -38,11 +38,6 @@ const MOVEMENT_INPUTS: MovementInputsMap = {
 	[Enum.UserInputType.Gamepad1.Value]: {
 		[Enum.KeyCode.Thumbstick1.Value]: true,
 	},
-
-	// For Touch, we consider ANY touch an attempt to move
-	// There aren't really any good ways to detect movement attempts on touch devices.
-	// For the record, "Touch" indicates taps, not just any touch.
-	[Enum.UserInputType.Touch.Value]: true,
 };
 
 let existingPather: Pather | undefined = undefined;
@@ -51,13 +46,22 @@ let isPathing: boolean = false;
 
 let consecutiveFails: number = 0;
 
+let targetRequestInProgress = false;
+let targetSpawnTime = 0;
+let initialTargetSpawned = false;
+let trackedSpawnPosition = new Vector3();
+
 const mapSpawns = CollectionService.GetTagged(gameConstants.SPAWN_TAG).filter((instance) => instance.IsA("PVInstance"));
 
-/**
- * queueActive indicates whether we've already spawned a background
- * task to eventually call requestNextTarget().
- */
 let queueActive = false;
+
+const enableDebugWarnings = true;
+
+const logWarn = (message: string) => {
+	if (enableDebugWarnings) {
+		debugWarn(message, "AutoDigging");
+	}
+};
 
 @Controller({})
 export class AutoDigging implements OnStart {
@@ -69,63 +73,48 @@ export class AutoDigging implements OnStart {
 				mapSpawns.push(instance);
 			}
 		});
+
 		Events.targetSpawnSuccess.connect((position: Vector3) => {
+			targetSpawnTime = tick();
 			if (treasureCountAtom() >= inventorySizeAtom()) {
 				Signals.inventoryFull.Fire();
 				this.setAutoDiggingEnabled(false);
 				return;
 			}
 			if (autoDiggingEnabled) {
-				if (isPathing) {
-					existingPather?.Destroy();
-					existingPather = undefined;
-					isPathing = false;
-					Promise.defer((resolve) => {
-						if (this.shovelController.diggingActive || this.detector.targetActive) {
-							Events.endDiggingClient();
-							resolve(true);
-						}
-						resolve(false);
-					}).then((targetActive) => {
-						if (targetActive) {
-							this.queueNextTargetRequest();
-						}
-						this.moveTo(position);
-					});
-				} else {
-					this.moveTo(position);
-				}
+				initialTargetSpawned = true;
+				this.requestAndPathToNextTarget(position);
+			}
+		});
+
+		Events.targetSpawnFailure.connect(() => {
+			if (treasureCountAtom() >= inventorySizeAtom()) {
+				Signals.inventoryFull.Fire();
+				this.setAutoDiggingEnabled(false);
+				return;
+			}
+			if (autoDiggingEnabled) {
+				this.cleanupPather();
+				initialTargetSpawned = true;
+				this.requestAndPathToNextTarget();
 			}
 		});
 
 		this.shovelController.onDiggingComplete.Connect(() => {
-			existingPather?.Destroy();
-			existingPather = undefined;
-			isPathing = false;
+			this.cleanupPather();
 			if (autoDiggingEnabled) {
-				this.quitCurrentTarget();
-				this.queueNextTargetRequest();
+				this.requestAndPathToNextTarget();
 			}
 		});
-
-		// Events.endDiggingServer.connect(() => {
-		// 	if (this.isPathing) {
-		// 		this.existingPather?.cleanup();
-		// 		this.existingPather = undefined;
-		// 		this.isPathing = false;
-		// 	}
-		// 	if (this.autoDiggingEnabled) {
-		// 		this.queueNextTargetRequest();
-		// 	}
-		// });
 
 		Signals.setAutoDiggingRunning.Connect((running: boolean) => {
 			isPathing = running;
 
 			// Cleanup pather
-			if (!running && existingPather) {
-				existingPather?.Destroy();
-				existingPather = undefined;
+			if (!running) {
+				initialTargetSpawned = false;
+
+				this.cleanupPather();
 			}
 		});
 
@@ -135,6 +124,65 @@ export class AutoDigging implements OnStart {
 
 		UserInputService.InputBegan.Connect((input, gameProcessedEvent) => {
 			this.onInputBegan(input, gameProcessedEvent);
+		});
+
+		// Start a periodic check to see if we might be stuck
+		this.beginStuckCheck();
+	}
+
+	/**
+	 * In cases of high latency, we can have an active target, not be pathing, and still be right next to it.
+	 * This is because we are still waiting for a response from the server to tell us that we are close enough to dig.
+	 * In this case, we should keep track of this and not quit our current target if we are close with an active target.
+	 */
+	private isClosedToTrackedTarget(): boolean {
+		const characterPosition = Players.LocalPlayer.Character?.GetPivot().Position;
+		if (!characterPosition) return false;
+		return characterPosition.sub(trackedSpawnPosition).Magnitude < gameConstants.DIG_RANGE * 1.1;
+	}
+
+	/**
+	 * Periodic check: If auto-digging is enabled, we have a target,
+	 * but we aren't pathing or digging, it could mean we're stuck.
+	 */
+	private beginStuckCheck() {
+		const WAIT_INTERVAL = 2; // seconds
+
+		// let lastTrackedPosition = Players.LocalPlayer.Character?.GetPivot().Position;
+
+		task.spawn(() => {
+			while (true) {
+				task.wait(WAIT_INTERVAL);
+
+				// debugWarn(`Stuck check: Target Active: ${this.detector.targetActive}, Pathing: ${isPathing}`);
+				// debugWarn(
+				// 	`\tStuck check: Last Target Spawn: ${tick() - targetSpawnTime}, Last Dig: ${
+				// 		tick() - this.shovelController.lastDiggingTime
+				// 	}\n`,
+				// );
+
+				if (
+					autoDiggingEnabled &&
+					this.detector.targetActive && // We have a target
+					!isPathing && // But we're not pathfinding
+					!this.shovelController.diggingActive && // And not digging
+					tick() - targetSpawnTime > WAIT_INTERVAL * 2 && // And it's been a while since the last target spawned
+					tick() - this.shovelController.lastDiggingTime > WAIT_INTERVAL * 2 // And it's been a while since we last dug
+				) {
+					if (this.isClosedToTrackedTarget()) return;
+					logWarn(
+						"[Stuck check]: Auto-digging enabled and target found, but not pathing or digging. Could be stuck. Trying reset.",
+					);
+
+					consecutiveFails++;
+					this.tryResetIfStuck();
+
+					if (autoDiggingEnabled) {
+						targetRequestInProgress = false;
+						this.requestAndPathToNextTarget();
+					}
+				}
+			}
 		});
 	}
 
@@ -148,9 +196,7 @@ export class AutoDigging implements OnStart {
 		let cancelPath = false;
 
 		if (movementEntry !== undefined) {
-			if (userInputType === Enum.UserInputType.Touch && movementEntry === true) {
-				cancelPath = true;
-			} else if (typeIs(movementEntry, "table")) {
+			if (typeIs(movementEntry, "table")) {
 				if (movementEntry[input.KeyCode.Value]) {
 					cancelPath = true;
 				}
@@ -158,11 +204,9 @@ export class AutoDigging implements OnStart {
 		}
 
 		if (isPathing && cancelPath) {
-			existingPather?.Destroy();
-			existingPather = undefined;
-			isPathing = false;
-			autoDiggingEnabled = false;
-			Signals.setAutoDiggingEnabled.Fire(false);
+			if (this.isClosedToTrackedTarget()) return;
+			this.cleanupPather();
+			this.setAutoDiggingEnabled(false, false);
 		}
 	}
 
@@ -177,93 +221,85 @@ export class AutoDigging implements OnStart {
 		});
 
 		character.PivotTo(new CFrame(closestSpawn.GetPivot().Position.add(new Vector3(0, 5, 0))));
-		warn(`Resetting to spawn, likely due to getting stuck too many times in a row during automatic pathfinding.`);
+		logWarn(
+			`Resetting to spawn, likely due to getting stuck too many times in a row during automatic pathfinding.`,
+		);
 	}
 
-	public moveTo(pathTargetPosition: Vector3) {
-		// Move to the given position
-		const character = Players.LocalPlayer.Character;
-		const humanoid = character?.FindFirstChildOfClass("Humanoid");
-		if (!character || !humanoid) return;
-
-		// If there's an existing pather, stop it and clean up
+	private cleanupPather() {
 		if (existingPather) {
-			existingPather?.Destroy();
+			existingPather.Destroy();
 			existingPather = undefined;
-			isPathing = false;
 		}
+		isPathing = false;
+	}
 
-		const pather = new Pather(pathTargetPosition);
+	private startPathTo(goal: Vector3) {
+		this.cleanupPather();
 
-		let cleaned = false;
+		// Signal to cancel any existing pathers that we missed. This is mainly a fallback incase an existing pather was overwritten before we could destroy it:
+		Signals.requestingNewPather.Fire();
 
-		const cleanup = () => {
-			if (cleaned) return;
-			cleaned = true;
-			isPathing = false;
-			pather?.Destroy();
-			if (existingPather === pather) {
-				existingPather = undefined;
-			} else if (existingPather) {
-				existingPather?.Destroy();
-				existingPather = undefined;
-			}
-		};
+		const pather = new Pather(goal);
+		existingPather = pather;
 
-		if (pather !== undefined) {
-			existingPather = pather;
+		pather.Finished.Connect(() => {
+			this.cleanupPather();
 
-			isPathing = true;
-
-			pather.Finished.Connect(() => {
-				cleanup();
-
-				const CHECK_DELAY = 1;
-				// Check if the player is digging after a second, if not, it's still safe to assume that pathfinding has failed.
-				task.delay(CHECK_DELAY, () => {
-					// Also check lastDiggingTime incase they finished digging before the delay
-					const lastDiggingTime = this.shovelController.lastDiggingTime;
-					if (!isPathing && !this.shovelController.diggingActive && tick() - lastDiggingTime > 2) {
-						consecutiveFails++;
-						this.quitCurrentTarget();
-						this.queueNextTargetRequest();
-						warn("Pathfinding failed (close but didn't dig)");
-					} else {
-						// We can confidently say pathfinding was successful and we dug or are digging
-						consecutiveFails = 0;
-					}
-				});
+			const CHECK_DELAY = 1;
+			// Check if the player is digging after a second, if not, it's still safe to assume that pathfinding has failed.
+			task.delay(CHECK_DELAY, () => {
+				// Also check lastDiggingTime incase they finished digging before the delay
+				const lastDiggingTime = this.shovelController.lastDiggingTime;
+				if (this.isClosedToTrackedTarget()) return;
+				if (!isPathing && !this.shovelController.diggingActive && tick() - lastDiggingTime > 2) {
+					consecutiveFails++;
+					this.quitCurrentTarget();
+					this.requestAndPathToNextTarget();
+					logWarn("Pathfinding failed (close but didn't dig)");
+				} else {
+					// We can confidently say pathfinding was successful and we dug or are digging
+					consecutiveFails = 0;
+				}
 			});
+		});
 
-			pather.PathFailed.Connect(() => {
-				cleanup();
+		pather.PathFailed.Connect(() => {
+			this.cleanupPather();
 
-				const CHECK_DELAY = 1;
-				// Check if the player is digging after a second, if not, it's still safe to assume that pathfinding has failed.
-				task.delay(CHECK_DELAY, () => {
-					// Also check lastDiggingTime incase they finished digging before the delay
-					const lastDiggingTime = this.shovelController.lastDiggingTime;
-					if (!isPathing && !this.shovelController.diggingActive && tick() - lastDiggingTime > 2) {
-						consecutiveFails++;
-						this.quitCurrentTarget();
-						this.queueNextTargetRequest();
-						warn("Pathfinding failed (potentially stuck)");
-					}
-				});
+			const CHECK_DELAY = 1;
+			// Check if the player is digging after a second, if not, it's still safe to assume that pathfinding has failed.
+			task.delay(CHECK_DELAY, () => {
+				// Also check lastDiggingTime incase they finished digging before the delay
+				const lastDiggingTime = this.shovelController.lastDiggingTime;
+				if (this.isClosedToTrackedTarget()) return;
+				if (!isPathing && !this.shovelController.diggingActive && tick() - lastDiggingTime > 2) {
+					consecutiveFails++;
+					this.quitCurrentTarget();
+					this.requestAndPathToNextTarget();
+					logWarn(
+						"Pathfinding failed (potentially stuck or pathfinding error, possibly due to being blocked unexpectedly)",
+					);
+				}
 			});
+		});
 
-			pather.start();
-		} else {
-			cleanup();
-			this.queueNextTargetRequest();
+		const started = pather.start();
+		if (!started) {
+			consecutiveFails++;
+			this.cleanupPather();
+			this.quitCurrentTarget();
+			this.requestAndPathToNextTarget();
+			return;
 		}
+		isPathing = true;
 	}
 
 	/**
 	 * We only spawn one background “queue” task at a time.
 	 * If we're already queued (queueActive == true), we do nothing.
 	 */
-	private queueNextTargetRequest() {
+	private retryResetTargetRequest() {
 		// If we're not auto-digging or there's already a queue worker, skip.
 		if (!autoDiggingEnabled || queueActive) {
 			return;
@@ -278,7 +314,16 @@ export class AutoDigging implements OnStart {
 				queueActive &&
 				(isPathing || this.shovelController.diggingActive || this.detector.targetActive)
 			) {
-				task.wait(0.1); // I tried reducing this wait but it caused the same concurrency issues I was trying to prevent.
+				// Continuously try resetting state until we're free
+				this.quitCurrentTarget();
+
+				// Reset state for the next target
+				this.cleanupPather();
+
+				consecutiveFails++;
+				this.tryResetIfStuck();
+
+				task.wait(0.1);
 			}
 
 			const wasActive = queueActive;
@@ -286,46 +331,93 @@ export class AutoDigging implements OnStart {
 			queueActive = false;
 			// If we're still enabled, request the next target
 			if (autoDiggingEnabled && wasActive) {
-				this.requestNextTarget();
+				targetRequestInProgress = false;
+				this.requestAndPathToNextTarget();
 			}
 		});
 	}
 
-	private requestNextTarget() {
+	requestAndPathToNextTarget(targetPosition?: Vector3) {
+		if (this.detector.targetActive) {
+			initialTargetSpawned = true;
+		}
+
+		if (!autoDiggingEnabled || targetRequestInProgress || !initialTargetSpawned) return;
+
+		if (treasureCountAtom() >= inventorySizeAtom()) {
+			Signals.inventoryFull.Fire();
+			this.setAutoDiggingEnabled(false);
+			return;
+		}
+
+		this.cleanupPather();
+		if (targetPosition) {
+			this.tryResetIfStuck();
+			trackedSpawnPosition = targetPosition;
+			this.startPathTo(targetPosition);
+			return;
+		}
+		targetRequestInProgress = true;
+		Functions.requestNextTarget()
+			.then((target) => {
+				targetRequestInProgress = false;
+				if (!autoDiggingEnabled) return;
+				if (!target) {
+					this.setAutoDiggingEnabled(false); // Prevent partial states
+					return error("Target request failed.");
+				}
+				this.tryResetIfStuck();
+
+				trackedSpawnPosition = target.position;
+				this.startPathTo(target.position);
+			})
+			.catch((err) => {
+				targetRequestInProgress = false;
+				if (!autoDiggingEnabled) return;
+				logWarn(`Failed to get next target: ${err}`);
+				this.retryResetTargetRequest(); // Maybe retry or do fallback
+			});
+	}
+
+	private tryResetIfStuck() {
 		if (consecutiveFails >= gameConstants.AUTO_DIG_FAILURE_THRESHOLD) {
 			consecutiveFails = 0;
 			this.resetToSpawn();
 			this.setAutoDiggingEnabled(false);
 			this.setAutoDiggingEnabled(true);
 		}
-		this.quitCurrentTarget();
-		Signals.setAutoDiggingRunning.Fire(false);
-		// Reset state for the next target
-		existingPather?.Destroy();
-		existingPather = undefined;
-		isPathing = false;
-		Events.nextTargetAutoDigger(); // Sends a request to the server to spawn a new target
 	}
 
 	private quitCurrentTarget() {
-		if (this.shovelController.diggingActive || this.detector.targetActive) {
+		if (
+			autoDiggingEnabled &&
+			(this.shovelController.diggingActive || (this.detector.targetActive && !this.isClosedToTrackedTarget()))
+		) {
 			Events.endDiggingClient();
 		}
 	}
 
-	public setAutoDiggingEnabled(enabled: boolean = true) {
+	public setAutoDiggingEnabled(enabled: boolean, quitTarget: boolean = true) {
+		autoDiggingEnabled = enabled;
+
 		if (enabled) {
 			if (treasureCountAtom() >= inventorySizeAtom()) {
-				Signals.inventoryFull.Fire();
 				this.setAutoDiggingEnabled(false);
 				return;
 			}
-		}
-		this.quitCurrentTarget();
-		if (!enabled) {
+
+			this.cleanupPather();
+			this.requestAndPathToNextTarget();
+		} else {
+			if (quitTarget) {
+				this.quitCurrentTarget();
+			}
+			this.cleanupPather();
 			Signals.setAutoDiggingRunning.Fire(false);
 		}
-		autoDiggingEnabled = enabled;
+
+		initialTargetSpawned = false;
 		Signals.setAutoDiggingEnabled.Fire(enabled);
+		logWarn(`Auto-digging is now ${enabled ? "enabled" : "disabled"}`);
 	}
 }

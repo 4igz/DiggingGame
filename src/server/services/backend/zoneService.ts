@@ -2,7 +2,7 @@ import { Service, OnStart, OnInit } from "@flamework/core";
 import { CollectionService, Players, Workspace } from "@rbxts/services";
 import { Zone } from "@rbxts/zone-plus";
 import { mapConfig } from "shared/config/mapConfig";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 import { ProfileService } from "./profileService";
 import Signal from "@rbxts/goodsignal";
 import { Events } from "server/network";

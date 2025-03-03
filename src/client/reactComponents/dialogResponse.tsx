@@ -1,12 +1,11 @@
 //!optimize 2
-//!native
 import Object from "@rbxts/object-utils";
 import React from "@rbxts/react";
-import { DialogResponse, QUEST_ACCEPT } from "shared/config/questConfig";
+import { DialogResponse, QUEST_ACCEPT, QUEST_DECLINE } from "shared/config/questConfig";
 
 interface DialogResponseProps {
 	options?: Record<DialogResponse, string>;
-	onOptionSelected?: (optionIndex: DialogResponse) => DialogResponse;
+	onOptionSelected?: (optionIndex?: DialogResponse) => DialogResponse;
 	resetTrigger?: number;
 }
 
@@ -18,6 +17,8 @@ export const DialogResponseComponent = (props: DialogResponseProps) => {
 		if (props.options) {
 			setOptions(props.options);
 			setSelectedOption(undefined);
+		} else {
+			props.onOptionSelected?.(undefined);
 		}
 	}, [props.options, props.resetTrigger]);
 
@@ -35,7 +36,7 @@ export const DialogResponseComponent = (props: DialogResponseProps) => {
 					return (
 						<textbutton
 							Size={new UDim2(1, 0, 0.33, 0)}
-							LayoutOrder={responseType === QUEST_ACCEPT ? 1 : responseType === "QUEST_DECLINE" ? 2 : 3}
+							LayoutOrder={responseType === QUEST_ACCEPT ? 1 : responseType === QUEST_DECLINE ? 2 : 3}
 							Text={message}
 							TextScaled={true}
 							BackgroundTransparency={0.5}

@@ -4,13 +4,15 @@ import { GetProfileStore, Profile } from "@rbxts/rbx-profileservice-plus";
 import { Players } from "@rbxts/services";
 import { Events } from "server/network";
 import { PROFILE_STORE_NAME, ProfileTemplate, profileTemplate } from "server/profileTemplate";
+import { debugWarn } from "shared/util/logUtil";
+import { promisePlayerDisconnected } from "shared/util/playerUtil";
 
 export type LoadedProfile = Profile<ProfileTemplate>;
 
 @Service({
 	loadOrder: 0, // We want this service to exist before other services
 })
-export class ProfileService implements OnInit {
+export class ProfileService implements OnInit, OnStart {
 	public onProfileLoaded = new Signal<(player: Player, profile: LoadedProfile) => void>();
 	public profileChanged = new Signal<(player: Player, profile: LoadedProfile) => void>();
 
@@ -19,6 +21,28 @@ export class ProfileService implements OnInit {
 
 	public getLoadedProfiles(): Map<Player, LoadedProfile> {
 		return this.profileCache as Map<Player, LoadedProfile>;
+	}
+
+	public async getProfileLoaded(player: Player): Promise<LoadedProfile> {
+		const existingProfile = this.profileCache.get(player) as LoadedProfile | undefined;
+		if (existingProfile) {
+			return existingProfile;
+		}
+
+		const promise = Promise.fromEvent(this.onProfileLoaded, (playerAdded: Player) => player === playerAdded);
+
+		const disconnect = promisePlayerDisconnected(player).then(() => {
+			promise.cancel();
+		});
+
+		const [success] = promise.await();
+		if (!success) {
+			throw `Player ${player.UserId} disconnected before profile was created`;
+		}
+
+		disconnect.cancel();
+
+		return this.profileCache.get(player) as LoadedProfile;
 	}
 
 	public getProfile(player: Player): LoadedProfile | undefined {
@@ -67,6 +91,7 @@ export class ProfileService implements OnInit {
 	}
 
 	onInit() {
+		debugWarn("Server module onInit lifecycle began.");
 		for (const player of Players.GetPlayers()) {
 			this.onPlayerAdded(player);
 		}
@@ -80,5 +105,12 @@ export class ProfileService implements OnInit {
 				this.profileCache.delete(player);
 			}
 		});
+	}
+
+	onStart() {
+		debugWarn("Server module onInit lifecycle complete.");
+		debugWarn(
+			"Server module onStart lifecycle began.\n------------------------------------------------------------------------------------------------------",
+		);
 	}
 }

@@ -1,9 +1,9 @@
-import { Service, OnStart, OnInit } from "@flamework/core";
+import { Service, OnStart } from "@flamework/core";
 import { Events, Functions } from "server/network";
-import { ProfileService } from "./profileService";
+import { ProfileService } from "../backend/profileService";
 import { dailyRewards, DAILY_REWARD_COOLDOWN } from "shared/config/dailyRewardConfig";
-import { MoneyService } from "./moneyService";
-import { DevproductService } from "./devproductService";
+import { MoneyService } from "../backend/moneyService";
+import { DevproductService } from "../backend/devproductService";
 import { Players } from "@rbxts/services";
 import { Reward } from "shared/networkTypes";
 import { timePlayedRewards } from "shared/config/timePlayedConfig";
@@ -90,11 +90,6 @@ export class DailyRewardsService implements OnStart {
 				return false;
 			}
 
-			const profile = this.profileService.getProfile(player);
-			if (!profile) {
-				return false;
-			}
-
 			const playerServerTime = tick() - this.playerJoinTimes.get(player)!;
 			if (playerServerTime < rewardCfg.unlockTime) {
 				return false;
@@ -117,32 +112,12 @@ export class DailyRewardsService implements OnStart {
 		});
 
 		Functions.getLastDailyClaimTime.setCallback((player) => {
-			const profile = this.profileService.getProfile(player);
-			if (!profile) {
-				while (player && player.IsDescendantOf(Players)) {
-					const [playerProfileLoaded, loadedProfile] = this.profileService.onProfileLoaded.Wait();
-					if (playerProfileLoaded === player) {
-						return loadedProfile.Data.lastDailyClaimed;
-					}
-				}
-				return undefined; // We tried our best
-			}
-
+			const profile = this.profileService.getProfileLoaded(player).expect();
 			return profile.Data.lastDailyClaimed;
 		});
 
 		Functions.getDailyStreak.setCallback((player) => {
-			const profile = this.profileService.getProfile(player);
-			if (!profile) {
-				while (player && player.IsDescendantOf(Players)) {
-					const [playerProfileLoaded, loadedProfile] = this.profileService.onProfileLoaded.Wait();
-					if (playerProfileLoaded === player) {
-						return loadedProfile.Data.dailyStreak;
-					}
-				}
-				return undefined; // We tried our best
-			}
-
+			const profile = this.profileService.getProfileLoaded(player).expect();
 			return profile.Data.dailyStreak;
 		});
 	}

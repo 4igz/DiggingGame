@@ -1,6 +1,4 @@
 //!optimize 2
-//!native
-
 import { MarketplaceService } from "@rbxts/services";
 
 // Define a cache to store developer product info

@@ -1,5 +1,4 @@
 //!optimize 2
-//!native
 import { Controller, OnStart } from "@flamework/core";
 import { Players, ReplicatedStorage, TweenService, Workspace } from "@rbxts/services";
 import { Events } from "client/network";

@@ -4,7 +4,7 @@ import { ProfileService } from "./profileService";
 import { Signals } from "shared/signals";
 import { Events } from "server/network";
 import { GamepassService } from "./gamepassService";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 import Signal from "@rbxts/goodsignal";
 import { EN } from "shared/networkTypes";
 
@@ -48,10 +48,10 @@ export class MoneyService implements OnStart {
 		// Add money to player
 		const profile = this.profileService.getProfile(player);
 		if (!profile) return;
-		profile.Data.money = EternityNum.toString(
-			EternityNum.sub(EternityNum.fromString(profile.Data.money), EternityNum.fromNumber(amount)),
-		);
+		const moneyEN = EternityNum.sub(EternityNum.fromString(profile.Data.money), EternityNum.fromNumber(amount));
+		profile.Data.money = EternityNum.toString(moneyEN);
 		Events.updateMoney.fire(player, profile.Data.money);
 		this.profileService.setProfile(player, profile);
+		this.moneyChanged.Fire(player, moneyEN);
 	}
 }

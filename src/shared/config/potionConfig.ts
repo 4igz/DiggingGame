@@ -1,5 +1,4 @@
 //!optimize 2
-//!native
 import { Rarity } from "shared/networkTypes";
 
 enum PotionKind {

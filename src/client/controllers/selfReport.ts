@@ -1,12 +1,10 @@
 //!optimize 2
-//!native
 import Object from "@rbxts/object-utils";
 import { Players, ReplicatedFirst, ReplicatedStorage, RunService, ScriptContext, Workspace } from "@rbxts/services";
 import { Events } from "client/network";
 
 // Basic fly check
 const flyCheck = (character: Model) => {
-	//!IMPORTANT! If in the future we ever add BodyGyro, AngularVelocity, or BodyVelocity to the character, we need to remove this check.
 	character.DescendantAdded.Connect((descendant) => {
 		if (descendant.IsA("BodyGyro") || descendant.IsA("BodyVelocity") || descendant.IsA("AngularVelocity")) {
 			Events.selfReport("Flying");
@@ -17,7 +15,6 @@ const flyCheck = (character: Model) => {
 	});
 };
 
-//!IMPORTANT! If in the future we ever add the possibility to increase these properties, we need to change them to their max possible value.
 const humanoidProps = {
 	WalkSpeed: 16,
 	JumpHeight: 7.2,
@@ -80,6 +77,7 @@ const physicsFPSCheck = () => {
 };
 
 // Exploiters Self-Report if they hit any of our detections.
+// They are not banned, they are only silently flagged as exploiters.
 task.spawn(() => {
 	const someCharacter = Players.LocalPlayer.Character;
 	if (someCharacter) {

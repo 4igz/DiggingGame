@@ -1,9 +1,8 @@
 //!optimize 2
-//!native
 import { Controller, OnRender, OnStart } from "@flamework/core";
 import { CollectionService, Players, ReplicatedStorage, TweenService } from "@rbxts/services";
 import { UiController } from "./uiController";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 import ReactRoblox from "@rbxts/react-roblox";
 import React from "@rbxts/react";
 import TypewriterBillboard from "client/reactComponents/typeWritingBillboard";
@@ -33,6 +32,39 @@ export class ShopController implements OnStart, OnRender {
 
 		const AnimationFolder = ReplicatedStorage.WaitForChild("Assets").WaitForChild("Animations");
 
+		const animationTracks = new Map<Model, Map<string, AnimationTrack>>();
+
+		const playAnimation = (npc: Model, animationName: string, animationType: "Action" | "Idle") => {
+			const humanoid = npc.FindFirstChildOfClass("Humanoid");
+			if (!humanoid) return;
+			let animator = humanoid.FindFirstChild("Animator") as Animator | undefined;
+			if (!animator) {
+				animator = new Instance("Animator");
+				animator.Parent = humanoid;
+			}
+
+			let tracks = animationTracks.get(npc);
+
+			if (!tracks) {
+				tracks = animationTracks.set(npc, new Map<string, AnimationTrack>()).get(npc);
+			}
+
+			const track = tracks!.get(animationName);
+			if (!track) {
+				const animation = AnimationFolder?.FindFirstChild(animationName) as Animation | undefined;
+				assert(animation, `Could not find animation ${animationName}`);
+				const track = animator.LoadAnimation(animation);
+				track.Priority =
+					animationType === "Action" ? Enum.AnimationPriority.Action : Enum.AnimationPriority.Idle;
+				track.Looped = animationType === "Idle";
+				track.Play();
+				tracks!.set(animationName, track);
+			} else {
+				track.Play();
+			}
+			return track;
+		};
+
 		const createShopPrompt = (part: BasePart, shopType: keyof typeof PROMPT_DIALOGS) => {
 			if (registeredShops.has(part)) return;
 			// Create a prompt that will open the sell ui when triggered
@@ -54,7 +86,7 @@ export class ShopController implements OnStart, OnRender {
 			const npcObject = part.FindFirstChild("NPC") as ObjectValue | undefined;
 
 			if (npcObject && npcObject.Value) {
-				const npc = npcObject.Value;
+				const npc = npcObject.Value as Model;
 				const highlight = new Instance("Highlight");
 				highlight.Name = "Highlight";
 				highlight.DepthMode = Enum.HighlightDepthMode.Occluded;
@@ -64,22 +96,9 @@ export class ShopController implements OnStart, OnRender {
 				highlight.OutlineTransparency = 1;
 				highlight.Parent = npc;
 
-				const humanoid = npc.WaitForChild("Humanoid");
-				if (!humanoid) return;
-				let animator = humanoid.WaitForChild("Animator") as Animator | undefined;
-				if (!animator) {
-					animator = new Instance("Animator");
-					animator.Parent = humanoid;
-				}
-
 				const idleAnimName = shopType === gameConstants.BOAT_SHOP_UI ? "NpcIdleBoat" : "NpcIdleStore";
 
-				const idleAnim = AnimationFolder?.FindFirstChild(idleAnimName) as Animation;
-				assert(idleAnim, `Could not find animation ${idleAnimName}`);
-				const idleTrack = animator.LoadAnimation(idleAnim);
-				idleTrack.Priority = Enum.AnimationPriority.Idle;
-				idleTrack.Looped = true;
-				idleTrack.Play();
+				playAnimation(npc, idleAnimName, "Idle");
 
 				CollectionService.AddTag(npc, NPC_TAG);
 
@@ -100,15 +119,9 @@ export class ShopController implements OnStart, OnRender {
 
 				const talkAnimName = shopType === gameConstants.BOAT_SHOP_UI ? "NpcTalkBoat" : "NpcTalkStore";
 
-				const talkAnim = AnimationFolder?.FindFirstChild(talkAnimName) as Animation | undefined;
-				assert(talkAnim, `Could not find animation ${talkAnimName}`);
-				const talkTrack = animator.LoadAnimation(talkAnim);
-				talkTrack.Priority = Enum.AnimationPriority.Action;
-				talkTrack.Looped = false;
-
 				prompt.Triggered.Connect(() => {
 					prompt.Enabled = false;
-					talkTrack.Play();
+					playAnimation(npc, talkAnimName, "Action");
 					currentOpenMenu = shopType;
 					if (dialogPlayed[shopType]) {
 						prompt.Enabled = true;
@@ -167,31 +180,20 @@ export class ShopController implements OnStart, OnRender {
 		});
 
 		Events.purchaseFailed.connect((itemType: ItemType) => {
-			const nearestNPC = this.getNearestNPC();
+			const character = Players.LocalPlayer.Character;
+			if (!character) return;
+			const [nearestNPC] = this.getNearestNPC(character.GetPivot().Position);
 			if (!nearestNPC) return;
-			const humanoid = nearestNPC.FindFirstChildOfClass("Humanoid");
-			if (!humanoid) return;
-			let animator = humanoid.FindFirstChild("Animator") as Animator | undefined;
-			if (!animator) {
-				animator = new Instance("Animator");
-				animator.Parent = humanoid;
-			}
 
-			const animationName = itemType === "Boats" ? "PurchaseFailedBoat" : "PurchaseFailedStore";
+			const purchaseFailedAnimationName = itemType === "Boats" ? "PurchaseFailedBoat" : "PurchaseFailedStore";
 
-			const animation = AnimationFolder?.FindFirstChild(animationName) as Animation | undefined;
-			assert(animation, `Could not find animation ${animationName}`);
-			const track = animator.LoadAnimation(animation);
-			track.Priority = Enum.AnimationPriority.Action2;
-			track.Looped = false;
-			task.defer(() => track.Play());
-			track.Stopped.Connect(() => {
-				track.Destroy();
-			});
+			playAnimation(nearestNPC, purchaseFailedAnimationName, "Action");
 		});
 
 		Events.boughtItem.connect((_, itemType: ItemType) => {
-			const nearestNPC = this.getNearestNPC();
+			const character = Players.LocalPlayer.Character;
+			if (!character) return;
+			const [nearestNPC] = this.getNearestNPC(character.GetPivot().Position);
 			if (!nearestNPC) return;
 			const humanoid = nearestNPC.FindFirstChildOfClass("Humanoid");
 			if (!humanoid) return;
@@ -203,52 +205,35 @@ export class ShopController implements OnStart, OnRender {
 
 			const animationName = itemType === "Boats" ? "BoatGuyBought" : "StoreGuyBought";
 
-			const animation = AnimationFolder?.FindFirstChild(animationName) as Animation | undefined;
-			assert(animation, `Could not find animation ${animationName}`);
-			const track = animator.LoadAnimation(animation);
-			track.Priority = Enum.AnimationPriority.Action2;
-			track.Looped = false;
-			task.defer(() => track.Play());
-			track.Stopped.Connect(() => {
-				track.Destroy();
-			});
+			playAnimation(nearestNPC, animationName, "Action");
 		});
 	}
 
 	onRender(): void {
 		if (currentOpenMenu) {
-			const character = Players.LocalPlayer?.Character;
+			const character = Players.LocalPlayer.Character;
 			if (!character) return;
-			const position = character.GetPivot().Position;
-			const nearestNPC = this.getNearestNPC();
-			if (
-				nearestNPC &&
-				nearestNPC.GetPivot().Position.sub(position).Magnitude > gameConstants.SHOP_PROMPT_RANGE * 1.2
-			) {
+			const [nearestNPC, distance] = this.getNearestNPC(character.GetPivot().Position);
+			if (nearestNPC && distance > gameConstants.SHOP_PROMPT_RANGE * 1.2) {
 				this.uiController.closeUi(currentOpenMenu);
 				currentOpenMenu = undefined;
 			}
 		}
 	}
 
-	getNearestNPC() {
-		const player = Players.LocalPlayer;
-		if (!player) return;
-		const pos = player.Character?.GetPivot().Position;
-		if (!pos) return;
-
+	getNearestNPC(position: Vector3) {
 		let nearestNPC: Model | undefined;
 		let nearestDistance = math.huge;
 
 		for (const npcModel of CollectionService.GetTagged(NPC_TAG)) {
 			if (!npcModel.IsA("Model")) continue;
-			const distance = npcModel.GetPivot().Position.sub(pos).Magnitude;
+			const distance = npcModel.GetPivot().Position.sub(position).Magnitude;
 			if (distance < nearestDistance) {
 				nearestNPC = npcModel;
 				nearestDistance = distance;
 			}
 		}
 
-		return nearestNPC;
+		return [nearestNPC, nearestDistance] as const;
 	}
 }

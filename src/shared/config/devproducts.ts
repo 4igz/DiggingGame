@@ -1,6 +1,5 @@
 //!optimize 2
-//!native
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 import { Signals } from "shared/signals";
 
 const IDS = gameConstants.DEVPRODUCT_IDS;

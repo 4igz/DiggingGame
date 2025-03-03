@@ -1,5 +1,4 @@
 //!optimize 2
-//!native
 import { ReplicatedStorage } from "@rbxts/services";
 
 export function observeAttribute(

@@ -1,10 +1,9 @@
 //!optimize 2
-//!native
 import React, { useEffect } from "@rbxts/react";
 import { UiController } from "client/controllers/uiController";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 import { MENUS } from "./inventory";
 import { AutoDigging } from "client/controllers/autoDigController";
 import { Players } from "@rbxts/services";
@@ -157,6 +156,8 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 
 		Functions.getLevelData().then((levelData) => {
 			setAvailableSkillPoints(levelData.skillPoints);
+		}).catch((e)=>{
+			warn(e)
 		});
 		Events.updateLevelUi.connect((_level, _xp, _xpMax, skillPoints) => {
 			setAvailableSkillPoints(skillPoints);

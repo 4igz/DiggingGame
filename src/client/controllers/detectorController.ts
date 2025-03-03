@@ -1,5 +1,4 @@
 //!optimize 2
-//!native
 import { Controller, OnStart, OnTick } from "@flamework/core";
 import { ContextActionService, Players, ReplicatedStorage, RunService, SoundService, Workspace } from "@rbxts/services";
 import { Events } from "client/network";
@@ -10,6 +9,8 @@ import { ShovelController } from "./shovelController";
 import { interval } from "shared/util/interval";
 import { subscribe } from "@rbxts/charm";
 import { inventorySizeAtom, treasureCountAtom } from "client/atoms/inventoryAtoms";
+import { gameConstants } from "shared/gameConstants";
+import { ObjectPool } from "shared/util/objectPool";
 
 const DING_SOUND_INTERVAL = interval(1);
 const RENDER_STEP_ID = "WaypointArrow";
@@ -18,12 +19,31 @@ let VFX_FOLDER = ReplicatedStorage.WaitForChild("Assets").WaitForChild("VFX");
 let beepSound = SoundService.WaitForChild("Tools").WaitForChild("DetectorBeep") as Sound;
 let dingSound = SoundService.WaitForChild("UI")?.WaitForChild("DigDing") as Sound;
 let ANIMATION_FOLDER = ReplicatedStorage.WaitForChild("Assets").WaitForChild("Animations");
-let areaIndicatorVFX = VFX_FOLDER.FindFirstChild("DigAreaIndicatorVfx") as BasePart;
 let metalDetectorAnimation = ANIMATION_FOLDER.FindFirstChild("MetalDetector") as Animation;
 let phase = 0;
 let currentBeepSound: Sound | undefined = undefined;
 let areaIndicator: BasePart | undefined;
-let arrowIndicator: BasePart | undefined;
+let arrowIndicator: Part | undefined;
+const arrowPool = new ObjectPool(() => {
+	const arrow = VFX_FOLDER.WaitForChild("IndicatorPart") as Part;
+	return arrow.Clone();
+}, 1);
+const areaIndicatorPool = new ObjectPool(() => {
+	return VFX_FOLDER.WaitForChild("DigAreaIndicatorVfx")?.Clone() as BasePart;
+}, 1);
+
+interface PlayerModule {
+	GetControls(this: PlayerModule): Controls;
+}
+
+interface Controls {
+	GetMoveVector(this: Controls): Vector3;
+	Disable(): void;
+	Enable(): void;
+}
+
+let playerModule: PlayerModule | undefined = undefined;
+let controls: Controls | undefined = undefined;
 
 @Controller({})
 export class DetectorController implements OnStart {
@@ -41,8 +61,16 @@ export class DetectorController implements OnStart {
 		let holding = false;
 		let holdStart = 0;
 
+		let understandsInput = false;
+
 		const HOLD_LENGTH = 0.2;
 		const DETECTION_KEYBINDS = [Enum.KeyCode.ButtonR2, Enum.UserInputType.MouseButton1];
+
+		// Wait for onStart so we arent holding up other systems while we wait for the PlayerModule to load.
+		playerModule = require(Players.LocalPlayer.WaitForChild("PlayerScripts").WaitForChild(
+			"PlayerModule",
+		) as ModuleScript) as PlayerModule;
+		controls = playerModule.GetControls();
 
 		Signals.setAutoDiggingRunning.Connect((running: boolean) => {
 			autoDigRunning = running;
@@ -52,52 +80,55 @@ export class DetectorController implements OnStart {
 			isInventoryFull = count >= inventorySizeAtom();
 		});
 
+		const beepSoundPool = new ObjectPool(() => {
+			return beepSound.Clone();
+		});
+
 		const setupCharacter = (character: Model) => {
-			let detectorTrack: AnimationTrack | undefined;
+			const humanoid = character.WaitForChild("Humanoid") as Humanoid;
+
+			const animator = humanoid.WaitForChild("Animator") as Animator;
+			const detectorAnimation = metalDetectorAnimation.Clone();
+			const detectorTrack = animator.LoadAnimation(detectorAnimation);
 
 			// Cleanup the animation track if the character is removed or the player dies
 			const cleanupTrack = () => {
 				if (detectorTrack) {
 					detectorTrack.Stop();
-					detectorTrack.Destroy();
-					detectorTrack = undefined;
 				}
 			};
+
 			character.AncestryChanged.Connect(() => {
 				if (!character.IsDescendantOf(game)) {
 					cleanupTrack();
+					detectorTrack?.Destroy();
 				}
 			});
 
-			const humanoid = character.WaitForChild("Humanoid") as Humanoid;
-
-			humanoid.Died.Connect(cleanupTrack);
+			humanoid.Died.Connect(() => {
+				cleanupTrack();
+				detectorTrack?.Destroy();
+			});
 
 			// Detect tools being equipped
 			character.ChildAdded.Connect((child) => {
-				if (child.IsA("Tool") && metalDetectorConfig[child.Name]) {
+				const cfg = metalDetectorConfig[child.Name];
+				if (child.IsA("Tool") && cfg !== undefined) {
 					// We use this to check if the player has just finished digging, to determine if the equip should have a cooldown
 					// before working since they are possibly still spam clicking the shovel as the detector is being equipped.
-					const lastSuccessfulDigTime = child.GetAttribute("LastSuccessfulDigTime") as number | undefined;
-					if (!detectorTrack) {
-						const animator = humanoid.WaitForChild("Animator") as Animator;
-						const detectorAnimation = metalDetectorAnimation.Clone();
-						detectorTrack = animator.LoadAnimation(detectorAnimation);
+					let beep = child.FindFirstChild(beepSound.Name) as Sound | undefined;
+					if (!beep) {
+						beep = beepSoundPool.acquire();
+						beep.Parent = child.FindFirstChildWhichIsA("BasePart") as BasePart;
 					}
-					let existingBeepSound = child.FindFirstChild(beepSound.Name) as Sound | undefined;
-					if (!existingBeepSound) {
-						const clone = beepSound.Clone();
-						clone.Parent = child.FindFirstChildWhichIsA("BasePart") ?? child;
-						existingBeepSound = clone;
-					}
-					currentBeepSound = existingBeepSound as Sound;
+					currentBeepSound = beep as Sound;
 
 					const trove = new Trove();
+					holdStart = tick();
 
 					// Play the animation when the tool is equipped
 					detectorTrack.Play();
 
-					// The delay is so that the player doesn't accidentally start detecting immediately after digging.
 					const actionName = "DetectorAction";
 
 					const detectorAction = (
@@ -126,43 +157,70 @@ export class DetectorController implements OnStart {
 							if (isRolling) {
 								awaitingResponse = true;
 								Events.endDetectorLuckRoll();
+								Signals.setUiToggled.Fire(gameConstants.LUCKBAR_UI, false, false);
 								Signals.closeLuckbar.Fire();
+
+								if (!understandsInput) {
+									Signals.setUiToggled.Fire(gameConstants.DETECTOR_HINT_TEXT, false, true);
+									understandsInput = true;
+								}
 							}
 						}
 					};
 
 					// Delay the detector action to prevent accidental detections if the player was just digging
 					ContextActionService.BindAction(actionName, detectorAction, true, ...DETECTION_KEYBINDS);
-
-					// TODO: Configure mobile button
+					ContextActionService.SetImage(actionName, cfg.itemImage);
+					ContextActionService.SetPosition(actionName, UDim2.fromScale(0.25, 0));
 					const button = ContextActionService.GetButton(actionName);
+					if (button) {
+						button.Size = new UDim2(0, 75, 0, 75);
+					}
+					// ContextActionService.SetTitle(actionName, "Detect");
 
 					trove.add(() => {
 						ContextActionService.UnbindAction(actionName);
 					});
 
-					const renderStep = RunService.RenderStepped.Connect(() => {
-						if (holding && tick() - holdStart > HOLD_LENGTH) {
-							if (!isRolling) {
-								isRolling = true;
-								Events.beginDetectorLuckRoll();
-								Signals.startLuckbar.Fire();
+					trove.add(
+						RunService.RenderStepped.Connect(() => {
+							if (holding && tick() - holdStart > HOLD_LENGTH) {
+								if (!isRolling) {
+									isRolling = true;
+									Events.beginDetectorLuckRoll();
+									Signals.setUiToggled.Fire(gameConstants.LUCKBAR_UI, true, false);
+									Signals.startLuckbar.Fire();
+								}
 							}
-						}
-					});
+						}),
+					);
 
-					// Cleanup indicators when unequipping
-					child.AncestryChanged.Once(() => {
+					trove.add(cleanupTrack);
+
+					if (!understandsInput) {
+						// Player hasn't shown yet that they understand how the detector works
+						Signals.setUiToggled.Fire(gameConstants.DETECTOR_HINT_TEXT, true, true);
+					}
+
+					trove.add(() => {
+						holdStart = tick();
+						holding = false;
+
 						if (isRolling) {
 							isRolling = false;
 							Events.endDetectorLuckRoll();
 							Signals.closeLuckbar.Fire();
+							Signals.setUiToggled.Fire(gameConstants.LUCKBAR_UI, false, false);
 						}
 
-						renderStep.Disconnect();
+						if (beep) {
+							beepSoundPool.release(beep);
+							beep = undefined;
+						}
 
-						cleanupTrack();
-						trove.destroy();
+						if (!understandsInput) {
+							Signals.setUiToggled.Fire(gameConstants.DETECTOR_HINT_TEXT, false, true);
+						}
 
 						task.defer(() => {
 							if (!this.shovelController.diggingActive && isAutoDigging) {
@@ -170,6 +228,21 @@ export class DetectorController implements OnStart {
 							}
 						});
 					});
+
+					// Cleanup indicators when unequipping
+					trove.add(
+						child.AncestryChanged.Once(() => {
+							trove.destroy();
+						}),
+					);
+
+					trove.add(
+						character.ChildRemoved.Connect((child2) => {
+							if (child2 === child) {
+								trove.destroy();
+							}
+						}),
+					);
 				}
 			});
 		};
@@ -201,7 +274,7 @@ export class DetectorController implements OnStart {
 			this.targetActive = false;
 			this.hideWaypointArrow();
 			if (areaIndicator) {
-				areaIndicator.Destroy();
+				areaIndicatorPool.release(areaIndicator);
 				areaIndicator = undefined;
 			}
 		});
@@ -209,9 +282,13 @@ export class DetectorController implements OnStart {
 		Events.endDiggingServer.connect(() => {
 			this.hideWaypointArrow();
 			if (areaIndicator) {
-				areaIndicator.Destroy();
+				areaIndicatorPool.release(areaIndicator);
 				areaIndicator = undefined;
 			}
+		});
+
+		Events.beginDigging.connect(() => {
+			this.hideWaypointArrow();
 		});
 
 		Events.createWaypointVisualization.connect((position: Vector3, detectorName: string) => {
@@ -225,6 +302,23 @@ export class DetectorController implements OnStart {
 			// Start tweening the waypoint indicator
 			this.showWaypointArrow(position, detectorCfg.searchRadius);
 		});
+	}
+
+	private onCanDig(canDig: boolean) {
+		if (this.shovelController.diggingActive) {
+			canDig = false; // We're already digging, sink this request and undo any previous changes
+		}
+		if (controls) {
+			if (canDig) {
+				controls.Disable();
+
+				if (DING_SOUND_INTERVAL()) {
+					SoundService.PlayLocalSound(dingSound);
+				}
+			} else {
+				controls.Enable();
+			}
+		}
 	}
 
 	private getLocalPlayerRootPart(): BasePart | undefined {
@@ -246,8 +340,7 @@ export class DetectorController implements OnStart {
 		// If we haven't cloned our arrow yet, do so
 		if (!arrowIndicator) {
 			// This should be your old arrow part with a BillboardGui inside
-			const arrowTemplate = VFX_FOLDER.WaitForChild("IndicatorPart") as Part;
-			arrowIndicator = arrowTemplate.Clone();
+			arrowIndicator = arrowPool.acquire();
 			arrowIndicator.Parent = Workspace;
 		}
 
@@ -271,7 +364,10 @@ export class DetectorController implements OnStart {
 		// Setup the arrow to update every frame
 		RunService.BindToRenderStep(RENDER_STEP_ID, Enum.RenderPriority.Input.Value + 1, () => {
 			const camera = Workspace.CurrentCamera ?? undefined;
-			if (!camera || !arrowIndicator) return;
+			if (!camera || !arrowIndicator || !arrowIndicator.Parent) {
+				RunService.UnbindFromRenderStep(RENDER_STEP_ID);
+				return;
+			}
 			let detector = character.FindFirstChildOfClass("Tool");
 			detector = detector && metalDetectorConfig[detector.Name] ? detector : undefined;
 
@@ -300,9 +396,9 @@ export class DetectorController implements OnStart {
 				const offsetPosition = new Vector3(offsetX, 0, offsetZ);
 				const finalPosition = targetPos.add(offsetPosition).add(new Vector3(0, 1, 0));
 
-				const currentAreaIndicator = areaIndicator ?? areaIndicatorVFX.Clone();
+				const currentAreaIndicator = areaIndicatorPool.acquire();
 				currentAreaIndicator.Size = new Vector3(detectorSearchRadius, 0.001, detectorSearchRadius);
-				currentAreaIndicator.SetAttribute("OriginalPosition", finalPosition);
+				currentAreaIndicator.SetAttribute(gameConstants.AREA_INDICATOR_POS, finalPosition);
 				currentAreaIndicator.Position = finalPosition;
 				currentAreaIndicator.Parent = Workspace;
 				areaIndicator = currentAreaIndicator;
@@ -329,7 +425,7 @@ export class DetectorController implements OnStart {
 
 				dot.Visible = true;
 				exclamationMarkBlur.Visible = false;
-			} else if (distance <= MIN_DIST && distance > 8) {
+			} else if (distance <= MIN_DIST && distance > gameConstants.DIG_RANGE * 0.95) {
 				// Show exclamation mark
 				dot.Visible = false;
 				exclamationMarkBlur.Visible = true;
@@ -380,6 +476,8 @@ export class DetectorController implements OnStart {
 			exclamationMark.Rotation = sinVal * 10;
 			shovel.Rotation = sinVal * 10;
 
+			this.onCanDig(canDig);
+
 			// 4) Check zero-crossing (- => +) for beep & blink
 			if (sinVal <= 0 && prevSinVal > 0 && !canDig) {
 				if (currentBeepSound) currentBeepSound.Play();
@@ -392,11 +490,6 @@ export class DetectorController implements OnStart {
 						}
 					}
 				}
-			} else if (canDig) {
-				// Play ding sound to say that they can dig every second.
-				if (DING_SOUND_INTERVAL()) {
-					SoundService.PlayLocalSound(dingSound);
-				}
 			}
 			prevSinVal = sinVal;
 		});
@@ -405,10 +498,11 @@ export class DetectorController implements OnStart {
 	public hideWaypointArrow() {
 		// Unbind our render-step
 		RunService.UnbindFromRenderStep(RENDER_STEP_ID);
+		this.onCanDig(false);
 
 		// Destroy the arrow if needed
 		if (arrowIndicator) {
-			arrowIndicator.Destroy();
+			arrowPool.release(arrowIndicator);
 			arrowIndicator = undefined;
 		}
 	}

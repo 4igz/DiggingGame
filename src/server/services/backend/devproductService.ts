@@ -3,10 +3,10 @@ import { MarketplaceService, Players } from "@rbxts/services";
 import { getDevProduct, handlePurchase } from "shared/config/devproducts";
 import { Signals } from "shared/signals";
 import { ProfileService } from "./profileService";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 import { Events, Functions } from "server/network";
 import { interval } from "shared/util/interval";
-import { LevelService } from "./levelService";
+import { LevelService } from "../gameplay/levelService";
 
 const SEC = interval(1);
 
@@ -79,7 +79,8 @@ export class DevproductService implements OnStart, OnTick, OnInit {
 		});
 
 		Functions.getMultiDigLevel.setCallback((player: Player) => {
-			return this.profileService.getProfile(player)?.Data.multiDigLevel ?? 0;
+			const profile = this.profileService.getProfileLoaded(player).expect()
+			return profile.Data.multiDigLevel ?? 0;
 		});
 	}
 

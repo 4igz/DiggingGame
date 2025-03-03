@@ -1,24 +1,25 @@
 //!optimize 2
-//!native
-import React, { ReactNode, useEffect, useState } from "@rbxts/react";
-import { RunService, UserInputService, Lighting, Workspace, Players } from "@rbxts/services";
+import React, { ReactNode, useEffect, useRef, useState } from "@rbxts/react";
+import { RunService, Lighting, Workspace } from "@rbxts/services";
 import { useMotion } from "client/hooks/useMotion";
-import { Events } from "client/network";
+import { Events, Functions } from "client/network";
 import { springs } from "client/utils/springs";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 import { NetworkedTarget, PlayerDigInfo, Target } from "shared/networkTypes";
 
 import { BASE_SHOVEL_STRENGTH, shovelConfig } from "shared/config/shovelConfig";
 import { Signals } from "shared/signals";
 import { ShovelController } from "client/controllers/shovelController";
-import CameraShaker, { CameraShakeInstance } from "@rbxts/camera-shaker";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 import { interval } from "shared/util/interval";
+import { numberSerializer } from "shared/network";
+import { UiController } from "client/controllers/uiController";
 
 export interface DiggingBarProps {
 	target?: Target;
 	digInfo?: PlayerDigInfo;
 	shovelController: ShovelController;
+	uiController: UiController;
 
 	visible: boolean;
 }
@@ -38,17 +39,18 @@ const fovGoal = 50;
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-const FPS = 60;
-const ProgressDecreaseRate = 1 / FPS;
-const ProgressDecreaseCooldown = interval(ProgressDecreaseRate);
+const replicateInterval = interval(1 / 10);
+const digInterval = interval(gameConstants.DIG_TIME_SEC);
 
 export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 	const [barProgress, setBarProgress] = useMotion(1);
 	const [rotation, setRotation] = useMotion(0);
 	const [cycle, setCycle] = useState(0);
 	const [fov, fovMotion] = useMotion(defaultFov);
-	const [target, setTarget] = useState<NetworkedTarget>();
+	const [clientTarget, setClientTarget] = useState<NetworkedTarget | undefined>();
 	const [digInfo, setDigInfo] = useState<PlayerDigInfo>();
+
+	const progressRef = useRef(0);
 
 	const [scale, setScale] = useMotion(1);
 
@@ -69,6 +71,8 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 			setCycle(value);
 		});
 
+		props.uiController.setGuiEnabled(gameConstants.DIG_BAR_UI, visible);
+
 		// Cleanup connection when component unmounts
 		return () => connection.Disconnect();
 	}, [visible]);
@@ -79,28 +83,27 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 
 	useEffect(() => {
 		if (visible) {
-			if (!target || !digInfo) {
+			if (!clientTarget || !digInfo) {
 				warn("DiggingBar requires a target and digInfo to be passed");
 				return;
 			}
 			const cfg = shovelConfig[digInfo.shovel];
 			const increment = digInfo.strength + cfg.strengthMult * BASE_SHOVEL_STRENGTH;
+			let lastReplicatedProgress = 0;
+			let finished = false;
 
 			// Create mock data for the target
-			let progress = target.digProgress;
-			let lastDigTime = tick();
+			progressRef.current = clientTarget.digProgress;
 			let spawnedTask: thread | undefined = undefined;
 
 			const clickConnection = Signals.gotDigInput.Connect(() => {
 				if (!props.shovelController.canStartDigging) return;
-				Events.dig();
 
 				// Since the server is rate limited by this same timer, we should
 				// ratelimit on the client too incase they are autoclicking
 				// way faster than the dig_time and cause the bar to go out of sync
-				if (tick() - lastDigTime >= gameConstants.DIG_TIME_SEC) {
-					progress += increment;
-					lastDigTime = tick();
+				if (digInterval()) {
+					progressRef.current += increment;
 				}
 
 				setRotation.spring(math.clamp(rotation.getValue() + math.random(-2, 2), -12, 12), springs.responsive);
@@ -119,8 +122,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 			});
 
 			const autoDigConnection = Signals.autoDig.Connect(() => {
-				progress += increment;
-				lastDigTime = tick();
+				progressRef.current += increment;
 
 				setRotation.spring(math.clamp(rotation.getValue() + math.random(-2, 2), -12, 12), springs.responsive);
 				setScale.spring(math.max(scale.getValue() + math.random(0.01, 0.05), 1.1), springs.responsive);
@@ -137,20 +139,25 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				});
 			});
 
-			const hb = RunService.Heartbeat.Connect(() => {
-				setBarProgress.spring((target.maxProgress - progress) / target.maxProgress, springs.responsive);
+			const hb = RunService.Heartbeat.Connect((dt) => {
+				if (!clientTarget) return;
+				setBarProgress.spring(
+					math.clamp((clientTarget.maxProgress - progressRef.current) / clientTarget.maxProgress, 0, 1),
+					springs.responsive,
+				);
 
 				setWarnStage(0);
 
 				warnStages.forEach((stage) => {
 					for (const [threshold, newStage] of pairs(stage)) {
-						if (progress / target.maxProgress <= threshold) {
+						if (!clientTarget) return;
+						if (progressRef.current / clientTarget.maxProgress <= threshold) {
 							setWarnStage(newStage);
 						}
 					}
 				});
 
-				const progressRatio = progress / target.maxProgress;
+				const progressRatio = progressRef.current / clientTarget.maxProgress;
 				const firstWarningThreshold = 0.4;
 				if (progressRatio <= firstWarningThreshold) {
 					redScreen.TintColor = whiteTint.Lerp(redTint, 1 - progressRatio / firstWarningThreshold);
@@ -158,9 +165,9 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 					redScreen.TintColor = whiteTint;
 				}
 
-				Signals.updateDiggingProgress.Fire(progress, target.maxProgress);
+				Signals.updateDiggingProgress.Fire(progressRef.current, clientTarget.maxProgress);
 
-				if (progress <= 0) {
+				if (progressRef.current <= 0) {
 					clickConnection?.Disconnect();
 					Events.endDiggingClient();
 					hb?.Disconnect();
@@ -169,14 +176,22 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 
 				// Make bar decrease over time
 
-				// Sync to server FPS
-				if (ProgressDecreaseCooldown(target.itemId)) {
-					if (progress > 0 && progress < target.maxProgress) {
-						const DECREASE_RATE = gameConstants.BAR_DECREASE_RATE;
-						progress = progress - target.maxProgress * DECREASE_RATE;
+				if (progressRef.current > 0 && progressRef.current < clientTarget.maxProgress) {
+					const DECREASE_RATE = gameConstants.BAR_DECREASE_RATE;
+					progressRef.current = progressRef.current - clientTarget.maxProgress * DECREASE_RATE * dt;
+
+					if (replicateInterval() && progressRef.current > lastReplicatedProgress) {
+						const serialized = numberSerializer.serialize(progressRef.current).buffer;
+						Events.replicateDigProgress(serialized);
+						lastReplicatedProgress = progressRef.current;
 					}
-					progress = math.clamp(progress, 0, target.maxProgress);
 				}
+				if (!finished && progressRef.current >= clientTarget.maxProgress) {
+					finished = true;
+					Events.finishedDigging();
+					hb?.Disconnect();
+				}
+				progressRef.current = math.clamp(progressRef.current, 0, clientTarget.maxProgress);
 			});
 
 			const endDiggingConnection = Events.endDiggingServer.connect(() => {
@@ -208,10 +223,10 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 		} else {
 			setBarProgress.immediate(1);
 			fovMotion.spring(defaultFov, springs.slow);
-			setTarget(undefined);
+			setClientTarget(undefined);
 			setDigInfo(undefined);
 		}
-	}, [visible, target]);
+	}, [visible, clientTarget, digInfo]);
 
 	useEffect(() => {
 		if (!visible) return;
@@ -220,11 +235,13 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 
 	useEffect(() => {
 		fovMotion.onStep((value) => {
-			camera!.FieldOfView = value;
+			const myCamera = camera ?? Workspace.CurrentCamera;
+			if (!myCamera) return;
+			myCamera.FieldOfView = value;
 		});
 
 		Events.beginDigging.connect((target: NetworkedTarget, digInfo: PlayerDigInfo) => {
-			setTarget(target);
+			setClientTarget(target);
 			setDigInfo(digInfo);
 			setVisible(true);
 		});
@@ -530,7 +547,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 			</frame>
 
 			<textlabel
-				Text={`${platform === "Mobile" ? "Tap" : "Click"} to dig!`}
+				Text={`${platform === "Mobile" ? "Tap" : platform === "Console" ? "L2/R2" : "Click"} to dig!`}
 				Position={UDim2.fromScale(0.5, 0.78)}
 				AnchorPoint={new Vector2(0.5, 0)}
 				BackgroundTransparency={1}

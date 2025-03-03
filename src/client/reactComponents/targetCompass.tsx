@@ -1,5 +1,4 @@
 //!optimize 2
-//!native
 import React, { useEffect, useState } from "@rbxts/react";
 import { Players, RunService } from "@rbxts/services";
 import { Trove } from "@rbxts/trove";

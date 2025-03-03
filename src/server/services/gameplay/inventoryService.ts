@@ -1,18 +1,20 @@
-import { Service, OnStart, OnTick, OnInit } from "@flamework/core";
-import { LoadedProfile, ProfileService } from "./profileService";
-import { Item, ItemType, Target, TargetItem } from "shared/networkTypes";
-import { CollectionService, Players, ReplicatedStorage, ServerStorage } from "@rbxts/services";
+//!optimize 2
+//!native
+import { Service, OnStart, OnTick } from "@flamework/core";
+import { LoadedProfile, ProfileService } from "../backend/profileService";
+import { Item, ItemName, ItemType, Target, TargetItem } from "shared/networkTypes";
+import { CollectionService, Players, ServerStorage } from "@rbxts/services";
 import { Events, Functions } from "server/network";
 import { metalDetectorConfig, MetalDetectorModule } from "shared/config/metalDetectorConfig";
 import { shovelConfig, ShovelModule } from "shared/config/shovelConfig";
 import { fullTargetConfig, targetConfig, TargetModule } from "shared/config/targetConfig";
 import { ProfileTemplate } from "server/profileTemplate";
-import { MoneyService } from "./moneyService";
+import { MoneyService } from "../backend/moneyService";
 import { Signals } from "shared/signals";
 import { boatConfig } from "shared/config/boatConfig";
 import { potionConfig } from "shared/config/potionConfig";
 import { interval } from "shared/util/interval";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 
 const DetectorFolder = ServerStorage.WaitForChild("MetalDetectors") as Folder;
 const ShovelFolder = ServerStorage.WaitForChild("Shovels") as Folder;
@@ -104,6 +106,7 @@ export class InventoryService implements OnStart, OnTick {
 				}
 			}
 
+			// Events.updateInventorySize: (size: number) => void;
 			Events.updateInventorySize(player, profile.Data.inventorySize);
 
 			this.giveTools(player, profile);
@@ -116,8 +119,7 @@ export class InventoryService implements OnStart, OnTick {
 		});
 
 		Functions.getInventorySize.setCallback((player) => {
-			const profile = this.profileService.getProfile(player);
-			if (!profile) return gameConstants.TARGET_INVENTORY_DEFAULT_CAPACITY;
+			const profile = this.profileService.getProfileLoaded(player).expect();
 
 			return profile.Data.inventorySize;
 		});
@@ -150,36 +152,10 @@ export class InventoryService implements OnStart, OnTick {
 
 			this.moneyService.takeMoney(player, cost);
 
-			const inventory = profile.Data[inventoryKey];
-			inventory.push(item as string & TargetItem);
-			const equippedItemKey = itemType === "MetalDetectors" ? "equippedDetector" : "equippedShovel";
-			const equippedItem = profile.Data[equippedItemKey];
-			const equippedItemPrice = "price" in config[equippedItem] ? config[equippedItem].price : 0;
-			if (!equippedItem || cost > equippedItemPrice) {
-				profile.Data[equippedItemKey] = item;
-				this.giveTools(player, profile);
-			}
-			Events.updateInventory(player, itemType, [
-				{
-					equippedShovel: profile.Data.equippedShovel,
-					equippedDetector: profile.Data.equippedDetector,
-					equippedTreasure: profile.Data.equippedTreasure,
-				},
-				inventory.map(
-					(value) => ({ name: value, type: itemType as ItemType, ...config[value as string] } as Item),
-				),
-			]);
-			this.profileService.setProfile(player, profile);
-
-			Events.boughtItem(player, item, itemType, config[item]);
+			this.onItemBoughtSuccess(player, itemType, item);
 		});
 
 		Events.buyBoat.connect((player, boatName) => {
-			const profile = this.profileService.getProfile(player);
-			if (!profile) return;
-
-			if (profile.Data.ownedBoats.get(boatName) === true) return;
-
 			const cost = boatConfig[boatName].price;
 
 			if (!cost || !this.moneyService.hasEnoughMoney(player, cost)) {
@@ -189,11 +165,7 @@ export class InventoryService implements OnStart, OnTick {
 
 			this.moneyService.takeMoney(player, cost);
 
-			profile.Data.ownedBoats.set(boatName, true);
-			this.profileService.setProfile(player, profile);
-
-			Events.updateBoatInventory(player, profile.Data.ownedBoats);
-			Events.boughtItem(player, boatName, "Boats", boatConfig[boatName]);
+			this.onBoatBoughtSuccess(player, boatName);
 		});
 
 		Events.equipTreasure.connect((player, targetName) => {
@@ -268,14 +240,8 @@ export class InventoryService implements OnStart, OnTick {
 		});
 
 		Functions.getInventory.setCallback((player, inventoryType) => {
-			const profile = this.profileService.getProfile(player);
-			if (!profile) return [{ equippedDetector: "", equippedShovel: "", equippedTreasure: "" }, []];
-
-			const selected = inventoryConfigMap[inventoryType];
-			if (!selected) {
-				warn("Invalid inventory type requested");
-				return [{ equippedDetector: "", equippedShovel: "", equippedTreasure: "" }, []];
-			}
+			const profile = this.profileService.getProfileLoaded(player).expect();
+			const selected = inventoryConfigMap[inventoryType] ?? error("Invalid inventory type requested");
 
 			const { inventoryKey, config } = selected;
 			const inventory = profile.Data[inventoryKey];
@@ -302,18 +268,69 @@ export class InventoryService implements OnStart, OnTick {
 		});
 
 		Functions.getUnlockedTargets.setCallback((player) => {
-			const profile = this.profileService.getProfile(player);
-			if (!profile) return new Set<string>();
-
+			const profile = this.profileService.getProfileLoaded(player).expect();
 			return profile.Data.previouslyFoundTargets;
 		});
 
 		Functions.getOwnedBoats.setCallback((player) => {
-			const profile = this.profileService.getProfile(player);
-			if (!profile) return new Map<string, boolean>();
-
+			const profile = this.profileService.getProfileLoaded(player).expect();
 			return profile.Data.ownedBoats;
 		});
+	}
+
+	onItemBoughtSuccess(player: Player, itemType: ItemType, item: ItemName) {
+		const profile = this.profileService.getProfile(player);
+		if (!profile) return;
+
+		const selected = inventoryConfigMap[itemType];
+		if (!selected) {
+			warn("Invalid inventory type requested");
+			return;
+		}
+
+		const { inventoryKey, config } = selected;
+		if (inventoryKey === "targetInventory" || !("price" in config[item])) return;
+
+		// Check if player already owns the item
+		if (profile.Data[inventoryKey].includes(item)) {
+			return;
+		}
+
+		const cost = config[item].price;
+
+		const inventory = profile.Data[inventoryKey];
+		inventory.push(item as string & TargetItem);
+		const equippedItemKey = itemType === "MetalDetectors" ? "equippedDetector" : "equippedShovel";
+		const equippedItem = profile.Data[equippedItemKey];
+		const equippedItemPrice = "price" in config[equippedItem] ? config[equippedItem].price : 0;
+		if (!equippedItem || cost > equippedItemPrice) {
+			profile.Data[equippedItemKey] = item;
+			this.giveTools(player, profile);
+		}
+		Events.updateInventory(player, itemType, [
+			{
+				equippedShovel: profile.Data.equippedShovel,
+				equippedDetector: profile.Data.equippedDetector,
+				equippedTreasure: profile.Data.equippedTreasure,
+			},
+			inventory.map((value) => ({ name: value, type: itemType as ItemType, ...config[value as string] } as Item)),
+		]);
+		this.profileService.setProfile(player, profile);
+
+		Events.boughtItem(player, item, itemType, config[item]);
+	}
+
+	onBoatBoughtSuccess(player: Player, boatName: string) {
+		const profile = this.profileService.getProfile(player);
+		if (!profile) return;
+
+		if (profile.Data.ownedBoats.get(boatName) === true) return;
+
+		profile.Data.ownedBoats.set(boatName, true);
+		this.profileService.setProfile(player, profile);
+
+		Events.updateBoatInventory(player, profile.Data.ownedBoats);
+		Events.boughtItem(player, boatName, "Boats", boatConfig[boatName]);
 	}
 
 	private POTION_SEC_INTERVAL = interval(1);
@@ -416,7 +433,7 @@ export class InventoryService implements OnStart, OnTick {
 			});
 		}
 
-		if (profile.Data.equippedTreasure) {
+		if (profile.Data.equippedTreasure !== "") {
 			this.addToolToBackpack(backpack, character, TargetToolFolder, profile.Data.equippedTreasure);
 		} else {
 			character.GetChildren().forEach((child) => {
@@ -475,6 +492,7 @@ export class InventoryService implements OnStart, OnTick {
 		if (!target) {
 			profile.Data.equippedTreasure = "";
 			this.profileService.setProfile(player, profile);
+			this.giveTools(player, profile);
 			return;
 		}
 
@@ -489,9 +507,7 @@ export class InventoryService implements OnStart, OnTick {
 		const profile = this.profileService.getProfile(player);
 		if (profile) {
 			if (profile.Data.targetInventory.size() >= profile.Data.inventorySize) {
-				// This should not happen!!
-				// This is supposed to be handled on the client way before it reaches the server, and even this point!
-				error("Inventory is full", 2);
+				error("Unhandled full inventory case");
 			}
 			profile.Data.targetInventory.push({ itemId: item.itemId, name: item.name, weight: item.weight });
 			if (!profile.Data.previouslyFoundTargets.has(item.name)) {

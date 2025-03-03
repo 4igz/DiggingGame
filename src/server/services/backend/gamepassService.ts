@@ -1,7 +1,7 @@
 import { Service, OnStart, OnInit } from "@flamework/core";
 import Object from "@rbxts/object-utils";
 import { MarketplaceService } from "@rbxts/services";
-import { gameConstants } from "shared/constants";
+import { gameConstants } from "shared/gameConstants";
 import { ProfileService } from "./profileService";
 import { Events, Functions } from "server/network";
 
@@ -57,9 +57,7 @@ export class GamepassService implements OnStart {
 		});
 
 		Functions.getOwnedGamepasses.setCallback((player) => {
-			const profile = this.profileService.getProfile(player);
-			if (!profile) return new Map();
-
+			const profile = this.profileService.getProfileLoaded(player).expect();
 			return profile.Data.ownedGamepasses;
 		});
 

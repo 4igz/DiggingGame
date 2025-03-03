@@ -1,5 +1,4 @@
 //!optimize 2
-//!native
 import { Rarity } from "shared/networkTypes";
 
 export const DEFAULT_BOAT_TURN_SPEED = 1000;

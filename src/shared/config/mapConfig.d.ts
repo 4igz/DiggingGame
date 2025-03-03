@@ -6,6 +6,7 @@ interface MapConfig {
 	targetList: Array<keyof typeof targetConfig>;
 	requiredStrength: number;
 	difficulty: keyof typeof difficulties;
+	order: number;
 }
 
 export const mapConfig: Record<string, MapConfig>;
