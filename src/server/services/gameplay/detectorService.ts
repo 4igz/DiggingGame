@@ -1,7 +1,7 @@
 //!optimize 2
 //!native
 import { Service, OnStart, OnTick } from "@flamework/core";
-import {  Workspace } from "@rbxts/services";
+import { Workspace } from "@rbxts/services";
 import { TargetService } from "./targetService";
 import { gameConstants } from "shared/gameConstants";
 import { Events } from "server/network";
@@ -40,7 +40,7 @@ export class DetectorService implements OnStart, OnTick {
 			});
 		});
 
-		Events.endDetectorLuckRoll.connect((player) => {
+		Events.endDetectorLuckRoll.connect((player, cancelled: boolean = false) => {
 			const rollingData = this.rolling.get(player.UserId);
 			if (!rollingData) return;
 
@@ -57,7 +57,7 @@ export class DetectorService implements OnStart, OnTick {
 			const existingTarget = this.targetService.getPlayerTarget(player);
 			if (existingTarget) return;
 
-			const response = this.targetService.spawnTarget(player, finalLuckValue);
+			const response = !cancelled ? this.targetService.spawnTarget(player, finalLuckValue) : undefined;
 			if (!response) {
 				Events.targetSpawnFailure.fire(player);
 			}

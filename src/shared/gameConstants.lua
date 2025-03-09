@@ -132,6 +132,7 @@ local gameConstants = {
 	PLAYTIME_REWARD_UI = "PlaytimeRewardUi",
 	DIALOG_PROMPT = "DialogPromptUi",
 	DETECTOR_HINT_TEXT = "DetectorHintText",
+	QUEST_INFO_SIDEBUTTON = "QuestInfoSideButton",
 
 	-- Attributes
 	BOAT_DRIVER_SITTING = "SittingInBoatDriverSeat",

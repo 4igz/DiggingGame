@@ -140,9 +140,10 @@ export class ZoneController implements OnStart, OnRender {
 		// This is important because this is how we know that the island has streamed in before we teleport the player to it.
 		Events.teleportToIsland.connect((islandName) => {
 			const island = CollectionService.GetTagged("Map").filter((instance) => instance.Name === islandName)[0];
-			const spawnPos = (island.WaitForChild("SpawnLocation") as Model).GetPivot();
+			const spawnLocation = island.WaitForChild("SpawnLocation") as Model;
+			const spawnPos = spawnLocation.GetPivot();
 			const character = Players.LocalPlayer.Character || Players.LocalPlayer.CharacterAdded.Wait()[0];
-			const goal = spawnPos.add(new Vector3(0, 5, 0));
+			const goal = spawnPos.add(new Vector3(0, spawnLocation.GetExtentsSize().Y / 2, 0));
 			// Wait for HumanoidRootPart so we can ensure that they can be teleported.
 			character.WaitForChild("HumanoidRootPart");
 			character.PivotTo(goal);

@@ -108,6 +108,11 @@ const MoneyVector = (props: MoneyVectorProps) => {
 	);
 };
 
+const GAMEPAD_KEYCODES = {
+	[gameConstants.DAILY_REWARD_UI]: Enum.KeyCode.DPadLeft,
+	[gameConstants.PLAYTIME_REWARD_UI]: Enum.KeyCode.DPadRight,
+};
+
 interface MenuProps {
 	uiController: UiController;
 	amount?: string;
@@ -119,6 +124,7 @@ export const RightSideMenu = (props: MenuProps) => {
 	const [moneyVectors, setMoneyVectors] = useState<MoneyVectorProps[]>([]);
 	const [moneyValue, setMoneyValue] = useState("0");
 	const [, moneyMotion] = useMotion(0);
+	const [gamepadEnabled, setGamepadEnabled] = React.useState(UserInputService.GamepadEnabled);
 	const moneyFrameRef = createRef<Frame>();
 
 	const updateMoneyValue = (value: string) => {
@@ -146,8 +152,26 @@ export const RightSideMenu = (props: MenuProps) => {
 			.catch((e) => {
 				warn(e);
 			});
+
 		Events.updateMoney.connect((newAmount) => {
 			updateMoneyValue(newAmount);
+		});
+
+		UserInputService.GamepadConnected.Connect(() => {
+			setGamepadEnabled(true);
+		});
+
+		UserInputService.GamepadDisconnected.Connect(() => {
+			setGamepadEnabled(false);
+		});
+
+		UserInputService.InputBegan.Connect((input) => {
+			if (props.uiController.isMenuLayerOpen()) return;
+			for (const [menu, keyCode] of pairs(GAMEPAD_KEYCODES)) {
+				if (input.KeyCode === keyCode) {
+					props.uiController.toggleUi(menu as string);
+				}
+			}
 		});
 	}, []);
 
@@ -169,6 +193,7 @@ export const RightSideMenu = (props: MenuProps) => {
 				<AnimatedButton
 					position={UDim2.fromScale(0.5, 0.5)}
 					size={UDim2.fromScale(0.658, 0.166)}
+					selectable={false}
 					onClick={() => {
 						// if (animationRunning) return;
 						const creationAmt = math.random(MONEY_VECTOR_CREATION_AMT.Min, MONEY_VECTOR_CREATION_AMT.Max);
@@ -264,6 +289,7 @@ export const RightSideMenu = (props: MenuProps) => {
 						layoutOrder={1}
 						position={UDim2.fromScale(0.341, -0.368)}
 						size={UDim2.fromScale(0.329, 0.981)}
+						selectable={false}
 						onClick={() => {
 							props.uiController.toggleUi(gameConstants.PLAYTIME_REWARD_UI);
 						}}
@@ -325,6 +351,17 @@ export const RightSideMenu = (props: MenuProps) => {
 							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 						</imagelabel>
 
+						<imagelabel
+							Image={UserInputService.GetImageForKeyCode(Enum.KeyCode.DPadRight)}
+							Position={UDim2.fromScale(0.5, 1)}
+							AnchorPoint={new Vector2(0.5, 0)}
+							BackgroundTransparency={1}
+							Size={UDim2.fromScale(0.4, 0.4)}
+							Visible={gamepadEnabled}
+						>
+							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+						</imagelabel>
+
 						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 					</AnimatedButton>
 
@@ -333,12 +370,13 @@ export const RightSideMenu = (props: MenuProps) => {
 						BackgroundTransparency={1}
 						BorderColor3={Color3.fromRGB(0, 0, 0)}
 						BorderSizePixel={0}
-						key={"Daily  Menu"}
+						key={"Daily Menu"}
 						Position={UDim2.fromScale(0.671, -0.368)}
 						Size={UDim2.fromScale(0.329, 0.981)}
 					>
 						<AnimatedButton
-							size={UDim2.fromScale(0.9, 0.9)}
+							size={UDim2.fromScale(1, 1)}
+							selectable={false}
 							onClick={() => {
 								props.uiController.toggleUi(gameConstants.DAILY_REWARD_UI);
 							}}
@@ -355,6 +393,17 @@ export const RightSideMenu = (props: MenuProps) => {
 								ScaleType={Enum.ScaleType.Fit}
 								Size={UDim2.fromScale(0.8, 0.8)}
 							/>
+
+							<imagelabel
+								Image={UserInputService.GetImageForKeyCode(Enum.KeyCode.DPadLeft)}
+								Position={UDim2.fromScale(0.5, 1)}
+								BackgroundTransparency={1}
+								Size={UDim2.fromScale(0.4, 0.4)}
+								Visible={gamepadEnabled}
+								AnchorPoint={new Vector2(0.5, 0)}
+							>
+								<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+							</imagelabel>
 
 							<textlabel
 								AnchorPoint={new Vector2(0.5, 0.5)}

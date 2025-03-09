@@ -12,6 +12,8 @@ import { Events, Functions } from "client/network";
 import { AnimatedProductButton } from "./gamepassShop";
 import { ProductType } from "shared/config/shopConfig";
 import { getDeveloperProductInfo } from "shared/util/monetizationUtil";
+import Sift from "@rbxts/sift";
+import Object from "@rbxts/object-utils";
 
 const SEC_INTERVAL = interval(1);
 
@@ -31,25 +33,34 @@ const RewardSlot = (props: {
 	order: number;
 	cfg: PlaytimeReward;
 	timerRunning: boolean;
+	alreadyClaimed: boolean;
+	shouldResetClaims: boolean;
 	serverClaimed: boolean | undefined;
 	requiredTime: number;
 	onClaimed: (index: number) => void;
 }) => {
 	const [timeLeft, setTimeLeft] = useState(props.requiredTime - time());
 	const [serverAllowedToClaim, setServerAllowedToClaim] = useState(false);
-	const [claimed, setClaimed] = useState(false);
+	const [claimed, setClaimed] = useState(props.alreadyClaimed);
+
+	useEffect(() => {
+		if (props.shouldResetClaims) {
+			setClaimed(false);
+			setTimeLeft(props.requiredTime - time());
+		}
+	}, [props.shouldResetClaims]);
 
 	useEffect(() => {
 		const thread = task.spawn(() => {
 			if (!props.timerRunning) return;
-			if (claimed) {
-				setClaimed(false);
-			}
+			// if (claimed) {
+			// 	setClaimed(false);
+			// }
 			while (time() < props.requiredTime && props.timerRunning) {
-				task.wait();
 				if (SEC_INTERVAL(props.order)) {
 					setTimeLeft(props.requiredTime - time());
 				}
+				task.wait(1);
 			}
 			if (time() >= props.requiredTime && !claimed) {
 				setTimeLeft(0);
@@ -72,7 +83,7 @@ const RewardSlot = (props: {
 		<frame
 			AnchorPoint={new Vector2(0.5, 0.5)}
 			BackgroundTransparency={1}
-			key={"1"}
+			key={props.order}
 			Position={UDim2.fromScale(0.5, 0.5)}
 			Size={UDim2.fromScale(0.224, 0.306)}
 			ZIndex={10}
@@ -386,25 +397,29 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 							order={i}
 							timerRunning={!allowClaimAll && visible}
 							serverClaimed={allowClaimAll}
+							alreadyClaimed={claimed.get(i) ?? false}
+							shouldResetClaims={claimed.size() >= timePlayedRewards.size()}
 							onClaimed={(index) => {
-								const newClaimed = claimed.set(index, true);
-								setClaimed(newClaimed);
+								setClaimed((prevClaimed) => {
+									const newClaimed = new Map(Object.entries(prevClaimed));
+									newClaimed.set(index, true);
 
-								if (claimed.size() >= timePlayedRewards.size()) {
-									let allClaimed = true;
-
-									// Ensure all rewards are claimed
-									for (const [_, value] of claimed) {
-										if (!value) {
-											allClaimed = false;
-											break;
+									// Check if all rewards are claimed after the state update
+									if (newClaimed.size() >= timePlayedRewards.size()) {
+										let allClaimed = true;
+										for (const [, value] of newClaimed) {
+											if (!value) {
+												allClaimed = false;
+												break;
+											}
+										}
+										if (allClaimed) {
+											setClaimedAll(true);
 										}
 									}
 
-									if (allClaimed) {
-										setClaimedAll(true);
-									}
-								}
+									return newClaimed;
+								});
 							}}
 						/>
 					);

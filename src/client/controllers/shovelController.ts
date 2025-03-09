@@ -124,6 +124,20 @@ export class ShovelController implements OnStart {
 				}
 
 				if (child.IsA("Tool") && shovelConfig[child.Name] !== undefined) {
+					const toolTrove = new Trove();
+
+					toolTrove.add(character.ChildRemoved.Connect((child2) => {
+						if (child2 === child) {
+							toolTrove.destroy();
+						}
+					}));
+
+					toolTrove.add(child.Unequipped.Once(() => {
+						if (child.Parent !== character) {
+							toolTrove.destroy();
+						}
+					}));
+
 					Signals.setShovelEquipped.Fire(true);
 
 					// Speeds for your digging animation
@@ -136,9 +150,12 @@ export class ShovelController implements OnStart {
 					const maxClickCount = 10;
 
 					// Example marker connection
-					const markerSignalConnection = digTrack.GetMarkerReachedSignal(DIG_ANIMATION_MARKER).Connect(() => {
-						Signals.dig.Fire();
-					});
+					toolTrove.add(
+						digTrack.GetMarkerReachedSignal(DIG_ANIMATION_MARKER).Connect(() => {
+							Signals.dig.Fire();
+						}),
+						"Disconnect",
+					);
 
 					const startDiggingAnimation = () => {
 						// If we're already active or not in a dig state, skip.
@@ -231,8 +248,8 @@ export class ShovelController implements OnStart {
 					task.defer(() => digTrack.AdjustSpeed(0));
 
 					let steppedConnection: RBXScriptConnection | undefined;
-					const rsThread = task.spawn(() => {
-						steppedConnection = RunService.RenderStepped.Connect(() => {
+					toolTrove.add(
+						RunService.RenderStepped.Connect(() => {
 							if ((humanoid && humanoid.Parent && this.diggingActive) || digRequestInProgress) {
 								humanoid.WalkSpeed = 0;
 							} else {
@@ -279,8 +296,9 @@ export class ShovelController implements OnStart {
 
 							// Always update idle animations if not digging
 							updateIdleAnimation();
-						});
-					});
+						}),
+						"Disconnect",
+					);
 
 					const shovelAction = () => {
 						if (this.diggingActive) {
@@ -348,12 +366,10 @@ export class ShovelController implements OnStart {
 					});
 
 					// === Cleanup on tool removal ===
-					child.AncestryChanged.Once(() => {
+					toolTrove.add(() => {
 						Signals.setShovelEquipped.Fire(false);
 						steppedConnection?.Disconnect();
-						task.cancel(rsThread);
 						ContextActionService.UnbindAction(actionName);
-						markerSignalConnection.Disconnect();
 						uisConnection.Disconnect();
 
 						digTrack.Stop();

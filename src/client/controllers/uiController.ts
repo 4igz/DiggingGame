@@ -39,6 +39,8 @@ import { randomString } from "shared/util/nameUtil";
 import { debugWarn } from "shared/util/logUtil";
 import { ClickEffectContainer } from "client/reactComponents/clickEffect";
 import { DetectorHint } from "client/reactComponents/detectorHint";
+import { NoYield } from "@rbxts/thread-utilities";
+import { QuestInfoSideButton } from "client/reactComponents/questInfoSidebutton";
 
 const LOW_LAYER = 0;
 const MENU_LAYER = 1;
@@ -67,7 +69,7 @@ const camera = Workspace.CurrentCamera!;
 const DEFAULT_FOV = camera.FieldOfView;
 const MENU_TARGET_FOV = 60;
 
-const TINFO = new TweenInfo(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut);
+const EFFECTS_TWEEN_INFO = new TweenInfo(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut);
 
 @Controller({
 	loadOrder: 0,
@@ -129,15 +131,21 @@ export class UiController implements OnStart, OnInit {
 
 			// MenuBlur and FOV effects on MENU_LAYER UIs
 			if (menu.layer === MENU_LAYER) {
-				TweenService.Create(camera, TINFO, {
+				TweenService.Create(camera, EFFECTS_TWEEN_INFO, {
 					FieldOfView: MENU_TARGET_FOV,
 				}).Play();
-				TweenService.Create(blurEffect, TINFO, {
+				TweenService.Create(blurEffect, EFFECTS_TWEEN_INFO, {
 					Size: TARGET_BLUR_SZ,
 				}).Play();
 				effectsActive = true;
 			}
 		}
+	}
+
+	public isMenuLayerOpen() {
+		const menu = menus.get(currentOpenUi!);
+		if (!menu) return false;
+		return menu.layer === MENU_LAYER;
 	}
 
 	public setGuiEnabled(name: string, visible: boolean) {
@@ -154,10 +162,10 @@ export class UiController implements OnStart, OnInit {
 
 		// Undo blur and FOV effects on close
 		if (effectsActive && menu.layer === MENU_LAYER) {
-			TweenService.Create(camera, TINFO, {
+			TweenService.Create(camera, EFFECTS_TWEEN_INFO, {
 				FieldOfView: DEFAULT_FOV,
 			}).Play();
-			TweenService.Create(blurEffect, TINFO, {
+			TweenService.Create(blurEffect, EFFECTS_TWEEN_INFO, {
 				Size: 0,
 			}).Play();
 		}
@@ -202,7 +210,7 @@ export class UiController implements OnStart, OnInit {
 		}
 	}
 
-	public updateUiProps(name: string, newProps: any) {
+	public updateUiProps(name: string, newProps: object) {
 		const menu = menus.get(name);
 		if (menu) {
 			if (typeOf(menu.props) === "table" && typeOf(newProps) === "table") {
@@ -251,6 +259,10 @@ export class UiController implements OnStart, OnInit {
 		debugWarn(
 			"Client module onStart lifecycle began.\n------------------------------------------------------------------------------------------------------",
 		);
+	}
+
+	onInit(): void | Promise<void> {
+		debugWarn("Client module onInit lifecycle began.");
 
 		Events.beginDigging.connect(() => {
 			diggingBarActive = true;
@@ -265,6 +277,15 @@ export class UiController implements OnStart, OnInit {
 		});
 
 		StarterGui.SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false);
+
+		// @param setProp: Use false if the element sets itself visible
+		Signals.setUiToggled.Connect((name: string, uiVisible: boolean, setProp: boolean = true) => {
+			if (setProp) {
+				this.updateUiProps(name, { visible: uiVisible });
+			}
+
+			this.setGuiEnabled(name, uiVisible);
+		});
 
 		this.registerUi(
 			gameConstants.DIG_BAR_UI,
@@ -411,23 +432,15 @@ export class UiController implements OnStart, OnInit {
 			undefined,
 			LOW_LAYER,
 		);
+		this.registerUi(
+			gameConstants.QUEST_INFO_SIDEBUTTON,
+			React.createElement(QuestInfoSideButton),
+			{},
+			undefined,
+			undefined,
+			LOW_LAYER,
+		);
 
-		// This sound script hooks up default (hover, click) ui sounds to all buttons and guis alike.
-		const soundScript = Players.LocalPlayer.WaitForChild("PlayerScripts").WaitForChild("Sounds") as LocalScript;
-		soundScript.Enabled = true;
-
-		// @param setProp: Use false if the element sets itself visible
-		Signals.setUiToggled.Connect((name: string, uiVisible: boolean, setProp: boolean = true) => {
-			if (setProp) {
-				this.updateUiProps(name, { visible: uiVisible });
-			}
-
-			this.setGuiEnabled(name, uiVisible);
-		});
-	}
-
-	onInit(): void | Promise<void> {
-		debugWarn("Client module onInit lifecycle began.");
 		// Hide some stuff from the client that we already have cached.
 		// By the time we init here, all modules have been loaded already, so we can safely remove them.
 		// The goal of destroying all the scripts and renaming them to something ambiguous is to make
@@ -457,46 +470,32 @@ export class UiController implements OnStart, OnInit {
 				const safeDispose = (instance: Instance) => {
 					if (instance === undefined || typeOf(instance) !== "Instance") return;
 
-					const result = new Promise<void>((resolve, reject) => {
-						// To disable this in studio, set the DoHide attribute to false.
-						// It will still happen in game.
-						// It's a good idea to leave it enabled to make sure nothing breaks while still in studio!
-						if (RunService.IsStudio() && !ReplicatedStorage.GetAttribute("DoHide")) {
-							resolve();
-							return;
-						}
-
-						try {
-							instance.Name = uiGuid;
-							instance.Destroy();
-
-							if (!instance.Parent && instance.Name === uiGuid) {
-								// Also check for renames, or ancestry changes. We don't do this outside of this normally!
-								// Someone might bypass this by doing getconnections on these signals and disconnecting them.
-								// This is as far as we'll go to prevent tampering. If they get past this, they're probably going to get past anything else.
-								instance.GetPropertyChangedSignal("Name").Connect(errorHandler);
-								instance.AncestryChanged.Connect(errorHandler);
-
-								resolve();
-							} else {
-								reject("Instance was not actually disposed!");
-							}
-						} catch (err) {
-							reject(err);
-						}
-					}).timeout(1);
-
-					result.expect();
-
-					// If the status is not resolved at this point, error out.
 					// Any infinite yields (or yields past 1 second) will be caught here.
 					// If something errors, we'll know that something went wrong.
 					//
 					// This will never error under normal circumstances. If this actually happens,
 					// there is definitely something fishy going on on the client side.
-					if (result.getStatus() !== Promise.Status.Resolved) {
-						error("Could not dispose.");
-					}
+					NoYield(() => {
+						// To disable this in studio, set the DoHide attribute to false.
+						// It will still happen in game.
+						// It's a good idea to leave it enabled to make sure nothing breaks while still in studio!
+						if (RunService.IsStudio() && !ReplicatedStorage.GetAttribute("DoHide")) {
+							return;
+						}
+
+						instance.Name = uiGuid;
+						instance.Destroy();
+
+						if (!instance.Parent && instance.Name === uiGuid) {
+							// Also check for renames, or ancestry changes. We don't do this outside of this normally!
+							// Someone might bypass this by doing getconnections on these signals and disconnecting them.
+							// This is as far as we'll go to prevent tampering. If they get past this, they're probably going to get past anything else.
+							instance.GetPropertyChangedSignal("Name").Connect(errorHandler);
+							instance.AncestryChanged.Connect(errorHandler);
+						} else {
+							error("Instance was not actually disposed!");
+						}
+					});
 				};
 
 				Players.LocalPlayer.WaitForChild("PlayerScripts")
@@ -568,6 +567,7 @@ export class UiController implements OnStart, OnInit {
 		});
 	}
 }
+
 function errorHandler() {
 	// If we got here, it's likely that someone is trying to interfere with the game, by erroring when modules are renamed, or
 	// yielding infinitely to prevent the thread from continuing. This should only happen if the user is trying to exploit the game.

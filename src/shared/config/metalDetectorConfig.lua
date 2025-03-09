@@ -19,6 +19,15 @@ local metalDetectorConfig = {
 		price = 350,
 		shopOrder = -1,
 	},
+	SilverDetector = {
+		strength = 1.5,
+		luck = 7.5,
+		searchRadius = 45,
+		itemImage = "rbxassetid://123445201960643",
+		rarityType = "Common",
+		price = 1000,
+		shopOrder = 0,
+	},
 	GoldDetector = {
 		strength = 1.5,
 		luck = 10,

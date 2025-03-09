@@ -21,6 +21,8 @@ import { Signals } from "shared/signals";
 import { GamepassController } from "client/controllers/gamepassController";
 import { getOrderFromRarity } from "shared/util/rarityUtil";
 import { Networking, NetworkingFunctionError } from "@flamework/networking";
+import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
+import { set } from "@rbxts/sift/out/Array";
 
 export function capitalizeWords(str: string): string {
 	return str
@@ -45,6 +47,7 @@ interface AnimatedButtonProps {
 	zindex?: number;
 	Ref?: React.Ref<Frame>;
 	active?: boolean;
+	selectable?: boolean;
 }
 
 export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
@@ -58,6 +61,7 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
 	scales,
 	children,
 	zindex,
+	selectable,
 	Ref: ref,
 	active = true,
 }) => {
@@ -91,6 +95,7 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
 				Size={UDim2.fromScale(1, 1)}
 				ZIndex={zindex ?? 10}
 				Active={active}
+				Selectable={selectable}
 				Event={{
 					MouseEnter: () => {
 						onHover?.();
@@ -183,6 +188,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 				key={"Item Container"}
 				Position={UDim2.fromScale(0.5, 0.5)}
 				Size={UDim2.fromScale(1, 0.949)}
+				Selectable={true}
 				Event={{
 					MouseButton1Click: () => {
 						// Equip the item
@@ -735,6 +741,7 @@ const CategoryButton = (props: CategoryButtonProps) => {
 			})}
 			SliceCenter={new Rect(98, 73, 643, 212)}
 			SliceScale={0.25}
+			Selectable={false}
 			ZIndex={-10}
 			Event={{
 				MouseButton1Click: () => {
@@ -913,6 +920,7 @@ const SkillFrame: React.FC<SkillFrameProps> = (props) => {
 				SliceCenter={new Rect(36, 60, 994, 60)}
 				SliceScale={0.7}
 				Active={true}
+				Selectable={false}
 				Event={{
 					MouseEnter: () => {
 						setIsHovered(true);
@@ -1081,6 +1089,7 @@ const SkillFrame: React.FC<SkillFrameProps> = (props) => {
 								Size={UDim2.fromScale(1, 1)}
 								SliceCenter={new Rect(40, 86, 544, 87)}
 								SliceScale={0.3}
+								Selectable={true}
 								Event={{
 									Activated: () => {
 										Events.upgradeSkill.fire(string.lower(props.title) as SkillName);
@@ -1154,6 +1163,7 @@ const InventorySelectorTab = (props: InventorySelectorTabProps) => {
 			position={props.position}
 			anchorPoint={new Vector2(0.5, 0.5)}
 			scales={new NumberRange(0.95, 1.05)}
+			selectable={false}
 			onClick={() => {
 				setHovered(false);
 				props.setSelectedInventoryType(props.inventoryType);
@@ -1222,6 +1232,7 @@ export const SellAllBtn = (props: SellAllBtnProps) => {
 			scales={new NumberRange(0.95, 1.05)}
 			position={props.position}
 			anchorPoint={props.anchorPoint ?? new Vector2(0.5, 0.5)}
+			selectable={false}
 			onClick={() => {
 				if (props.requiresGamepass && !props.gamepassController?.getOwnsGamepass("SellEverywhere")) {
 					// TODO: Prompt gamepass purchase.
@@ -1234,7 +1245,7 @@ export const SellAllBtn = (props: SellAllBtnProps) => {
 				Events.sellAll();
 			}}
 		>
-			<imagebutton
+			<imagelabel
 				AnchorPoint={new Vector2(0.5, 0.5)}
 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 				BackgroundTransparency={1}
@@ -1246,6 +1257,7 @@ export const SellAllBtn = (props: SellAllBtnProps) => {
 				ScaleType={Enum.ScaleType.Fit}
 				Size={UDim2.fromScale(1, 1)}
 				SliceCenter={new Rect(40, 86, 544, 87)}
+				Selectable={false}
 				SliceScale={0.3}
 			>
 				<textlabel
@@ -1283,7 +1295,7 @@ export const SellAllBtn = (props: SellAllBtnProps) => {
 						<uistroke key={"UIStroke"} Color={Color3.fromRGB(1, 75, 33)} Thickness={3} />
 					</textlabel>
 				</textlabel>
-			</imagebutton>
+			</imagelabel>
 		</AnimatedButton>
 	);
 };
@@ -1350,7 +1362,7 @@ export const ExitButton = (props: ExitButtonProps) => {
 	useEffect(() => {
 		// Listen to Gamepad B button for our controller enjoyers
 		const inputBegan = UserInputService.InputBegan.Connect((input) => {
-			if (input.KeyCode === Enum.KeyCode.ButtonB && props.menuRefToClose?.current) {
+			if (input.KeyCode === Enum.KeyCode.ButtonB && props.menuRefToClose?.current && props.isMenuVisible) {
 				exit();
 			}
 		});
@@ -1443,6 +1455,7 @@ const IndexPageItem = (props: IndexPageItemProps) => {
 				size={UDim2.fromScale(1, 1)}
 				scales={new NumberRange(0.95, 1.05)}
 				onClick={() => props.setSelected({ targetName: props.itemName, mapName: props.mapName })}
+				selectable={true}
 			>
 				{/* Background Color Image, used for rarity. */}
 				<imagelabel
@@ -1533,6 +1546,7 @@ const RefundPointFrame = () => {
 						return UDim2.fromScale(1.03 * s, 1.07 * s);
 					})}
 					SliceCenter={new Rect(47, 94, 539, 94)}
+					Selectable={true}
 					Event={{
 						MouseEnter: () => setIsHovered(true),
 						MouseLeave: () => setIsHovered(false),
@@ -1637,6 +1651,19 @@ export const MENUS = {
 	Index: "Index",
 };
 
+const MENU_INDICIES = {
+	Inventory: 0,
+	Skills: 1,
+	Index: 2,
+};
+
+const INVENTORY_MENU_INDICIES = {
+	Shovels: 0,
+	MetalDetectors: 1,
+	Target: 2,
+	Potions: 3,
+};
+
 interface MainUiProps {
 	visible: boolean;
 	menu?: keyof typeof MENUS;
@@ -1659,6 +1686,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 	const [inventory, setInventory] = React.useState<InventoryItemProps[]>([]);
 	const [targetInventoryUsedSize, setTargetInventoryUsedSize] = useState(0);
 	const [enabledMenu, setEnabledMenu] = React.useState(MENUS.Inventory);
+	const [menuIndex, setMenuIndex] = React.useState(0);
 	const [popInSz, popInMotion] = useMotion(UDim2.fromScale(0, 0));
 	const [selectedIndexItem, setSelectedIndexItem] = useState<{
 		targetName: keyof typeof targetConfig | "";
@@ -1670,6 +1698,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 		gameConstants.TARGET_INVENTORY_DEFAULT_CAPACITY,
 	);
 	const [visible, setVisible] = React.useState(false);
+	const [gamepadEnabled, setGamepadEnabled] = React.useState(UserInputService.GamepadEnabled);
 	const menuRef = createRef<Frame>();
 
 	function updateInventory(
@@ -1710,7 +1739,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 				});
 			} else if (item.type === "Target") {
 				// Populate stats
-				stats.push({ key: "weight", value: item.weight, icon: "⚖️" });
+				stats.push({ key: "weight", value: item.weight, icon: "" });
 			}
 
 			const cfg =
@@ -1813,6 +1842,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 					connection?.Disconnect();
 					return;
 				}
+				print("Toggling inventory menu");
 				props.uiController.toggleUi(gameConstants.MAIN_UI, {
 					menu: MENUS.Inventory,
 					displayInventoryType: "Target",
@@ -1840,10 +1870,10 @@ export const InventoryComponent = (props: MainUiProps) => {
 	}, [loading]);
 
 	React.useEffect(() => {
-		Signals.inventoryFull.Connect(() => {
-			setEnabledMenu(MENUS.Inventory);
-			setSelectedInventoryType("Target");
-		});
+		// Signals.inventoryFull.Connect(() => {
+		// 	setEnabledMenu(MENUS.Inventory);
+		// 	setSelectedInventoryType("Target");
+		// });
 
 		const preloadInventories = () => {
 			for (const inventory of ["MetalDetectors", "Shovels", "Potions", "Target"] as const) {
@@ -1906,6 +1936,49 @@ export const InventoryComponent = (props: MainUiProps) => {
 		Events.updateTreasureCount.connect((count) => {
 			setTargetInventoryUsedSize(count);
 			treasureCountAtom(count);
+		});
+
+		UserInputService.GamepadConnected.Connect(() => {
+			setGamepadEnabled(true);
+		});
+
+		UserInputService.GamepadDisconnected.Connect(() => {
+			setGamepadEnabled(false);
+		});
+
+		UserInputService.InputBegan.Connect((input, gpe) => {
+			if (gpe) return;
+			if (input.KeyCode === Enum.KeyCode.DPadDown) {
+				setMenuIndex((prev) => {
+					const newIndex = (prev + 1) % 3;
+					setEnabledMenu(
+						Object.keys(MENU_INDICIES).find((key) => MENU_INDICIES[key] === newIndex) as keyof typeof MENUS,
+					);
+					return newIndex;
+				});
+			} else if (input.KeyCode === Enum.KeyCode.DPadUp) {
+				setMenuIndex((prev) => {
+					const newIndex = (prev - 1 + 3) % 3;
+					setEnabledMenu(
+						Object.keys(MENU_INDICIES).find((key) => MENU_INDICIES[key] === newIndex) as keyof typeof MENUS,
+					);
+					return newIndex;
+				});
+			} else if (input.KeyCode === Enum.KeyCode.DPadLeft) {
+				setSelectedInventoryType((prev) => {
+					prev = prev as Exclude<ItemType, "Boats">;
+					const keys = Object.keys(INVENTORY_MENU_INDICIES);
+					const newIndex = (INVENTORY_MENU_INDICIES[prev] - 1 + keys.size()) % keys.size();
+					return keys.find((key) => INVENTORY_MENU_INDICIES[key] === newIndex) as ItemType;
+				});
+			} else if (input.KeyCode === Enum.KeyCode.DPadRight) {
+				setSelectedInventoryType((prev) => {
+					prev = prev as Exclude<ItemType, "Boats">;
+					const keys = Object.keys(INVENTORY_MENU_INDICIES);
+					const newIndex = (INVENTORY_MENU_INDICIES[prev] + 1) % keys.size();
+					return keys.find((key) => INVENTORY_MENU_INDICIES[key] === newIndex) as ItemType;
+				});
+			}
 		});
 
 		// This is part of my `renameRemotes` "security" measure. It will deter script kiddies, but not a fully determined exploiter.
@@ -2161,7 +2234,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 						Size={UDim2.fromScale(0.931, 0.14)}
 					>
 						{/* Search Bar */}
-						<imagelabel
+						{/* <imagelabel
 							AnchorPoint={new Vector2(0, 0.5)}
 							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 							BackgroundTransparency={1}
@@ -2196,8 +2269,9 @@ export const InventoryComponent = (props: MainUiProps) => {
 								TextStrokeColor3={Color3.fromRGB(255, 255, 255)}
 								TextWrapped={true}
 								TextXAlignment={Enum.TextXAlignment.Left}
+								Selectable={false}
 							/>
-						</imagelabel>
+						</imagelabel> */}
 
 						<InventorySelectorTab
 							inventoryType="Shovels"
@@ -2480,8 +2554,8 @@ export const InventoryComponent = (props: MainUiProps) => {
 						BorderColor3={Color3.fromRGB(0, 0, 0)}
 						BorderSizePixel={0}
 						key={"Index Container"}
-						Position={UDim2.fromScale(0, 0.166)}
-						Size={UDim2.fromScale(0.671, 0.831)}
+						Position={UDim2.fromScale(0, 0.05)}
+						Size={UDim2.fromScale(0.671, 0.96)}
 						ClipsDescendants={true}
 					>
 						<uicorner key={"UICorner"} CornerRadius={new UDim(0.0314, 0)} />
@@ -2508,6 +2582,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 							CanvasSize={new UDim2()}
 							key={"Index Items Scrolling"}
 							Position={UDim2.fromScale(0.5, 0.5)}
+							Selectable={false}
 							ScrollBarImageColor3={Color3.fromRGB(0, 0, 0)}
 							ScrollBarThickness={0}
 							ScrollingDirection={Enum.ScrollingDirection.Y}
@@ -2573,7 +2648,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 						</scrollingframe>
 					</frame>
 
-					<imagelabel
+					{/* <imagelabel
 						AnchorPoint={new Vector2(0.5, 0.5)}
 						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 						BackgroundTransparency={1}
@@ -2606,7 +2681,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 							TextWrapped={true}
 							TextXAlignment={Enum.TextXAlignment.Left}
 						/>
-					</imagelabel>
+					</imagelabel> */}
 
 					<frame
 						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -2835,6 +2910,41 @@ export const InventoryComponent = (props: MainUiProps) => {
 					currentCategory={enabledMenu}
 					setCategory={setEnabledMenu}
 				/>
+
+				<frame
+					Visible={gamepadEnabled}
+					BackgroundTransparency={1}
+					Size={UDim2.fromScale(1, 0.2)}
+					LayoutOrder={100}
+				>
+					<uilistlayout
+						key={"UIListLayout"}
+						FillDirection={Enum.FillDirection.Horizontal}
+						HorizontalAlignment={Enum.HorizontalAlignment.Center}
+						SortOrder={Enum.SortOrder.LayoutOrder}
+						VerticalAlignment={Enum.VerticalAlignment.Center}
+						Padding={new UDim(0, 5)}
+					/>
+					<imagelabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						Image={"rbxasset://textures/ui/Controls/DefaultController/DPadUp@2x.png"}
+						Size={UDim2.fromScale(0.5, 0.5)}
+						LayoutOrder={1}
+					>
+						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1} />
+					</imagelabel>
+
+					<imagelabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						Image={"rbxasset://textures/ui/Controls/DefaultController/DPadDown@2x.png"}
+						Size={UDim2.fromScale(0.5, 0.5)}
+						LayoutOrder={2}
+					>
+						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1} />
+					</imagelabel>
+				</frame>
 			</frame>
 
 			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={2.05} />

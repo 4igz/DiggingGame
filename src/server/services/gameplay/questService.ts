@@ -7,13 +7,15 @@ import { MoneyService } from "../backend/moneyService";
 import { LevelService } from "./levelService";
 import { InventoryService } from "./inventoryService";
 import { QuestProgress } from "shared/networkTypes";
+import { Players } from "@rbxts/services";
 
 @Service({})
 export class QuestService implements OnStart {
 	private QUEST_RESET_TIME = 86400; // 24 hours
+	private questsReady = new Array<Player>();
 
 	private readonly DEFAULT_QUEST_PROGRESS = new Map<keyof typeof questConfig, QuestProgress>(
-		Object.keys(questConfig).map((questName) => [questName, { stage: 0, active: false }]),
+		Object.keys(questConfig).map((questName) => [questName, { stage: 0, active: false, completed: false }]),
 	);
 
 	constructor(
@@ -107,7 +109,13 @@ export class QuestService implements OnStart {
 				this.profileService.setProfile(player, profile);
 			}
 
+			this.questsReady.push(player);
+
 			Events.updateQuestProgress.fire(player, profile.Data.questProgress);
+		});
+
+		Players.PlayerRemoving.Connect((player) => {
+			this.questsReady.remove(this.questsReady.indexOf(player));
 		});
 	}
 

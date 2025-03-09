@@ -41,6 +41,7 @@ export class ZoneService implements OnStart {
 		Events.teleportSuccess.connect((player) => {
 			if (!this.spawnedPlayers.has(player)) {
 				this.spawnedPlayers.add(player);
+				player.SetAttribute("Spawned", true);
 			}
 
 			const character = player.Character || player.CharacterAdded.Wait()[0];

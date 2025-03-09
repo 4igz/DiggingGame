@@ -126,6 +126,23 @@ export class DetectorController implements OnStart {
 					const trove = new Trove();
 					holdStart = tick();
 
+					trove.add(cleanupTrack);
+
+					// Cleanup indicators when unequipping
+					trove.add(
+						child.Unequipped.Once(() => {
+							trove.destroy();
+						}),
+					);
+
+					trove.add(
+						character.ChildRemoved.Connect((child2) => {
+							if (child2 === child) {
+								trove.destroy();
+							}
+						}),
+					);
+
 					// Play the animation when the tool is equipped
 					detectorTrack.Play();
 
@@ -156,9 +173,9 @@ export class DetectorController implements OnStart {
 							holding = false;
 							if (isRolling) {
 								awaitingResponse = true;
+								isRolling = false;
+								Signals.setUiToggled.Fire(gameConstants.LUCKBAR_UI, false, true);
 								Events.endDetectorLuckRoll();
-								Signals.setUiToggled.Fire(gameConstants.LUCKBAR_UI, false, false);
-								Signals.closeLuckbar.Fire();
 
 								if (!understandsInput) {
 									Signals.setUiToggled.Fire(gameConstants.DETECTOR_HINT_TEXT, false, true);
@@ -176,7 +193,6 @@ export class DetectorController implements OnStart {
 					if (button) {
 						button.Size = new UDim2(0, 75, 0, 75);
 					}
-					// ContextActionService.SetTitle(actionName, "Detect");
 
 					trove.add(() => {
 						ContextActionService.UnbindAction(actionName);
@@ -188,14 +204,11 @@ export class DetectorController implements OnStart {
 								if (!isRolling) {
 									isRolling = true;
 									Events.beginDetectorLuckRoll();
-									Signals.setUiToggled.Fire(gameConstants.LUCKBAR_UI, true, false);
-									Signals.startLuckbar.Fire();
+									Signals.setUiToggled.Fire(gameConstants.LUCKBAR_UI, true, true);
 								}
 							}
 						}),
 					);
-
-					trove.add(cleanupTrack);
 
 					if (!understandsInput) {
 						// Player hasn't shown yet that they understand how the detector works
@@ -208,9 +221,9 @@ export class DetectorController implements OnStart {
 
 						if (isRolling) {
 							isRolling = false;
-							Events.endDetectorLuckRoll();
-							Signals.closeLuckbar.Fire();
-							Signals.setUiToggled.Fire(gameConstants.LUCKBAR_UI, false, false);
+							awaitingResponse = true;
+							Events.endDetectorLuckRoll(true);
+							Signals.setUiToggled.Fire(gameConstants.LUCKBAR_UI, false, true);
 						}
 
 						if (beep) {
@@ -218,9 +231,7 @@ export class DetectorController implements OnStart {
 							beep = undefined;
 						}
 
-						if (!understandsInput) {
-							Signals.setUiToggled.Fire(gameConstants.DETECTOR_HINT_TEXT, false, true);
-						}
+						Signals.setUiToggled.Fire(gameConstants.DETECTOR_HINT_TEXT, false, true);
 
 						task.defer(() => {
 							if (!this.shovelController.diggingActive && isAutoDigging) {
@@ -228,21 +239,6 @@ export class DetectorController implements OnStart {
 							}
 						});
 					});
-
-					// Cleanup indicators when unequipping
-					trove.add(
-						child.AncestryChanged.Once(() => {
-							trove.destroy();
-						}),
-					);
-
-					trove.add(
-						character.ChildRemoved.Connect((child2) => {
-							if (child2 === child) {
-								trove.destroy();
-							}
-						}),
-					);
 				}
 			});
 		};

@@ -33,6 +33,7 @@ export declare const gameConstants: {
 	readonly PLAYTIME_REWARD_UI: string;
 	readonly DIALOG_PROMPT: string;
 	readonly DETECTOR_HINT_TEXT: string;
+	readonly QUEST_INFO_SIDEBUTTON: string;
 
 	readonly BOAT_DRIVER_SITTING: "SittingInBoatDriverSeat";
 	readonly AREA_INDICATOR_POS: "OriginalPosition";

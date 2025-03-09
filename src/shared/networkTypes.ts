@@ -43,6 +43,7 @@ export interface NetworkedTarget {
 }
 
 export interface QuestProgress {
+	completed: boolean;
 	active: boolean;
 	stage: number;
 }

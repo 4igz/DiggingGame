@@ -48,25 +48,6 @@ export default function LuckBar(props: LuckBarProps) {
 		fovMotion.onStep((value) => {
 			camera!.FieldOfView = value;
 		});
-
-		Signals.startLuckbar.Connect(() => {
-			setLuckSz.immediate(0);
-			setStartTime(Workspace.GetServerTimeNow());
-			setCurrentLuck(0);
-
-			setPaused(false);
-			setVisible(true);
-			fovMotion.spring(fovGoal, springs.walk);
-		});
-		Signals.pauseLuckbar.Connect(() => {
-			setPaused(true);
-		});
-		Signals.closeLuckbar.Connect(() => {
-			fovMotion.spring(defaultFov, springs.molasses);
-			setVisible(false);
-			setPaused(true);
-			lastPlayedLuck = 1;
-		});
 	}, []);
 
 	useEffect(() => {
@@ -74,10 +55,16 @@ export default function LuckBar(props: LuckBarProps) {
 			setLuckSz.immediate(0);
 			setStartTime(Workspace.GetServerTimeNow());
 			setCurrentLuck(0);
+
+			setPaused(false);
+			setVisible(true);
+			fovMotion.spring(fovGoal, springs.walk);
+		} else {
+			fovMotion.spring(defaultFov, springs.molasses);
+			setVisible(false);
+			setPaused(true);
+			lastPlayedLuck = 1;
 		}
-		task.defer(() => {
-			setVisible(props.visible);
-		});
 	}, [props.visible]);
 
 	// Predict roll based on time since last update

@@ -52,7 +52,7 @@ export const profileTemplate = {
 	ownedGamepasses: new Map(Object.keys(gameConstants.GAMEPASS_IDS).map((id) => [id, false])),
 
 	questProgress: new Map<keyof typeof questConfig, QuestProgress>(
-		Object.keys(questConfig).map((questName) => [questName, { stage: 0, active: false }]),
+		Object.keys(questConfig).map((questName) => [questName, { stage: 0, active: false, completed: false }]),
 	),
 	lastQuestReset: 0,
 

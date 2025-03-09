@@ -29,7 +29,7 @@ interface ClientToServerEvents {
 	upgradeSkill: (skillName: SkillName) => void;
 	equipTreasure: (targetName: string) => void;
 	beginDetectorLuckRoll: () => void;
-	endDetectorLuckRoll: () => void;
+	endDetectorLuckRoll: (cancelled?: boolean) => void;
 	/** A bit dumb, but we assume player rolls a 10 luck detector automatically here */
 	nextTargetAutoDigger: () => void;
 	spawnBoat: (boatName: keyof typeof boatConfig) => void;
