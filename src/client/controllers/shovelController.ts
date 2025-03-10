@@ -111,32 +111,25 @@ export class ShovelController implements OnStart {
 			upperIdle.Priority = Enum.AnimationPriority.Movement;
 			upperIdle.Looped = true;
 
-			// Apply player collision group to the character
-			character.GetChildren().forEach((child) => {
-				if (child.IsA("BasePart")) {
-					child.CollisionGroup = gameConstants.PLAYER_COLGROUP;
-				}
-			});
-
 			character.ChildAdded.Connect((child) => {
-				if (child.IsA("BasePart")) {
-					child.CollisionGroup = gameConstants.PLAYER_COLGROUP;
-				}
-
 				if (child.IsA("Tool") && shovelConfig[child.Name] !== undefined) {
 					const toolTrove = new Trove();
 
-					toolTrove.add(character.ChildRemoved.Connect((child2) => {
-						if (child2 === child) {
-							toolTrove.destroy();
-						}
-					}));
+					toolTrove.add(
+						character.ChildRemoved.Connect((child2) => {
+							if (child2 === child) {
+								toolTrove.destroy();
+							}
+						}),
+					);
 
-					toolTrove.add(child.Unequipped.Once(() => {
-						if (child.Parent !== character) {
-							toolTrove.destroy();
-						}
-					}));
+					toolTrove.add(
+						child.Unequipped.Once(() => {
+							if (child.Parent !== character) {
+								toolTrove.destroy();
+							}
+						}),
+					);
 
 					Signals.setShovelEquipped.Fire(true);
 
@@ -515,7 +508,6 @@ export class ShovelController implements OnStart {
 			const startPos = new CFrame(target.position).sub(new Vector3(0, 5, 0)).mul(randomRotation);
 			model = model.Clone();
 			model.PivotTo(startPos);
-			model.Parent = Workspace;
 			digTroves.forEach((trove, id) => {
 				trove.destroy();
 				digTroves.delete(id);
@@ -532,6 +524,8 @@ export class ShovelController implements OnStart {
 					CollectionService.AddTag(descendant, "CameraIgnore");
 				}
 			}
+
+			model.Parent = Workspace;
 
 			// const h = new Instance("Highlight");
 			// h.Parent = model;

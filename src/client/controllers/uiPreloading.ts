@@ -2,6 +2,21 @@ import { Controller, OnStart } from "@flamework/core";
 import { Players, ContentProvider, ReplicatedStorage } from "@rbxts/services";
 import Sift from "@rbxts/sift";
 
+const MANUAL_PRELOAD = [
+	// Luckbar
+	"rbxassetid://139244894119518",
+	"rbxassetid://85733831609212",
+
+	// Quest characters
+	"rbxassetid://77880591512469",
+	"rbxassetid://108020026923113",
+	"rbxassetid://81062336181962",
+
+	// Other essentials (only assets not present at startup should be specified here)
+	"rbxassetid://83809962362409",
+	"rbxassetid://80311363716942",
+];
+
 @Controller()
 export class PreloadingController implements OnStart {
 	private player = Players.LocalPlayer;
@@ -78,13 +93,13 @@ export class PreloadingController implements OnStart {
 
 				const clone = new Instance("ImageLabel");
 				clone.Name = imageUrl;
-				clone.Size = new UDim2(0, 1, 0, 1);
-				clone.ImageTransparency = 0.99;
-				clone.Transparency = 1;
-				clone.Position = new UDim2(1, 0, 1, 0);
-				clone.AnchorPoint = new Vector2(1, 1);
-				clone.Visible = true;
+				clone.Size = UDim2.fromOffset(1, 1);
+				clone.Position = UDim2.fromScale(0.5, 0.5);
+				clone.AnchorPoint = new Vector2(0.5, 0.5);
 				clone.Image = imageUrl;
+				clone.ScaleType = Enum.ScaleType.Fit;
+				clone.BackgroundTransparency = 1;
+				clone.Visible = true;
 				clone.Parent = this.preloadingUi;
 
 				this.activeClones[imageUrl] = clone;
@@ -116,6 +131,10 @@ export class PreloadingController implements OnStart {
 	}
 
 	private preloadUiImages() {
+		MANUAL_PRELOAD.forEach((imageUrl) => {
+			this.toClone.push(imageUrl);
+		});
+
 		this.ui.GetDescendants().forEach((descendant) => {
 			if (descendant.IsDescendantOf(this.preloadingUi)) return;
 			if (descendant.IsA("ImageLabel") || descendant.IsA("ImageButton")) {

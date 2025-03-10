@@ -90,6 +90,19 @@ export function formatShortTime(timeLeft: number): string {
 	}
 }
 
+export function makePlural(word: string, count: number): string {
+	if (count === 1) {
+		return word;
+	} else {
+		// Simple pluralization by adding 's', can be extended for more complex rules
+		if (word.sub(word.size(), word.size()) === "s") {
+			return word;
+		} else {
+			return `${word}s`;
+		}
+	}
+}
+
 /**
  * Generates a random alphanumeric string of the given length.
  * This avoids using HttpService.GenerateGUID() to prevent

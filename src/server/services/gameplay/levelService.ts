@@ -1,7 +1,6 @@
 import { Service, OnStart } from "@flamework/core";
 import { Events, Functions } from "server/network";
 import { SkillName } from "shared/networkTypes";
-import { gameConstants } from "shared/gameConstants";
 import { ProfileService } from "../backend/profileService";
 import Signal from "@rbxts/goodsignal";
 
@@ -56,7 +55,15 @@ export class LevelService implements OnStart {
 	}
 
 	private xpForLevel(level: number): number {
-		return math.floor(gameConstants.BASE_EXP * math.pow(level, gameConstants.LEVEL_INCREASE_EXPONENT));
+		const BASE_EXP = 100;
+		const LEVEL_FORMULA_TRANSITION = 100;
+		const TRANSITION_MODIFIER = 50; // At 50, it will meet the logarithmic formula and then increase linearly.
+
+		if (level < LEVEL_FORMULA_TRANSITION) {
+			return math.floor(BASE_EXP * math.log(level + 1));
+		} else {
+			return math.floor(BASE_EXP * (level / TRANSITION_MODIFIER));
+		}
 	}
 
 	public addExperience(player: Player, amt: number): void {

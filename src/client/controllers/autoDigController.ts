@@ -9,6 +9,7 @@ import { Signals } from "shared/signals";
 import { gameConstants } from "shared/gameConstants";
 import { inventorySizeAtom, treasureCountAtom } from "client/atoms/inventoryAtoms";
 import { debugWarn } from "shared/util/logUtil";
+import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
 
 interface MovementKeyMap {
 	[keyCode: number]: boolean;
@@ -48,7 +49,6 @@ let consecutiveFails: number = 0;
 
 let targetRequestInProgress = false;
 let targetSpawnTime = 0;
-let initialTargetSpawned = false;
 let trackedSpawnPosition = new Vector3();
 
 const mapSpawns = CollectionService.GetTagged(gameConstants.SPAWN_TAG).filter((instance) => instance.IsA("PVInstance"));
@@ -74,31 +74,26 @@ export class AutoDigging implements OnStart {
 			}
 		});
 
-		Events.targetSpawnSuccess.connect((position: Vector3) => {
+		Events.targetSpawnSuccess.connect(() => {
 			targetSpawnTime = tick();
 			if (treasureCountAtom() >= inventorySizeAtom()) {
 				Signals.inventoryFull.Fire();
 				this.setAutoDiggingEnabled(false);
 				return;
 			}
-			if (autoDiggingEnabled) {
-				initialTargetSpawned = true;
-				this.requestAndPathToNextTarget(position);
-			}
 		});
 
-		Events.targetSpawnFailure.connect(() => {
-			if (treasureCountAtom() >= inventorySizeAtom()) {
-				Signals.inventoryFull.Fire();
-				this.setAutoDiggingEnabled(false);
-				return;
-			}
-			if (autoDiggingEnabled) {
-				this.cleanupPather();
-				initialTargetSpawned = true;
-				this.requestAndPathToNextTarget();
-			}
-		});
+		// Events.targetSpawnFailure.connect(() => {
+		// 	if (treasureCountAtom() >= inventorySizeAtom()) {
+		// 		Signals.inventoryFull.Fire();
+		// 		this.setAutoDiggingEnabled(false);
+		// 		return;
+		// 	}
+		// 	if (autoDiggingEnabled) {
+		// 		this.cleanupPather();
+		// 		this.requestAndPathToNextTarget();
+		// 	}
+		// });
 
 		this.shovelController.onDiggingComplete.Connect(() => {
 			this.cleanupPather();
@@ -112,8 +107,6 @@ export class AutoDigging implements OnStart {
 
 			// Cleanup pather
 			if (!running) {
-				initialTargetSpawned = false;
-
 				this.cleanupPather();
 			}
 		});
@@ -154,22 +147,23 @@ export class AutoDigging implements OnStart {
 			while (true) {
 				task.wait(WAIT_INTERVAL);
 
-				// debugWarn(`Stuck check: Target Active: ${this.detector.targetActive}, Pathing: ${isPathing}`);
-				// debugWarn(
-				// 	`\tStuck check: Last Target Spawn: ${tick() - targetSpawnTime}, Last Dig: ${
-				// 		tick() - this.shovelController.lastDiggingTime
-				// 	}\n`,
-				// );
-
 				if (
 					autoDiggingEnabled &&
-					this.detector.targetActive && // We have a target
+					// this.detector.targetActive && // We have a target
 					!isPathing && // But we're not pathfinding
 					!this.shovelController.diggingActive && // And not digging
 					tick() - targetSpawnTime > WAIT_INTERVAL * 2 && // And it's been a while since the last target spawned
 					tick() - this.shovelController.lastDiggingTime > WAIT_INTERVAL * 2 // And it's been a while since we last dug
 				) {
-					if (this.isClosedToTrackedTarget()) return;
+					if (this.isClosedToTrackedTarget()) continue;
+
+					// If no target is active, request a new one
+					if (!this.detector.targetActive) {
+						logWarn("[Stuck Check]: No active target detected, attempting to get a new one.");
+						this.requestAndPathToNextTarget();
+						continue;
+					}
+
 					logWarn(
 						"[Stuck check]: Auto-digging enabled and target found, but not pathing or digging. Could be stuck. Trying reset.",
 					);
@@ -337,45 +331,53 @@ export class AutoDigging implements OnStart {
 		});
 	}
 
-	requestAndPathToNextTarget(targetPosition?: Vector3) {
-		if (this.detector.targetActive) {
-			initialTargetSpawned = true;
-		}
-
-		if (!autoDiggingEnabled || targetRequestInProgress || !initialTargetSpawned) return;
+	requestAndPathToNextTarget() {
+		if (!autoDiggingEnabled || targetRequestInProgress) return;
 
 		if (treasureCountAtom() >= inventorySizeAtom()) {
 			Signals.inventoryFull.Fire();
 			this.setAutoDiggingEnabled(false);
+			this.quitCurrentTarget();
 			return;
 		}
 
 		this.cleanupPather();
-		if (targetPosition) {
-			this.tryResetIfStuck();
-			trackedSpawnPosition = targetPosition;
-			this.startPathTo(targetPosition);
-			return;
-		}
+
 		targetRequestInProgress = true;
 		Functions.requestNextTarget()
 			.then((target) => {
-				targetRequestInProgress = false;
+				const character = Players.LocalPlayer.Character;
+				const humanoid = character?.FindFirstChildOfClass("Humanoid");
+				if (!character || !humanoid) return;
 				if (!autoDiggingEnabled) return;
 				if (!target) {
-					this.setAutoDiggingEnabled(false); // Prevent partial states
-					return error("Target request failed.");
+					logWarn("Target request failed. Retrying...");
+					task.delay(0.1, () => this.requestAndPathToNextTarget()); // Retry after delay
+					return;
 				}
 				this.tryResetIfStuck();
 
 				trackedSpawnPosition = target.position;
+
+				if (!this.detector.detectorActive) {
+					humanoid.UnequipTools();
+					for (const tool of Players.LocalPlayer.WaitForChild("Backpack").GetChildren()) {
+						if (tool.IsA("Tool") && metalDetectorConfig[tool.Name]) {
+							humanoid.EquipTool(tool);
+							break;
+						}
+					}
+				}
+
 				this.startPathTo(target.position);
 			})
 			.catch((err) => {
-				targetRequestInProgress = false;
 				if (!autoDiggingEnabled) return;
 				logWarn(`Failed to get next target: ${err}`);
 				this.retryResetTargetRequest(); // Maybe retry or do fallback
+			})
+			.finally(() => {
+				targetRequestInProgress = false;
 			});
 	}
 
@@ -416,7 +418,6 @@ export class AutoDigging implements OnStart {
 			Signals.setAutoDiggingRunning.Fire(false);
 		}
 
-		initialTargetSpawned = false;
 		Signals.setAutoDiggingEnabled.Fire(enabled);
 		logWarn(`Auto-digging is now ${enabled ? "enabled" : "disabled"}`);
 	}

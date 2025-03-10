@@ -2,12 +2,13 @@ import { Service, OnStart } from "@flamework/core";
 import { Events, Functions } from "server/network";
 import { questConfig } from "shared/config/questConfig";
 import Object from "@rbxts/object-utils";
-import { ProfileService } from "../backend/profileService";
+import { LoadedProfile, ProfileService } from "../backend/profileService";
 import { MoneyService } from "../backend/moneyService";
 import { LevelService } from "./levelService";
 import { InventoryService } from "./inventoryService";
 import { QuestProgress } from "shared/networkTypes";
 import { Players } from "@rbxts/services";
+import { debugWarn } from "shared/util/logUtil";
 
 @Service({})
 export class QuestService implements OnStart {
@@ -55,19 +56,33 @@ export class QuestService implements OnStart {
 			if (questProgress.stage >= questConfig[questline].size()) {
 				return;
 			}
+			// If any previous active quest that's not completed, set it to inactive
+			for (const [key, value] of profile.Data.questProgress) {
+				if (value.active) {
+					value.active = false;
+					profile.Data.questProgress.set(key, value);
+				}
+			}
+
 			if (!questProgress.active) {
 				questProgress.active = true;
 				profile.Data.questProgress.set(questline, questProgress);
 				Events.updateQuestProgress.fire(player, profile.Data.questProgress);
-				// Technically we don't need to set the profile here, but it's good practice to show where the profile is being modified by calling this method.
-				this.profileService.setProfile(player, profile);
 			}
+
+			// Technically we don't need to set the profile here, but it's good practice to show where the profile is being modified by calling this method.
+			this.profileService.setProfile(player, profile);
 		});
 
 		Functions.requestTurnInQuest.setCallback((player, questName) => {
 			const profile = this.profileService.getProfileLoaded(player).expect();
 			const questProgress = profile.Data.questProgress.get(questName);
 			if (!questProgress) {
+				debugWarn("No quest progress found for", questName);
+				return false;
+			}
+			if (!questProgress.active) {
+				debugWarn("Quest is not active", questName);
 				return false;
 			}
 
@@ -89,7 +104,11 @@ export class QuestService implements OnStart {
 			const profile = this.profileService.getProfileLoaded(player).expect();
 			const questProgress = profile.Data.questProgress.get(questName);
 			if (!questProgress) {
-				warn("No quest progress found for", questName);
+				debugWarn("No quest progress found for", questName);
+				return false;
+			}
+			if (!questProgress.active) {
+				debugWarn("Quest is not active", questName);
 				return false;
 			}
 			return this.isQuestComplete(player, questName, questProgress.stage);
@@ -97,19 +116,18 @@ export class QuestService implements OnStart {
 
 		Functions.getQuestProgress.setCallback((player) => {
 			const profile = this.profileService.getProfileLoaded(player).expect();
-			return profile.Data.questProgress;
+
+			if (this.questsReady.includes(player)) {
+				return profile.Data.questProgress;
+			} else {
+				this.checkAndReadyQuestProgress(player, profile);
+
+				return profile.Data.questProgress;
+			}
 		});
 
 		this.profileService.onProfileLoaded.Connect((player, profile) => {
-			const lastReset = profile.Data.lastQuestReset;
-
-			if (tick() - lastReset > this.QUEST_RESET_TIME) {
-				profile.Data.questProgress = this.DEFAULT_QUEST_PROGRESS;
-				profile.Data.lastQuestReset = tick();
-				this.profileService.setProfile(player, profile);
-			}
-
-			this.questsReady.push(player);
+			this.checkAndReadyQuestProgress(player, profile);
 
 			Events.updateQuestProgress.fire(player, profile.Data.questProgress);
 		});
@@ -117,6 +135,43 @@ export class QuestService implements OnStart {
 		Players.PlayerRemoving.Connect((player) => {
 			this.questsReady.remove(this.questsReady.indexOf(player));
 		});
+	}
+
+	private checkAndReadyQuestProgress(player: Player, profile: LoadedProfile) {
+		if (!this.questsReady.includes(player)) {
+			const lastReset = profile.Data.lastQuestReset;
+
+			// If we add more quests, or change the name of a quest, we need to reset the quest progress
+			// of this player because their quest progress will be out of sync with the quest config.
+			let keysMatch = true;
+			for (const [key] of this.DEFAULT_QUEST_PROGRESS) {
+				if (!profile.Data.questProgress.has(key)) {
+					keysMatch = false;
+					break;
+				}
+			}
+
+			if (tick() - lastReset > this.QUEST_RESET_TIME || !keysMatch) {
+				profile.Data.questProgress = this.DEFAULT_QUEST_PROGRESS;
+				profile.Data.lastQuestReset = tick();
+			}
+
+			// Ensure only one quest is active
+			let activeQuest = false;
+			for (const [key, value] of profile.Data.questProgress) {
+				if (value.active) {
+					if (activeQuest) {
+						value.active = false;
+						profile.Data.questProgress.set(key, value);
+					} else {
+						activeQuest = true;
+					}
+				}
+			}
+
+			this.profileService.setProfile(player, profile);
+			this.questsReady.push(player);
+		}
 	}
 
 	completeQuest(player: Player, questName: keyof typeof questConfig, questStage: number) {

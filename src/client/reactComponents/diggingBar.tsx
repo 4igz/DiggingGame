@@ -158,7 +158,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				});
 
 				const progressRatio = progressRef.current / clientTarget.maxProgress;
-				const firstWarningThreshold = 0.4;
+				const firstWarningThreshold = 0.25;
 				if (progressRatio <= firstWarningThreshold) {
 					redScreen.TintColor = whiteTint.Lerp(redTint, 1 - progressRatio / firstWarningThreshold);
 				} else {
@@ -175,7 +175,6 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				}
 
 				// Make bar decrease over time
-
 				if (progressRef.current > 0 && progressRef.current < clientTarget.maxProgress) {
 					const DECREASE_RATE = gameConstants.BAR_DECREASE_RATE;
 					progressRef.current = progressRef.current - clientTarget.maxProgress * DECREASE_RATE * dt;

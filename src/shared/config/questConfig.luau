@@ -30,7 +30,7 @@ local TALK = 3
 local IDLE = 4
 
 local questConfig: { [string]: { QuestConfig } } = {
-	["PirateQuest"] = {
+	["Plankwalker Paul"] = {
 		{
 			questType = "Collect",
 			questReward = "Money",
@@ -66,7 +66,7 @@ local questConfig: { [string]: { QuestConfig } } = {
 
 			playerResponses = {
 				[QUEST_ACCEPT] = "I've got your back matey",
-				[QUEST_DECLINE] = "Good luck finding it on your own",
+				[QUEST_DECLINE] = "See you walking the plank!",
 			},
 
 			initialResponse = "Don't tell the captain, but I've lost his prized peg-leg. Can you please help me find it?",
@@ -91,7 +91,7 @@ local questConfig: { [string]: { QuestConfig } } = {
 			collectAmount = 1,
 		},
 	},
-	["VolcanoQuest"] = {
+	["Baitin’ Bob"] = {
 		-- These are intended to be placeholders to show you how to create quests
 		{
 			questType = "Collect",
@@ -122,7 +122,7 @@ local questConfig: { [string]: { QuestConfig } } = {
 			collectAmount = 3,
 		},
 	},
-	["FrozenQuest"] = {
+	["Abominable Joe-man"] = {
 		-- These are intended to be placeholders to show you how to create quests
 		{
 			questType = "Collect",
@@ -157,24 +157,31 @@ local questConfig: { [string]: { QuestConfig } } = {
 
 -- The animations must be stored in ReplicatedStorage/Assets/Animations
 local npcAnimationConfig = {
-	["PirateQuest"] = {
+	["Plankwalker Paul"] = {
 		[QUEST_ACCEPT] = "BoatGuyBought",
 		[TALK] = "NpcTalkBoat",
 		[IDLE] = "NpcIdleBoat",
 	},
-	["VolcanoQuest"] = {
+	["Baitin’ Bob"] = {
 		[IDLE] = "NpcFish",
 	},
-	["FrozenQuest"] = {
+	["Abominable Joe-man"] = {
 		[QUEST_ACCEPT] = "BoatGuyBought",
 		[TALK] = "NpcTalkBoat",
 		[IDLE] = "NpcIdleBoat",
 	},
 }
 
+local npcCharacterRenders = {
+	["Plankwalker Paul"] = "rbxassetid://77880591512469",
+	["Baitin’ Bob"] = "rbxassetid://108020026923113",
+	["Abominable Joe-man"] = "rbxassetid://81062336181962",
+}
+
 return {
 	questConfig = questConfig,
 	npcAnimationConfig = npcAnimationConfig,
+	npcCharacterRenders = npcCharacterRenders,
 	QUEST_ACCEPT = QUEST_ACCEPT,
 	QUEST_DECLINE = QUEST_DECLINE,
 	TALK = TALK,

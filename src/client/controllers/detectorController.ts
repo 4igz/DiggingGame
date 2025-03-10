@@ -48,6 +48,7 @@ let controls: Controls | undefined = undefined;
 @Controller({})
 export class DetectorController implements OnStart {
 	public targetActive = false;
+	public detectorActive = false;
 
 	constructor(private readonly shovelController: ShovelController) {}
 
@@ -63,7 +64,7 @@ export class DetectorController implements OnStart {
 
 		let understandsInput = false;
 
-		const HOLD_LENGTH = 0.2;
+		const HOLD_LENGTH = 0.1;
 		const DETECTION_KEYBINDS = [Enum.KeyCode.ButtonR2, Enum.UserInputType.MouseButton1];
 
 		// Wait for onStart so we arent holding up other systems while we wait for the PlayerModule to load.
@@ -125,8 +126,23 @@ export class DetectorController implements OnStart {
 
 					const trove = new Trove();
 					holdStart = tick();
+					holding = false;
+					this.detectorActive = true;
 
 					trove.add(cleanupTrack);
+
+					trove.add(
+						RunService.RenderStepped.Connect(() => {
+							if (holding && tick() - holdStart > HOLD_LENGTH) {
+								if (!isRolling) {
+									Signals.setLuckbarVisible.Fire(true);
+									isRolling = true;
+									Events.beginDetectorLuckRoll();
+								}
+							}
+						}),
+						"Disconnect",
+					);
 
 					// Cleanup indicators when unequipping
 					trove.add(
@@ -155,11 +171,11 @@ export class DetectorController implements OnStart {
 					) => {
 						if (inputState === Enum.UserInputState.Begin) {
 							if (
-								holding ||
-								awaitingResponse ||
-								this.targetActive ||
-								isRolling ||
-								(isAutoDigging && autoDigRunning)
+								holding || // Not currently holding down the detector button
+								awaitingResponse || // And not currently waiting for a target to spawn
+								this.targetActive || // And a target is not already active
+								isRolling || // And not currently already rolling for a target
+								(isAutoDigging && autoDigRunning) // And we aren't autodigging
 							)
 								return;
 							if (isInventoryFull) {
@@ -174,7 +190,8 @@ export class DetectorController implements OnStart {
 							if (isRolling) {
 								awaitingResponse = true;
 								isRolling = false;
-								Signals.setUiToggled.Fire(gameConstants.LUCKBAR_UI, false, true);
+								Signals.setLuckbarVisible.Fire(false);
+
 								Events.endDetectorLuckRoll();
 
 								if (!understandsInput) {
@@ -185,45 +202,24 @@ export class DetectorController implements OnStart {
 						}
 					};
 
-					// Delay the detector action to prevent accidental detections if the player was just digging
-					ContextActionService.BindAction(actionName, detectorAction, true, ...DETECTION_KEYBINDS);
-					ContextActionService.SetImage(actionName, cfg.itemImage);
-					ContextActionService.SetPosition(actionName, UDim2.fromScale(0.25, 0));
-					const button = ContextActionService.GetButton(actionName);
-					if (button) {
-						button.Size = new UDim2(0, 75, 0, 75);
-					}
-
 					trove.add(() => {
 						ContextActionService.UnbindAction(actionName);
 					});
 
-					trove.add(
-						RunService.RenderStepped.Connect(() => {
-							if (holding && tick() - holdStart > HOLD_LENGTH) {
-								if (!isRolling) {
-									isRolling = true;
-									Events.beginDetectorLuckRoll();
-									Signals.setUiToggled.Fire(gameConstants.LUCKBAR_UI, true, true);
-								}
-							}
-						}),
-					);
-
-					if (!understandsInput) {
+					if (!understandsInput && autoDigRunning) {
 						// Player hasn't shown yet that they understand how the detector works
 						Signals.setUiToggled.Fire(gameConstants.DETECTOR_HINT_TEXT, true, true);
 					}
 
 					trove.add(() => {
-						holdStart = tick();
+						this.detectorActive = false;
 						holding = false;
 
 						if (isRolling) {
 							isRolling = false;
 							awaitingResponse = true;
 							Events.endDetectorLuckRoll(true);
-							Signals.setUiToggled.Fire(gameConstants.LUCKBAR_UI, false, true);
+							Signals.setLuckbarVisible.Fire(false);
 						}
 
 						if (beep) {
@@ -239,6 +235,14 @@ export class DetectorController implements OnStart {
 							}
 						});
 					});
+
+					ContextActionService.BindAction(actionName, detectorAction, true, ...DETECTION_KEYBINDS);
+					ContextActionService.SetImage(actionName, cfg.itemImage);
+					ContextActionService.SetPosition(actionName, UDim2.fromScale(0.25, 0));
+					const button = ContextActionService.GetButton(actionName);
+					if (button) {
+						button.Size = new UDim2(0, 75, 0, 75);
+					}
 				}
 			});
 		};
@@ -253,6 +257,7 @@ export class DetectorController implements OnStart {
 
 		Signals.setAutoDiggingEnabled.Connect((enabled) => {
 			isAutoDigging = enabled;
+			understandsInput = true;
 		});
 
 		Events.targetSpawnSuccess.connect(() => {
@@ -358,7 +363,7 @@ export class DetectorController implements OnStart {
 		if (!character || !character.Parent) return;
 
 		// Setup the arrow to update every frame
-		RunService.BindToRenderStep(RENDER_STEP_ID, Enum.RenderPriority.Input.Value + 1, () => {
+		RunService.BindToRenderStep(RENDER_STEP_ID, Enum.RenderPriority.Last.Value, () => {
 			const camera = Workspace.CurrentCamera ?? undefined;
 			if (!camera || !arrowIndicator || !arrowIndicator.Parent) {
 				RunService.UnbindFromRenderStep(RENDER_STEP_ID);

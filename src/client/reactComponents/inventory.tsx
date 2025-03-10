@@ -1842,7 +1842,6 @@ export const InventoryComponent = (props: MainUiProps) => {
 					connection?.Disconnect();
 					return;
 				}
-				print("Toggling inventory menu");
 				props.uiController.toggleUi(gameConstants.MAIN_UI, {
 					menu: MENUS.Inventory,
 					displayInventoryType: "Target",

@@ -280,11 +280,10 @@ export class UiController implements OnStart, OnInit {
 
 		// @param setProp: Use false if the element sets itself visible
 		Signals.setUiToggled.Connect((name: string, uiVisible: boolean, setProp: boolean = true) => {
+			this.setGuiEnabled(name, uiVisible);
 			if (setProp) {
 				this.updateUiProps(name, { visible: uiVisible });
 			}
-
-			this.setGuiEnabled(name, uiVisible);
 		});
 
 		this.registerUi(
@@ -310,7 +309,7 @@ export class UiController implements OnStart, OnInit {
 		this.registerUi(
 			gameConstants.LUCKBAR_UI,
 			React.createElement(LuckBar),
-			{ visible: false, uiController: this },
+			{ uiController: this },
 			undefined,
 			undefined,
 			LOW_LAYER,

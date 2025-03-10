@@ -97,6 +97,8 @@ let currentMapName = "Grasslands";
 let isFirstZoneEnter = true;
 let currentPlayingAreaSound: Sound | undefined;
 
+const rng = new Random();
+
 @Controller({})
 export class ZoneController implements OnStart, OnRender {
 	public isleZoneMap = new Map<string, Zone>();
@@ -143,7 +145,14 @@ export class ZoneController implements OnStart, OnRender {
 			const spawnLocation = island.WaitForChild("SpawnLocation") as Model;
 			const spawnPos = spawnLocation.GetPivot();
 			const character = Players.LocalPlayer.Character || Players.LocalPlayer.CharacterAdded.Wait()[0];
-			const goal = spawnPos.add(new Vector3(0, spawnLocation.GetExtentsSize().Y / 2, 0));
+			const extents = spawnLocation.GetExtentsSize();
+			const goal = spawnPos.add(
+				new Vector3(
+					rng.NextNumber(-extents.X, extents.X),
+					extents.Y / 2,
+					rng.NextNumber(-extents.Z, extents.Z),
+				),
+			);
 			// Wait for HumanoidRootPart so we can ensure that they can be teleported.
 			character.WaitForChild("HumanoidRootPart");
 			character.PivotTo(goal);

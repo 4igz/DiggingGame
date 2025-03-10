@@ -1,6 +1,6 @@
 import { Service, OnStart, OnTick, OnInit } from "@flamework/core";
 import { MarketplaceService, Players } from "@rbxts/services";
-import { getDevProduct, handlePurchase } from "shared/config/devproducts";
+import { developerProducts, getDevProduct, handlePurchase } from "shared/config/devproducts";
 import { Signals } from "shared/signals";
 import { ProfileService } from "./profileService";
 import { gameConstants } from "shared/gameConstants";
@@ -31,6 +31,8 @@ export class DevproductService implements OnStart, OnTick, OnInit {
 
 	onInit(): void | Promise<void> {
 		MarketplaceService.ProcessReceipt = (receiptInfo) => {
+			if (getDevProduct(receiptInfo.ProductId) === undefined) return Enum.ProductPurchaseDecision.NotProcessedYet; // attempt to buy a product that doesn't exist in our code
+
 			const player = Players.GetPlayerByUserId(receiptInfo.PlayerId);
 			if (!player) return Enum.ProductPurchaseDecision.NotProcessedYet;
 
@@ -79,7 +81,7 @@ export class DevproductService implements OnStart, OnTick, OnInit {
 		});
 
 		Functions.getMultiDigLevel.setCallback((player: Player) => {
-			const profile = this.profileService.getProfileLoaded(player).expect()
+			const profile = this.profileService.getProfileLoaded(player).expect();
 			return profile.Data.multiDigLevel ?? 0;
 		});
 	}

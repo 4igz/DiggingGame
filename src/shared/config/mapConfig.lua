@@ -56,7 +56,7 @@ local mapConfig = {
 		targetList = Sift.Array.concat({
 			"Frozen ring",
 			"Frozen teddy",
-			"Ice shard",
+			"Icecicle",
 			"Sapphire gem",
 			"Viking dagger",
 			"Viking sword",

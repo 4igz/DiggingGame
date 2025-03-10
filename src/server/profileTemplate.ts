@@ -9,14 +9,14 @@ import { boatConfig } from "shared/config/boatConfig";
 import { potionConfig } from "shared/config/potionConfig";
 import { questConfig } from "shared/config/questConfig";
 
-export const PROFILE_STORE_NAME = "pre_v15";
+export const PROFILE_STORE_NAME = "pre_test2";
 
 export const profileTemplate = {
 	equippedShovel: "StarterShovel" as keyof typeof shovelConfig,
 	equippedDetector: "StarterDetector" as keyof typeof metalDetectorConfig,
 	equippedTreasure: "" as keyof typeof targetConfig,
 	currentMap: "Grasslands" as keyof typeof mapConfig,
-	money: "0;1000",
+	money: "0;0",
 
 	treasuresDug: 0,
 

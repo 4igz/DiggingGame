@@ -31,3 +31,5 @@ export type QuestConfig = {
 export const questConfig: Record<string, QuestConfig[]>;
 
 export const npcAnimationConfig: Record<keyof typeof questConfig, Record<Key, string>>;
+
+export const npcCharacterRenders: Record<keyof typeof questConfig, string>;

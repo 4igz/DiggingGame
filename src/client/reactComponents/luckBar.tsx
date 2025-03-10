@@ -12,7 +12,6 @@ import { computeLuckValue } from "shared/util/detectorUtil";
 import { emitUsingAttributes } from "shared/util/vfxUtil";
 
 interface LuckBarProps {
-	visible: boolean;
 	uiController: UiController;
 }
 
@@ -44,14 +43,9 @@ export default function LuckBar(props: LuckBarProps) {
 
 	const px = usePx();
 
-	useEffect(() => {
-		fovMotion.onStep((value) => {
-			camera!.FieldOfView = value;
-		});
-	}, []);
-
-	useEffect(() => {
-		if (props.visible) {
+	const setLuckbarEnabled = (visible: boolean) => {
+		props.uiController.setGuiEnabled(gameConstants.LUCKBAR_UI, visible);
+		if (visible) {
 			setLuckSz.immediate(0);
 			setStartTime(Workspace.GetServerTimeNow());
 			setCurrentLuck(0);
@@ -65,7 +59,17 @@ export default function LuckBar(props: LuckBarProps) {
 			setPaused(true);
 			lastPlayedLuck = 1;
 		}
-	}, [props.visible]);
+	};
+
+	useEffect(() => {
+		fovMotion.onStep((value) => {
+			camera!.FieldOfView = value;
+		});
+
+		Signals.setLuckbarVisible.Connect((visible) => {
+			setLuckbarEnabled(visible);
+		});
+	}, []);
 
 	// Predict roll based on time since last update
 	useEffect(() => {
@@ -82,8 +86,6 @@ export default function LuckBar(props: LuckBarProps) {
 	}, [paused, startTime, visible]);
 
 	useEffect(() => {
-		props.uiController.setGuiEnabled(gameConstants.LUCKBAR_UI, visible);
-
 		setLuckSz.immediate(currentLuck / maxLuck);
 
 		const flooredLuck = math.floor(currentLuck);

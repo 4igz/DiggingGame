@@ -25,6 +25,7 @@ export const Signals = {
 	dig: new Signal<() => void>(),
 	setDetectorHintEnabled: new Signal<(enabled: boolean) => void>(),
 	setUiToggled: new Signal<(name: string, enabled: boolean, setProp: boolean) => void>(),
+	setLuckbarVisible: new Signal<(visible: boolean) => void>(),
 	forceSetAutoDigging: new Signal<(enabled: boolean) => void>(),
 	setAutoDiggingEnabled: new Signal<(enabled: boolean) => void>(),
 	setAutoDiggingRunning: new Signal<(running: boolean) => void>(),

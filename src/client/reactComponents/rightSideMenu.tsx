@@ -187,7 +187,7 @@ export const RightSideMenu = (props: MenuProps) => {
 				BorderColor3={Color3.fromRGB(0, 0, 0)}
 				BorderSizePixel={0}
 				key={"Menu Container Frame"}
-				Position={UDim2.fromScale(0.972, 0.293)}
+				Position={UDim2.fromScale(0.972, 0.425)}
 				Size={UDim2.fromScale(0.211, 0.512)}
 			>
 				<AnimatedButton
