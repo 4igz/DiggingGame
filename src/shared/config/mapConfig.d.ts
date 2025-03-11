@@ -4,7 +4,7 @@ export const difficulties: Record<string, Color3>;
 
 interface MapConfig {
 	targetList: Array<keyof typeof targetConfig>;
-	requiredStrength: number;
+	recommendedStrength: number;
 	difficulty: keyof typeof difficulties;
 	order: number;
 }

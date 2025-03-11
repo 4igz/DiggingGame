@@ -118,6 +118,7 @@ interface ClientToServerFunctions {
 	requestDigging: () => boolean;
 	sitInBoat(boatId: string): boolean;
 	requestNextTarget: () => NetworkedTarget | undefined;
+	getCurrentStrength: () => number;
 }
 
 interface ServerToClientFunctions {}

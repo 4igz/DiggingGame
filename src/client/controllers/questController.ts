@@ -86,7 +86,7 @@ export class QuestController implements OnStart {
 								track.Priority = Enum.AnimationPriority.Idle;
 								break;
 							case TALK:
-								track.Looped = true;
+								track.Looped = false;
 								track.Priority = Enum.AnimationPriority.Idle;
 							default:
 								track.Looped = false;
@@ -100,12 +100,11 @@ export class QuestController implements OnStart {
 			}
 
 			const playAnimation = (key: Key): Promise<boolean> => {
-				for (const [, track] of animTracks) {
-					track.Stop();
-				}
-
 				const track = animTracks.get(key);
 				if (track) {
+					for (const [, otherTrack] of animTracks) {
+						otherTrack.Stop();
+					}
 					track.Play();
 					return Promise.fromEvent(track.Stopped);
 				}

@@ -94,9 +94,6 @@ export class DetectorService implements OnStart, OnTick {
 		humanoid.WalkSpeed = 0;
 
 		let strength = profile.Data.strength;
-		if (this.gamepassService.ownsGamepass(player, gameConstants.GAMEPASS_IDS.x2Strength)) {
-			strength *= 2;
-		}
 		this.targetService.playerStartedDiggingTimes.set(player, tick() + player.GetNetworkPing());
 		Events.beginDigging(
 			player,
@@ -126,7 +123,7 @@ export class DetectorService implements OnStart, OnTick {
 		});
 
 		// Delay the digging process by the player's ping
-		task.delay(player.GetNetworkPing(), () => {
+		task.delay(player.GetNetworkPing() / 2, () => {
 			target.activelyDigging = true;
 		});
 

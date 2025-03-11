@@ -14,11 +14,13 @@ import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 import { interval } from "shared/util/interval";
 import { numberSerializer } from "shared/network";
 import { UiController } from "client/controllers/uiController";
+import { GamepassController } from "client/controllers/gamepassController";
 
 export interface DiggingBarProps {
 	target?: Target;
 	digInfo?: PlayerDigInfo;
 	shovelController: ShovelController;
+	gamepassController: GamepassController;
 	uiController: UiController;
 
 	visible: boolean;
@@ -41,6 +43,7 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 const replicateInterval = interval(1 / 10);
 const digInterval = interval(gameConstants.DIG_TIME_SEC);
+const frameInterval = interval(1 / 60);
 
 export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 	const [barProgress, setBarProgress] = useMotion(1);
@@ -87,8 +90,11 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				warn("DiggingBar requires a target and digInfo to be passed");
 				return;
 			}
-			const cfg = shovelConfig[digInfo.shovel];
-			const increment = digInfo.strength + cfg.strengthMult * BASE_SHOVEL_STRENGTH;
+			const shovelCfg = shovelConfig[digInfo.shovel];
+			const owns2x = props.gamepassController.getOwnsGamepass("x2Strength");
+			const increment =
+				digInfo.strength * gameConstants.STRENGTH_MODIFIER +
+				shovelCfg.strengthMult * BASE_SHOVEL_STRENGTH * (owns2x ? 2 : 1);
 			let lastReplicatedProgress = 0;
 			let finished = false;
 
@@ -122,7 +128,9 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 			});
 
 			const autoDigConnection = Signals.autoDig.Connect(() => {
-				progressRef.current += increment;
+				if (digInterval()) {
+					progressRef.current += increment;
+				}
 
 				setRotation.spring(math.clamp(rotation.getValue() + math.random(-2, 2), -12, 12), springs.responsive);
 				setScale.spring(math.max(scale.getValue() + math.random(0.01, 0.05), 1.1), springs.responsive);
@@ -175,7 +183,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				}
 
 				// Make bar decrease over time
-				if (progressRef.current > 0 && progressRef.current < clientTarget.maxProgress) {
+				if (frameInterval() && progressRef.current > 0 && progressRef.current < clientTarget.maxProgress) {
 					const DECREASE_RATE = gameConstants.BAR_DECREASE_RATE;
 					progressRef.current = progressRef.current - clientTarget.maxProgress * DECREASE_RATE * dt;
 

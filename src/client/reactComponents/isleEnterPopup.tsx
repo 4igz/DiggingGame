@@ -8,6 +8,8 @@ import { fullTargetConfig, trashConfig } from "shared/config/targetConfig";
 import { gameConstants } from "shared/gameConstants";
 import { Rarity } from "shared/networkTypes";
 import { AnimatedButton } from "./inventory";
+import { Functions } from "client/network";
+import { redToGreen } from "shared/util/colorUtil";
 
 interface ItemProps {
 	itemName: string;
@@ -55,6 +57,7 @@ const IsleItem = (props: ItemProps) => {
 						key={"ItemName"}
 						Size={UDim2.fromScale(1, 0.2)}
 						Text={props.itemName}
+						TextTruncate={"AtEnd"}
 						TextColor3={Color3.fromRGB(255, 255, 255)}
 						TextSize={14}
 					>
@@ -98,9 +101,20 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 	const [pos, posMotion] = useMotion(UDim2.fromScale(0.5, -0.3));
 	const [, transparencyMotion] = useMotion(1);
 	const [isleItems, setIsleItems] = useState<ItemProps[]>([]);
+	const [currentStrength, setCurrentStrength] = useState(0);
 	const frameRef = createRef<Frame>();
 
 	useEffect(() => {
+		Functions.getCurrentStrength().then((strength) => {
+			setCurrentStrength(strength);
+		});
+	}, []);
+
+	useEffect(() => {
+		Functions.getCurrentStrength().then((strength) => {
+			setCurrentStrength(strength);
+		});
+
 		if (!isleName || isleName === "") return;
 		if (firstEnter) {
 			setFirstEnter(false);
@@ -149,7 +163,7 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 
 		task.defer(() => {
 			transparencyMotion.spring(0, springs.pitch);
-			posMotion.spring(UDim2.fromScale(0.5, 0), springs.heavy);
+			posMotion.spring(UDim2.fromScale(0.5, 0.01), springs.heavy);
 		});
 
 		return () => {
@@ -214,7 +228,6 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 				SortOrder={Enum.SortOrder.LayoutOrder}
 				VerticalFlex={Enum.UIFlexAlignment.SpaceEvenly}
 			/>
-
 			<textlabel
 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 				BackgroundTransparency={1}
@@ -223,9 +236,9 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 				FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 				key={"Title"}
 				Position={UDim2.fromScale(0.0164, 0.0261)}
-				Size={UDim2.fromScale(0.967, 0.236)}
-				Text={isleName}
-				TextColor3={Color3.fromRGB(0, 255, 162)}
+				Size={UDim2.fromScale(0.967, 0.3)}
+				Text={`${isleName} - ${mapConfig[isleName]?.difficulty ?? "Easy"}`}
+				TextColor3={difficulties[mapConfig[isleName]?.difficulty] ?? Color3.fromRGB(0, 255, 162)}
 				TextScaled={true}
 				TextWrapped={true}
 			>
@@ -239,7 +252,6 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 					PaddingTop={new UDim(0.00545, 0)}
 				/>
 			</textlabel>
-
 			<frame
 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 				BackgroundTransparency={1}
@@ -262,30 +274,82 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 				))}
 			</frame>
 
-			<textlabel
+			<imagelabel
+				AnchorPoint={new Vector2(0, 1)}
 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 				BackgroundTransparency={1}
 				BorderColor3={Color3.fromRGB(0, 0, 0)}
 				BorderSizePixel={0}
-				FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Italic)}
-				key={"Difficulty"}
-				Position={UDim2.fromScale(0.0164, 0.796)}
-				Size={UDim2.fromScale(0.967, 0.169)}
-				Text={mapConfig[isleName]?.difficulty ?? "Easy"}
-				TextColor3={difficulties[mapConfig[isleName]?.difficulty] ?? Color3.fromRGB(0, 255, 162)}
-				TextScaled={true}
-				TextWrapped={true}
+				Image={"rbxassetid://128518524234528"}
+				key={".$Background"}
+				Position={new UDim2(0, 5, 1, -5)}
+				ScaleType={Enum.ScaleType.Slice}
+				Size={UDim2.fromScale(0.4, 0.2)}
+				SliceCenter={new Rect(89, 120, 960, 120)}
 			>
-				<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={4} />
-
-				<uipadding
-					key={"UIPadding"}
-					PaddingBottom={new UDim(0.00098, 0)}
-					PaddingLeft={new UDim(0.465, 0)}
-					PaddingRight={new UDim(0.465, 0)}
-					PaddingTop={new UDim(0.00098, 0)}
-				/>
-			</textlabel>
+				<textlabel
+					key={"TextLabel"}
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					FontFace={
+						new Font(
+							"rbxasset://fonts/families/SourceSansPro.json",
+							Enum.FontWeight.Bold,
+							Enum.FontStyle.Normal,
+						)
+					}
+					Position={new UDim2(0.5, 0, 0.5, -2)}
+					Size={new UDim2(1, -10, 1, -5)}
+					Text={`Recommended strength: ${mapConfig[isleName]?.recommendedStrength ?? 1}`}
+					TextColor3={redToGreen(currentStrength / (mapConfig[isleName]?.recommendedStrength ?? 1))}
+					TextScaled={true}
+					TextWrapped={true}
+					ZIndex={2}
+				>
+					<uistroke key={"UIStroke"} Thickness={2} />
+				</textlabel>
+			</imagelabel>
+			<imagelabel
+				AnchorPoint={new Vector2(0, 1)}
+				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+				BackgroundTransparency={1}
+				BorderColor3={Color3.fromRGB(0, 0, 0)}
+				BorderSizePixel={0}
+				Image={"rbxassetid://128518524234528"}
+				key={".$Background"}
+				Position={new UDim2(0, 10, 1.2, -5)}
+				ScaleType={Enum.ScaleType.Slice}
+				Size={UDim2.fromScale(0.4, 0.2)}
+				SliceCenter={new Rect(89, 120, 960, 120)}
+			>
+				<textlabel
+					key={"TextLabel"}
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					FontFace={
+						new Font(
+							"rbxasset://fonts/families/SourceSansPro.json",
+							Enum.FontWeight.Bold,
+							Enum.FontStyle.Normal,
+						)
+					}
+					Position={new UDim2(0.5, 0, 0.5, -2)}
+					Size={new UDim2(1, -10, 1, -5)}
+					Text={`Current strength: ${currentStrength}`}
+					TextColor3={Color3.fromRGB(255, 255, 255)}
+					TextScaled={true}
+					TextWrapped={true}
+					ZIndex={2}
+				>
+					<uistroke key={"UIStroke"} Thickness={2} />
+				</textlabel>
+			</imagelabel>
 
 			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={4.58} />
 		</frame>

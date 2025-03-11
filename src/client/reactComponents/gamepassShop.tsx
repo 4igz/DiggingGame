@@ -5,13 +5,14 @@ import { UiController } from "client/controllers/uiController";
 import { gameConstants } from "shared/gameConstants";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
-import { MarketplaceService, Players, ReplicatedStorage } from "@rbxts/services";
+import { MarketplaceService, Players, ReplicatedStorage, TweenService } from "@rbxts/services";
 import { getDevProduct } from "shared/config/devproducts";
 import { separateWithCommas } from "shared/util/nameUtil";
 import { getDeveloperProductInfo } from "shared/util/monetizationUtil";
 import { ProductType } from "shared/config/shopConfig";
 import SpriteClip from "@rbxts/spriteclip";
 import { Events, Functions } from "client/network";
+import { usePx } from "client/hooks/usePx";
 
 interface BuyButtonProps {
 	position: UDim2;
@@ -221,11 +222,12 @@ interface CashProductProps {
 const CashProduct = (props: CashProductProps) => {
 	const dpInfo = getDevProduct(props.id);
 
+	const px = usePx();
+
 	return (
 		<AnimatedProductButton
-			position={UDim2.fromScale(0.105, -2.46e-7)}
-			size={UDim2.fromScale(0.324, 2.12)}
-			scales={new NumberRange(0.98, 1.02)}
+			size={UDim2.fromScale(0.324, 0.5)}
+			scales={new NumberRange(0.95, 1.05)}
 			layoutOrder={props.layoutOrder}
 			productId={props.id}
 			productType={ProductType.DevProduct}
@@ -253,8 +255,8 @@ const CashProduct = (props: CashProductProps) => {
 					Size={UDim2.fromScale(0.817, 0.121)}
 					Text={props.title ?? "Buy Cash"}
 					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextScaled={true}
-					TextWrapped={true}
+					TextScaled={false}
+					TextSize={px(24)}
 				>
 					<uistroke key={"UIStroke"} Thickness={3} />
 
@@ -349,16 +351,20 @@ const DigProduct = (props: MoreDiggingProduct) => {
 	const animationRef = createRef<ImageLabel>();
 	const [digLevel, setDigLevel] = React.useState(0);
 
+	const px = usePx();
+
 	React.useEffect(() => {
 		if (props.runAnimation) {
 			animation.Adornee = animationRef.current;
 			animation.Play();
 
-			Functions.getMultiDigLevel().then((level) => {
-				setDigLevel(level);
-			}).catch((e)=>{
-				warn(e);
-			});
+			Functions.getMultiDigLevel()
+				.then((level) => {
+					setDigLevel(level);
+				})
+				.catch((e) => {
+					warn(e);
+				});
 
 			const connection = Events.updateMultiDigLevel.connect((level) => {
 				setDigLevel(level);
@@ -376,6 +382,7 @@ const DigProduct = (props: MoreDiggingProduct) => {
 			position={UDim2.fromScale(0.5, 0.56)}
 			size={UDim2.fromScale(0.961, 0.588)}
 			layoutOrder={3}
+			scales={new NumberRange(0.975, 1.025)}
 			productType={ProductType.DevProduct}
 			productId={2683148761}
 			predicate={() => {
@@ -424,8 +431,8 @@ const DigProduct = (props: MoreDiggingProduct) => {
 					Size={UDim2.fromScale(0.589, 1.65)}
 					Text={"Add 1+ shovel to every dig!"}
 					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextScaled={true}
-					TextWrapped={true}
+					TextScaled={false}
+					TextSize={px(30)}
 					TextXAlignment={Enum.TextXAlignment.Left}
 					ZIndex={10}
 				>
@@ -448,8 +455,7 @@ const DigProduct = (props: MoreDiggingProduct) => {
 					Size={UDim2.fromScale(0.388, 1)}
 					Text={"24:00:00"}
 					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextScaled={true}
-					TextWrapped={true}
+					TextSize={px(30)}
 					Visible={false}
 					TextXAlignment={Enum.TextXAlignment.Right}
 					ZIndex={10}
@@ -703,6 +709,8 @@ const DigProduct = (props: MoreDiggingProduct) => {
 };
 
 const LimitedOffer = () => {
+	const px = usePx();
+
 	return (
 		<AnimatedProductButton
 			position={UDim2.fromScale(0.5, 0.443)}
@@ -753,9 +761,8 @@ const LimitedOffer = () => {
 					Size={UDim2.fromScale(0.499, 1)}
 					Text={"Limited Offer!"}
 					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextScaled={true}
-					TextWrapped={true}
 					TextXAlignment={Enum.TextXAlignment.Left}
+					TextSize={px(30)}
 					ZIndex={10}
 				>
 					<uistroke key={"UIStroke"} Thickness={3} />
@@ -777,8 +784,7 @@ const LimitedOffer = () => {
 					Size={UDim2.fromScale(0.499, 1)}
 					Text={"24:00:00"}
 					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextScaled={true}
-					TextWrapped={true}
+					TextSize={px(30)}
 					TextXAlignment={Enum.TextXAlignment.Right}
 					ZIndex={10}
 				>
@@ -823,7 +829,7 @@ const LimitedOffer = () => {
 						BorderSizePixel={0}
 						Image={"rbxassetid://114369521200815"}
 						key={"Plus"}
-						Position={UDim2.fromScale(0.267, 0.49)}
+						Position={UDim2.fromScale(0.3, 0.49)}
 						ScaleType={Enum.ScaleType.Fit}
 						Size={UDim2.fromScale(0.091, 0.386)}
 						ZIndex={10}
@@ -842,7 +848,7 @@ const LimitedOffer = () => {
 						BorderColor3={Color3.fromRGB(0, 0, 0)}
 						BorderSizePixel={0}
 						key={"Item Two"}
-						Position={UDim2.fromScale(0.297, 0)}
+						Position={UDim2.fromScale(0.36, 0)}
 						Size={UDim2.fromScale(0.244, 1)}
 					>
 						<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
@@ -858,7 +864,7 @@ const LimitedOffer = () => {
 						BorderSizePixel={0}
 						Image={"rbxassetid://114369521200815"}
 						key={"Plus"}
-						Position={UDim2.fromScale(0.559, 0.49)}
+						Position={UDim2.fromScale(0.66, 0.49)}
 						ScaleType={Enum.ScaleType.Fit}
 						Size={UDim2.fromScale(0.091, 0.386)}
 						ZIndex={10}
@@ -877,7 +883,7 @@ const LimitedOffer = () => {
 						BorderColor3={Color3.fromRGB(0, 0, 0)}
 						BorderSizePixel={0}
 						key={"Item Three"}
-						Position={UDim2.fromScale(0.579, 0)}
+						Position={UDim2.fromScale(0.72, 0)}
 						Size={UDim2.fromScale(0.244, 1)}
 					>
 						<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
@@ -885,7 +891,6 @@ const LimitedOffer = () => {
 						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 					</frame>
 				</frame>
-
 				<BuyButton
 					position={UDim2.fromScale(0.82, 0.5)}
 					id={2683148761}
@@ -961,15 +966,20 @@ export const scrollTo = (labelRef: React.RefObject<TextLabel>, scrollingRef: Rea
 	const currentLabel = labelRef.current;
 
 	if (currentScrolling && currentLabel) {
+		const currentPos = currentScrolling.CanvasPosition.Y;
+
 		// Reset the CanvasPosition to 0, ensuring a clean starting point
-		currentScrolling.CanvasPosition = new Vector2(0, 0);
+		// Will doing a 0 timed tween will cancel any concurrent tweens and position it at the start
+		TweenService.Create(currentScrolling, new TweenInfo(0), {
+			CanvasPosition: new Vector2(0, 0),
+		}).Play();
+		// currentScrolling.CanvasPosition = new Vector2(0, 0);
 		task.wait(); // Necessary wait to ensure the CanvasPosition is updated before scrolling.
 
 		// Calculate the label's position within the canvas
 		const labelOffset = currentLabel.AbsolutePosition.Y - currentScrolling.CanvasPosition.Y;
 
-		// Calculate the desired CanvasPosition to center the label
-		const centeredPosition = labelOffset - currentScrolling.AbsoluteSize.Y;
+		const centeredPosition = labelOffset - currentScrolling.AbsoluteSize.Y / 2 + currentLabel.AbsoluteSize.Y / 2;
 
 		// Clamp the position to ensure it stays within bounds
 		const clampedPosition = math.clamp(
@@ -979,7 +989,10 @@ export const scrollTo = (labelRef: React.RefObject<TextLabel>, scrollingRef: Rea
 		);
 
 		// Set the CanvasPosition to the calculated clamped position
-		currentScrolling.CanvasPosition = new Vector2(0, clampedPosition);
+		currentScrolling.CanvasPosition = new Vector2(0, currentPos);
+		TweenService.Create(currentScrolling, new TweenInfo(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			CanvasPosition: new Vector2(0, clampedPosition),
+		}).Play();
 	}
 };
 
@@ -998,29 +1011,34 @@ interface AnimatedProductButtonProps {
 
 export const AnimatedProductButton = (props: AnimatedProductButtonProps) => {
 	return (
-		<AnimatedButton
-			size={props.size ? UDim2.fromScale(props.size.X.Scale, props.size.Y.Scale) : UDim2.fromScale(0.961, 0.588)}
-			position={props.position}
-			anchorPoint={props.anchorPoint}
-			layoutOrder={props.layoutOrder ?? 0}
-			zindex={props.zindex ?? 10}
-			scales={props.scales}
-			onClick={() => {
-				// Prompt product purchase
-				const canBuy = props.predicate ? props.predicate() : true;
-				if (!canBuy) return;
-				switch (props.productType) {
-					case ProductType.GamePass:
-						MarketplaceService.PromptGamePassPurchase(Players.LocalPlayer, props.productId);
-					case ProductType.DevProduct:
-						MarketplaceService.PromptProductPurchase(Players.LocalPlayer, props.productId);
-				}
-			}}
+		<frame
+			Size={props.size ? UDim2.fromScale(props.size.X.Scale, props.size.Y.Scale) : UDim2.fromScale(0.961, 0.588)}
+			Position={props.position}
+			AnchorPoint={props.anchorPoint}
+			LayoutOrder={props.layoutOrder ?? 0}
+			ZIndex={props.zindex ?? 10}
+			BackgroundTransparency={1}
 		>
-			{React.Children.map(props.children, (child) => {
-				return child;
-			})}
-		</AnimatedButton>
+			<AnimatedButton
+				size={UDim2.fromScale(1, 1)}
+				scales={props.scales}
+				onClick={() => {
+					// Prompt product purchase
+					const canBuy = props.predicate ? props.predicate() : true;
+					if (!canBuy) return;
+					switch (props.productType) {
+						case ProductType.GamePass:
+							MarketplaceService.PromptGamePassPurchase(Players.LocalPlayer, props.productId);
+						case ProductType.DevProduct:
+							MarketplaceService.PromptProductPurchase(Players.LocalPlayer, props.productId);
+					}
+				}}
+			>
+				{React.Children.map(props.children, (child) => {
+					return child;
+				})}
+			</AnimatedButton>
+		</frame>
 	);
 };
 
@@ -1030,11 +1048,12 @@ interface GamepassButtonProps {
 }
 
 const GamepassButton = (props: GamepassButtonProps) => {
+	const px = usePx();
+
 	return (
 		<AnimatedProductButton
-			position={UDim2.fromScale(0.105, -2.46e-7)}
-			size={UDim2.fromScale(0.324, 2.12)}
-			scales={new NumberRange(0.98, 1.02)}
+			size={UDim2.fromScale(0.324, 0.5)}
+			scales={new NumberRange(0.95, 1.05)}
 			productType={ProductType.GamePass}
 			productId={props.gamepassId}
 		>
@@ -1076,8 +1095,7 @@ const GamepassButton = (props: GamepassButtonProps) => {
 					Size={UDim2.fromScale(0.817, 0.115)}
 					Text={props.gamepassName}
 					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextScaled={true}
-					TextWrapped={true}
+					TextSize={px(24)}
 				>
 					<uistroke key={"UIStroke"} Thickness={3} />
 
@@ -1117,6 +1135,8 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 	const [serverLuckTimer, setServerLuckTimer] = React.useState(0);
 	const [serverLuck, setServerLuck] = React.useState(1);
 
+	const px = usePx();
+
 	const menuRef = React.createRef<Frame>();
 	const scrollingFrameRef = React.createRef<ScrollingFrame>();
 
@@ -1128,7 +1148,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 
 	React.useEffect(() => {
 		if (visible) {
-			popInMotion.spring(UDim2.fromScale(0.849, 0.688), springs.responsive);
+			popInMotion.spring(UDim2.fromScale(0.849, 0.849), springs.responsive);
 
 			const connection = Events.updateServerLuckMultiplier.connect((multiplier: number, time: number) => {
 				setServerLuck(multiplier);
@@ -1205,7 +1225,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 					Position={UDim2.fromScale(0.0328, 0.24)}
 					ScrollBarImageTransparency={1}
 					Selectable={false}
-					Size={UDim2.fromScale(0.937, 0.677)}
+					Size={UDim2.fromScale(0.937, 0.7)}
 					ScrollBarThickness={0}
 					ref={scrollingFrameRef}
 					ClipsDescendants={true}
@@ -1213,7 +1233,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 					<uilistlayout
 						key={"UIListLayout"}
 						HorizontalAlignment={Enum.HorizontalAlignment.Center}
-						Padding={new UDim(0.05, 0)}
+						Padding={new UDim(0.01, 0)}
 						SortOrder={Enum.SortOrder.LayoutOrder}
 					/>
 
@@ -1252,6 +1272,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 						position={UDim2.fromScale(0.5, 0.56)}
 						size={UDim2.fromScale(0.961, 0.588)}
 						layoutOrder={2}
+						scales={new NumberRange(0.975, 1.025)}
 						productId={gameConstants.DEVPRODUCT_IDS.x2Luck}
 						productType={ProductType.DevProduct}
 					>
@@ -1299,8 +1320,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.499, 1)}
 								Text={"Multiply Server Luck!"}
 								TextColor3={Color3.fromRGB(255, 255, 255)}
-								TextScaled={true}
-								TextWrapped={true}
+								TextSize={px(30)}
 								TextXAlignment={Enum.TextXAlignment.Left}
 								ZIndex={10}
 							>
@@ -1330,8 +1350,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									serverLuckTimer % 60,
 								)}
 								TextColor3={Color3.fromRGB(255, 255, 255)}
-								TextScaled={true}
-								TextWrapped={true}
+								TextSize={px(30)}
 								TextXAlignment={Enum.TextXAlignment.Right}
 								ZIndex={10}
 							>
@@ -1433,7 +1452,6 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									<uistroke key={"UIStroke"} Color={Color3.fromRGB(70, 44, 0)} Thickness={4} />
 								</textlabel>
 							</frame>
-
 							<BuyButton
 								id={gameConstants.DEVPRODUCT_IDS.x2Luck}
 								position={UDim2.fromScale(0.76, 0.417)}
@@ -1722,11 +1740,68 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 						<uistroke key={"UIStroke"} Thickness={4} />
 					</textlabel>
 
+					<frame
+						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+						BackgroundTransparency={1}
+						BorderColor3={Color3.fromRGB(0, 0, 0)}
+						BorderSizePixel={0}
+						LayoutOrder={7}
+						key={"Cash Products"}
+						Position={UDim2.fromScale(0.0265, -0.687)}
+						Size={UDim2.fromScale(0.947, 1.6)}
+					>
+						<uilistlayout
+							key={"UIListLayout"}
+							FillDirection={Enum.FillDirection.Horizontal}
+							HorizontalAlignment={Enum.HorizontalAlignment.Center}
+							Padding={new UDim(0.01, 0)}
+							SortOrder={Enum.SortOrder.LayoutOrder}
+							Wraps={true}
+						/>
+						<CashProduct
+							layoutOrder={2}
+							id={gameConstants.DEVPRODUCT_IDS["2.5k Money Pack"]}
+							title="Small Cash!"
+							icon="rbxassetid://89261366341053"
+						/>
+						<CashProduct
+							layoutOrder={3}
+							id={gameConstants.DEVPRODUCT_IDS["7.5k Money Pack"]}
+							title="Medium Cash!"
+							icon="rbxassetid://121228438692066"
+						/>
+						<CashProduct
+							layoutOrder={4}
+							id={gameConstants.DEVPRODUCT_IDS["15k Money Pack"]}
+							title="Large Cash!"
+							icon="rbxassetid://76204918792364"
+						/>
+						<CashProduct
+							layoutOrder={5}
+							id={gameConstants.DEVPRODUCT_IDS["40k Money Pack"]}
+							title="Bigger Cash!"
+							icon="rbxassetid://136338731838654"
+						/>
+						<CashProduct
+							layoutOrder={6}
+							id={gameConstants.DEVPRODUCT_IDS["75k Medium Money Pack"]}
+							title="Massive Cash!"
+							icon="rbxassetid://136338731838654"
+						/>
+						<CashProduct
+							layoutOrder={7}
+							id={gameConstants.DEVPRODUCT_IDS["250k Big Money Pack"]}
+							title="Extreme Cash!"
+							icon="rbxassetid://136338731838654"
+						/>
+					</frame>
+
 					<AnimatedProductButton
 						position={UDim2.fromScale(0.5, 0.747)}
 						size={UDim2.fromScale(0.961, 0.544)}
-						layoutOrder={6}
+						layoutOrder={8}
 						productType={ProductType.DevProduct}
+						scales={new NumberRange(0.975, 1.025)}
 						productId={gameConstants.DEVPRODUCT_IDS["1M Massive Money Pack"]}
 					>
 						<imagelabel
@@ -1773,8 +1848,8 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.499, 1)}
 								Text={"$1,000,000 Cash!"}
 								TextColor3={Color3.fromRGB(255, 255, 255)}
-								TextScaled={true}
-								TextWrapped={true}
+								TextScaled={false}
+								TextSize={px(30)}
 								TextXAlignment={Enum.TextXAlignment.Left}
 								ZIndex={10}
 							>
@@ -2214,76 +2289,17 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 						</canvasgroup>
 					</AnimatedProductButton>
 
+					<DigProduct runAnimation={visible} />
+
 					<frame
+						key={"Frame"}
 						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 						BackgroundTransparency={1}
 						BorderColor3={Color3.fromRGB(0, 0, 0)}
 						BorderSizePixel={0}
-						LayoutOrder={7}
-						key={"Cash Products"}
-						Position={UDim2.fromScale(0.0265, -0.687)}
-						Size={UDim2.fromScale(0.947, 2.75)}
-					>
-						<uilistlayout
-							key={"UIListLayout"}
-							FillDirection={Enum.FillDirection.Horizontal}
-							HorizontalAlignment={Enum.HorizontalAlignment.Center}
-							Padding={new UDim(0.01, 0)}
-							SortOrder={Enum.SortOrder.LayoutOrder}
-							Wraps={true}
-						/>
-
-						<CashProduct
-							layoutOrder={1}
-							id={gameConstants.DEVPRODUCT_IDS["1k Money Pack"]}
-							title="Tiny Cash!"
-							icon="rbxassetid://82377284011764"
-						/>
-						<CashProduct
-							layoutOrder={2}
-							id={gameConstants.DEVPRODUCT_IDS["2.5k Money Pack"]}
-							title="Small Cash!"
-							icon="rbxassetid://89261366341053"
-						/>
-						<CashProduct
-							layoutOrder={3}
-							id={gameConstants.DEVPRODUCT_IDS["7.5k Money Pack"]}
-							title="Medium Cash!"
-							icon="rbxassetid://121228438692066"
-						/>
-						<CashProduct
-							layoutOrder={4}
-							id={gameConstants.DEVPRODUCT_IDS["15k Money Pack"]}
-							title="Large Cash!"
-							icon="rbxassetid://76204918792364"
-						/>
-						<CashProduct
-							layoutOrder={5}
-							id={gameConstants.DEVPRODUCT_IDS["40k Money Pack"]}
-							title="Bigger Cash!"
-							icon="rbxassetid://136338731838654"
-						/>
-						<CashProduct
-							layoutOrder={6}
-							id={gameConstants.DEVPRODUCT_IDS["75k Medium Money Pack"]}
-							title="Massive Cash!"
-							icon="rbxassetid://136338731838654"
-						/>
-						<CashProduct
-							layoutOrder={7}
-							id={gameConstants.DEVPRODUCT_IDS["250k Big Money Pack"]}
-							title="Extreme Cash!"
-							icon="rbxassetid://136338731838654"
-						/>
-						<CashProduct
-							layoutOrder={8}
-							id={gameConstants.DEVPRODUCT_IDS["1M Massive Money Pack"]}
-							title="Crazy Cash!"
-							icon="rbxassetid://136338731838654"
-						/>
-					</frame>
-
-					<DigProduct runAnimation={visible} />
+						LayoutOrder={100}
+						Size={UDim2.fromOffset(100, 25)}
+					/>
 				</scrollingframe>
 
 				<frame

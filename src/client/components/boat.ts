@@ -104,7 +104,16 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 			const hrp = character?.FindFirstChild("HumanoidRootPart") as Part;
 			const humanoid = character?.FindFirstChild("Humanoid") as Humanoid;
 			const animator = humanoid.FindFirstChild("Animator") as Animator;
-			if (!character || !character.Parent || !hrp || !humanoid || !animator) return;
+			if (
+				!character ||
+				!character.Parent ||
+				!hrp ||
+				!humanoid ||
+				!animator ||
+				humanoid.GetState() === Enum.HumanoidStateType.Seated ||
+				humanoid.GetState() === Enum.HumanoidStateType.Dead
+			)
+				return;
 
 			playingTrack = animator.LoadAnimation(sitAnim);
 			playingTrack.Priority = Enum.AnimationPriority.Action4;

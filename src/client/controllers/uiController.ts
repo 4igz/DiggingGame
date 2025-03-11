@@ -293,6 +293,7 @@ export class UiController implements OnStart, OnInit {
 				visible: false,
 				shovelController: this.shovelController,
 				uiController: this,
+				gamepassController: this.gamepassController,
 			},
 			undefined,
 			true,

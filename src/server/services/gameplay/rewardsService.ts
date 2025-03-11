@@ -129,7 +129,7 @@ export class DailyRewardsService implements OnStart {
 					reward.rewardAmount !== undefined,
 					"rewardAmount must be specfied on daily streak when rewardType is 'Money'`",
 				);
-				this.moneyService.giveMoney(player, reward.rewardAmount!);
+				this.moneyService.giveMoney(player, reward.rewardAmount!, true);
 				break;
 			case "LuckMultiplier":
 				if (reward.rewardLength === undefined) {

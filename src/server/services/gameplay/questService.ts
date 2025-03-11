@@ -187,7 +187,7 @@ export class QuestService implements OnStart {
 
 		switch (quest.questReward) {
 			case "Money":
-				this.moneyService.giveMoney(player, quest.questRewardAmount as number);
+				this.moneyService.giveMoney(player, quest.questRewardAmount as number, true);
 				break;
 			case "Experience":
 				this.levelService.addExperience(player, quest.questRewardAmount as number);

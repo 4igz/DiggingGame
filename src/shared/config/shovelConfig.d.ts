@@ -1,6 +1,6 @@
 import { Rarity } from "../networkTypes";
 
-export const BASE_SHOVEL_STRENGTH = 10;
+export const BASE_SHOVEL_STRENGTH = 1;
 
 export interface Shovel {
 	strengthMult: number;

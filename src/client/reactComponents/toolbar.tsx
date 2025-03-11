@@ -266,7 +266,7 @@ export const Toolbar = () => {
 				icon: cfg.itemImage,
 				itemName: child.Name,
 				isEquipped: equipped,
-				order: prev.size() + 1,
+				order: itemType === "MetalDetectors" ? 1 : itemType === "Shovels" ? 2 : prev.size() + 1,
 				tool: child,
 				itemType: itemType,
 				rarity: cfg.rarityType,

@@ -17,8 +17,9 @@ type TargetConfig = {
 
 local targetConfig: { [string]: TargetConfig } = {
 	-- Grasslands
+	-- Grasslands
 	["Bag of coins"] = {
-		rarity = 3, -- Scaled weight = 745 (1 in 3)
+		rarity = 3, -- 1 in 3
 		rarityType = "Common",
 		baseWeight = NumberRange.new(1, 3),
 		basePrice = 250,
@@ -28,7 +29,7 @@ local targetConfig: { [string]: TargetConfig } = {
 	},
 
 	["Cool shell"] = {
-		rarity = 5, -- Scaled weight = 1,241 (1 in 5)
+		rarity = 5, -- 1 in 5
 		rarityType = "Common",
 		baseWeight = NumberRange.new(1, 3),
 		basePrice = 100,
@@ -37,16 +38,16 @@ local targetConfig: { [string]: TargetConfig } = {
 	},
 
 	["Jade fish"] = {
-		rarity = 10, -- Scaled weight = 2,482 (1 in 10)
+		rarity = 10, -- 1 in 10
 		rarityType = "Common",
 		baseWeight = NumberRange.new(2, 4),
 		basePrice = 250,
 		itemImage = "rbxassetid://73363406884733",
-		description = "Scary.",
+		description = "Despite its appearance, it cannot swim.",
 	},
 
 	Necklace = {
-		rarity = 3972, -- Scaled weight = 3,972 (1 in 16)
+		rarity = 16, -- 1 in 16
 		rarityType = "Uncommon",
 		baseWeight = NumberRange.new(2, 6),
 		basePrice = 500,
@@ -56,7 +57,7 @@ local targetConfig: { [string]: TargetConfig } = {
 	},
 
 	Ring = {
-		rarity = 4965, -- Scaled weight = 4,965 (1 in 20)
+		rarity = 20, -- 1 in 20
 		rarityType = "Uncommon",
 		baseWeight = NumberRange.new(2, 6),
 		basePrice = 500,
@@ -65,7 +66,7 @@ local targetConfig: { [string]: TargetConfig } = {
 	},
 
 	["Golden eyepatch"] = {
-		rarity = 7943, -- Scaled weight = 7,943 (1 in 32)
+		rarity = 32, -- 1 in 32
 		rarityType = "Rare",
 		baseWeight = NumberRange.new(5, 10),
 		basePrice = 400,
@@ -74,7 +75,7 @@ local targetConfig: { [string]: TargetConfig } = {
 	},
 
 	["Gold chalice"] = {
-		rarity = 11915, -- Scaled weight = 11,915 (1 in 48)
+		rarity = 48, -- 1 in 48
 		rarityType = "Rare",
 		baseWeight = NumberRange.new(5, 10),
 		basePrice = 500,
@@ -83,7 +84,7 @@ local targetConfig: { [string]: TargetConfig } = {
 	},
 
 	["Bejeweled pegleg"] = {
-		rarity = 15887, -- Scaled weight = 15,887 (1 in 64)
+		rarity = 64, -- 1 in 64
 		rarityType = "Uncommon",
 		baseWeight = NumberRange.new(7, 10),
 		basePrice = 500,
@@ -92,7 +93,7 @@ local targetConfig: { [string]: TargetConfig } = {
 	},
 
 	["Treasure chest"] = {
-		rarity = 31773, -- Scaled weight = 31,773 (1 in 128)
+		rarity = 128, -- 1 in 128
 		rarityType = "Rare",
 		baseWeight = NumberRange.new(10, 50),
 		basePrice = 265,
@@ -102,7 +103,7 @@ local targetConfig: { [string]: TargetConfig } = {
 	},
 
 	["Ruby"] = {
-		rarity = 63547, -- Scaled weight = 63,547 (1 in 256)
+		rarity = 256, -- 1 in 256
 		rarityType = "Epic",
 		baseWeight = NumberRange.new(8, 10),
 		basePrice = 600,
@@ -111,7 +112,7 @@ local targetConfig: { [string]: TargetConfig } = {
 	},
 
 	Diamond = {
-		rarity = 127093, -- Scaled weight = 127,093 (1 in 512)
+		rarity = 512, -- 1 in 512
 		rarityType = "Epic",
 		baseWeight = NumberRange.new(8, 10),
 		basePrice = 1250,
@@ -121,7 +122,7 @@ local targetConfig: { [string]: TargetConfig } = {
 	},
 
 	["Ancient artifact"] = {
-		rarity = 496460, -- Scaled weight = 496,460 (1 in 2000)
+		rarity = 2048, -- 1 in 2048
 		rarityType = "Legendary",
 		baseWeight = NumberRange.new(20, 22.5),
 		basePrice = 4500,

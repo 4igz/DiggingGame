@@ -46,7 +46,9 @@ export class ZoneService implements OnStart {
 
 			const character = player.Character || player.CharacterAdded.Wait()[0];
 			const humanoid = character.WaitForChild("Humanoid") as Humanoid;
+			const hrp = character.WaitForChild("HumanoidRootPart") as BasePart;
 			humanoid.WalkSpeed = 16;
+			hrp.Anchored = false;
 		});
 
 		Players.PlayerRemoving.Connect((player) => {
@@ -99,6 +101,10 @@ export class ZoneService implements OnStart {
 			const humanoid = player.Character?.WaitForChild("Humanoid") as Humanoid;
 			if (humanoid) {
 				humanoid.WalkSpeed = 0;
+			}
+			const hrp = player.Character?.WaitForChild("HumanoidRootPart") as BasePart;
+			if (hrp) {
+				hrp.Anchored = true;
 			}
 		});
 		this.streamSpawn(player, zoneName);

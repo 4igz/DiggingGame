@@ -17,6 +17,8 @@ export class ClientDetections implements OnStart {
 			profile.Data.selfReports++;
 
 			this.profileService.setProfile(player, profile);
+
+			warn(`${player.Name} self-reported for ${reportType}`);
 		});
 
 		Players.PlayerAdded.Connect((player) => {

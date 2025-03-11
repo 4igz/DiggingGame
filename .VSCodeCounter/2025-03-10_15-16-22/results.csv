@@ -1,0 +1,114 @@
+"filename", "language", "TypeScript", "Luau", "TypeScript JSX", "comment", "blank", "total"
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\atoms\inventoryAtoms.ts", "TypeScript", 4, 0, 0, 2, 2, 8
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\atoms\uiAtoms.ts", "TypeScript", 2, 0, 0, 0, 2, 4
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\components\boat.ts", "TypeScript", 221, 0, 0, 27, 54, 302
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\components\treasure.tsx", "TypeScript JSX", 0, 0, 58, 1, 13, 72
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\autoDigController.ts", "TypeScript", 308, 0, 0, 49, 68, 425
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\detectorController.ts", "TypeScript", 392, 0, 0, 37, 82, 511
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\gamepassController.ts", "TypeScript", 27, 0, 0, 3, 5, 35
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\levelUpController.ts", "TypeScript", 42, 0, 0, 1, 7, 50
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\promptController.ts", "TypeScript", 462, 0, 0, 14, 65, 541
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\questController.ts", "TypeScript", 223, 0, 0, 3, 26, 252
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\selfReport.ts", "TypeScript", 97, 0, 0, 9, 13, 119
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\shopController.ts", "TypeScript", 199, 0, 0, 2, 39, 240
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\shovelController.ts", "TypeScript", 965, 0, 0, 86, 176, 1227
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\treasureAnimationController.ts", "TypeScript", 37, 0, 0, 1, 6, 44
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\uiController.ts", "TypeScript", 461, 0, 0, 64, 51, 576
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\uiPreloading.ts", "TypeScript", 142, 0, 0, 3, 28, 173
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\controllers\zoneController.ts", "TypeScript", 221, 0, 0, 12, 22, 255
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\hooks\useMotion.ts", "TypeScript", 19, 0, 0, 1, 8, 28
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\hooks\usePx.ts", "TypeScript", 40, 0, 0, 19, 11, 70
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\network.ts", "TypeScript", 3, 0, 0, 1, 2, 6
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\boatShop.tsx", "TypeScript JSX", 0, 0, 757, 63, 52, 872
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\boughtItemPopup.tsx", "TypeScript JSX", 0, 0, 137, 3, 19, 159
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\clickEffect.tsx", "TypeScript JSX", 0, 0, 121, 0, 20, 141
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\dailyReward.tsx", "TypeScript JSX", 0, 0, 286, 1, 26, 313
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\detectorHint.tsx", "TypeScript JSX", 0, 0, 43, 0, 6, 49
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\dialogResponse.tsx", "TypeScript JSX", 0, 0, 176, 1, 15, 192
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\diggingBar.tsx", "TypeScript JSX", 0, 0, 487, 9, 67, 563
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\gamepassShop.tsx", "TypeScript JSX", 0, 0, 2173, 10, 172, 2355
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\inventory.tsx", "TypeScript JSX", 0, 0, 2679, 129, 188, 2996
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\isleEnterPopup.tsx", "TypeScript JSX", 0, 0, 324, 8, 26, 358
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\itemAddedPopup.tsx", "TypeScript JSX", 0, 0, 157, 3, 19, 179
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\itemViewport.tsx", "TypeScript JSX", 0, 0, 74, 11, 15, 100
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\luckBar.tsx", "TypeScript JSX", 0, 0, 225, 3, 28, 256
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\playTimeRewards.tsx", "TypeScript JSX", 0, 0, 559, 7, 49, 615
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\popups.tsx", "TypeScript JSX", 0, 0, 139, 6, 14, 159
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\questInfoSidebutton.tsx", "TypeScript JSX", 0, 0, 120, 1, 15, 136
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\richBillboardText.tsx", "TypeScript JSX", 0, 0, 42, 1, 5, 48
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\rightSideMenu.tsx", "TypeScript JSX", 0, 0, 470, 11, 52, 533
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\sell.tsx", "TypeScript JSX", 0, 0, 254, 17, 23, 294
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\shop.tsx", "TypeScript JSX", 0, 0, 840, 18, 72, 930
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\sidebar.tsx", "TypeScript JSX", 0, 0, 255, 1, 22, 278
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\soldItemPopup.tsx", "TypeScript JSX", 0, 0, 149, 3, 19, 171
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\targetCompass.tsx", "TypeScript JSX", 0, 0, 210, 1, 21, 232
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\toolbar.tsx", "TypeScript JSX", 0, 0, 321, 23, 53, 397
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\typeWritingBillboard.tsx", "TypeScript JSX", 0, 0, 49, 1, 8, 58
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\reactComponents\volumeMuteButton.tsx", "TypeScript JSX", 0, 0, 28, 1, 6, 35
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\runtime.client.ts", "TypeScript", 8, 0, 0, 1, 3, 12
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\client\utils\springs.ts", "TypeScript", 11, 0, 0, 0, 2, 13
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\modules\serverSignals.ts", "TypeScript", 5, 0, 0, 0, 2, 7
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\network.ts", "TypeScript", 3, 0, 0, 0, 2, 5
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\profileTemplate.ts", "TypeScript", 50, 0, 0, 9, 17, 76
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\runtime.server.ts", "TypeScript", 8, 0, 0, 0, 3, 11
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\backend\analyticsService.ts", "TypeScript", 18, 0, 0, 3, 3, 24
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\backend\devproductService.ts", "TypeScript", 94, 0, 0, 0, 19, 113
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\backend\gamepassService.ts", "TypeScript", 68, 0, 0, 6, 15, 89
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\backend\leaderstatService.ts", "TypeScript", 76, 0, 0, 0, 12, 88
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\backend\moneyService.ts", "TypeScript", 45, 0, 0, 3, 10, 58
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\backend\profileService.ts", "TypeScript", 96, 0, 0, 2, 19, 117
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\backend\security\banService.ts", "TypeScript", 24, 0, 0, 0, 3, 27
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\backend\security\clientDetections.ts", "TypeScript", 50, 0, 0, 4, 11, 65
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\backend\security\renameRemotes.ts", "TypeScript", 18, 0, 0, 22, 2, 42
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\backend\zoneService.ts", "TypeScript", 111, 0, 0, 2, 13, 126
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\gameplay\boatService.ts", "TypeScript", 234, 0, 0, 11, 50, 295
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\gameplay\detectorService.ts", "TypeScript", 166, 0, 0, 15, 33, 214
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\gameplay\inventoryService.ts", "TypeScript", 457, 0, 0, 8, 91, 556
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\gameplay\levelService.ts", "TypeScript", 94, 0, 0, 0, 21, 115
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\gameplay\questService.ts", "TypeScript", 206, 0, 0, 7, 32, 245
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\gameplay\rewardsService.ts", "TypeScript", 122, 0, 0, 2, 21, 145
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\server\services\gameplay\targetService.ts", "TypeScript", 511, 0, 0, 129, 130, 770
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\boatConfig.ts", "TypeScript", 61, 0, 0, 1, 12, 74
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\dailyRewardConfig.ts", "TypeScript", 11, 0, 0, 2, 3, 16
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\devproducts.ts", "TypeScript", 115, 0, 0, 17, 6, 138
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\mapConfig.d.ts", "TypeScript", 9, 0, 0, 0, 4, 13
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\mapConfig.lua", "Luau", 0, 74, 0, 3, 2, 79
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\metalDetectorConfig.d.ts", "TypeScript", 13, 0, 0, 0, 5, 18
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\metalDetectorConfig.lua", "Luau", 0, 133, 0, 1, 1, 135
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\npcAnimationConfig.luau", "Luau", 0, 0, 0, 0, 2, 2
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\potionConfig.ts", "TypeScript", 30, 0, 0, 1, 4, 35
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\questConfig.d.ts", "TypeScript", 24, 0, 0, 0, 12, 36
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\questConfig.luau", "Luau", 0, 150, 0, 4, 36, 190
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\shopConfig.ts", "TypeScript", 52, 0, 0, 1, 3, 56
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\shovelConfig.d.ts", "TypeScript", 11, 0, 0, 0, 5, 16
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\shovelConfig.lua", "Luau", 0, 105, 0, 1, 1, 107
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\targetConfig.d.ts", "TypeScript", 14, 0, 0, 1, 6, 21
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\targetConfig.luau", "Luau", 0, 365, 0, 6, 18, 389
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\config\timePlayedConfig.ts", "TypeScript", 24, 0, 0, 1, 6, 31
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\gameConstants.d.ts", "TypeScript", 71, 0, 0, 1, 20, 92
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\gameConstants.lua", "Luau", 0, 129, 0, 10, 17, 156
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\network.ts", "TypeScript", 117, 0, 0, 3, 8, 128
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\networkTypes.ts", "TypeScript", 65, 0, 0, 11, 15, 91
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\signals.ts", "TypeScript", 30, 0, 0, 3, 3, 36
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\attributeUtil.ts", "TypeScript", 11, 0, 0, 1, 2, 14
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\castingUtil.ts", "TypeScript", 32, 0, 0, 16, 8, 56
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\characterUtil.ts", "TypeScript", 41, 0, 0, 21, 10, 72
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\colorUtil.ts", "TypeScript", 27, 0, 0, 0, 6, 33
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\crossPlatformUtil.ts", "TypeScript", 13, 0, 0, 1, 3, 17
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\detectorUtil.ts", "TypeScript", 44, 0, 0, 24, 13, 81
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\eternityNum.d.ts", "TypeScript", 56, 0, 0, 284, 62, 402
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\eternityNum.lua", "Luau", 0, 1049, 0, 24, 172, 1245
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\interval.d.ts", "TypeScript", 1, 0, 0, 5, 1, 7
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\interval.luau", "Luau", 0, 26, 0, 6, 8, 40
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\logUtil.ts", "TypeScript", 6, 0, 0, 0, 2, 8
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\monetizationUtil.ts", "TypeScript", 25, 0, 0, 10, 6, 41
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\nameUtil.ts", "TypeScript", 82, 0, 0, 21, 21, 124
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\objectPool.ts", "TypeScript", 24, 0, 0, 0, 5, 29
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\pather.ts", "TypeScript", 233, 0, 0, 57, 47, 337
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\playerUtil.ts", "TypeScript", 26, 0, 0, 13, 9, 48
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\rarityUtil.ts", "TypeScript", 20, 0, 0, 1, 2, 23
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\symbol.lua", "Luau", 0, 9, 0, 2, 2, 13
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\tagUtil.ts", "TypeScript", 10, 0, 0, 0, 2, 12
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\targetUtil.ts", "TypeScript", 41, 0, 0, 21, 9, 71
+"c:\Users\jorde\OneDrive\Documents\GitHub\DiggingGame\src\shared\util\vfxUtil.ts", "TypeScript", 22, 0, 0, 1, 3, 26
+"Total", "-", 7701, 2040, 11133, 1466, 2788, 25128

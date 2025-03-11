@@ -147,7 +147,7 @@ export class TargetService implements OnStart {
 			this.inventoryService.removeTargetItemFromInventory(player, itemId);
 
 			const cfg = fullTargetConfig[target.name];
-			this.moneyService.giveMoney(player, target.weight * cfg.basePrice);
+			this.moneyService.giveMoney(player, target.weight * cfg.basePrice, true);
 
 			this.profileService.setProfile(player, profile);
 			if (profile.Data.equippedTreasure !== "") {
@@ -200,7 +200,7 @@ export class TargetService implements OnStart {
 				const cfg = fullTargetConfig[item.name];
 				return acc + item.weight * cfg.basePrice;
 			}, 0);
-			this.moneyService.giveMoney(player, total);
+			this.moneyService.giveMoney(player, total, true);
 			profile.Data.targetInventory.clear();
 			profile.Data.equippedTreasure = "";
 			this.profileService.setProfile(player, profile);
@@ -398,22 +398,22 @@ export class TargetService implements OnStart {
 				this.digSuccess(player, target);
 			}
 		});
+
+		Functions.getCurrentStrength.setCallback((player) => {
+			return this.getDigStrength(player);
+		});
 	}
 
 	private digWasPossible(player: Player, target: Target): boolean {
-		const profile = this.profileService.getProfileLoaded(player).expect();
-
 		const startedTime = this.playerStartedDiggingTimes.get(player);
 		if (!startedTime) return false;
 
 		const elapsedTime = tick() - startedTime;
 
 		const digStrength = this.getDigStrength(player);
-		const shovelStrength = shovelConfig[profile.Data.equippedShovel].strengthMult * BASE_SHOVEL_STRENGTH;
-		const totalStrength = digStrength + shovelStrength;
 
 		const FRAME_TIME = 1 / 60; // Blanket Assume 60 FPS
-		const maxClickSpeed = gameConstants.DIG_TIME_SEC * 0.9;
+		const maxClickSpeed = gameConstants.DIG_TIME_SEC;
 		const maxHealth = target.maxProgress;
 		const startHealth = target.digProgress;
 		const totalHealth = maxHealth - startHealth;
@@ -421,9 +421,9 @@ export class TargetService implements OnStart {
 		const framesPerClick = maxClickSpeed / FRAME_TIME;
 		const decayPerClick = gameConstants.BAR_DECREASE_RATE * framesPerClick;
 
-		const effectiveStrength = totalStrength - decayPerClick;
+		const effectiveStrength = digStrength - decayPerClick;
 		if (effectiveStrength <= 0) {
-			return false;
+		return false;
 		}
 
 		const totalClicks = totalHealth / effectiveStrength;
@@ -437,7 +437,9 @@ export class TargetService implements OnStart {
 
 	public getDigStrength(player: Player): number {
 		const profile = this.profileService.getProfileLoaded(player).expect();
-		let strength = profile.Data.strength;
+		let strength =
+			profile.Data.strength * gameConstants.STRENGTH_MODIFIER +
+			shovelConfig[profile.Data.equippedShovel].strengthMult * BASE_SHOVEL_STRENGTH;
 		if (this.gamepassService.ownsGamepass(player, gameConstants.GAMEPASS_IDS.x2Strength)) {
 			strength *= 2;
 		}
@@ -657,7 +659,7 @@ export class TargetService implements OnStart {
 		let totalLuck =
 			(playerDetectorConfig.luck * DETECTOR_LUCK_MODIFIER + profile.Data.luck * LUCK_SKILL_LEVEL_ADDITION) *
 			ADDED_LUCK_PERCENT *
-		this.devproductService.serverLuckMultiplier(player) *
+			this.devproductService.serverLuckMultiplier(player) *
 			profile.Data.potionLuckMultiplier *
 			luckMult;
 
@@ -699,70 +701,70 @@ export class TargetService implements OnStart {
 		return [targetInstance, profile.Data.currentMap];
 	}
 
-private rollTargetUsingWeights(
-	currentMap: keyof typeof mapConfig,
-	addLuck: number,
-	includeTrash: boolean,
-): [keyof typeof fullTargetConfig, TargetConfig] | undefined {
-	// Retrieve the player's profile
-	// Retrieve the map data based on the player's current map
-	const mapData = mapConfig[currentMap];
-	if (!mapData || !mapData.targetList) {
-		return undefined;
-	}
-
-	// Initialize variables for cumulative weights
-	let cumulativeWeight = 0;
-	const cumulativeMap = new Map<keyof typeof fullTargetConfig, number>();
-
-	// If luck is 0, they are getting trash buddy
-	const cfg = includeTrash ? fullTargetConfig : targetConfig;
-
-	// Adjust weights with scaling
-	for (const [name, targetInfo] of pairs(cfg)) {
-		if (!mapData.targetList.includes(name)) continue;
-
-		// Apply the adjusted weight formula
-		const weight = math.pow(1 / targetInfo.rarity, 1 - addLuck);
-		cumulativeWeight += weight;
-		cumulativeMap.set(name, cumulativeWeight);
-	}
-
-	if (cumulativeMap.size() === 0) {
-		warn("No valid targets for the map:", currentMap);
-		return undefined;
-	}
-
-	// Generate a random roll within the cumulative weight range
-	const roll = this.rng.NextNumber(0, cumulativeWeight);
-
-	// Find the matching target based on the roll
-	let selectedTarget: keyof typeof fullTargetConfig | undefined;
-
-	// Manually convert Map to an array of key-value pairs
-	const mapArray: [string, number][] = [];
-	for (const [key, value] of cumulativeMap) {
-		mapArray.push([key, value]);
-	}
-
-	mapArray.sort((a, b) => {
-		return a[1] < b[1];
-	});
-
-	for (const [name, cumulative] of mapArray) {
-		if (roll <= cumulative) {
-			selectedTarget = name;
-			break; // Stop once the first matching target is found
+	private rollTargetUsingWeights(
+		currentMap: keyof typeof mapConfig,
+		addLuck: number,
+		includeTrash: boolean,
+	): [keyof typeof fullTargetConfig, TargetConfig] | undefined {
+		// Retrieve the player's profile
+		// Retrieve the map data based on the player's current map
+		const mapData = mapConfig[currentMap];
+		if (!mapData || !mapData.targetList) {
+			return undefined;
 		}
-	}
 
-	// If no target is selected, return undefined
-	if (!selectedTarget) {
-		warn("Roll failed to match any target");
-		return undefined;
-	}
+		// Initialize variables for cumulative weights
+		let cumulativeWeight = 0;
+		const cumulativeMap = new Map<keyof typeof fullTargetConfig, number>();
 
-	// Return the selected target and its configuration
-	return [selectedTarget, cfg[selectedTarget]];
-}
+		// If luck is 0, they are getting trash buddy
+		const cfg = includeTrash ? fullTargetConfig : targetConfig;
+
+		// Adjust weights with scaling
+		for (const [name, targetInfo] of pairs(cfg)) {
+			if (!mapData.targetList.includes(name)) continue;
+
+			// Apply the adjusted weight formula
+			const weight = math.pow(1 / targetInfo.rarity, 1 - addLuck);
+			cumulativeWeight += weight;
+			cumulativeMap.set(name, cumulativeWeight);
+		}
+
+		if (cumulativeMap.size() === 0) {
+			warn("No valid targets for the map:", currentMap);
+			return undefined;
+		}
+
+		// Generate a random roll within the cumulative weight range
+		const roll = this.rng.NextNumber(0, cumulativeWeight);
+
+		// Find the matching target based on the roll
+		let selectedTarget: keyof typeof fullTargetConfig | undefined;
+
+		// Manually convert Map to an array of key-value pairs
+		const mapArray: [string, number][] = [];
+		for (const [key, value] of cumulativeMap) {
+			mapArray.push([key, value]);
+		}
+
+		mapArray.sort((a, b) => {
+			return a[1] < b[1];
+		});
+
+		for (const [name, cumulative] of mapArray) {
+			if (roll <= cumulative) {
+				selectedTarget = name;
+				break; // Stop once the first matching target is found
+			}
+		}
+
+		// If no target is selected, return undefined
+		if (!selectedTarget) {
+			warn("Roll failed to match any target");
+			return undefined;
+		}
+
+		// Return the selected target and its configuration
+		return [selectedTarget, cfg[selectedTarget]];
+	}
 }
