@@ -39,7 +39,8 @@ local gameConstants = {
 	LEVEL_INCREASE_EXPONENT = 1.01, -- math.floor(BASE_EXP * currentLevel^LEVEL_INCREASE_EXPONENT)
 	BASE_EXP = 100,
 
-	TARGET_INVENTORY_DEFAULT_CAPACITY = 100,
+	TARGET_INVENTORY_DEFAULT_CAPACITY = 50,
+	BIGGER_BACKPACK_SIZE_MODIFIER = 2,
 
 	-- Skills modifiers
 	STRENGTH_MODIFIER = 0.1,
@@ -52,27 +53,27 @@ local gameConstants = {
 	},
 
 	DEVPRODUCT_IDS = {
-		x2Luck = 2683149065,
-		StarterPack = 2683148216,
-		MoreDigging = 2683148761,
-		MediumPack = 2683148387,
-		RefundPoints = 3226810394,
-		["1k Money Pack"] = 2683146655,
-		["2.5k Money Pack"] = 2683146887,
-		["7.5k Money Pack"] = 2683147047,
-		["15k Money Pack"] = 2683147418,
-		["40k Money Pack"] = 2683147564,
-		["75k Medium Money Pack"] = 2683147732,
-		["250k Big Money Pack"] = 2683147863,
-		["1M Massive Money Pack"] = 2683148034,
-		["Unlock All Playtime Rewards"] = 3221367930,
+		x2Luck = 3236554282,
+		StarterPack = 3236554871,
+		MoreDigging = 3236554633,
+		MediumPack = 3236554589,
+		RefundPoints = 3236554800,
+		["2.5k Money Pack"] = 3236554045,
+		["7.5k Money Pack"] = 3236554465,
+		["15k Money Pack"] = 3236553863,
+		["40k Money Pack"] = 3236554350,
+		["75k Medium Money Pack"] = 3236554527,
+		["250k Big Money Pack"] = 3236554148,
+		["1M Massive Money Pack"] = 3236553972,
+		["Unlock All Playtime Rewards"] = 3236554940,
 	},
 
 	GAMEPASS_IDS = {
-		x2Strength = 1014663108,
-		x2Cash = 1015008881,
-		BiggerBackpack = 1014776887,
-		SellEverywhere = 1014879019,
+		BiggerBackpack = 1098304454,
+		SellEverywhere = 1098278343,
+		x2Strength = 1097762136,
+		x2Luck = 1098158597,
+		x2Cash = 1098088676,
 	},
 
 	MAP_THEME_COLORS = {

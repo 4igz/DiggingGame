@@ -259,12 +259,11 @@ export class TargetService implements OnStart {
 			const map = Maps.find((map) => map.Name === mapName) as Folder | undefined;
 			if (!map) return false;
 
-			// Check if inventory is full before we try doing anything
-			if (profile.Data.targetInventory.size() >= profile.Data.inventorySize) {
+			const invSz = this.inventoryService.getInventorySize(player);
+			if (profile.Data.targetInventory.size() >= invSz) {
 				// This should only happen if their data is out of sync with the server
 				// So sync them up here
-				// Events.updateInventorySize: (size: number) => void;
-				Events.updateInventorySize(player, profile.Data.inventorySize);
+				Events.updateInventorySize(player, invSz);
 				return false;
 			}
 
@@ -423,7 +422,7 @@ export class TargetService implements OnStart {
 
 		const effectiveStrength = digStrength - decayPerClick;
 		if (effectiveStrength <= 0) {
-		return false;
+			return false;
 		}
 
 		const totalClicks = totalHealth / effectiveStrength;
@@ -462,8 +461,8 @@ export class TargetService implements OnStart {
 		const multiDigLevel = profile.Data.multiDigLevel;
 
 		for (let i = 0; i < multiDigLevel; i++) {
-			const invSz = profile.Data.targetInventory.size();
-			if (invSz >= profile.Data.inventorySize) break;
+			const usedSz = profile.Data.targetInventory.size();
+			if (usedSz >= this.inventoryService.getInventorySize(player)) break;
 			const targetResult = this.createTarget(player, target.usedLuckMult);
 			if (!targetResult) break;
 			const [extraTarget] = targetResult;
@@ -661,6 +660,7 @@ export class TargetService implements OnStart {
 			ADDED_LUCK_PERCENT *
 			this.devproductService.serverLuckMultiplier(player) *
 			profile.Data.potionLuckMultiplier *
+			(this.gamepassService.ownsGamepass(player, gameConstants.GAMEPASS_IDS["x2Luck"]) ? 2 : 1) *
 			luckMult;
 
 		totalLuck = math.clamp(totalLuck, 0, 1);

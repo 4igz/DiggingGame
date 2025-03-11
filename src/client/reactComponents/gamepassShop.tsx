@@ -1707,6 +1707,10 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							gamepassName="x2 Strength!"
 						/>
 						<GamepassButton
+							gamepassId={gameConstants.GAMEPASS_IDS.x2Luck}
+							gamepassName="x2 Luck!"
+						/>
+						<GamepassButton
 							gamepassId={gameConstants.GAMEPASS_IDS.SellEverywhere}
 							gamepassName="Sell Everywhere!"
 						/>

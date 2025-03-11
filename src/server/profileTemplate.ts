@@ -9,7 +9,7 @@ import { boatConfig } from "shared/config/boatConfig";
 import { potionConfig } from "shared/config/potionConfig";
 import { questConfig } from "shared/config/questConfig";
 
-export const PROFILE_STORE_NAME = "pre_test2";
+export const PROFILE_STORE_NAME = "pre_test4";
 
 export const profileTemplate = {
 	equippedShovel: "StarterShovel" as keyof typeof shovelConfig,

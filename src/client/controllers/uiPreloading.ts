@@ -15,6 +15,8 @@ const MANUAL_PRELOAD = [
 	// Other essentials (only assets not present at startup should be specified here)
 	"rbxassetid://83809962362409",
 	"rbxassetid://80311363716942",
+	"rbxassetid://96446480715038",
+	"rbxassetid://83833460426334",
 ];
 
 @Controller()

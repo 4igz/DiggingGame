@@ -149,7 +149,7 @@ export class ZoneController implements OnStart, OnRender {
 			const goal = spawnPos.add(
 				new Vector3(
 					rng.NextNumber(-extents.X, extents.X),
-					extents.Y / 2,
+					extents.Y * 2,
 					rng.NextNumber(-extents.Z, extents.Z),
 				),
 			);

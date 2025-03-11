@@ -4,6 +4,7 @@ import { MarketplaceService } from "@rbxts/services";
 import { gameConstants } from "shared/gameConstants";
 import { ProfileService } from "./profileService";
 import { Events, Functions } from "server/network";
+import { InventoryService } from "../gameplay/inventoryService";
 
 // 🗣️🗣️🗣️
 type ValueOf<T> = T[keyof T];
@@ -36,9 +37,9 @@ export class GamepassService implements OnStart {
 
 		MarketplaceService.PromptGamePassPurchaseFinished.Connect((player, assetId, wasPurchased) => {
 			if (!wasPurchased) return;
-			const gamepassExists = this.gamepassIdToName.get(assetId);
+			const gamepassName = this.gamepassIdToName.get(assetId);
 
-			if (!gamepassExists) {
+			if (!gamepassName) {
 				error("What are you buying??", assetId);
 			}
 
@@ -51,9 +52,14 @@ export class GamepassService implements OnStart {
 				return;
 			}
 
-			profile.Data.ownedGamepasses.set(gamepassExists, true);
+			profile.Data.ownedGamepasses.set(gamepassName, true);
 			this.profileService.setProfile(player, profile);
 			Events.updateOwnedGamepasses(player, profile.Data.ownedGamepasses);
+
+			if (gamepassName === "BiggerBackpack") {
+				const inventorySize = profile.Data.inventorySize * gameConstants.BIGGER_BACKPACK_SIZE_MODIFIER;
+				Events.updateInventorySize(player, inventorySize);
+			}
 		});
 
 		Functions.getOwnedGamepasses.setCallback((player) => {

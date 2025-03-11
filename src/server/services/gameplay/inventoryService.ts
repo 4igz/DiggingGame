@@ -15,11 +15,14 @@ import { boatConfig } from "shared/config/boatConfig";
 import { potionConfig } from "shared/config/potionConfig";
 import { interval } from "shared/util/interval";
 import { gameConstants } from "shared/gameConstants";
+import { GamepassService } from "../backend/gamepassService";
 
 const DetectorFolder = ServerStorage.WaitForChild("MetalDetectors") as Folder;
 const ShovelFolder = ServerStorage.WaitForChild("Shovels") as Folder;
 const TargetToolFolder = ServerStorage.WaitForChild("TargetTools") as Folder;
 const ShovelAccessoryFolder = ServerStorage.WaitForChild("ShovelAccessories") as Folder;
+
+const BIGGER_BACKPACK_SIZE_MODIFIER = gameConstants.BIGGER_BACKPACK_SIZE_MODIFIER;
 
 type InventoryKeys<T> = {
 	[K in keyof T]: T[K] extends Array<string> | Array<TargetItem> ? K : never;
@@ -49,7 +52,11 @@ const inventoryConfigMap: Record<
 export class InventoryService implements OnStart, OnTick {
 	private potionDrinkers = new Array<Player>();
 
-	constructor(private readonly profileService: ProfileService, private readonly moneyService: MoneyService) {}
+	constructor(
+		private readonly profileService: ProfileService,
+		private readonly moneyService: MoneyService,
+		private readonly gamepassService: GamepassService,
+	) {}
 
 	onStart() {
 		for (const tool of DetectorFolder.GetChildren()) {
@@ -106,22 +113,18 @@ export class InventoryService implements OnStart, OnTick {
 				}
 			}
 
-			// Events.updateInventorySize: (size: number) => void;
-			Events.updateInventorySize(player, profile.Data.inventorySize);
+			Events.updateInventorySize(player, this.getInventorySize(player));
 
 			this.giveTools(player, profile);
 			player.CharacterAdded.Connect(() => {
-				const newProfile = this.profileService.getProfile(player);
-				if (newProfile) {
-					this.giveTools(player, newProfile);
-				}
+				this.profileService.getProfileLoaded(player).then((loadedProfile) => {
+					this.giveTools(player, loadedProfile);
+				});
 			});
 		});
 
 		Functions.getInventorySize.setCallback((player) => {
-			const profile = this.profileService.getProfileLoaded(player).expect();
-
-			return profile.Data.inventorySize;
+			return this.getInventorySize(player);
 		});
 
 		Events.buyItem.connect((player, itemType, item) => {
@@ -276,6 +279,17 @@ export class InventoryService implements OnStart, OnTick {
 			const profile = this.profileService.getProfileLoaded(player).expect();
 			return profile.Data.ownedBoats;
 		});
+	}
+
+	getInventorySize(player: Player) {
+		const profile = this.profileService.getProfileLoaded(player).expect();
+
+		const ownsBiggerBackpack = this.gamepassService.ownsGamepass(
+			player,
+			gameConstants.GAMEPASS_IDS["BiggerBackpack"],
+		);
+
+		return profile.Data.inventorySize * (ownsBiggerBackpack ? BIGGER_BACKPACK_SIZE_MODIFIER : 1);
 	}
 
 	onItemBoughtSuccess(player: Player, itemType: ItemType, item: ItemName) {
@@ -506,8 +520,8 @@ export class InventoryService implements OnStart, OnTick {
 	public addItemToTargetInventory(player: Player, item: Target) {
 		const profile = this.profileService.getProfile(player);
 		if (profile) {
-			if (profile.Data.targetInventory.size() >= profile.Data.inventorySize) {
-				error("Unhandled full inventory case");
+			if (profile.Data.targetInventory.size() >= this.getInventorySize(player)) {
+				error("Unhandled full inventory case", 2);
 			}
 			profile.Data.targetInventory.push({ itemId: item.itemId, name: item.name, weight: item.weight });
 			if (!profile.Data.previouslyFoundTargets.has(item.name)) {
