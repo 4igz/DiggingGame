@@ -281,6 +281,25 @@ export class InventoryService implements OnStart, OnTick {
 		});
 	}
 
+	givePotion(player: Player, potionName: keyof typeof potionConfig) {
+		const profile = this.profileService.getProfile(player);
+		if (!profile) return;
+
+		profile.Data.potionInventory.push(potionName);
+		this.profileService.setProfile(player, profile);
+
+		Events.updateInventory(player, "Potions", [
+			{
+				equippedShovel: profile.Data.equippedShovel,
+				equippedDetector: profile.Data.equippedDetector,
+				equippedTreasure: profile.Data.equippedTreasure,
+			},
+			profile.Data.potionInventory.map(
+				(value) => ({ name: value, type: "Potions", ...potionConfig[value] } as Item),
+			),
+		]);
+	}
+
 	getInventorySize(player: Player) {
 		const profile = this.profileService.getProfileLoaded(player).expect();
 

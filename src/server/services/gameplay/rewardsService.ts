@@ -8,6 +8,8 @@ import { Players } from "@rbxts/services";
 import { Reward } from "shared/networkTypes";
 import { timePlayedRewards } from "shared/config/timePlayedConfig";
 import { Signals } from "shared/signals";
+import { potionConfig } from "shared/config/potionConfig";
+import { InventoryService } from "./inventoryService";
 
 @Service({})
 export class DailyRewardsService implements OnStart {
@@ -18,6 +20,7 @@ export class DailyRewardsService implements OnStart {
 		private readonly profileService: ProfileService,
 		private readonly moneyService: MoneyService,
 		private readonly devproductService: DevproductService,
+		private readonly inventoryService: InventoryService,
 	) {}
 
 	onStart() {
@@ -51,6 +54,11 @@ export class DailyRewardsService implements OnStart {
 						error(
 							`rewardLength must be specified on daily streak when rewardType is '${reward.rewardType}'`,
 						);
+					}
+					break;
+				case "Potions":
+					if (potionConfig[reward.itemName!] === undefined) {
+						error(`No potion found for reward ${reward.itemName}`);
 					}
 					break;
 				default:
@@ -137,6 +145,11 @@ export class DailyRewardsService implements OnStart {
 				}
 				this.devproductService.giveLuckMultiplier(player, reward.rewardLength);
 				break;
+			case "Potions":
+				if (potionConfig[reward.itemName!] === undefined) {
+					error(`No potion found for reward ${reward.itemName}`);
+				}
+				this.inventoryService.givePotion(player, reward.itemName!);
 			default:
 				error(`Unknown reward type: ${reward.rewardType}`);
 		}
