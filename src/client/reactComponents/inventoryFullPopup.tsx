@@ -10,14 +10,11 @@ import { shortenNumber, spaceWords } from "shared/util/nameUtil";
 
 const RC = gameConstants.RARITY_COLORS;
 
-export interface BoughtItemPopupProps {
-	itemName: string;
-	itemImage: string;
-	itemRarity: Rarity;
+export interface InventoryFullPopupProps {
 	onComplete: () => void;
 }
 
-export const BoughtItemPopup = (props: BoughtItemPopupProps) => {
+export const InventoryFullPopup = (props: InventoryFullPopupProps) => {
 	const [sizeMotion, setSizeMotion] = useMotion(UDim2.fromScale(0, 0));
 
 	const [spinValue, setSpinValue] = React.useState(0);
@@ -106,17 +103,18 @@ export const BoughtItemPopup = (props: BoughtItemPopupProps) => {
 				<imagelabel
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
+					ImageColor3={Color3.fromRGB(255, 0, 0)}
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					Position={UDim2.fromScale(0.5, 0.5)}
 					BorderColor3={Color3.fromRGB(0, 0, 0)}
 					BorderSizePixel={0}
-					key={"ItemImage"}
+					key={"Exclamation"}
 					Size={UDim2.fromScale(1, 1)}
 					ZIndex={5}
-					Image={props.itemImage}
+					Image={"rbxassetid://113272831193584"}
 					Rotation={imageRotation}
 				>
-					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1} />
+					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.5} />
 				</imagelabel>
 
 				<imagelabel
@@ -142,9 +140,7 @@ export const BoughtItemPopup = (props: BoughtItemPopupProps) => {
 				RichText={true}
 				Size={UDim2.fromScale(2, 2)}
 				TextXAlignment={Enum.TextXAlignment.Center}
-				Text={`You bought a <font color="rgb(${math.floor(RC[props.itemRarity].R * 255)},${math.floor(
-					RC[props.itemRarity].G * 255,
-				)},${math.floor(RC[props.itemRarity].B * 255)})">${spaceWords(props.itemName)}</font>`}
+				Text={`Your inventory is full! Sell your treasure to make room for more!`}
 				TextColor3={Color3.fromRGB(255, 255, 255)}
 				TextScaled={true}
 				TextWrapped={false}

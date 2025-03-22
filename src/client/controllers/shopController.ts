@@ -1,7 +1,7 @@
 //!optimize 2
 import { Controller, OnRender, OnStart } from "@flamework/core";
 import { CollectionService, Players, ReplicatedStorage, TweenService } from "@rbxts/services";
-import { UiController } from "./uiController";
+import UiController from "client/controllers/uiController";
 import { gameConstants } from "shared/gameConstants";
 import ReactRoblox from "@rbxts/react-roblox";
 import React from "@rbxts/react";

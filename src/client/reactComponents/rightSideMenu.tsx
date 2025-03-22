@@ -5,7 +5,7 @@ import { Events, Functions } from "client/network";
 import { springs } from "client/utils/springs";
 import EternityNum, { IsInf, IsNaN } from "shared/util/eternityNum";
 import { AnimatedButton } from "./inventory";
-import { UiController } from "client/controllers/uiController";
+import UiController from "client/controllers/uiController";
 import { RunService, UserInputService } from "@rbxts/services";
 import { gameConstants } from "shared/gameConstants";
 
@@ -187,7 +187,7 @@ export const RightSideMenu = (props: MenuProps) => {
 				BorderColor3={Color3.fromRGB(0, 0, 0)}
 				BorderSizePixel={0}
 				key={"Menu Container Frame"}
-				Position={UDim2.fromScale(0.972, 0.425)}
+				Position={UDim2.fromScale(0.972, 0.28)}
 				Size={UDim2.fromScale(0.211, 0.512)}
 			>
 				<AnimatedButton

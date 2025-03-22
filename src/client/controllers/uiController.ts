@@ -55,7 +55,8 @@ const menus: Map<
 let currentOpenUi: string | undefined;
 let diggingBarActive = false; // We create this, so that we can cancel any active digging bar if we open another UI.
 let autoDiggingEnabled = false;
-let uiGuid = randomString(math.random(32, 64));
+math.randomseed(tick());
+const uiGuid = randomString(math.random(32, 64));
 let effectsActive = false;
 
 const blurEffect = new Instance("BlurEffect");
@@ -74,7 +75,7 @@ const EFFECTS_TWEEN_INFO = new TweenInfo(0.1, Enum.EasingStyle.Linear, Enum.Easi
 @Controller({
 	loadOrder: 0,
 })
-export class UiController implements OnStart, OnInit {
+export default class UiController implements OnStart, OnInit {
 	constructor(
 		private readonly autoDigging: AutoDigging,
 		private readonly zoneController: ZoneController,
@@ -261,6 +262,10 @@ export class UiController implements OnStart, OnInit {
 		);
 	}
 
+	toString() {
+		return uiGuid;
+	}
+
 	onInit(): void | Promise<void> {
 		debugWarn("Client module onInit lifecycle began.");
 
@@ -401,7 +406,7 @@ export class UiController implements OnStart, OnInit {
 				visible: false,
 				uiController: this,
 			},
-			undefined,
+			true,
 			undefined,
 			MENU_LAYER,
 		);

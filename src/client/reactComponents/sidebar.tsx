@@ -1,6 +1,6 @@
 //!optimize 2
 import React, { useEffect } from "@rbxts/react";
-import { UiController } from "client/controllers/uiController";
+import UiController from "client/controllers/uiController";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
 import { gameConstants } from "shared/gameConstants";

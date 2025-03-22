@@ -1,7 +1,7 @@
 //!optimize 2
 import React, { createRef, useEffect, useState } from "@rbxts/react";
 import { AnimatedButton, ExitButton } from "./inventory";
-import { UiController } from "client/controllers/uiController";
+import UiController from "client/controllers/uiController";
 import { gameConstants, REWARD_IMAGES } from "shared/gameConstants";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
@@ -135,18 +135,41 @@ const RewardSlot = (props: {
 					BackgroundTransparency={1}
 					BorderColor3={Color3.fromRGB(0, 0, 0)}
 					BorderSizePixel={0}
-					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					FontFace={
+						new Font(
+							"rbxasset://fonts/families/FredokaOne.json",
+							Enum.FontWeight.Bold,
+							Enum.FontStyle.Normal,
+						)
+					}
 					key={".$Timer"}
 					Position={UDim2.fromScale(0.046, 0.596)}
 					Size={UDim2.fromScale(0.954, 0.294)}
 					Text={`${!claimed ? (timeLeft > 0 ? formatShortTime(timeLeft) : "CLAIM") : "CLAIMED"}`}
-					TextColor3={Color3.fromRGB(205, 255, 148)}
+					TextColor3={Color3.fromRGB(255, 255, 255)}
 					TextScaled={true}
 					TextWrapped={true}
 				>
 					<uistroke key={"UIStroke"} Thickness={3} />
 
 					<uipadding key={"UIPadding"} PaddingLeft={new UDim(0.19, 0)} PaddingRight={new UDim(0.19, 0)} />
+
+					<uigradient
+						key={"UIGradient"}
+						Enabled={!claimed && timeLeft <= 0}
+						Color={
+							new ColorSequence([
+								new ColorSequenceKeypoint(0, Color3.fromRGB(43, 255, 10)),
+								new ColorSequenceKeypoint(0.349, Color3.fromRGB(43, 255, 10)),
+								new ColorSequenceKeypoint(0.438, Color3.fromRGB(186, 255, 185)),
+								new ColorSequenceKeypoint(0.469, Color3.fromRGB(186, 255, 185)),
+								new ColorSequenceKeypoint(0.502, Color3.fromRGB(186, 255, 185)),
+								new ColorSequenceKeypoint(0.645, Color3.fromRGB(43, 255, 10)),
+								new ColorSequenceKeypoint(1, Color3.fromRGB(43, 255, 10)),
+							])
+						}
+						Rotation={90}
+					/>
 				</textlabel>
 
 				<imagelabel
@@ -237,6 +260,8 @@ interface PlaytimeRewardsProps {
 	uiController: UiController;
 }
 
+const MAX_IMAGE_ROTATION = 25;
+
 export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 	const [popInSz, popInMotion] = useMotion(UDim2.fromScale(0, 0));
 	const [visible, setVisible] = useState(false);
@@ -245,6 +270,8 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 	const [playTimeRewardsDPInfo, setPlayTimeRewardsDPInfo] = useState<DeveloperProductInfo>();
 	const [startTime, setStartTime] = useState(time());
 	const [claimed, setClaimed] = useState(new Map<number, boolean>());
+	const [imageRotation, setImageRotation] = useMotion(-MAX_IMAGE_ROTATION);
+
 	const menuRef = createRef<Frame>();
 
 	useEffect(() => {
@@ -283,6 +310,22 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 		}
 	}, [claimedAll]);
 
+	useEffect(() => {
+		let currentRotation = imageRotation.getValue();
+		const rotationThread = task.spawn(() => {
+			while (true) {
+				// Make gift image bob back and forth
+				task.wait(0.6);
+				currentRotation = currentRotation < MAX_IMAGE_ROTATION ? MAX_IMAGE_ROTATION : -MAX_IMAGE_ROTATION;
+				setImageRotation.spring(currentRotation, springs.bubbly);
+			}
+		});
+
+		return () => {
+			task.cancel(rotationThread);
+		};
+	}, []);
+
 	return (
 		<frame
 			AnchorPoint={new Vector2(0.5, 0.5)}
@@ -307,16 +350,13 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 				Position={UDim2.fromScale(0.5, 0.5)}
 				Size={UDim2.fromScale(1, 1)}
 			/>
-
 			<ExitButton
 				menuRefToClose={menuRef}
 				uiController={props.uiController}
 				uiName={gameConstants.PLAYTIME_REWARD_UI}
 				isMenuVisible={visible}
 			/>
-
 			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.74} />
-
 			<frame
 				BackgroundColor3={Color3.fromRGB(80, 130, 229)}
 				BackgroundTransparency={1}
@@ -328,7 +368,7 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 				ZIndex={10}
 			>
 				<textlabel
-					AnchorPoint={new Vector2(0.5, 0.5)}
+					AnchorPoint={new Vector2(0, 0.5)}
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
 					BorderColor3={Color3.fromRGB(0, 0, 0)}
@@ -336,7 +376,7 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 					LayoutOrder={1}
 					key={"Title"}
-					Position={UDim2.fromScale(0.825, 0.5)}
+					Position={UDim2.fromScale(0.3, 0.5)}
 					Size={UDim2.fromScale(0.552, 0.654)}
 					Text={"Free Gifts!"}
 					TextColor3={Color3.fromRGB(255, 255, 255)}
@@ -357,21 +397,13 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 					ScaleType={Enum.ScaleType.Fit}
 					Size={UDim2.fromScale(0.285, 1.38)}
 					ZIndex={10}
+					Rotation={imageRotation}
 				>
 					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 				</imagelabel>
 
-				<uilistlayout
-					key={"UIListLayout"}
-					FillDirection={Enum.FillDirection.Horizontal}
-					Padding={new UDim(0.025, 0)}
-					SortOrder={Enum.SortOrder.LayoutOrder}
-					VerticalAlignment={Enum.VerticalAlignment.Center}
-				/>
-
 				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={4.85} />
 			</frame>
-
 			<frame
 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 				BackgroundTransparency={1}
@@ -425,7 +457,6 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 					);
 				})}
 			</frame>
-
 			<frame
 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 				BackgroundTransparency={1}
@@ -436,10 +467,7 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 				Size={UDim2.fromScale(0.274, 0.207)}
 			>
 				<textlabel
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
 					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 					key={"Label"}
 					Position={UDim2.fromScale(0.046, 0.0581)}
@@ -447,7 +475,6 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 					Text={"Skip All!"}
 					TextColor3={Color3.fromRGB(253, 253, 253)}
 					TextScaled={true}
-					TextWrapped={true}
 				>
 					<uistroke key={"UIStroke"} Thickness={3} />
 
@@ -457,6 +484,20 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 						PaddingLeft={new UDim(0.279, 0)}
 						PaddingRight={new UDim(0.279, 0)}
 						PaddingTop={new UDim(0.00219, 0)}
+					/>
+
+					<uigradient
+						key={"UIGradient"}
+						Color={
+							new ColorSequence([
+								new ColorSequenceKeypoint(0, Color3.fromRGB(141, 255, 124)),
+								new ColorSequenceKeypoint(0.182, Color3.fromRGB(223, 255, 82)),
+								new ColorSequenceKeypoint(0.528, Color3.fromRGB(255, 202, 41)),
+								new ColorSequenceKeypoint(0.846, Color3.fromRGB(255, 137, 101)),
+								new ColorSequenceKeypoint(1, Color3.fromRGB(255, 131, 106)),
+							])
+						}
+						Rotation={90}
 					/>
 				</textlabel>
 
@@ -555,7 +596,6 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 
 				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={2.3} />
 			</frame>
-
 			<frame
 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 				BackgroundTransparency={1}
@@ -565,12 +605,31 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 				Position={UDim2.fromScale(0.0453, 0.741)}
 				Size={UDim2.fromScale(0.56, 0.197)}
 			>
+				<uilistlayout
+					key={"UIListLayout"}
+					HorizontalAlignment={Enum.HorizontalAlignment.Center}
+					SortOrder={Enum.SortOrder.LayoutOrder}
+					VerticalAlignment={Enum.VerticalAlignment.Center}
+				/>
+
+				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={4.94} />
+			</frame>
+
+			<frame
+				BackgroundTransparency={1}
+				key={"Disclaimer"}
+				Position={UDim2.fromScale(0.0453, 0.741)}
+				Size={UDim2.fromScale(0.56, 0.197)}
+			>
 				<textlabel
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					FontFace={
+						new Font(
+							"rbxasset://fonts/families/FredokaOne.json",
+							Enum.FontWeight.Bold,
+							Enum.FontStyle.Normal,
+						)
+					}
 					LayoutOrder={1}
 					key={"Label"}
 					Position={UDim2.fromScale(0.0732, 0.416)}
@@ -578,7 +637,6 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 					Text={"Leaving resets progress!"}
 					TextColor3={Color3.fromRGB(253, 83, 86)}
 					TextScaled={true}
-					TextWrapped={true}
 				>
 					<uistroke key={"UIStroke"} Thickness={3} />
 				</textlabel>
@@ -589,23 +647,6 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 					SortOrder={Enum.SortOrder.LayoutOrder}
 					VerticalAlignment={Enum.VerticalAlignment.Center}
 				/>
-
-				<textlabel
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-					key={"Disclaimer"}
-					Position={UDim2.fromScale(0.225, 0.434)}
-					Size={UDim2.fromScale(0.549, 0.34)}
-					Text={"Disclaimer!"}
-					TextColor3={Color3.fromRGB(253, 253, 253)}
-					TextScaled={true}
-					TextWrapped={true}
-				>
-					<uistroke key={"UIStroke"} Thickness={3} />
-				</textlabel>
 
 				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={4.94} />
 			</frame>

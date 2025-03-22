@@ -145,7 +145,7 @@ export class DetectorService implements OnStart, OnTick {
 				// Ensure the player is still digging this target
 				if (this.targetService.playerDiggingTargets.get(player) !== target) return;
 				if (shovel.Parent !== character) {
-					this.targetService.endDigging(player);
+					this.targetService.endDigging(player, true);
 				}
 			});
 		}

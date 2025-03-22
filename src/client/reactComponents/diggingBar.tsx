@@ -13,7 +13,7 @@ import { ShovelController } from "client/controllers/shovelController";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 import { interval } from "shared/util/interval";
 import { numberSerializer } from "shared/network";
-import { UiController } from "client/controllers/uiController";
+import UiController from "client/controllers/uiController";
 import { GamepassController } from "client/controllers/gamepassController";
 
 export interface DiggingBarProps {

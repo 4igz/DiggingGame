@@ -28,6 +28,12 @@ export function getMapFromTarget(itemName: string): string | undefined {
  *                higher > 1 intensifies it, 0 uses trashConfig.
  */
 export function getOneInXChance(itemName: string, mapName: string, addLuck: number = 1): number {
+	const cfg = trashConfig[itemName] ? fullTargetConfig : targetConfig;
+
+	if ("indexRarity" in cfg[itemName]) {
+		return cfg[itemName].indexRarity as number;
+	}
+
 	// 1) Find the map data
 	const mapData = mapConfig[mapName];
 	if (!mapData) {
@@ -39,8 +45,6 @@ export function getOneInXChance(itemName: string, mapName: string, addLuck: numb
 		warn(`No targetList for map '${mapName}'`);
 		return 0;
 	}
-
-	const cfg = trashConfig[itemName] ? fullTargetConfig : targetConfig;
 
 	if (!allowedItems.includes(itemName as keyof typeof cfg)) {
 		return 0;

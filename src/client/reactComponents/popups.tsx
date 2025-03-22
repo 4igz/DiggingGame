@@ -5,16 +5,19 @@ import { fullTargetConfig } from "shared/config/targetConfig";
 import { TreasureAddedPopup, TreasurePopupProps } from "./itemAddedPopup";
 import { SoldItemPopup, SoldItemPopupProps } from "./soldItemPopup";
 import { BoughtItemPopup, BoughtItemPopupProps } from "./boughtItemPopup";
+import { Signals } from "shared/signals";
+import { InventoryFullPopup, InventoryFullPopupProps } from "./inventoryFullPopup";
 
 const POPUP_TYPES = {
 	ItemAdded: "ItemAdded",
 	BoughtItem: "BoughtItem",
 	SoldItem: "SoldItem",
+	InventoryFull: "InventoryFull",
 };
 
 interface PopupProps {
 	id: number; // NEW: unique ID
-	popupProps: TreasurePopupProps | SoldItemPopupProps | BoughtItemPopupProps;
+	popupProps: TreasurePopupProps | SoldItemPopupProps | BoughtItemPopupProps | InventoryFullPopupProps;
 	popupType: keyof typeof POPUP_TYPES;
 }
 
@@ -127,6 +130,26 @@ export const Popups = () => {
 				},
 			]);
 		});
+
+		Signals.inventoryFull.Connect(() => {
+			nextId.current++;
+			const newId = nextId.current;
+
+			setPopups((prev) => [
+				...prev,
+				{
+					id: newId,
+					popupType: "InventoryFull",
+					popupProps: {
+						onComplete: () => {
+							setPopups((prev2) => {
+								return prev2.filter((popup) => popup.id !== newId);
+							});
+						},
+					},
+				},
+			]);
+		});
 	}, []);
 
 	return (
@@ -151,6 +174,8 @@ export const Popups = () => {
 					return <SoldItemPopup key={popup.id} {...(popup.popupProps as SoldItemPopupProps)} />;
 				} else if (popup.popupType === "BoughtItem") {
 					return <BoughtItemPopup key={popup.id} {...(popup.popupProps as BoughtItemPopupProps)} />;
+				} else if (popup.popupType === "InventoryFull") {
+					return <InventoryFullPopup key={popup.id} {...(popup.popupProps as InventoryFullPopupProps)} />;
 				}
 			})}
 		</frame>

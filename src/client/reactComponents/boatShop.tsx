@@ -1,6 +1,6 @@
 //!optimize 2
 import React, { Dispatch, useEffect } from "@rbxts/react";
-import { UiController } from "client/controllers/uiController";
+import UiController from "client/controllers/uiController";
 import { useMotion } from "client/hooks/useMotion";
 import { Events, Functions } from "client/network";
 import { springs } from "client/utils/springs";
@@ -699,9 +699,11 @@ export const BoatShopComponent: React.FC<ShopProps> = (props) => {
 	React.useEffect(() => {
 		if (visible) {
 			popInMotion.spring(UDim2.fromScale(0.631, 0.704), springs.responsive);
-			Functions.getOwnedBoats().then((ownedBoats) => {
-				setOwnedBoats(ownedBoats);
-			}).catch(warn);
+			Functions.getOwnedBoats()
+				.then((ownedBoats) => {
+					setOwnedBoats(ownedBoats);
+				})
+				.catch(warn);
 
 			const connection = Events.updateBoatInventory.connect((ownedBoats) => {
 				setOwnedBoats(ownedBoats);

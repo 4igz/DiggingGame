@@ -1,7 +1,7 @@
 //!optimize 2
 import React, { createRef } from "@rbxts/react";
 import { AnimatedButton, ExitButton } from "./inventory";
-import { UiController } from "client/controllers/uiController";
+import UiController from "client/controllers/uiController";
 import { gameConstants } from "shared/gameConstants";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
@@ -44,6 +44,7 @@ const BuyButton = (props: BuyButtonProps) => {
 			Size={props.size ?? UDim2.fromScale(0.854, 0.245)}
 			BackgroundTransparency={1}
 			AnchorPoint={props.anchorPoint ?? new Vector2(0.5, 0.5)}
+			ZIndex={10}
 		>
 			<uilistlayout
 				key={"UIListLayout"}
@@ -384,7 +385,7 @@ const DigProduct = (props: MoreDiggingProduct) => {
 			layoutOrder={3}
 			scales={new NumberRange(0.975, 1.025)}
 			productType={ProductType.DevProduct}
-			productId={2683148761}
+			productId={gameConstants.DEVPRODUCT_IDS["MoreDigging"]}
 			predicate={() => {
 				return digLevel < gameConstants.MAX_MULTIDIG_LEVEL;
 			}}
@@ -429,10 +430,14 @@ const DigProduct = (props: MoreDiggingProduct) => {
 					key={"Title"}
 					Position={UDim2.fromScale(0.295, 0.823)}
 					Size={UDim2.fromScale(0.589, 1.65)}
-					Text={"Add 1+ shovel to every dig!"}
+					Text={`Add 1+ shovel to every dig!${
+						digLevel > 0
+							? ` Current Level: ${`${digLevel >= gameConstants.MAX_MULTIDIG_LEVEL ? "MAX" : digLevel}`}`
+							: ""
+					}`}
 					TextColor3={Color3.fromRGB(255, 255, 255)}
 					TextScaled={false}
-					TextSize={px(30)}
+					TextSize={px(27)}
 					TextXAlignment={Enum.TextXAlignment.Left}
 					ZIndex={10}
 				>
@@ -503,7 +508,7 @@ const DigProduct = (props: MoreDiggingProduct) => {
 
 				<BuyButton
 					position={UDim2.fromScale(0.88, 0.7)}
-					id={2683148761}
+					id={gameConstants.DEVPRODUCT_IDS["MoreDigging"]}
 					layoutOrder={2}
 					size={UDim2.fromScale(0.258, 0.58)}
 					productType={Enum.InfoType.Product}
@@ -893,7 +898,7 @@ const LimitedOffer = () => {
 				</frame>
 				<BuyButton
 					position={UDim2.fromScale(0.82, 0.5)}
-					id={2683148761}
+					id={gameConstants.DEVPRODUCT_IDS["MoreDigging"]}
 					layoutOrder={2}
 					size={UDim2.fromScale(0.421, 0.58)}
 					isDiscounted={true}
@@ -1706,10 +1711,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							gamepassId={gameConstants.GAMEPASS_IDS.x2Strength}
 							gamepassName="x2 Strength!"
 						/>
-						<GamepassButton
-							gamepassId={gameConstants.GAMEPASS_IDS.x2Luck}
-							gamepassName="x2 Luck!"
-						/>
+						<GamepassButton gamepassId={gameConstants.GAMEPASS_IDS.x2Luck} gamepassName="x2 Luck!" />
 						<GamepassButton
 							gamepassId={gameConstants.GAMEPASS_IDS.SellEverywhere}
 							gamepassName="Sell Everywhere!"
@@ -1865,120 +1867,12 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							<uipadding key={"UIPadding"} PaddingLeft={new UDim(0.01, 0)} />
 						</frame>
 
-						<frame
-							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-							BackgroundTransparency={1}
-							BorderColor3={Color3.fromRGB(0, 0, 0)}
-							BorderSizePixel={0}
-							key={"Info"}
-							Position={UDim2.fromScale(0.048, 0.355)}
-							Size={UDim2.fromScale(0.904, 0.476)}
-							ZIndex={10}
-						>
-							<frame
-								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-								BackgroundTransparency={1}
-								BorderColor3={Color3.fromRGB(0, 0, 0)}
-								BorderSizePixel={0}
-								key={"Price"}
-								Position={UDim2.fromScale(0.735, 0.417)}
-								Size={UDim2.fromScale(0.283, 0.58)}
-							>
-								<frame
-									BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-									BackgroundTransparency={1}
-									BorderColor3={Color3.fromRGB(0, 0, 0)}
-									BorderSizePixel={0}
-									key={"Buy Btn Frame"}
-									Position={UDim2.fromScale(-0.0902, 0.00862)}
-									Size={UDim2.fromScale(1, 1)}
-								>
-									<imagebutton
-										AnchorPoint={new Vector2(0.5, 0.5)}
-										BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-										BackgroundTransparency={1}
-										BorderColor3={Color3.fromRGB(0, 0, 0)}
-										BorderSizePixel={0}
-										Image={"rbxassetid://92239062767450"}
-										key={"Buy Btn"}
-										Position={UDim2.fromScale(0.487, 0.5)}
-										ScaleType={Enum.ScaleType.Slice}
-										Size={UDim2.fromScale(0.849, 1.07)}
-										SliceCenter={new Rect(47, 94, 539, 94)}
-									>
-										<frame
-											AnchorPoint={new Vector2(0.5, 0.5)}
-											BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-											BackgroundTransparency={1}
-											BorderColor3={Color3.fromRGB(0, 0, 0)}
-											BorderSizePixel={0}
-											key={"Discount Number"}
-											Position={UDim2.fromScale(0.5, 0.492)}
-											Size={UDim2.fromScale(0.829, 0.524)}
-										>
-											<uilistlayout
-												key={"UIListLayout"}
-												FillDirection={Enum.FillDirection.Horizontal}
-												HorizontalAlignment={Enum.HorizontalAlignment.Center}
-												SortOrder={Enum.SortOrder.LayoutOrder}
-												VerticalAlignment={Enum.VerticalAlignment.Center}
-											/>
-
-											<imagelabel
-												BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-												BackgroundTransparency={1}
-												BorderColor3={Color3.fromRGB(0, 0, 0)}
-												BorderSizePixel={0}
-												Image={"rbxassetid://114732216650363"}
-												key={"Robux"}
-												Position={UDim2.fromScale(0.0126, 0.129)}
-												ScaleType={Enum.ScaleType.Fit}
-												Size={UDim2.fromScale(0.227, 1)}
-											>
-												<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-											</imagelabel>
-
-											<textlabel
-												AnchorPoint={new Vector2(0.5, 0.5)}
-												BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-												BackgroundTransparency={1}
-												BorderColor3={Color3.fromRGB(0, 0, 0)}
-												BorderSizePixel={0}
-												FontFace={
-													new Font(
-														"rbxassetid://16658221428",
-														Enum.FontWeight.Bold,
-														Enum.FontStyle.Normal,
-													)
-												}
-												key={"Timer"}
-												Position={UDim2.fromScale(0.656, 0.5)}
-												Size={UDim2.fromScale(0.359, 1)}
-												Text={"2999"}
-												TextColor3={Color3.fromRGB(255, 255, 255)}
-												TextScaled={true}
-												TextWrapped={true}
-												ZIndex={10}
-											>
-												<uistroke
-													key={"UIStroke"}
-													Color={Color3.fromRGB(8, 66, 34)}
-													Thickness={3}
-												/>
-											</textlabel>
-										</frame>
-									</imagebutton>
-								</frame>
-
-								<uilistlayout
-									key={"UIListLayout"}
-									FillDirection={Enum.FillDirection.Horizontal}
-									HorizontalAlignment={Enum.HorizontalAlignment.Right}
-									SortOrder={Enum.SortOrder.LayoutOrder}
-									VerticalAlignment={Enum.VerticalAlignment.Center}
-								/>
-							</frame>
-						</frame>
+						<BuyButton
+							position={UDim2.fromScale(0.8, 0.7)}
+							size={UDim2.fromScale(0.3, 0.4)}
+							productType={Enum.InfoType.Product}
+							id={gameConstants.DEVPRODUCT_IDS["1M Massive Money Pack"]}
+						/>
 
 						<canvasgroup
 							BackgroundColor3={Color3.fromRGB(255, 255, 255)}

@@ -1,6 +1,6 @@
 //!optimize 2
 import React from "@rbxts/react";
-import { UiController } from "client/controllers/uiController";
+import UiController from "client/controllers/uiController";
 import { useMotion } from "client/hooks/useMotion";
 import { Events, Functions } from "client/network";
 import { springs } from "client/utils/springs";
@@ -287,6 +287,7 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 				position={UDim2.fromScale(0.5, 0.85)}
 				size={UDim2.fromScale(0.278, 0.154)}
 				requiresGamepass={false}
+				visible={true}
 			/>
 		</frame>
 	);

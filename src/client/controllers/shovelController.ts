@@ -634,10 +634,6 @@ export class ShovelController implements OnStart {
 				// Kick up some dirt blocks (using parts)
 				const origin = target.position;
 
-				const map = CollectionService.GetTagged("Map").filter(
-					(instance) => instance.Name === target.mapName,
-				)[0];
-
 				const params = new RaycastParams();
 				params.FilterType = Enum.RaycastFilterType.Exclude;
 				params.FilterDescendantsInstances = [

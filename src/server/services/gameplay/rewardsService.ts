@@ -75,18 +75,18 @@ export class DailyRewardsService implements OnStart {
 				return;
 			}
 
-			profile.Data.dailyStreak++;
-			profile.Data.lastDailyClaimed = tick();
-			profile.Data.dailyStreak = profile.Data.dailyStreak % dailyRewards.size(); // Resets streak if it reaches the end
-
 			let reward = dailyRewards[profile.Data.dailyStreak];
 			if (!reward) {
 				warn(`No reward found for daily streak ${profile.Data.dailyStreak}`);
 				profile.Data.dailyStreak = 0;
 				reward = dailyRewards[0];
 			}
+
 			this.claimReward(player, reward);
 
+			profile.Data.dailyStreak++;
+			profile.Data.lastDailyClaimed = tick();
+			profile.Data.dailyStreak = profile.Data.dailyStreak % dailyRewards.size(); // Resets streak if it reaches the end
 			Events.updateDailyStreak(player, profile.Data.dailyStreak, profile.Data.lastDailyClaimed);
 			this.profileService.setProfile(player, profile);
 		});

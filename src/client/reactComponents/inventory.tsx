@@ -1,6 +1,6 @@
 //!optimize 2
 import React, { createRef, Dispatch, useEffect, useState } from "@rbxts/react";
-import { UiController } from "client/controllers/uiController";
+import UiController from "client/controllers/uiController";
 import { gameConstants } from "shared/gameConstants";
 import { Item, type ItemType, Rarity, SkillName } from "shared/networkTypes";
 import { Events, Functions } from "client/network";
@@ -13,16 +13,13 @@ import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
 import { fullTargetConfig, targetConfig, trashConfig } from "shared/config/targetConfig";
 import { mapConfig } from "shared/config/mapConfig";
 import Object from "@rbxts/object-utils";
-import { usePx } from "client/hooks/usePx";
 import { getOneInXChance } from "shared/util/targetUtil";
 import { potionConfig } from "shared/config/potionConfig";
 import { inventorySizeAtom, treasureCountAtom } from "client/atoms/inventoryAtoms";
 import { Signals } from "shared/signals";
 import { GamepassController } from "client/controllers/gamepassController";
 import { getOrderFromRarity } from "shared/util/rarityUtil";
-import { Networking, NetworkingFunctionError } from "@flamework/networking";
-import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
-import { set } from "@rbxts/sift/out/Array";
+import { NetworkingFunctionError } from "@flamework/networking";
 
 export function capitalizeWords(str: string): string {
 	return str
@@ -48,6 +45,8 @@ interface AnimatedButtonProps {
 	Ref?: React.Ref<Frame>;
 	active?: boolean;
 	selectable?: boolean;
+	clickable?: boolean;
+	visible?: boolean;
 }
 
 export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
@@ -61,7 +60,9 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
 	scales,
 	children,
 	zindex,
+	visible,
 	selectable,
+	clickable = true,
 	Ref: ref,
 	active = true,
 }) => {
@@ -87,6 +88,7 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
 			LayoutOrder={layoutOrder ?? 0}
 			ZIndex={zindex ?? 10}
 			ref={ref}
+			Visible={visible}
 		>
 			<imagebutton
 				BackgroundTransparency={1}
@@ -98,14 +100,17 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
 				Selectable={selectable}
 				Event={{
 					MouseEnter: () => {
+						if (!active) return;
 						onHover?.();
 						setIsHovered(true);
 					},
 					MouseLeave: () => {
+						if (!active) return;
 						onLeave?.();
 						setIsHovered(false);
 					},
 					MouseButton1Click: () => {
+						if (!active || !clickable) return;
 						// Check for undefined, because we only want a pressing animation if a click event is defined
 						if (onClick !== undefined) {
 							setPressed(true);
@@ -140,10 +145,10 @@ interface GenericItemProps {
 const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 	const { itemImage, itemName, rarity, stats, itemType, isEquipped } = props;
 	const [isHovered, setIsHovered] = React.useState(false);
-	const [isPressed, setPressed] = React.useState(false);
+	const [, setPressed] = React.useState(false);
 	const [size, sizeMotion] = useMotion(1);
-	const [MIN_SCALE, MAX_SCALE] = [0.95, 1.05];
-	const [orderModifier, setOrderModifier] = React.useState(0);
+	const [, MAX_SCALE] = [0.95, 1.05];
+	const [layoutOrder, setLayoutOrder] = React.useState(0);
 
 	useEffect(() => {
 		// sizeMotion.spring(isHovered ? START_SZ.add(SZ_INC) : START_SZ, springs.bubbly);
@@ -158,7 +163,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 		// Get either strength or luck stat and set the order modifier based on that
 		const stat = stats.find((s) => s.key === "strength" || s.key === "luck");
 		if (stat) {
-			setOrderModifier(tonumber(stat.value) ?? 0);
+			setLayoutOrder(getOrderFromRarity(rarity, tonumber(stat.value)));
 		}
 	}, []);
 
@@ -169,7 +174,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 			BackgroundTransparency={1}
 			BorderColor3={Color3.fromRGB(0, 0, 0)}
 			BorderSizePixel={0}
-			LayoutOrder={getOrderFromRarity(rarity, orderModifier)}
+			LayoutOrder={layoutOrder}
 			key={"Item"}
 			Position={UDim2.fromScale(0, 0.5)}
 			Size={size.map((s) => {
@@ -1223,6 +1228,7 @@ interface SellAllBtnProps {
 	anchorPoint?: Vector2;
 	requiresGamepass: boolean;
 	gamepassController?: GamepassController;
+	visible: boolean;
 }
 
 export const SellAllBtn = (props: SellAllBtnProps) => {
@@ -1233,6 +1239,7 @@ export const SellAllBtn = (props: SellAllBtnProps) => {
 			position={props.position}
 			anchorPoint={props.anchorPoint ?? new Vector2(0.5, 0.5)}
 			selectable={false}
+			visible={props.visible}
 			onClick={() => {
 				if (props.requiresGamepass && !props.gamepassController?.getOwnsGamepass("SellEverywhere")) {
 					// TODO: Prompt gamepass purchase.
@@ -1449,6 +1456,46 @@ const IndexPageItem = (props: IndexPageItemProps) => {
 		return undefined;
 	}
 
+	// Lord forgive me
+	const CUSTOM_IMAGE_SIZES: Record<string, UDim2> = {
+		"Bag of coins": UDim2.fromScale(0.9100381731987, 0.8529204726219177),
+		Diamond: UDim2.fromScale(1, 1),
+		"Gold chalice": UDim2.fromScale(0.8830496072769165, 0.8424146771430969),
+		"Bejeweled pegleg": UDim2.fromScale(0.8560611605644226, 0.769302248954773),
+		"Golden eyepatch": UDim2.fromScale(0.8470649123191833, 0.8739317655563354),
+		"Treasure chest": UDim2.fromScale(0.7559078931808472, 0.7898862361907959),
+		"Jade fish": UDim2.fromScale(0.7660993933677673, 0.8634262084960938),
+		"Cool shell": UDim2.fromScale(0.8830496072769165, 0.8949432969093323),
+		Necklace: UDim2.fromScale(0.8920458555221558, 0.8437936902046204),
+		Ruby: UDim2.fromScale(0.8470649719238281, 0.8003919720649719),
+		Ring: UDim2.fromScale(1, 1),
+		"Ancient artifact": UDim2.fromScale(0.9460229277610779, 0.9154517650604248),
+		"Volcano's tear": UDim2.fromScale(0.883049726486206, 0.8452515006065369),
+		"Heat rock": UDim2.fromScale(0.7559078335762024, 0.7671473622322083),
+		"Volcano rock": UDim2.fromScale(0.7559078335762024, 0.810268223285675),
+		"Obsidian crown": UDim2.fromScale(0.9113808274269104, 0.8664734363555908),
+		Skull: UDim2.fromScale(0.7119847536087036, 0.6986404657363892),
+		"T-Rex skull": UDim2.fromScale(0.6676746606826782, 0.7543591260910034),
+		"T-Rex tooth": UDim2.fromScale(0.7045997381210327, 0.6722814440727234),
+		"Obsidian shard": UDim2.fromScale(0.883049726486206, 0.7757713794708252),
+		"Lava bucket": UDim2.fromScale(0.7710647583007812, 0.7671473622322083),
+		"Coal artifact": UDim2.fromScale(0.8227602243423462, 0.7757713794708252),
+		Ammonoids: UDim2.fromScale(0.8744553327560425, 0.8452515006065369),
+		"Jade statue": UDim2.fromScale(0.7559078335762024, 0.7543591260910034),
+		Icecicle: UDim2.fromScale(1, 1),
+		"Frozen teddy": UDim2.fromScale(0.7267543077468872, 0.6981539130210876),
+		"Mammoth tusk": UDim2.fromScale(0.7193697094917297, 0.6809055805206299),
+		"Topaz amulet": UDim2.fromScale(0.7858352065086365, 0.632728636264801),
+		Gift: UDim2.fromScale(0.8892248868942261, 0.8484111428260803),
+		"Small gift": UDim2.fromScale(0.7559078335762024, 0.7498990297317505),
+		"Viking sword": UDim2.fromScale(0.8523002862930298, 0.8016439080238342),
+		"Frozen ring": UDim2.fromScale(0.7267547249794006, 0.6981539726257324),
+		"Viking helmet": UDim2.fromScale(0.7559078335762024, 0.7671473622322083),
+		"Viking dagger": UDim2.fromScale(0.9421296715736389, 0.8884709477424622),
+		"Sapphire gem": UDim2.fromScale(0.8375303149223328, 0.8884709477424622),
+		"Diamond yeti": UDim2.fromScale(0.5812065005302429, 0.8484105467796326),
+	};
+
 	return (
 		<frame Size={UDim2.fromScale(0.25, 0.343)} BackgroundTransparency={1} LayoutOrder={itemCfg.rarity}>
 			<AnimatedButton
@@ -1468,12 +1515,24 @@ const IndexPageItem = (props: IndexPageItemProps) => {
 					Image={"rbxassetid://118068418947215"}
 				>
 					<imagelabel
-						Size={UDim2.fromScale(1, 1)}
+						Size={CUSTOM_IMAGE_SIZES[props.itemName] ?? UDim2.fromScale(0.581, 0.848)}
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						Position={UDim2.fromScale(0.5, 0.5)}
 						BackgroundTransparency={1}
 						ScaleType={Enum.ScaleType.Fit}
 						Image={fullTargetConfig[props.itemName].itemImage}
+						ImageTransparency={!props.unlocked ? 0.5 : 0}
 					>
-						<uigradient Color={new ColorSequence(Color3.fromRGB(0, 0, 0))} Enabled={!props.unlocked} />
+						<uigradient
+							Color={
+								new ColorSequence([
+									new ColorSequenceKeypoint(0, Color3.fromRGB(0, 0, 0)),
+									new ColorSequenceKeypoint(1, Color3.fromRGB(0, 0, 0)),
+								])
+							}
+							Enabled={!props.unlocked}
+							key={".1"}
+						/>
 					</imagelabel>
 				</imagelabel>
 			</AnimatedButton>
@@ -1488,7 +1547,6 @@ const RefundPointFrame = () => {
 	const [MIN_SCALE, MAX_SCALE] = [0.95, 1.05];
 
 	useEffect(() => {
-		// sizeMotion.spring(isHovered ? START_SZ.add(SZ_INC) : START_SZ, springs.bubbly);
 		sizeMotion.spring(isHovered ? MAX_SCALE : 1, springs.responsive);
 	}, [isHovered]);
 
@@ -2310,6 +2368,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 							position={UDim2.fromScale(0.68, 0.5)}
 							requiresGamepass={true}
 							gamepassController={props.gamepassController}
+							visible={selectedInventoryType === "Target"}
 						/>
 					</frame>
 				</frame>
@@ -2570,6 +2629,8 @@ export const InventoryComponent = (props: MainUiProps) => {
 							Size={UDim2.fromScale(1, 1)}
 						/>
 
+						<uistroke key={"UIStroke"} Thickness={3.6} />
+
 						<scrollingframe
 							Active={true}
 							AnchorPoint={new Vector2(0.5, 0.5)}
@@ -2597,17 +2658,26 @@ export const InventoryComponent = (props: MainUiProps) => {
 
 							{Object.entries(mapConfig).map(([isleName, isleCfg]) => {
 								return (
-									<textlabel
-										Text={` ---${isleName}`}
+									<frame
+										Size={UDim2.fromScale(1, 0.2)}
 										BackgroundTransparency={1}
-										Font={Enum.Font.BuilderSansBold}
-										TextColor3={gameConstants.MAP_THEME_COLORS[isleName]}
-										TextXAlignment={Enum.TextXAlignment.Left}
-										Size={new UDim2(1, 0, 0.1, 0)}
 										LayoutOrder={isleCfg.order}
-										TextYAlignment={Enum.TextYAlignment.Bottom}
-										TextScaled={true}
-									/>
+									>
+										<textlabel
+											Text={` - ${isleName}`}
+											BackgroundTransparency={1}
+											Font={Enum.Font.BuilderSansBold}
+											TextColor3={new Color3(1, 1, 1)}
+											TextXAlignment={Enum.TextXAlignment.Left}
+											AnchorPoint={new Vector2(0.5, 0.5)}
+											Size={UDim2.fromScale(1, 0.5)}
+											Position={UDim2.fromScale(0.5, 0.5)}
+											TextYAlignment={Enum.TextYAlignment.Bottom}
+											TextScaled={true}
+										>
+											<uistroke key={"UIStroke"} Thickness={4.5} />
+										</textlabel>
+									</frame>
 								);
 							})}
 
@@ -2717,6 +2787,9 @@ export const InventoryComponent = (props: MainUiProps) => {
 										? targetConfig[selectedIndexItem.targetName]?.itemImage ??
 										  "rbxassetid://113782765462239"
 										: "rbxassetid://113782765462239"
+								}
+								ImageTransparency={
+									unlockedTreasures?.has(selectedIndexItem.targetName) === false ? 0.4 : 0
 								}
 							>
 								<uicorner key={"UICorner"} />

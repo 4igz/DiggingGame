@@ -1,22 +1,29 @@
 //!optimize 2
 import { Rarity } from "shared/networkTypes";
 
-export const getOrderFromRarity = (rarity: Rarity, modifier: number = 0): number => {
-	return (
-		(rarity === "Secret"
-			? 100
+export const getOrderFromRarity = (rarity: Rarity, statValue: number = 0): number => {
+	const rarityBase =
+		rarity === "Secret"
+			? 100000
 			: rarity === "Mythical"
-			? 200
+			? 200000
 			: rarity === "Legendary"
-			? 300
+			? 300000
 			: rarity === "Epic"
-			? 400
+			? 400000
 			: rarity === "Rare"
-			? 500
+			? 500000
 			: rarity === "Uncommon"
-			? 600
+			? 600000
 			: rarity === "Common"
-			? 700
-			: 0) - modifier
-	);
+			? 700000
+			: 800000;
+
+	// Calculate offset based on the stat value (strength/luck)
+	// Multiply by -100 to ensure higher stats appear first within the same rarity
+	// Then round to ensure we get an integer
+	const statOffset = statValue > 0 ? math.floor(-100 * statValue) : 0;
+
+	// Return combined integer value (still ensuring higher stats are shown first)
+	return rarityBase + statOffset;
 };

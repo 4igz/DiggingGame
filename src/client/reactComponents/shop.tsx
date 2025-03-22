@@ -1,6 +1,6 @@
 //!optimize 2
 import React, { Dispatch, useEffect } from "@rbxts/react";
-import { UiController } from "client/controllers/uiController";
+import UiController from "client/controllers/uiController";
 import { useMotion } from "client/hooks/useMotion";
 import { Events, Functions } from "client/network";
 import { springs } from "client/utils/springs";

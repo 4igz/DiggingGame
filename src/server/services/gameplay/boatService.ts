@@ -9,6 +9,7 @@ import { boatConfig } from "shared/config/boatConfig";
 import { gameConstants } from "shared/gameConstants";
 import { interval } from "shared/util/interval";
 import { ProfileService } from "../backend/profileService";
+import { ZoneService } from "../backend/zoneService";
 
 @Service({})
 export class BoatService implements OnStart, OnTick {
@@ -21,7 +22,7 @@ export class BoatService implements OnStart, OnTick {
 
 	private BOAT_DESPAWN_TIMER = 15;
 
-	constructor(private readonly profileService: ProfileService) {}
+	constructor(private readonly profileService: ProfileService, private readonly zoneService: ZoneService) {}
 
 	onStart() {
 		const boatSpawnCooldown = interval(1);
@@ -219,7 +220,8 @@ export class BoatService implements OnStart, OnTick {
 		for (const [boatId, lastActiveTime] of this.lastActiveBoatTimes) {
 			if (tick() - lastActiveTime > this.BOAT_DESPAWN_TIMER) {
 				const boat = this.spawnedBoats.get(boatId);
-				if (boat) {
+				const boatOwner = this.boatOwners.get(boatId);
+				if (boat && boatOwner && boatOwner.Parent === Players && !this.zoneService.isPlayerAtSeas(boatOwner)) {
 					boat.Destroy();
 					this.spawnedBoats.delete(boatId);
 					this.boatOwners.delete(boatId);

@@ -25,6 +25,8 @@ export class DevproductService implements OnStart, OnTick, OnInit {
 				if (profile?.Data.multiDigLevel >= gameConstants.MAX_MULTIDIG_LEVEL) {
 					return false;
 				}
+			default:
+				break;
 		}
 		return true;
 	}

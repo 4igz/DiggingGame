@@ -2,7 +2,7 @@
 import Object from "@rbxts/object-utils";
 import React, { useEffect, useState } from "@rbxts/react";
 import { Players, ReplicatedStorage, RunService, SoundService, TweenService, Workspace } from "@rbxts/services";
-import { UiController } from "client/controllers/uiController";
+import UiController from "client/controllers/uiController";
 import { useMotion } from "client/hooks/useMotion";
 import { usePx } from "client/hooks/usePx";
 import { springs } from "client/utils/springs";

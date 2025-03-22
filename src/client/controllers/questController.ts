@@ -1,7 +1,6 @@
 //!optimize 2
 import { Controller, OnStart } from "@flamework/core";
 import { CollectionService, Players, ReplicatedStorage, TweenService } from "@rbxts/services";
-import { UiController } from "./uiController";
 import {
 	DialogResponse,
 	IDLE,
@@ -20,6 +19,7 @@ import TypewriterBillboard from "client/reactComponents/typeWritingBillboard";
 import React from "@rbxts/react";
 import Object from "@rbxts/object-utils";
 import { debugWarn } from "shared/util/logUtil";
+import UiController from "./uiController";
 
 const registeredNpcs = new Set<Instance>();
 let questProgress = new Map<keyof typeof questConfig, QuestProgress>();

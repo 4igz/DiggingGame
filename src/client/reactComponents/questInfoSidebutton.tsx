@@ -15,9 +15,7 @@ const getActiveQuest = (
 	return undefined;
 };
 
-interface QuestInfoSideButtonProps {}
-
-export const QuestInfoSideButton = (props: QuestInfoSideButtonProps) => {
+export const QuestInfoSideButton = () => {
 	const [questInfo, setQuestInfo] = React.useState<Map<keyof typeof questConfig, QuestProgress>>();
 	const [activeQuest, setActiveQuest] = React.useState<
 		{ name: keyof typeof questConfig; info: QuestProgress } | undefined
@@ -61,7 +59,7 @@ export const QuestInfoSideButton = (props: QuestInfoSideButtonProps) => {
 			BorderColor3={Color3.fromRGB(0, 0, 0)}
 			BorderSizePixel={0}
 			key={"Sidebar"}
-			Position={UDim2.fromScale(1.013, 0.35)}
+			Position={UDim2.fromScale(1.013, 0.6)}
 			Size={UDim2.fromScale(0.275, 0.124)}
 			Visible={activeQuest !== undefined}
 		>

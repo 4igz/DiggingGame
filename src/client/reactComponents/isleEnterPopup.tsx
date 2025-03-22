@@ -102,6 +102,7 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 	const [, transparencyMotion] = useMotion(1);
 	const [isleItems, setIsleItems] = useState<ItemProps[]>([]);
 	const [currentStrength, setCurrentStrength] = useState(0);
+	const [resetTick, setResetTick] = useState(0);
 	const frameRef = createRef<Frame>();
 
 	useEffect(() => {
@@ -170,13 +171,14 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 			cleaned = true;
 			unsub2();
 		};
-	}, [isleName]);
+	}, [isleName, resetTick]);
 
 	useEffect(() => {
 		props.zoneController.isleZoneMap.forEach((zone, name) => {
 			connectedZoneNames.add(name);
 			zone.localPlayerEntered.Connect(() => {
 				setIsleName(name);
+				setResetTick(time());
 			});
 		});
 
@@ -186,6 +188,7 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 				connectedZoneNames.add(name);
 				zone.localPlayerEntered.Connect(() => {
 					setIsleName(name);
+					setResetTick(time());
 				});
 			});
 		});

@@ -56,15 +56,27 @@ export class LevelService implements OnStart {
 
 	private xpForLevel(level: number): number {
 		const BASE_EXP = 100;
-		const LEVEL_FORMULA_TRANSITION = 100;
-		const TRANSITION_MODIFIER = 50; // At 50, it will meet the logarithmic formula and then increase linearly.
+		const LEVEL_FORMULA_TRANSITION = 80;
+		const TRANSITION_MODIFIER = 13;
+		const LEVEL_EXPONENT = 1.5;
 
 		if (level < LEVEL_FORMULA_TRANSITION) {
-			return math.floor(BASE_EXP * math.log(level + 1));
-		} else {
 			return math.floor(BASE_EXP * (level / TRANSITION_MODIFIER));
+		} else {
+			return math.floor(math.pow(level, LEVEL_EXPONENT));
 		}
 	}
+	// private xpForLevel(level: number): number {
+	// 	const BASE_EXP = 100;
+	// 	const LEVEL_FORMULA_TRANSITION = 20;
+	// 	const TRANSITION_MODIFIER = 15; // Attempt to meet the logarithmic formula and then increase linearly.
+
+	// 	if (level < LEVEL_FORMULA_TRANSITION) {
+	// 		return math.floor(BASE_EXP * math.log(level + 1, 10));
+	// 	} else {
+	// 		return math.floor(BASE_EXP * (level / TRANSITION_MODIFIER));
+	// 	}
+	// }
 
 	public addExperience(player: Player, amt: number): void {
 		const playerProfile = this.playerDataService.getProfile(player);

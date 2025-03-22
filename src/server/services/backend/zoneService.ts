@@ -79,6 +79,17 @@ export class ZoneService implements OnStart {
 		});
 	}
 
+	isPlayerAtSeas(player: Player): boolean {
+		let isAtSeas = true;
+		for (const [_, zone] of this.zoneMap) {
+			if (zone.findPlayer(player)) {
+				isAtSeas = false;
+				break;
+			}
+		}
+		return isAtSeas;
+	}
+
 	async streamSpawn(player: Player, zoneName: keyof typeof mapConfig) {
 		const map = CollectionService.GetTagged("Map").filter((instance) => instance.Name === zoneName)[0];
 		const spawn = map.FindFirstChild("SpawnLocation") as Model;
