@@ -52,7 +52,7 @@ local metalDetectorConfig = {
 		searchRadius = 35,
 		itemImage = "rbxassetid://123979343978192",
 		rarityType = "Uncommon",
-		price = 20000,
+		price = 25000,
 		shopOrder = 3,
 	},
 	RubyDetector = {
@@ -61,7 +61,7 @@ local metalDetectorConfig = {
 		searchRadius = 32.5,
 		itemImage = "rbxassetid://80842349596350",
 		rarityType = "Rare",
-		price = 75000,
+		price = 100000,
 		shopOrder = 4,
 	},
 	EnchantedDetector = {
@@ -70,7 +70,7 @@ local metalDetectorConfig = {
 		searchRadius = 30,
 		itemImage = "rbxassetid://100950657608323",
 		rarityType = "Rare",
-		price = 150000,
+		price = 250000,
 		shopOrder = 5,
 	},
 	DemonicDetector = {
@@ -79,7 +79,7 @@ local metalDetectorConfig = {
 		searchRadius = 27.5,
 		itemImage = "rbxassetid://76078468216770",
 		rarityType = "Epic",
-		price = 500000,
+		price = 750000,
 		shopOrder = 6,
 	},
 	HeavenlyDetector = {

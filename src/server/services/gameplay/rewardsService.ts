@@ -10,6 +10,9 @@ import { timePlayedRewards } from "shared/config/timePlayedConfig";
 import { Signals } from "shared/signals";
 import { potionConfig } from "shared/config/potionConfig";
 import { InventoryService } from "./inventoryService";
+import { shovelConfig } from "shared/config/shovelConfig";
+import { boatConfig } from "shared/config/boatConfig";
+import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
 
 @Service({})
 export class DailyRewardsService implements OnStart {
@@ -60,6 +63,21 @@ export class DailyRewardsService implements OnStart {
 					if (potionConfig[reward.itemName!] === undefined) {
 						error(`No potion found for reward ${reward.itemName}`);
 					}
+					break;
+				case "Shovels":
+					assert(
+						shovelConfig[reward.itemName!] !== undefined,
+						`No shovel found for reward ${reward.itemName}`,
+					);
+					break;
+				case "Boats":
+					assert(boatConfig[reward.itemName!] !== undefined, `No boat found for reward ${reward.itemName}`);
+					break;
+				case "MetalDetectors":
+					assert(
+						metalDetectorConfig[reward.itemName!] !== undefined,
+						`No metal detector found for reward ${reward.itemName}`,
+					);
 					break;
 				default:
 					error(`Unknown reward type: ${reward.rewardType}`);
@@ -150,6 +168,15 @@ export class DailyRewardsService implements OnStart {
 					error(`No potion found for reward ${reward.itemName}`);
 				}
 				this.inventoryService.givePotion(player, reward.itemName!);
+			case "Boats":
+				this.inventoryService.onBoatBoughtSuccess(player, reward.itemName!);
+				break;
+			case "Shovels":
+				this.inventoryService.onItemBoughtSuccess(player, "Shovels", reward.itemName!);
+				break;
+			case "MetalDetectors":
+				this.inventoryService.onItemBoughtSuccess(player, "MetalDetectors", reward.itemName!);
+				break;
 			default:
 				error(`Unknown reward type: ${reward.rewardType}`);
 		}

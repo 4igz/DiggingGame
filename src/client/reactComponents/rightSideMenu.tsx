@@ -8,6 +8,8 @@ import { AnimatedButton } from "./inventory";
 import UiController from "client/controllers/uiController";
 import { RunService, UserInputService } from "@rbxts/services";
 import { gameConstants } from "shared/gameConstants";
+import { subscribe } from "@rbxts/charm";
+import { hasDailyAtom, hasGiftAtom } from "client/atoms/rewardAtoms";
 
 interface MoneyVectorProps {
 	offset: UDim2;
@@ -126,6 +128,8 @@ export const RightSideMenu = (props: MenuProps) => {
 	const [, moneyMotion] = useMotion(0);
 	const [gamepadEnabled, setGamepadEnabled] = React.useState(UserInputService.GamepadEnabled);
 	const moneyFrameRef = createRef<Frame>();
+	const [hasGift, setHasGift] = useState(hasGiftAtom());
+	const [hasDaily, setHasDaily] = useState(hasDailyAtom());
 
 	const updateMoneyValue = (value: string) => {
 		const etNum = EternityNum.fromString(value);
@@ -172,6 +176,14 @@ export const RightSideMenu = (props: MenuProps) => {
 					props.uiController.toggleUi(menu as string);
 				}
 			}
+		});
+
+		subscribe(hasGiftAtom, (hasGift) => {
+			setHasGift(hasGift);
+		});
+
+		subscribe(hasDailyAtom, (hasDaily) => {
+			setHasDaily(hasDaily);
 		});
 	}, []);
 
@@ -351,6 +363,52 @@ export const RightSideMenu = (props: MenuProps) => {
 							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 						</imagelabel>
 
+						<frame
+							BackgroundColor3={Color3.fromRGB(255, 0, 0)}
+							BorderColor3={Color3.fromRGB(0, 0, 0)}
+							BorderSizePixel={0}
+							key={"Notification"}
+							Position={UDim2.fromScale(0.6, 0.0908)}
+							Size={UDim2.fromScale(0.307, 0.307)}
+							Visible={hasGift}
+							ZIndex={34}
+						>
+							<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
+
+							<textlabel
+								AnchorPoint={new Vector2(0.5, 0.5)}
+								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+								BackgroundTransparency={1}
+								BorderColor3={Color3.fromRGB(0, 0, 0)}
+								BorderSizePixel={0}
+								FontFace={
+									new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+								}
+								key={"Title"}
+								Position={UDim2.fromScale(0.5, 0.5)}
+								Size={UDim2.fromScale(1, 1)}
+								Text={"!"}
+								TextColor3={Color3.fromRGB(255, 255, 255)}
+								TextScaled={true}
+								TextWrapped={true}
+								ZIndex={10}
+							>
+								<uistroke key={"UIStroke"} Thickness={2} />
+
+								<uipadding
+									key={"UIPadding"}
+									PaddingBottom={new UDim(0.025, 0)}
+									PaddingLeft={new UDim(0.05, 0)}
+									PaddingRight={new UDim(0.05, 0)}
+									PaddingTop={new UDim(0.025, 0)}
+								/>
+							</textlabel>
+
+							<uistroke key={"UIStroke"} Thickness={2} />
+
+							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+						</frame>
+
 						<imagelabel
 							Image={UserInputService.GetImageForKeyCode(Enum.KeyCode.DPadRight)}
 							Position={UDim2.fromScale(0.5, 1)}
@@ -379,8 +437,59 @@ export const RightSideMenu = (props: MenuProps) => {
 							selectable={false}
 							onClick={() => {
 								props.uiController.toggleUi(gameConstants.DAILY_REWARD_UI);
+								hasDailyAtom(false);
 							}}
 						>
+							<frame
+								BackgroundColor3={Color3.fromRGB(255, 0, 0)}
+								BorderColor3={Color3.fromRGB(0, 0, 0)}
+								BorderSizePixel={0}
+								key={"Notification"}
+								Position={UDim2.fromScale(0.6, 0.0908)}
+								Size={UDim2.fromScale(0.307, 0.307)}
+								Visible={hasDaily}
+								ZIndex={32}
+							>
+								<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
+
+								<textlabel
+									AnchorPoint={new Vector2(0.5, 0.5)}
+									BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+									BackgroundTransparency={1}
+									BorderColor3={Color3.fromRGB(0, 0, 0)}
+									BorderSizePixel={0}
+									FontFace={
+										new Font(
+											"rbxassetid://16658221428",
+											Enum.FontWeight.Bold,
+											Enum.FontStyle.Normal,
+										)
+									}
+									key={"Title"}
+									Position={UDim2.fromScale(0.5, 0.5)}
+									Size={UDim2.fromScale(1, 1)}
+									Text={"!"}
+									TextColor3={Color3.fromRGB(255, 255, 255)}
+									TextScaled={true}
+									TextWrapped={true}
+									ZIndex={10}
+								>
+									<uistroke key={"UIStroke"} Thickness={2} />
+
+									<uipadding
+										key={"UIPadding"}
+										PaddingBottom={new UDim(0.025, 0)}
+										PaddingLeft={new UDim(0.05, 0)}
+										PaddingRight={new UDim(0.05, 0)}
+										PaddingTop={new UDim(0.025, 0)}
+									/>
+								</textlabel>
+
+								<uistroke key={"UIStroke"} Thickness={2} />
+
+								<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+							</frame>
+
 							<imagelabel
 								AnchorPoint={new Vector2(0.5, 0.5)}
 								BackgroundColor3={Color3.fromRGB(255, 255, 255)}

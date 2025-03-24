@@ -18,6 +18,10 @@ export class MoneyService implements OnStart {
 		Signals.addMoney.Connect((player, amount) => {
 			this.giveMoney(player, amount);
 		});
+
+		this.profileService.onProfileLoaded.Connect((player, profile) => {
+			Events.updateMoney.fire(player, profile.Data.money);
+		});
 	}
 
 	hasEnoughMoney(player: Player, amount: number) {

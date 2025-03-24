@@ -142,7 +142,7 @@ export const BoughtItemPopup = (props: BoughtItemPopupProps) => {
 				RichText={true}
 				Size={UDim2.fromScale(2, 2)}
 				TextXAlignment={Enum.TextXAlignment.Center}
-				Text={`You bought a <font color="rgb(${math.floor(RC[props.itemRarity].R * 255)},${math.floor(
+				Text={`You got a <font color="rgb(${math.floor(RC[props.itemRarity].R * 255)},${math.floor(
 					RC[props.itemRarity].G * 255,
 				)},${math.floor(RC[props.itemRarity].B * 255)})">${spaceWords(props.itemName)}</font>`}
 				TextColor3={Color3.fromRGB(255, 255, 255)}

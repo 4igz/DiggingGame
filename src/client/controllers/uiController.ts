@@ -309,7 +309,7 @@ export default class UiController implements OnStart, OnInit {
 			React.createElement(RightSideMenu),
 			{ uiController: this },
 			true,
-			undefined,
+			true,
 			LOW_LAYER,
 		);
 		this.registerUi(

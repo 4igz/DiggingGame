@@ -12,8 +12,9 @@ import { Events, Functions } from "client/network";
 import { AnimatedProductButton } from "./gamepassShop";
 import { ProductType } from "shared/config/shopConfig";
 import { getDeveloperProductInfo } from "shared/util/monetizationUtil";
-import Sift from "@rbxts/sift";
 import Object from "@rbxts/object-utils";
+import { ItemType, RewardType } from "shared/networkTypes";
+import { hasGiftAtom } from "client/atoms/rewardAtoms";
 
 const SEC_INTERVAL = interval(1);
 
@@ -32,16 +33,29 @@ const disabledGradient = new ColorSequence([
 const RewardSlot = (props: {
 	order: number;
 	cfg: PlaytimeReward;
-	timerRunning: boolean;
 	alreadyClaimed: boolean;
 	shouldResetClaims: boolean;
 	serverClaimed: boolean | undefined;
 	requiredTime: number;
+	rewardType: RewardType | ItemType;
+	rewardName: string | undefined;
 	onClaimed: (index: number) => void;
 }) => {
 	const [timeLeft, setTimeLeft] = useState(props.requiredTime - time());
 	const [serverAllowedToClaim, setServerAllowedToClaim] = useState(false);
 	const [claimed, setClaimed] = useState(props.alreadyClaimed);
+
+	const [rewardImage] = useState(
+		REWARD_IMAGES[props.rewardType] ??
+			gameConstants.SHOP_CONFIGS[props.rewardType as ItemType][props.rewardName!]?.itemImage ??
+			undefined,
+	);
+
+	useEffect(() => {
+		if (!rewardImage) {
+			warn(`No image found for reward type ${props.rewardType} ${props.rewardName}`);
+		}
+	}, [rewardImage]);
 
 	useEffect(() => {
 		if (props.shouldResetClaims) {
@@ -52,11 +66,7 @@ const RewardSlot = (props: {
 
 	useEffect(() => {
 		const thread = task.spawn(() => {
-			if (!props.timerRunning) return;
-			// if (claimed) {
-			// 	setClaimed(false);
-			// }
-			while (time() < props.requiredTime && props.timerRunning) {
+			while (time() < props.requiredTime) {
 				if (SEC_INTERVAL(props.order)) {
 					setTimeLeft(props.requiredTime - time());
 				}
@@ -67,10 +77,14 @@ const RewardSlot = (props: {
 			}
 		});
 
+		if (!hasGiftAtom()) {
+			hasGiftAtom(!claimed && (serverAllowedToClaim || time() >= props.requiredTime));
+		}
+
 		return () => {
 			task.cancel(thread);
 		};
-	}, [timeLeft, props.timerRunning]);
+	}, [timeLeft]);
 
 	useEffect(() => {
 		if (props.serverClaimed) {
@@ -197,7 +211,6 @@ const RewardSlot = (props: {
 					key={"Prize"}
 					Position={UDim2.fromScale(0.5, 0.5)}
 					Size={UDim2.fromScale(1, 1)}
-					Visible={props.cfg.rewardAmount !== undefined}
 				>
 					<textlabel
 						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -214,6 +227,7 @@ const RewardSlot = (props: {
 						TextWrapped={true}
 						TextXAlignment={Enum.TextXAlignment.Left}
 						ZIndex={2}
+						Visible={props.cfg.rewardAmount !== undefined}
 					>
 						<uistroke key={"UIStroke"} Thickness={2} />
 
@@ -227,7 +241,7 @@ const RewardSlot = (props: {
 							key={"mm"}
 							Position={UDim2.fromScale(0.5, 0.46)}
 							Size={UDim2.fromScale(1, 1)}
-							Text={`x${shortenNumber(props.cfg.rewardAmount ?? 0, false)}`}
+							Text={`x${shortenNumber(props.cfg.rewardAmount ?? 1, false)}`}
 							TextColor3={Color3.fromRGB(253, 253, 253)}
 							TextScaled={true}
 							TextWrapped={true}
@@ -243,7 +257,7 @@ const RewardSlot = (props: {
 						BackgroundTransparency={1}
 						BorderColor3={Color3.fromRGB(0, 0, 0)}
 						BorderSizePixel={0}
-						Image={REWARD_IMAGES[props.cfg.rewardType]}
+						Image={rewardImage}
 						key={"Icon"}
 						Position={UDim2.fromScale(0.298, 0.0603)}
 						ScaleType={Enum.ScaleType.Fit}
@@ -427,11 +441,13 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 							requiredTime={cfg.unlockTime + startTime}
 							cfg={cfg}
 							order={i}
-							timerRunning={!allowClaimAll && visible}
 							serverClaimed={allowClaimAll}
 							alreadyClaimed={claimed.get(i) ?? false}
 							shouldResetClaims={claimed.size() >= timePlayedRewards.size()}
+							rewardType={cfg.rewardType}
+							rewardName={cfg.itemName}
 							onClaimed={(index) => {
+								hasGiftAtom(false);
 								setClaimed((prevClaimed) => {
 									const newClaimed = new Map(Object.entries(prevClaimed));
 									newClaimed.set(index, true);

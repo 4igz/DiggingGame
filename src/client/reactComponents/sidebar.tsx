@@ -118,7 +118,7 @@ const SidebarButton = (props: SidebarButtonProps) => {
 				BorderColor3={Color3.fromRGB(0, 0, 0)}
 				BorderSizePixel={0}
 				key={"Notification"}
-				Position={UDim2.fromScale(0.676, 0.0908)}
+				Position={UDim2.fromScale(0.6, 0.0908)}
 				Size={UDim2.fromScale(0.307, 0.307)}
 				Visible={props.notificationVisible ?? false}
 			>

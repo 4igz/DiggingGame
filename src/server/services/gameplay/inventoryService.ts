@@ -218,10 +218,7 @@ export class InventoryService implements OnStart, OnTick {
 				profile.Data.potionInventory.remove(potionIndex);
 
 				const existingTimeThisPotion = profile.Data.activePotions.get(potionName);
-				profile.Data.activePotions.set(
-					potionName,
-					(existingTimeThisPotion ?? 0) + gameConstants.POTION_DURATION,
-				);
+				profile.Data.activePotions.set(potionName, (existingTimeThisPotion ?? 0) + potion.duration);
 				const [, highestMultiplier] = this.getHighestMultiplierPotionName(profile.Data.activePotions);
 				profile.Data.potionLuckMultiplier = highestMultiplier;
 

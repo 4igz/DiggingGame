@@ -41,29 +41,28 @@ local shovelConfig = {
 		rarityType = "Uncommon",
 		itemImage = "rbxassetid://137452283112320",
 		shopOrder = 5,
-		price = 20000,
+		price = 25000,
 	},
 	RubyShovel = {
 		strengthMult = 10,
 		rarityType = "Rare",
 		itemImage = "rbxassetid://128554784882437",
 		shopOrder = 6,
-		price = 75000,
+		price = 100000,
 	},
 	EnchantedShovel = {
 		strengthMult = 17.5,
 		rarityType = "Rare",
 		itemImage = "rbxassetid://137008399562821",
 		shopOrder = 7,
-		price = 150000,
+		price = 250000,
 	},
-
 	DemonicShovel = {
 		strengthMult = 25,
 		rarityType = "Epic",
 		itemImage = "rbxassetid://77934386944359",
 		shopOrder = 9,
-		price = 500000,
+		price = 750000,
 	},
 
 	HeavenlyShovel = {

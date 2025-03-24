@@ -2,6 +2,7 @@ import { MetalDetector, metalDetectorConfig } from "./config/metalDetectorConfig
 import { ItemType, Rarity, RewardType } from "./networkTypes";
 import { Shovel, shovelConfig } from "./config/shovelConfig";
 import { mapConfig } from "./config/mapConfig";
+import { BoatConfig } from "./config/boatConfig";
 
 export declare const ROLL_TYPES: {
 	Bad: "Bad..";
@@ -70,7 +71,7 @@ export declare const gameConstants: {
 	readonly LUCK_MODIFIER: number;
 
 	// Maps itemType name to config
-	readonly SHOP_CONFIGS: Record<ItemType, Readonly<Record<string, MetalDetector | Shovel>>>;
+	readonly SHOP_CONFIGS: Record<ItemType, Readonly<Record<string, MetalDetector | Shovel | BoatConfig>>>;
 
 	readonly DEVPRODUCT_IDS: Record<string, number>;
 

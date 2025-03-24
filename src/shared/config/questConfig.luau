@@ -34,7 +34,7 @@ local questConfig: { [string]: { QuestConfig } } = {
 		{
 			questType = "Collect",
 			questReward = "Money",
-			questRewardAmount = 1000,
+			questRewardAmount = 250,
 
 			playerResponses = { [QUEST_ACCEPT] = "Got it", [QUEST_DECLINE] = "No thanks" },
 
@@ -48,7 +48,7 @@ local questConfig: { [string]: { QuestConfig } } = {
 		{
 			questType = "Collect",
 			questReward = "Money",
-			questRewardAmount = 4000,
+			questRewardAmount = 3500,
 
 			playerResponses = { [QUEST_ACCEPT] = "Of course", [QUEST_DECLINE] = "I can't right now" },
 
@@ -62,7 +62,7 @@ local questConfig: { [string]: { QuestConfig } } = {
 		{
 			questType = "Collect",
 			questReward = "Money",
-			questRewardAmount = 30_000,
+			questRewardAmount = 10_000,
 
 			playerResponses = {
 				[QUEST_ACCEPT] = "I've got your back matey",
@@ -79,7 +79,7 @@ local questConfig: { [string]: { QuestConfig } } = {
 		{
 			questType = "Collect",
 			questReward = "Money",
-			questRewardAmount = 100_000,
+			questRewardAmount = 50_000,
 
 			playerResponses = { [QUEST_ACCEPT] = "Yar matey", [QUEST_DECLINE] = "Nay" },
 
@@ -96,7 +96,7 @@ local questConfig: { [string]: { QuestConfig } } = {
 		{
 			questType = "Collect",
 			questReward = "Money",
-			questRewardAmount = 1000,
+			questRewardAmount = 25000,
 
 			playerResponses = { [QUEST_ACCEPT] = "Of course", [QUEST_DECLINE] = "No, find them yourself" },
 
@@ -107,19 +107,50 @@ local questConfig: { [string]: { QuestConfig } } = {
 			target = "Skull" :: Targets,
 			collectAmount = 3,
 		},
+
 		{
 			questType = "Collect",
 			questReward = "Money",
-			questRewardAmount = 10_000,
+			questRewardAmount = 100000,
+
+			playerResponses = { [QUEST_ACCEPT] = "Sure!", [QUEST_DECLINE] = "No, find them yourself" },
+
+			initialResponse = "I'm looking for 3 Heat rocks. Can you find them for me?",
+			subsequentResponse = "Did you find the Heat rock yet?",
+			completeResponse = "Here, take this as a token of my gratitude!",
+
+			target = "Heat rock" :: Targets,
+			collectAmount = 3,
+		},
+
+		{
+			questType = "Collect",
+			questReward = "Money",
+			questRewardAmount = 350000,
 
 			playerResponses = { [QUEST_ACCEPT] = "Sure!", [QUEST_DECLINE] = "If I did I would keep it for myself" },
 
-			initialResponse = "I'm looking for a jade statue. Can you find it for me?",
-			subsequentResponse = "Did you find the jade statue yet?",
+			initialResponse = "I'm looking for 3 jade statues. Can you find them for me?",
+			subsequentResponse = "Did you find the jade statues yet?",
 			completeResponse = "Thank you!!!!!",
 
 			target = "Jade statue" :: Targets,
 			collectAmount = 3,
+		},
+
+		{
+			questType = "Collect",
+			questReward = "Money",
+			questRewardAmount = 1000000,
+
+			playerResponses = { [QUEST_ACCEPT] = "Sure!", [QUEST_DECLINE] = "No thanks" },
+
+			initialResponse = "I'm searching for the legendary Obsidian crown, Can you help me find it?",
+			subsequentResponse = "Did you find the Obsidian crown yet?",
+			completeResponse = "Thank you!!!!!",
+
+			target = "Obsidian crown" :: Targets,
+			collectAmount = 1,
 		},
 	},
 	["Abominable Joe-man"] = {
@@ -131,12 +162,12 @@ local questConfig: { [string]: { QuestConfig } } = {
 
 			playerResponses = { [QUEST_ACCEPT] = "Of course", [QUEST_DECLINE] = "No, find them yourself" },
 
-			initialResponse = "Do you mind bringing me 3 ice shards?",
+			initialResponse = "Do you mind bringing me 10 Icecicles?",
 			subsequentResponse = "Don't ask me why I need them, just find them!",
 			completeResponse = "I appreciate it. Here's a little something for you! Can you do something else for me?",
 
-			target = "Ice shard" :: Targets,
-			collectAmount = 3,
+			target = "Icecicle" :: Targets,
+			collectAmount = 10,
 		},
 		{
 			questType = "Collect",

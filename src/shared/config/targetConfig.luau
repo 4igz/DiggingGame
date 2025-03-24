@@ -1,3 +1,4 @@
+--!strict
 -- Compiled with roblox-ts v3.0.0
 local TS = require(game:GetService("ReplicatedStorage"):WaitForChild("rbxts_include"):WaitForChild("RuntimeLib"))
 local Sift =
@@ -44,8 +45,8 @@ local targetConfig: { [string]: TargetConfig } = {
 	["Jade fish"] = {
 		rarity = 10, -- 1 in 10
 		rarityType = "Common",
-		baseWeight = NumberRange.new(2, 4),
-		basePrice = 250,
+		baseWeight = NumberRange.new(1, 3),
+		basePrice = 350,
 		itemImage = "rbxassetid://73363406884733",
 		description = "Despite its appearance, it cannot swim.",
 
@@ -55,7 +56,7 @@ local targetConfig: { [string]: TargetConfig } = {
 	Necklace = {
 		rarity = 16, -- 1 in 16
 		rarityType = "Uncommon",
-		baseWeight = NumberRange.new(2, 6),
+		baseWeight = NumberRange.new(1, 3),
 		basePrice = 500,
 		itemImage = "rbxassetid://81302821988412",
 		animationName = "Hold",
@@ -67,8 +68,8 @@ local targetConfig: { [string]: TargetConfig } = {
 	Ring = {
 		rarity = 20, -- 1 in 20
 		rarityType = "Uncommon",
-		baseWeight = NumberRange.new(2, 6),
-		basePrice = 500,
+		baseWeight = NumberRange.new(2, 4),
+		basePrice = 750,
 		itemImage = "rbxassetid://78683428732466",
 		description = "A simple ring, likely lost by someone long ago. It probably has a story to tell.",
 
@@ -366,7 +367,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		description = "Contains valuable ivory.",
 	},
 	["Diamond yeti"] = {
-		rarity = 20000,
+		rarity = 200000,
 		indexRarity = 1000000,
 		rarityType = "Mythical",
 		baseWeight = NumberRange.new(150, 150),

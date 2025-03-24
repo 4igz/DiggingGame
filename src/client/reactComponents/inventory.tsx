@@ -15,7 +15,7 @@ import { mapConfig } from "shared/config/mapConfig";
 import Object from "@rbxts/object-utils";
 import { getOneInXChance } from "shared/util/targetUtil";
 import { potionConfig } from "shared/config/potionConfig";
-import { inventorySizeAtom, treasureCountAtom } from "client/atoms/inventoryAtoms";
+import { inventorySizeAtom, treasureCountAtom, treasureInventoryAtom } from "client/atoms/inventoryAtoms";
 import { Signals } from "shared/signals";
 import { GamepassController } from "client/controllers/gamepassController";
 import { getOrderFromRarity } from "shared/util/rarityUtil";
@@ -1692,7 +1692,7 @@ const RefundPointFrame = () => {
 	);
 };
 
-type InventoryItemProps = {
+export type InventoryItemProps = {
 	itemImage: string;
 	itemName: string;
 	rarity: Rarity;
@@ -1773,10 +1773,6 @@ export const InventoryComponent = (props: MainUiProps) => {
 	) {
 		const newInventory: InventoryItemProps[] = [];
 
-		if (inventoryType === "Target") {
-			setTargetInventoryUsedSize(inv.size());
-		}
-
 		inv.forEach((item) => {
 			if (item.type !== inventoryType) return;
 			if (newInventory.find((invItem) => invItem.itemName === item.name)) return;
@@ -1826,6 +1822,10 @@ export const InventoryComponent = (props: MainUiProps) => {
 		cachedInventories[inventoryType] = newInventory;
 		if (shouldSetInventory) {
 			setInventory(newInventory);
+		}
+		if (inventoryType === "Target") {
+			setTargetInventoryUsedSize(inv.size());
+			treasureInventoryAtom(newInventory);
 		}
 	}
 

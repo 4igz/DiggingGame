@@ -1,4 +1,5 @@
 import React, { useEffect } from "@rbxts/react";
+import { treasureInventoryAtom } from "client/atoms/inventoryAtoms";
 import { Events, Functions } from "client/network";
 import { npcCharacterRenders, questConfig } from "shared/config/questConfig";
 import { QuestProgress } from "shared/networkTypes";
@@ -20,6 +21,7 @@ export const QuestInfoSideButton = () => {
 	const [activeQuest, setActiveQuest] = React.useState<
 		{ name: keyof typeof questConfig; info: QuestProgress } | undefined
 	>(undefined);
+	const [, render] = React.useState(0);
 
 	useEffect(() => {
 		if (questInfo === undefined) return;
@@ -35,6 +37,12 @@ export const QuestInfoSideButton = () => {
 
 		setActiveQuest({ name: key, info: questProgress });
 	}, [questInfo]);
+
+	useEffect(() => {
+		Events.updateInventory.connect(() => {
+			render((v) => v + 1);
+		});
+	}, []);
 
 	useEffect(() => {
 		Events.updateQuestProgress.connect((questProgress) => {
@@ -102,7 +110,11 @@ export const QuestInfoSideButton = () => {
 				Position={UDim2.fromScale(0.0693, 0.116)}
 				Size={UDim2.fromScale(0.5, 0.328)}
 				Text={quest && `Bring ${quest.collectAmount} ${makePlural(quest.target, quest.collectAmount!)}`}
-				TextColor3={Color3.fromRGB(255, 255, 255)}
+				TextColor3={
+					treasureInventoryAtom().find((v, i) => v.itemName === quest?.target) !== undefined
+						? Color3.fromRGB(0, 255, 0)
+						: Color3.fromRGB(255, 255, 255)
+				}
 				TextScaled={true}
 				TextWrapped={true}
 				TextXAlignment={Enum.TextXAlignment.Left}
@@ -119,7 +131,13 @@ export const QuestInfoSideButton = () => {
 				key={"Label"}
 				Position={UDim2.fromScale(0.0693, 0.356)}
 				Size={UDim2.fromScale(0.5, 0.48)}
-				Text={activeQuest ? activeQuest.name : "No Quest Active"}
+				Text={
+					activeQuest
+						? treasureInventoryAtom().find((item) => item.itemName === quest?.target) !== undefined
+							? "Completed"
+							: activeQuest.name
+						: "No Quest Active"
+				}
 				TextColor3={Color3.fromRGB(255, 213, 62)}
 				TextScaled={true}
 				TextWrapped={true}

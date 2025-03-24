@@ -1,15 +1,16 @@
 //!optimize 2
-import React, { createRef, useEffect } from "@rbxts/react";
+import React, { createRef, useEffect, useState } from "@rbxts/react";
 import { Events, Functions } from "client/network";
 import { dailyRewards, DAILY_REWARD_COOLDOWN } from "shared/config/dailyRewardConfig";
 import { gameConstants, REWARD_IMAGES } from "shared/gameConstants";
-import { RewardType } from "shared/networkTypes";
+import { ItemType, RewardType } from "shared/networkTypes";
 import { formatShortTime, shortenNumber } from "shared/util/nameUtil";
 import { AnimatedButton, ExitButton } from "./inventory";
 import UiController from "client/controllers/uiController";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
 import Sift from "@rbxts/sift";
+import { hasDailyAtom } from "client/atoms/rewardAtoms";
 
 interface DailyRewardsProps {
 	visible: boolean;
@@ -22,16 +23,34 @@ interface DailyRewardTileProps {
 	reward: string;
 	isClaimable: boolean;
 	rewardType: RewardType;
+	rewardName?: string;
 	onClaim: () => void;
 }
 
-// DailyRewardTile.jsx
 // This component represents a single daily reward tile
-const DailyRewardTile = ({ day, streak, reward, isClaimable, onClaim, rewardType }: DailyRewardTileProps) => {
+const DailyRewardTile = ({
+	day,
+	streak,
+	reward,
+	isClaimable,
+	onClaim,
+	rewardType,
+	rewardName,
+}: DailyRewardTileProps) => {
 	// Calculate visual states based on streak and day
+	const [rewardImage] = useState(
+		REWARD_IMAGES[rewardType] ??
+			gameConstants.SHOP_CONFIGS[rewardType as ItemType][rewardName!]?.itemImage ??
+			undefined,
+	);
 	const isCompleted = streak >= day;
 	const isToday = streak + 1 === day;
-	const isPending = !isCompleted && !isToday;
+
+	useEffect(() => {
+		if (!rewardImage) {
+			warn(`No image found for reward type ${rewardType} ${rewardName}`);
+		}
+	}, [rewardImage]);
 
 	return (
 		<frame BackgroundTransparency={1} LayoutOrder={day} key={`day-${day}`} Size={UDim2.fromScale(0.134, 0.931)}>
@@ -103,7 +122,7 @@ const DailyRewardTile = ({ day, streak, reward, isClaimable, onClaim, rewardType
 				<imagelabel
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundTransparency={1}
-					Image={REWARD_IMAGES[rewardType]}
+					Image={rewardImage}
 					key={"Reward Icon"}
 					Position={UDim2.fromScale(0.5, 0.5)}
 					ScaleType={Enum.ScaleType.Fit}
@@ -155,7 +174,7 @@ const DailyRewardTile = ({ day, streak, reward, isClaimable, onClaim, rewardType
 				/>
 
 				{/* Claim button - only visible on the current day if claimable */}
-				<imagebutton
+				<imagelabel
 					Active={false}
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundTransparency={1}
@@ -228,7 +247,7 @@ const DailyRewardTile = ({ day, streak, reward, isClaimable, onClaim, rewardType
 							Rotation={90}
 						/>
 					</textlabel>
-				</imagebutton>
+				</imagelabel>
 
 				{/* Glow effect for today's reward */}
 				{isToday && (
@@ -251,30 +270,26 @@ const DailyRewardTile = ({ day, streak, reward, isClaimable, onClaim, rewardType
 		</frame>
 	);
 };
-// Main Component
+
 export const DailyRewards = (props: DailyRewardsProps) => {
-	// State management (from original code)
 	const [lastClaimed, setLastClaimed] = React.useState(0);
 	const [timeLeft, setTimeLeft] = React.useState(0);
 	const [streak, setStreak] = React.useState(0);
 	const [visible, setVisible] = React.useState(false);
 	const [popInSz, popInMotion] = useMotion(UDim2.fromScale(0, 0));
 
-	// Reference for animation
 	const menuRef = createRef<Frame>();
 
 	// Effect to fetch last claim time and streak
 	useEffect(() => {
 		Functions.getLastDailyClaimTime()
 			.then((time) => {
-				if (!time) return; // If this happens, it's likely the player left before the profile could be loaded
 				setLastClaimed(time);
 			})
 			.catch(warn);
 
 		Functions.getDailyStreak()
 			.then((streak) => {
-				if (!streak) return;
 				setStreak(streak);
 			})
 			.catch(warn);
@@ -455,6 +470,7 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 								isClaimable={isClaimable}
 								onClaim={handleClaim}
 								rewardType={reward.rewardType}
+								rewardName={reward.itemName}
 							/>
 						);
 					})}
@@ -484,6 +500,7 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 						isClaimable={isClaimable}
 						onClaim={handleClaim}
 						rewardType={dailyRewards[6].rewardType}
+						rewardName={dailyRewards[6].itemName}
 					/>
 				</frame>
 			</frame>

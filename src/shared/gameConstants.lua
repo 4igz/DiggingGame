@@ -1,6 +1,8 @@
 --!optimize 2
 --!native
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 -- Compiled with roblox-ts v3.0.0
+local boatConfig = require(ReplicatedStorage.TS.config.boatConfig)
 local TS = require(game:GetService("ReplicatedStorage"):WaitForChild("rbxts_include"):WaitForChild("RuntimeLib"))
 local metalDetectorConfig =
 	TS.import(script, game:GetService("ReplicatedStorage"), "TS", "config", "metalDetectorConfig").metalDetectorConfig
@@ -50,6 +52,7 @@ local gameConstants = {
 	SHOP_CONFIGS = {
 		MetalDetectors = metalDetectorConfig,
 		Shovels = shovelConfig,
+		Boats = boatConfig.boatConfig,
 	},
 
 	DEVPRODUCT_IDS = {
