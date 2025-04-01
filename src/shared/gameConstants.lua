@@ -3,6 +3,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 -- Compiled with roblox-ts v3.0.0
 local boatConfig = require(ReplicatedStorage.TS.config.boatConfig)
+local potionConfig = require(ReplicatedStorage.TS.config.potionConfig)
 local TS = require(game:GetService("ReplicatedStorage"):WaitForChild("rbxts_include"):WaitForChild("RuntimeLib"))
 local metalDetectorConfig =
 	TS.import(script, game:GetService("ReplicatedStorage"), "TS", "config", "metalDetectorConfig").metalDetectorConfig
@@ -32,7 +33,7 @@ local gameConstants = {
 	BATCH_SEND_INTERVAL = 1 / 3,
 	AUTO_DIG_CLICK_INTERVAL = 0.2,
 	POTION_DURATION = 300,
-	BAR_DECREASE_RATE = 0.05,
+	BAR_DECREASE_RATE = 0.08,
 	HIGH_ROLL_THRESHOLD = 6.5,
 	SUCCESSFUL_DIG_COOLDOWN = 1, -- Prevent player from immediately digging again after just finishing digging
 	MAX_DIG_REPLICATE_DISTANCE = 200,
@@ -53,6 +54,7 @@ local gameConstants = {
 		MetalDetectors = metalDetectorConfig,
 		Shovels = shovelConfig,
 		Boats = boatConfig.boatConfig,
+		Potions = potionConfig.potionConfig,
 	},
 
 	DEVPRODUCT_IDS = {
@@ -68,6 +70,7 @@ local gameConstants = {
 		["75k Medium Money Pack"] = 3236554527,
 		["250k Big Money Pack"] = 3236554148,
 		["1M Massive Money Pack"] = 3236553972,
+		["2.5M Pirate's Treasure"] = 3250931243,
 		["Unlock All Playtime Rewards"] = 3236554940,
 	},
 
@@ -106,7 +109,7 @@ local gameConstants = {
 	RARITY_COLORS = {
 		Common = Color3.new(1, 1, 1),
 		Uncommon = Color3.new(0, 1, 0),
-		Rare = Color3.new(0, 0, 1),
+		Rare = Color3.new(0.0901961, 0.831373, 1),
 		Epic = Color3.new(0.5, 0, 1),
 		Legendary = Color3.new(1, 0.5, 0),
 		Mythical = Color3.new(1, 0, 0),

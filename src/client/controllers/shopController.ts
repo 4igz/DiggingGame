@@ -1,6 +1,6 @@
 //!optimize 2
 import { Controller, OnRender, OnStart } from "@flamework/core";
-import { CollectionService, Players, ReplicatedStorage, TweenService } from "@rbxts/services";
+import { CollectionService, Players, ReplicatedStorage, SoundService, TweenService } from "@rbxts/services";
 import UiController from "client/controllers/uiController";
 import { gameConstants } from "shared/gameConstants";
 import ReactRoblox from "@rbxts/react-roblox";
@@ -9,6 +9,7 @@ import TypewriterBillboard from "client/reactComponents/typeWritingBillboard";
 import { Events } from "client/network";
 import { ItemType } from "shared/networkTypes";
 import Object from "@rbxts/object-utils";
+import { Signals } from "shared/signals";
 
 const NPC_TAG = "NPC";
 
@@ -24,6 +25,8 @@ export class ShopController implements OnStart, OnRender {
 			[gameConstants.SHOP_UI]: "what would you like to buy?",
 			[gameConstants.BOAT_SHOP_UI]: "yar matey!",
 		} as Record<string, string>;
+
+		const npcChatter = SoundService.WaitForChild("UI").WaitForChild("NpcChatter");
 
 		const dialogPlayed = Object.keys(PROMPT_DIALOGS).reduce((acc, key) => {
 			acc[key] = false;
@@ -122,6 +125,7 @@ export class ShopController implements OnStart, OnRender {
 				prompt.Triggered.Connect(() => {
 					prompt.Enabled = false;
 					playAnimation(npc, talkAnimName, "Action");
+					SoundService.PlayLocalSound(npcChatter as Sound);
 					currentOpenMenu = shopType;
 					if (dialogPlayed[shopType]) {
 						prompt.Enabled = true;
@@ -188,6 +192,7 @@ export class ShopController implements OnStart, OnRender {
 			const purchaseFailedAnimationName = itemType === "Boats" ? "PurchaseFailedBoat" : "PurchaseFailedStore";
 
 			playAnimation(nearestNPC, purchaseFailedAnimationName, "Action");
+			SoundService.PlayLocalSound(npcChatter as Sound);
 		});
 
 		Events.boughtItem.connect((_, itemType: ItemType) => {
@@ -206,6 +211,7 @@ export class ShopController implements OnStart, OnRender {
 			const animationName = itemType === "Boats" ? "BoatGuyBought" : "StoreGuyBought";
 
 			playAnimation(nearestNPC, animationName, "Action");
+			// SoundService.PlayLocalSound(npcChatter as Sound);
 		});
 	}
 

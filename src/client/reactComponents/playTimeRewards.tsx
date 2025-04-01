@@ -10,11 +10,12 @@ import { interval } from "shared/util/interval";
 import { formatShortTime, shortenNumber } from "shared/util/nameUtil";
 import { Events, Functions } from "client/network";
 import { AnimatedProductButton } from "./gamepassShop";
-import { ProductType } from "shared/config/shopConfig";
 import { getDeveloperProductInfo } from "shared/util/monetizationUtil";
 import Object from "@rbxts/object-utils";
 import { ItemType, RewardType } from "shared/networkTypes";
 import { hasGiftAtom } from "client/atoms/rewardAtoms";
+import { Signals } from "shared/signals";
+import { SoundService } from "@rbxts/services";
 
 const SEC_INTERVAL = interval(1);
 
@@ -104,8 +105,11 @@ const RewardSlot = (props: {
 		>
 			<AnimatedButton
 				size={UDim2.fromScale(1, 1)}
+				clickable={!claimed}
+				errorText={"Already claimed!"}
 				onClick={() => {
-					if (!claimed && (serverAllowedToClaim || time() >= props.requiredTime)) {
+					if (serverAllowedToClaim || time() >= props.requiredTime) {
+						SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("Claim") as Sound);
 						setClaimed(true);
 						if (serverAllowedToClaim) {
 							setServerAllowedToClaim(false);
@@ -117,6 +121,7 @@ const RewardSlot = (props: {
 								if (!result) {
 									warn("Failed to claim reward, resetting claimed state.");
 									setClaimed(false);
+									Signals.invalidAction.Fire("Can't claim this right now!");
 									return;
 								}
 
@@ -125,6 +130,8 @@ const RewardSlot = (props: {
 								// TODO: Add a UI notification for the player that they claimed the reward.
 							})
 							.catch(warn);
+					} else {
+						Signals.invalidAction.Fire("Can't claim this yet!");
 					}
 				}}
 			>
@@ -149,13 +156,7 @@ const RewardSlot = (props: {
 					BackgroundTransparency={1}
 					BorderColor3={Color3.fromRGB(0, 0, 0)}
 					BorderSizePixel={0}
-					FontFace={
-						new Font(
-							"rbxasset://fonts/families/FredokaOne.json",
-							Enum.FontWeight.Bold,
-							Enum.FontStyle.Normal,
-						)
-					}
+					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 					key={".$Timer"}
 					Position={UDim2.fromScale(0.046, 0.596)}
 					Size={UDim2.fromScale(0.954, 0.294)}
@@ -484,42 +485,45 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 			>
 				<textlabel
 					BackgroundTransparency={1}
-					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					FontFace={Font.fromEnum(Enum.Font.FredokaOne)}
 					key={"Label"}
-					Position={UDim2.fromScale(0.046, 0.0581)}
-					Size={UDim2.fromScale(0.954, 0.321)}
+					Position={UDim2.fromScale(0.0229885, 0.0224008)}
+					Size={UDim2.fromScale(0.954023, 0.330954)}
 					Text={"Skip All!"}
-					TextColor3={Color3.fromRGB(253, 253, 253)}
+					TextColor3={new Color3()}
 					TextScaled={true}
 				>
-					<uistroke key={"UIStroke"} Thickness={3} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(100, 75, 39)} Thickness={3} />
 
-					<uipadding
-						key={"UIPadding"}
-						PaddingBottom={new UDim(0.00219, 0)}
-						PaddingLeft={new UDim(0.279, 0)}
-						PaddingRight={new UDim(0.279, 0)}
-						PaddingTop={new UDim(0.00219, 0)}
-					/>
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						FontFace={Font.fromEnum(Enum.Font.FredokaOne)}
+						key={"Label"}
+						Position={UDim2.fromScale(0.5, 0.4)}
+						Size={UDim2.fromScale(1, 1)}
+						Text={"Skip All!"}
+						TextColor3={Color3.fromRGB(253, 253, 253)}
+						TextScaled={true}
+					>
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(100, 75, 39)} Thickness={3} />
 
-					<uigradient
-						key={"UIGradient"}
-						Color={
-							new ColorSequence([
-								new ColorSequenceKeypoint(0, Color3.fromRGB(141, 255, 124)),
-								new ColorSequenceKeypoint(0.182, Color3.fromRGB(223, 255, 82)),
-								new ColorSequenceKeypoint(0.528, Color3.fromRGB(255, 202, 41)),
-								new ColorSequenceKeypoint(0.846, Color3.fromRGB(255, 137, 101)),
-								new ColorSequenceKeypoint(1, Color3.fromRGB(255, 131, 106)),
-							])
-						}
-						Rotation={90}
-					/>
+						<uigradient
+							key={"UIGradient"}
+							Color={
+								new ColorSequence([
+									new ColorSequenceKeypoint(0, Color3.fromRGB(223, 255, 79)),
+									new ColorSequenceKeypoint(1, Color3.fromRGB(255, 158, 129)),
+								])
+							}
+							Rotation={90}
+						/>
+					</textlabel>
 				</textlabel>
 
 				<AnimatedProductButton
 					productId={gameConstants.DEVPRODUCT_IDS["Unlock All Playtime Rewards"]}
-					productType={ProductType.DevProduct}
+					productType={Enum.InfoType.Product}
 					predicate={() => !allowClaimAll}
 					position={UDim2.fromScale(0.157, 0.458)}
 					size={UDim2.fromScale(0.862, 0.565)}
@@ -601,7 +605,6 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 						</frame>
 					</imagebutton>
 				</AnimatedProductButton>
-
 				<uilistlayout
 					key={"UIListLayout"}
 					HorizontalAlignment={Enum.HorizontalAlignment.Center}
@@ -609,7 +612,6 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 					SortOrder={Enum.SortOrder.LayoutOrder}
 					VerticalAlignment={Enum.VerticalAlignment.Center}
 				/>
-
 				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={2.3} />
 			</frame>
 			<frame
@@ -634,27 +636,36 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 			<frame
 				BackgroundTransparency={1}
 				key={"Disclaimer"}
-				Position={UDim2.fromScale(0.0453, 0.741)}
+				Position={UDim2.fromScale(0.045, 0.78)}
 				Size={UDim2.fromScale(0.56, 0.197)}
 			>
 				<textlabel
 					BackgroundTransparency={1}
-					FontFace={
-						new Font(
-							"rbxasset://fonts/families/FredokaOne.json",
-							Enum.FontWeight.Bold,
-							Enum.FontStyle.Normal,
-						)
-					}
+					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 					LayoutOrder={1}
 					key={"Label"}
-					Position={UDim2.fromScale(0.0732, 0.416)}
-					Size={UDim2.fromScale(0.854, 0.433)}
-					Text={"Leaving resets progress!"}
+					Position={UDim2.fromScale(-0.0194564, 0.447359)}
+					Size={UDim2.fromScale(1.03891, 0.526756)}
+					Text={"Leaving Resets Progress!"}
 					TextColor3={Color3.fromRGB(253, 83, 86)}
 					TextScaled={true}
 				>
 					<uistroke key={"UIStroke"} Thickness={3} />
+
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						LayoutOrder={1}
+						key={"Label"}
+						Position={UDim2.fromScale(0.5, 0.45)}
+						Size={UDim2.fromScale(1, 1)}
+						Text={"Leaving Resets Progress!"}
+						TextColor3={Color3.fromRGB(253, 83, 86)}
+						TextScaled={true}
+					>
+						<uistroke key={"UIStroke"} Thickness={3} />
+					</textlabel>
 				</textlabel>
 
 				<uilistlayout

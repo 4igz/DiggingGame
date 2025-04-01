@@ -7,6 +7,7 @@ import { GamepassService } from "./gamepassService";
 import { gameConstants } from "shared/gameConstants";
 import Signal from "@rbxts/goodsignal";
 import { EN } from "shared/networkTypes";
+import { MarketplaceService } from "@rbxts/services";
 
 @Service({})
 export class MoneyService implements OnStart {
@@ -30,14 +31,18 @@ export class MoneyService implements OnStart {
 		return EternityNum.meeq(EternityNum.fromString(profile.Data.money), EternityNum.fromNumber(amount));
 	}
 
-	giveMoney(player: Player, amount: number, can2x = false) {
+	giveMoney(player: Player, amount: number, canMultiply = false) {
 		// Add money to player
 		const profile = this.profileService.getProfile(player);
 		if (!profile) return;
 
 		// Double money if can2x is true and they own the 2x cash gamepass
-		if (can2x && this.gamepassService.ownsGamepass(player, gameConstants.GAMEPASS_IDS.x2Cash) === true) {
+		if (canMultiply && this.gamepassService.ownsGamepass(player, gameConstants.GAMEPASS_IDS.x2Cash) === true) {
 			amount *= 2;
+		}
+
+		if (canMultiply && player.MembershipType === Enum.MembershipType.Premium) {
+			amount *= 1.1;
 		}
 
 		const moneyEN = EternityNum.add(EternityNum.fromString(profile.Data.money), EternityNum.fromNumber(amount));

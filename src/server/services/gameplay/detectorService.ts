@@ -7,10 +7,10 @@ import { gameConstants } from "shared/gameConstants";
 import { Events } from "server/network";
 import { Target } from "shared/networkTypes";
 import { ProfileService } from "../backend/profileService";
-import { GamepassService } from "../backend/gamepassService";
 import { Signals } from "shared/signals";
 import { computeLuckValue } from "shared/util/detectorUtil";
 import Signal from "@rbxts/goodsignal";
+import { InventoryService } from "./inventoryService";
 
 @Service({})
 export class DetectorService implements OnStart, OnTick {
@@ -24,7 +24,7 @@ export class DetectorService implements OnStart, OnTick {
 	constructor(
 		private readonly targetService: TargetService,
 		private readonly profileService: ProfileService,
-		private readonly gamepassService: GamepassService,
+		private readonly inventoryService: InventoryService,
 	) {}
 
 	onStart() {
@@ -122,7 +122,7 @@ export class DetectorService implements OnStart, OnTick {
 			base: target.base,
 		});
 
-		// Delay the digging process by the player's ping
+		// Delay by the player's trip ping so we can mostly accurately measure when they started digging by the time the message to start reaches their client.
 		task.delay(player.GetNetworkPing() / 2, () => {
 			target.activelyDigging = true;
 		});
@@ -180,8 +180,16 @@ export class DetectorService implements OnStart, OnTick {
 			if (distance === undefined) continue;
 
 			if (distance < gameConstants.DIG_RANGE) {
-				// Within DIG_RANGE, set state to fully on and beeping
 				withinDigRange = true;
+			}
+
+			const profile = this.profileService.getProfile(player);
+
+			if (profile) {
+				if (profile.Data.targetInventory.size() >= this.inventoryService.getInventorySize(player)) {
+					this.targetService.endDigging(player, true, false);
+					return;
+				}
 			}
 
 			if (withinDigRange && target) {

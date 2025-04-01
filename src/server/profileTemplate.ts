@@ -6,10 +6,14 @@ import { targetConfig } from "shared/config/targetConfig";
 import Object from "@rbxts/object-utils";
 import { gameConstants } from "shared/gameConstants";
 import { boatConfig } from "shared/config/boatConfig";
-import { potionConfig } from "shared/config/potionConfig";
+import { potionConfig, PotionKind } from "shared/config/potionConfig";
 import { questConfig } from "shared/config/questConfig";
+import { PotionEffect } from "./services/gameplay/inventoryService";
+import { ReplicatedStorage } from "@rbxts/services";
 
-export const PROFILE_STORE_NAME = "pre_test10";
+export const PROFILE_STORE_NAME = "pre_test15";
+
+ReplicatedStorage.SetAttribute("CurrentStore", PROFILE_STORE_NAME);
 
 export const profileTemplate = {
 	equippedShovel: "StarterShovel" as keyof typeof shovelConfig,
@@ -40,7 +44,8 @@ export const profileTemplate = {
 
 	// Luck multiplier
 	potionLuckMultiplier: 1,
-	activePotions: new Map<keyof typeof potionConfig, number>(),
+	potionStrengthMultiplier: 1,
+	activePotions: new Map<PotionKind, PotionEffect>(),
 
 	targetInventory: new Array<TargetItem>(),
 	previouslyFoundTargets: new Set<keyof typeof targetConfig>(),

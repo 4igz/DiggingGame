@@ -1,5 +1,5 @@
 //!optimize 2
-import React, { Dispatch, useEffect } from "@rbxts/react";
+import React, { Dispatch, useEffect, useState } from "@rbxts/react";
 import UiController from "client/controllers/uiController";
 import { useMotion } from "client/hooks/useMotion";
 import { Events, Functions } from "client/network";
@@ -10,6 +10,8 @@ import { separateWithCommas, shortenNumber, spaceWords } from "shared/util/nameU
 import { AnimatedButton, ExitButton } from "./inventory";
 import Object from "@rbxts/object-utils";
 import { NetworkingFunctionError } from "@flamework/networking";
+import { usePx } from "client/hooks/usePx";
+import { RunService } from "@rbxts/services";
 
 const SHOP_MENUS = {
 	MetalDetectors: "Detectors",
@@ -18,122 +20,6 @@ const SHOP_MENUS = {
 };
 
 const outgoingShopRequests = new Array<Promise<void>>();
-
-interface SelectionButtonProps {
-	setSelectedShop: Dispatch<keyof typeof SHOP_MENUS>;
-	title: keyof typeof SHOP_MENUS;
-	subtitle: string;
-	icon: string;
-	buttonPosition: UDim2;
-	backgroundImage: string;
-}
-
-const SelectionButtonComponent: React.FC<SelectionButtonProps> = (props) => {
-	const [isHovered, setIsHovered] = React.useState(false);
-	const [isPressed, setPressed] = React.useState(false);
-	const [sz, sizeMotion] = useMotion(1);
-	const [MIN_SCALE, MAX_SCALE] = [0.95, 1.05];
-
-	useEffect(() => {
-		// sizeMotion.spring(isHovered ? START_SZ.add(SZ_INC) : START_SZ, springs.bubbly);
-		sizeMotion.spring(isHovered ? MAX_SCALE : 1, springs.responsive);
-	}, [isHovered]);
-
-	useEffect(() => {
-		sizeMotion.spring(isPressed ? MIN_SCALE : isHovered ? MAX_SCALE : 1, springs.responsive);
-	}, [isPressed]);
-
-	return (
-		<imagebutton
-			Active={true}
-			AnchorPoint={new Vector2(0.5, 0.5)}
-			BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-			BackgroundTransparency={1}
-			BorderColor3={Color3.fromRGB(0, 0, 0)}
-			BorderSizePixel={0}
-			key={"Shovel"}
-			Position={props.buttonPosition}
-			Selectable={false}
-			Size={sz.map((s) => {
-				return UDim2.fromScale(0.505 * s, 0.487 * s);
-			})}
-			Event={{
-				MouseButton1Click: () => {
-					props.setSelectedShop(props.title);
-					setPressed(true);
-					task.delay(0.1, () => setPressed(false));
-				},
-				MouseEnter: () => setIsHovered(true),
-				MouseLeave: () => setIsHovered(false),
-			}}
-		>
-			<imagelabel
-				AnchorPoint={new Vector2(0.5, 0.5)}
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				Image={props.backgroundImage}
-				key={"Background"}
-				Position={UDim2.fromScale(0.5, 0.5)}
-				ScaleType={Enum.ScaleType.Fit}
-				Size={UDim2.fromScale(1, 1)}
-			/>
-
-			<textlabel
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-				key={"Title"}
-				Position={UDim2.fromScale(0.108, 0.701)}
-				Size={UDim2.fromScale(0.78, 0.162)}
-				Text={spaceWords(props.title)}
-				TextColor3={Color3.fromRGB(255, 255, 255)}
-				TextScaled={true}
-				TextWrapped={true}
-				TextXAlignment={Enum.TextXAlignment.Left}
-				ZIndex={10}
-			>
-				<uistroke key={"UIStroke"} Thickness={3} />
-
-				<uipadding key={"UIPadding"} />
-			</textlabel>
-
-			<imagelabel
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				Image={props.icon}
-				key={"Icon"}
-				Position={UDim2.fromScale(0.307, 0.133)}
-				ScaleType={Enum.ScaleType.Fit}
-				Size={UDim2.fromScale(0.362, 0.695)}
-			/>
-
-			<textlabel
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-				key={"Label"}
-				Position={UDim2.fromScale(0.108, 0.132)}
-				Size={UDim2.fromScale(0.78, 0.193)}
-				Text={props.subtitle}
-				TextColor3={Color3.fromRGB(255, 234, 0)}
-				TextScaled={true}
-				TextWrapped={true}
-				TextXAlignment={Enum.TextXAlignment.Right}
-				ZIndex={10}
-			>
-				<uistroke key={"UIStroke"} Thickness={4} />
-			</textlabel>
-		</imagebutton>
-	);
-};
 
 interface TopbarSelectionButtonProps {
 	setSelectedShop: Dispatch<keyof typeof SHOP_MENUS>;
@@ -148,10 +34,18 @@ const TopbarSelectionButtonComponent: React.FC<TopbarSelectionButtonProps> = (pr
 	const [isPressed, setPressed] = React.useState(false);
 	const [sz, sizeMotion] = useMotion(1);
 	const [MIN_SCALE, MAX_SCALE] = [0.95, 1.05];
+	const [bgColor, bgColorMotion] = useMotion(Color3.fromRGB(255, 255, 255));
 
 	useEffect(() => {
 		// sizeMotion.spring(isHovered ? START_SZ.add(SZ_INC) : START_SZ, springs.bubbly);
 		sizeMotion.spring(isHovered ? MAX_SCALE : 1, springs.responsive);
+		if (isHovered) {
+			bgColorMotion.spring(Color3.fromRGB(255, 255, 255).Lerp(new Color3(), 0.3));
+			sizeMotion.spring(1.05, springs.responsive);
+		} else {
+			bgColorMotion.spring(Color3.fromRGB(255, 255, 255).Lerp(new Color3(), 0));
+			sizeMotion.spring(1, springs.responsive);
+		}
 	}, [isHovered]);
 
 	useEffect(() => {
@@ -165,9 +59,7 @@ const TopbarSelectionButtonComponent: React.FC<TopbarSelectionButtonProps> = (pr
 			BorderColor3={Color3.fromRGB(0, 0, 0)}
 			BorderSizePixel={0}
 			Position={UDim2.fromScale(-2.02e-7, -0.26)}
-			Size={sz.map((s) => {
-				return UDim2.fromScale(0.22 * s, 0.977 * s);
-			})}
+			Size={UDim2.fromScale(0.126, 0.977)}
 			LayoutOrder={props.order}
 			AnchorPoint={new Vector2(0.5, 0.5)}
 		>
@@ -180,9 +72,12 @@ const TopbarSelectionButtonComponent: React.FC<TopbarSelectionButtonProps> = (pr
 				Image={
 					props.selectedShop === props.name ? "rbxassetid://109250907266323" : "rbxassetid://105250247379697"
 				}
+				ImageColor3={bgColor}
 				key={"Shovel Tab Btn"}
 				Position={UDim2.fromScale(0.5, 0.5)}
-				Size={UDim2.fromScale(1, 1)}
+				Size={sz.map((s) => {
+					return UDim2.fromScale(1 * s, 1 * s);
+				})}
 				Event={{
 					MouseButton1Click: () => {
 						props.setSelectedShop(props.name);
@@ -231,19 +126,8 @@ interface GenericItemProps {
 
 const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 	const { itemName, stats, itemType, owned } = props;
-	const [isHovered, setIsHovered] = React.useState(false);
-	const [isPressed, setPressed] = React.useState(false);
-	const [sz, sizeMotion] = useMotion(1);
-	const [MIN_SCALE, MAX_SCALE] = [0.95, 1.05];
 
-	useEffect(() => {
-		// sizeMotion.spring(isHovered ? START_SZ.add(SZ_INC) : START_SZ, springs.bubbly);
-		sizeMotion.spring(isHovered ? MAX_SCALE : 1, springs.responsive);
-	}, [isHovered]);
-
-	useEffect(() => {
-		sizeMotion.spring(isPressed ? MIN_SCALE : isHovered ? MAX_SCALE : 1, springs.responsive);
-	}, [isPressed]);
+	const px = usePx();
 
 	return (
 		<frame
@@ -264,9 +148,9 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 					if (owned) return;
 					Events.buyItem(itemType, itemName);
 				}}
+				clickable={!owned}
 			>
 				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.748} />
-
 				<imagelabel
 					Image={gameConstants.RARITY_BACKGROUND_IMAGE}
 					ImageColor3={gameConstants.RARITY_COLORS[props.rarity]}
@@ -274,7 +158,6 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 					Size={UDim2.fromScale(1, 1)}
 					ZIndex={0}
 				/>
-
 				<frame
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
@@ -323,7 +206,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 									BorderSizePixel={0}
 									FontFace={
 										new Font(
-											"rbxassetid://16658221428",
+											"rbxassetid://11702779409",
 											Enum.FontWeight.Bold,
 											Enum.FontStyle.Normal,
 										)
@@ -333,8 +216,9 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 									Size={UDim2.fromScale(1.02, 0.763)}
 									Text={`x${shortenNumber(tonumber(stat.value) ?? 0)}`}
 									TextColor3={Color3.fromRGB(255, 255, 255)}
-									TextScaled={true}
-									TextWrapped={true}
+									// TextScaled={true}
+									// TextWrapped={true}
+									TextSize={px(30)}
 									TextXAlignment={Enum.TextXAlignment.Left}
 								>
 									<uistroke key={"UIStroke"} Thickness={2} />
@@ -355,7 +239,6 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 						SortOrder={Enum.SortOrder.LayoutOrder}
 					/>
 				</frame>
-
 				<frame
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
@@ -381,14 +264,15 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							BackgroundTransparency={1}
 							BorderColor3={Color3.fromRGB(0, 0, 0)}
 							BorderSizePixel={0}
-							FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+							FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 							key={"Rarity"}
 							Position={UDim2.fromScale(0.508, 0.26)}
 							Size={UDim2.fromScale(1.02, 0.438)}
 							Text={props.rarity}
 							TextColor3={gameConstants.RARITY_COLORS[props.rarity]}
-							TextScaled={true}
-							TextWrapped={true}
+							// TextScaled={true}
+							// TextWrapped={true}
+							TextSize={px(25)}
 							TextXAlignment={Enum.TextXAlignment.Right}
 						>
 							<uistroke key={"UIStroke"} Thickness={1.9} />
@@ -400,15 +284,16 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 								BorderColor3={Color3.fromRGB(0, 0, 0)}
 								BorderSizePixel={0}
 								FontFace={
-									new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+									new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
 								}
 								key={"Rarity"}
 								Position={UDim2.fromScale(0.5, 0.43)}
 								Size={UDim2.fromScale(1, 1)}
 								Text={props.rarity}
 								TextColor3={gameConstants.RARITY_COLORS[props.rarity]}
-								TextScaled={true}
-								TextWrapped={true}
+								// TextScaled={true}
+								// TextWrapped={true}
+								TextSize={px(25)}
 								TextXAlignment={Enum.TextXAlignment.Right}
 							>
 								<uistroke key={"UIStroke"} Thickness={1.9} />
@@ -427,15 +312,16 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							BackgroundTransparency={1}
 							BorderColor3={Color3.fromRGB(0, 0, 0)}
 							BorderSizePixel={0}
-							FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+							FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 							LayoutOrder={1}
 							key={"Name"}
 							Position={UDim2.fromScale(0.499, 0.709)}
 							Size={UDim2.fromScale(1.02, 0.521)}
 							Text={`${spaceWords(props.itemName)}`}
 							TextColor3={Color3.fromRGB(255, 255, 255)}
-							TextScaled={true}
-							TextWrapped={true}
+							// TextScaled={true}
+							// TextWrapped={true}
+							TextSize={px(25)}
 							TextXAlignment={Enum.TextXAlignment.Right}
 						>
 							<uistroke key={"UIStroke"} Thickness={3} />
@@ -447,7 +333,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 								BorderColor3={Color3.fromRGB(0, 0, 0)}
 								BorderSizePixel={0}
 								FontFace={
-									new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+									new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
 								}
 								LayoutOrder={1}
 								key={"Name"}
@@ -455,8 +341,9 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 								Size={UDim2.fromScale(1, 1)}
 								Text={`${spaceWords(props.itemName)}`}
 								TextColor3={Color3.fromRGB(255, 255, 255)}
-								TextScaled={true}
-								TextWrapped={true}
+								// TextScaled={true}
+								// TextWrapped={true}
+								TextSize={px(25)}
 								TextXAlignment={Enum.TextXAlignment.Right}
 							>
 								<uistroke key={"UIStroke"} Thickness={3} />
@@ -466,67 +353,50 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 				</frame>
 
 				<frame
-					BackgroundColor3={Color3.fromRGB(0, 0, 0)}
+					BackgroundColor3={new Color3()}
 					BackgroundTransparency={0.45}
-					BorderSizePixel={0}
-					key={"Owned Overlay"}
+					key={".$Owned Overlay"}
 					Size={UDim2.fromScale(1, 1)}
-					ZIndex={15}
 					Visible={owned}
+					ZIndex={15}
 				>
 					<uicorner key={"UICorner"} CornerRadius={new UDim(0.1, 0)} />
 
 					<imagelabel
 						AnchorPoint={new Vector2(0.5, 0.5)}
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
 						Image={"rbxassetid://114978900536475"}
 						key={"Check"}
 						Position={UDim2.fromScale(0.53, 0.376)}
 						ScaleType={Enum.ScaleType.Fit}
 						Size={UDim2.fromScale(0.335, 0.208)}
-						SliceCenter={new Rect(100, 259, 901, 259)}
 					/>
 
 					<textlabel
 						AnchorPoint={new Vector2(0.5, 0.5)}
 						BackgroundTransparency={1}
-						FontFace={
-							new Font(
-								"rbxasset://fonts/families/BuilderSans.json",
-								Enum.FontWeight.Bold,
-								Enum.FontStyle.Normal,
-							)
-						}
+						FontFace={Font.fromEnum(Enum.Font.BuilderSansBold)}
 						key={"1"}
 						Position={UDim2.fromScale(0.508, 0.538)}
 						Size={UDim2.fromScale(0.9, 0.9)}
 						Text={"OWNED"}
-						TextColor3={Color3.fromRGB(0, 0, 0)}
-						TextScaled={true}
-						TextWrapped={true}
+						TextColor3={new Color3()}
+						// TextScaled={true}
+						TextSize={px(60)}
 					>
 						<uistroke key={"1"} Thickness={5} />
 
 						<textlabel
 							AnchorPoint={new Vector2(0.5, 0.5)}
 							BackgroundTransparency={1}
-							FontFace={
-								new Font(
-									"rbxasset://fonts/families/BuilderSans.json",
-									Enum.FontWeight.Bold,
-									Enum.FontStyle.Normal,
-								)
-							}
+							FontFace={Font.fromEnum(Enum.Font.BuilderSansBold)}
 							key={"1"}
 							Position={UDim2.fromScale(0.5, 0.49)}
 							Size={UDim2.fromScale(1, 1)}
 							Text={"OWNED"}
-							TextColor3={Color3.fromRGB(255, 255, 255)}
-							TextScaled={true}
-							TextWrapped={true}
+							TextColor3={new Color3(1, 1, 1)}
+							// TextScaled={true}
+							TextSize={px(60)}
 						>
 							<uistroke key={"1"} Thickness={5} />
 						</textlabel>
@@ -534,7 +404,6 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 				</frame>
 
 				<imagelabel BackgroundTransparency={1} Image={props.image} Size={UDim2.fromScale(1, 1)} ZIndex={0} />
-
 				<textlabel
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundTransparency={1}
@@ -547,11 +416,12 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 					}
 					key={"1"}
 					Position={UDim2.fromScale(0.5, 0.971)}
-					Size={UDim2.fromScale(0.551, 0.11)}
+					Size={UDim2.fromScale(0.9, 0.11)}
 					Text={`$${separateWithCommas(props.price)}`}
 					TextColor3={Color3.fromRGB(92, 255, 133)}
-					TextScaled={true}
-					TextWrapped={true}
+					// TextScaled={true}
+					// TextWrapped={true}
+					TextSize={px(28)}
 					ZIndex={16}
 					Visible={!owned}
 				>
@@ -579,6 +449,7 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 		Array<Exclude<Item, { type: "Potions" }> & { owned: boolean }>
 	>([]);
 	const [popInSz, popInMotion] = useMotion(UDim2.fromScale(0, 0));
+	const [radialRotation, setRadialRotation] = useState(0);
 	const menuRef = React.createRef<Frame>();
 
 	const updateShopContent = (shopName: typeof selectedShop, items: Array<Item>, setSelected: boolean = false) => {
@@ -695,6 +566,11 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 					warn(e);
 				});
 		}
+
+		RunService.RenderStepped.Connect(() => {
+			const SPEED = 0.2;
+			setRadialRotation((prev) => (prev + SPEED) % 360);
+		});
 	}, []);
 
 	return (
@@ -721,65 +597,269 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 				Position={UDim2.fromScale(0.5, 0.5)}
 				Size={UDim2.fromScale(1, 1)}
 			/>
-
 			<ExitButton
 				uiController={props.uiController}
 				uiName={gameConstants.SHOP_UI}
 				menuRefToClose={menuRef}
 				isMenuVisible={visible}
 			/>
-
 			<frame
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
 				key={"Select Menu Frame"}
 				Position={UDim2.fromScale(0.037, 0.0705)}
 				Size={UDim2.fromScale(0.933, 0.853)}
 				Visible={selectedShop === ""}
 			>
-				<SelectionButtonComponent
-					setSelectedShop={setSelectedShop}
-					title={"Shovels"}
-					subtitle={"NEW"}
-					icon={"rbxassetid://101307691874432"}
-					buttonPosition={UDim2.fromScale(0.261, 0.254)}
-					backgroundImage="rbxassetid://88271653883643"
-				/>
-				<SelectionButtonComponent
-					setSelectedShop={setSelectedShop}
-					title={"MetalDetectors"}
-					subtitle={"NEW"}
-					icon={"rbxassetid://119544070088143"}
-					buttonPosition={UDim2.fromScale(0.728, 0.254)}
-					backgroundImage="rbxassetid://118545014651736"
-				/>
-				<SelectionButtonComponent
-					setSelectedShop={setSelectedShop}
-					title={"Store"}
-					subtitle={"NEW"}
-					icon={"rbxassetid://82530092684621"}
-					buttonPosition={UDim2.fromScale(0.484, 0.758)}
-					backgroundImage="rbxassetid://107941667988653"
-				/>
+				<AnimatedButton
+					anchorPoint={new Vector2(0.5, 0.5)}
+					position={UDim2.fromScale(0.261, 0.254)}
+					size={UDim2.fromScale(0.505, 0.487)}
+					onClick={() => {
+						setSelectedShop("Shovels");
+					}}
+				>
+					<imagelabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						Image={"rbxassetid://88271653883643"}
+						key={"Background"}
+						Position={UDim2.fromScale(0.5, 0.5)}
+						ScaleType={Enum.ScaleType.Fit}
+						Size={UDim2.fromScale(1, 1)}
+					/>
+
+					<imagelabel
+						BackgroundTransparency={1}
+						Image={"rbxassetid://101307691874432"}
+						key={"Icon"}
+						Position={UDim2.fromScale(0.307, 0.133)}
+						ScaleType={Enum.ScaleType.Fit}
+						Size={UDim2.fromScale(0.362, 0.695)}
+					/>
+
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0)}
+						BackgroundTransparency={1}
+						FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						key={"Title"}
+						Position={UDim2.fromScale(0.5, 0.701)}
+						Size={UDim2.fromScale(0.763131, 0.162)}
+						Text={"Shovels"}
+						TextColor3={new Color3(1, 1, 1)}
+						TextScaled={true}
+						TextXAlignment={Enum.TextXAlignment.Left}
+						ZIndex={10}
+					>
+						<uistroke key={"UIStroke"} Thickness={3} />
+
+						<uipadding key={"UIPadding"} />
+					</textlabel>
+
+					<textlabel
+						BackgroundTransparency={1}
+						FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						key={"Label"}
+						Position={UDim2.fromScale(0.108, 0.132)}
+						Size={UDim2.fromScale(0.773566, 0.193)}
+						Text={"NEW"}
+						TextColor3={Color3.fromRGB(255, 234, 0)}
+						TextScaled={true}
+						TextXAlignment={Enum.TextXAlignment.Right}
+						ZIndex={10}
+					>
+						<uistroke key={"UIStroke"} Thickness={4} />
+					</textlabel>
+				</AnimatedButton>
+
+				<AnimatedButton
+					anchorPoint={new Vector2(0.5, 0.5)}
+					position={UDim2.fromScale(0.728, 0.254)}
+					size={UDim2.fromScale(0.505, 0.487)}
+					onClick={() => {
+						setSelectedShop("MetalDetectors");
+					}}
+				>
+					<imagelabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						Image={"rbxassetid://118545014651736"}
+						key={"Background"}
+						Position={UDim2.fromScale(0.5, 0.5)}
+						ScaleType={Enum.ScaleType.Fit}
+						Size={UDim2.fromScale(1, 1)}
+					/>
+
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0)}
+						BackgroundTransparency={1}
+						FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						key={"Title"}
+						Position={UDim2.fromScale(0.5, 0.701)}
+						Size={UDim2.fromScale(0.763131, 0.162)}
+						Text={"Metal Detectors"}
+						TextColor3={new Color3(1, 1, 1)}
+						TextScaled={true}
+						TextXAlignment={Enum.TextXAlignment.Left}
+						ZIndex={10}
+					>
+						<uistroke key={"UIStroke"} Thickness={3} />
+
+						<uipadding key={"UIPadding"} />
+					</textlabel>
+
+					<imagelabel
+						BackgroundTransparency={1}
+						Image={"rbxassetid://119544070088143"}
+						key={"Icon"}
+						Position={UDim2.fromScale(0.307, 0.133)}
+						ScaleType={Enum.ScaleType.Fit}
+						Size={UDim2.fromScale(0.362, 0.695)}
+					/>
+
+					<textlabel
+						BackgroundTransparency={1}
+						FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						key={"Label"}
+						Position={UDim2.fromScale(0.108, 0.132)}
+						Size={UDim2.fromScale(0.773566, 0.193)}
+						Text={"NEW"}
+						TextColor3={Color3.fromRGB(255, 234, 0)}
+						TextScaled={true}
+						TextXAlignment={Enum.TextXAlignment.Right}
+						ZIndex={10}
+					>
+						<uistroke key={"UIStroke"} Thickness={4} />
+					</textlabel>
+				</AnimatedButton>
+
+				<AnimatedButton
+					anchorPoint={new Vector2(0.5, 0.5)}
+					position={UDim2.fromScale(0.495198, 0.758)}
+					selectable={false}
+					size={UDim2.fromScale(0.918124, 0.487)}
+					onClick={() => {
+						setSelectedShop("Store");
+					}}
+				>
+					<imagelabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						Image={"rbxassetid://107941667988653"}
+						key={"Background"}
+						Position={UDim2.fromScale(0.5, 0.5)}
+						ScaleType={Enum.ScaleType.Slice}
+						Size={UDim2.fromScale(1, 1)}
+						SliceCenter={new Rect(625, 208, 625, 208)}
+					>
+						<canvasgroup
+							key={"CanvasGroup"}
+							BackgroundTransparency={1}
+							Position={UDim2.fromScale(0.022, 0.069)}
+							Size={UDim2.fromScale(0.96, 0.836)}
+						>
+							<imagelabel
+								key={"ImageLabel"}
+								AnchorPoint={new Vector2(0.5, 0.5)}
+								BackgroundTransparency={1}
+								Image={"rbxassetid://96020275381733"}
+								ImageColor3={Color3.fromRGB(255, 61, 2)}
+								ImageTransparency={0.86}
+								Position={UDim2.fromScale(0.5, 0.5)}
+								Rotation={-180}
+								ScaleType={Enum.ScaleType.Crop}
+								Size={UDim2.fromScale(1.06184, 2.46095)}
+								ZIndex={2}
+							>
+								<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.77778} />
+							</imagelabel>
+
+							<imagelabel
+								key={"ImageLabel"}
+								AnchorPoint={new Vector2(0.5, 0.5)}
+								BackgroundTransparency={1}
+								Image={"rbxassetid://86149883416206"}
+								ImageColor3={Color3.fromRGB(207, 0, 0)}
+								ImageTransparency={0.94}
+								Position={UDim2.fromScale(0.5, 0.5)}
+								Rotation={radialRotation}
+								ScaleType={Enum.ScaleType.Crop}
+								Size={UDim2.fromScale(1.03294, 4.25594)}
+							>
+								<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+							</imagelabel>
+
+							<uicorner key={"UICorner"} CornerRadius={new UDim(0.1, 0)} />
+
+							<imagelabel
+								key={"ImageLabel"}
+								AnchorPoint={new Vector2(0.5, 0.5)}
+								BackgroundTransparency={1}
+								Image={"rbxassetid://95141846932408"}
+								ImageColor3={Color3.fromRGB(207, 0, 0)}
+								ImageTransparency={0.94}
+								Position={UDim2.fromScale(0.5, 0.5)}
+								Rotation={-180}
+								ScaleType={Enum.ScaleType.Crop}
+								Size={UDim2.fromScale(1.03294, 4.25594)}
+							>
+								<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+							</imagelabel>
+						</canvasgroup>
+					</imagelabel>
+
+					<imagelabel
+						BackgroundTransparency={1}
+						Image={"rbxassetid://82530092684621"}
+						key={"Icon"}
+						Position={UDim2.fromScale(0.307, 0.133)}
+						ScaleType={Enum.ScaleType.Fit}
+						Size={UDim2.fromScale(0.362, 0.695)}
+					/>
+
+					<textlabel
+						BackgroundTransparency={1}
+						FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						key={"Label"}
+						Position={UDim2.fromScale(0.108, 0.132)}
+						Size={UDim2.fromScale(0.855437, 0.193)}
+						Text={"NEW"}
+						TextColor3={Color3.fromRGB(255, 234, 0)}
+						TextScaled={true}
+						TextXAlignment={Enum.TextXAlignment.Right}
+						ZIndex={10}
+					>
+						<uistroke key={"UIStroke"} Thickness={4} />
+					</textlabel>
+
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0)}
+						BackgroundTransparency={1}
+						FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						key={"Title"}
+						Position={UDim2.fromScale(0.460732, 0.701)}
+						Size={UDim2.fromScale(0.841666, 0.162)}
+						Text={"Store"}
+						TextColor3={new Color3(1, 1, 1)}
+						TextScaled={true}
+						TextXAlignment={Enum.TextXAlignment.Left}
+						ZIndex={10}
+					>
+						<uistroke key={"UIStroke"} Thickness={3} />
+
+						<uipadding key={"UIPadding"} />
+					</textlabel>
+				</AnimatedButton>
 			</frame>
 
 			<frame
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
 				key={"Seller Profile"}
 				Position={UDim2.fromScale(-0.0621, -0.104)}
 				Size={UDim2.fromScale(0.165, 0.286)}
 			>
 				<imagelabel
 					AnchorPoint={new Vector2(0.5, 0.5)}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
 					Image={"rbxassetid://101474809776872"}
 					key={"Background"}
 					Position={UDim2.fromScale(0.5, 0.5)}
@@ -788,33 +868,26 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 				>
 					<imagelabel
 						AnchorPoint={new Vector2(0.5, 0.5)}
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
+						Image={"rbxassetid://77754309050946"}
 						key={"Profile"}
 						Position={UDim2.fromScale(0.5, 0.446)}
 						Size={UDim2.fromScale(0.717, 0.717)}
-						Image={"rbxassetid://77754309050946"}
 					/>
 				</imagelabel>
 			</frame>
 
 			<textlabel
 				key={"TextLabel"}
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-				Position={UDim2.fromScale(0.103, -0.0332)}
-				Size={UDim2.fromScale(0.239, 0.104)}
+				FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+				Position={UDim2.fromScale(0.117964, -0.0509579)}
+				Size={UDim2.fromScale(0.341737, 0.148706)}
 				Text={"Magia's Shop"}
-				TextColor3={Color3.fromRGB(255, 255, 255)}
+				TextColor3={new Color3(1, 1, 1)}
 				TextScaled={true}
-				TextWrapped={true}
 			>
-				<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={5.3} />
+				<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={8} />
 
 				<uipadding
 					key={"UIPadding"}
@@ -826,7 +899,6 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 			</textlabel>
 
 			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.74} />
-
 			<scrollingframe
 				key={"ScrollingFrame"}
 				Active={true}
@@ -849,6 +921,7 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 					FillDirection={Enum.FillDirection.Horizontal}
 					SortOrder={Enum.SortOrder.LayoutOrder}
 					VerticalAlignment={Enum.VerticalAlignment.Center}
+					Padding={new UDim(0.008, 0)}
 				/>
 
 				{shopContent.map((item) => {
@@ -883,15 +956,14 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 					);
 				})}
 			</scrollingframe>
-
 			<frame
 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 				BackgroundTransparency={1}
 				BorderColor3={Color3.fromRGB(0, 0, 0)}
 				BorderSizePixel={0}
 				key={"Top Navigation"}
-				Position={UDim2.fromScale(0.1, 0.025)}
-				Size={UDim2.fromScale(0.8, 0.18)}
+				Position={UDim2.fromScale(0.218, 0.035)}
+				Size={UDim2.fromScale(0.682, 0.154)}
 				Visible={selectedShop !== ""}
 			>
 				<TopbarSelectionButtonComponent
@@ -922,6 +994,7 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 					HorizontalAlignment={Enum.HorizontalAlignment.Right}
 					SortOrder={Enum.SortOrder.LayoutOrder}
 					VerticalAlignment={Enum.VerticalAlignment.Center}
+					Padding={new UDim(0.005)}
 				/>
 			</frame>
 		</frame>

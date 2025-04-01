@@ -3,26 +3,23 @@ import React, { useEffect } from "@rbxts/react";
 import { RunService } from "@rbxts/services";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
-import { fullTargetConfig } from "shared/config/targetConfig";
 import { gameConstants } from "shared/gameConstants";
-import { Rarity } from "shared/networkTypes";
-import { shortenNumber } from "shared/util/nameUtil";
+import { ItemName, ItemType, Rarity } from "shared/networkTypes";
+import { shortenNumber, spaceWords } from "shared/util/nameUtil";
 
 const RC = gameConstants.RARITY_COLORS;
 
-export interface SoldItemPopupProps {
-	itemName?: keyof typeof fullTargetConfig;
+export interface ClaimedPopupProps {
 	itemRarity?: Rarity;
-	sellCount?: number;
-	sellAmount: number;
-	isSellAll: boolean;
+	reward: ItemType | number;
+	itemName: ItemName | "Money";
 	onComplete: () => void;
 	count: number;
 }
 
-const SOLD_ALL_COLOR = new Color3(0, 0.68, 1);
+const DEFAULT_COLOR = new Color3(0.27, 1, 0.25);
 
-export const SoldItemPopup = (props: SoldItemPopupProps) => {
+export const ClaimedPopup = (props: ClaimedPopupProps) => {
 	const [sizeMotion, setSizeMotion] = useMotion(UDim2.fromScale(0, 0));
 
 	const [spinValue, setSpinValue] = React.useState(0);
@@ -46,7 +43,7 @@ export const SoldItemPopup = (props: SoldItemPopupProps) => {
 			while (true) {
 				// Make image bob back and forth
 				task.wait(1);
-				currentRotation = currentRotation < MAX_ROTATION ? MAX_ROTATION : 0;
+				currentRotation = currentRotation < MAX_ROTATION ? MAX_ROTATION : -MAX_ROTATION;
 				setImageRotation.spring(currentRotation, springs.bubbly);
 			}
 		});
@@ -117,7 +114,12 @@ export const SoldItemPopup = (props: SoldItemPopupProps) => {
 					key={"ItemImage"}
 					Size={UDim2.fromScale(1, 1)}
 					ZIndex={5}
-					Image={props.itemName ? fullTargetConfig[props.itemName].itemImage : "rbxassetid://96446480715038"}
+					Image={
+						gameConstants.SHOP_CONFIGS[props.reward as ItemType] !== undefined
+							? gameConstants.SHOP_CONFIGS[props.reward as ItemType][props.itemName as ItemName]
+									?.itemImage
+							: "rbxassetid://96446480715038"
+					}
 					Rotation={imageRotation}
 				>
 					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1} />
@@ -146,25 +148,17 @@ export const SoldItemPopup = (props: SoldItemPopupProps) => {
 				RichText={true}
 				Size={UDim2.fromScale(2, 1)}
 				TextXAlignment={Enum.TextXAlignment.Center}
-				Text={`You just sold ${
-					props.isSellAll
-						? ""
-						: `${"aeiou".find(string.lower((props.itemName ?? "").sub(0, 1))).size() > 0 ? "an " : "a "}`
-				}<font color="rgb(${math.round(
-					props.itemRarity ? RC[props.itemRarity].R * 255 : SOLD_ALL_COLOR.R * 255,
-				)},${math.round(props.itemRarity ? RC[props.itemRarity].G * 255 : SOLD_ALL_COLOR.G * 255)},${math.round(
-					props.itemRarity ? RC[props.itemRarity].B * 255 : SOLD_ALL_COLOR.B * 255,
-				)})">${
-					props.isSellAll
-						? `${props.sellCount} ${(props.sellCount ?? 0) > 1 ? "ITEMS" : "ITEM"}`
-						: props.itemName
-				}</font> for <font color="rgb(0, 255, 0)"><b>$${shortenNumber(props.sellAmount)}</b></font>!`}
-				TextColor3={Color3.fromRGB(255, 255, 255)}
+				Text={`Claimed ${
+					type(props.itemName) === "number"
+						? "$" + shortenNumber(props.itemName as unknown as number)
+						: spaceWords(props.itemName) ?? "Unknown"
+				}`}
+				TextColor3={type(props.itemName) === "number" ? DEFAULT_COLOR : RC[props.itemRarity ?? "Common"]}
 				TextScaled={true}
 				TextWrapped={false}
 				AutomaticSize={Enum.AutomaticSize.X}
 			>
-				<uistroke key={"UIStroke"} />
+				<uistroke key={"UIStroke"} Color={new Color3(0, 0, 0)} Thickness={1} />
 			</textlabel>
 		</frame>
 	);

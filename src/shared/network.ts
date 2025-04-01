@@ -1,5 +1,14 @@
 import { Networking } from "@flamework/networking";
-import { Item, ItemType, NetworkedTarget, PlayerDigInfo, QuestProgress, SkillName, Target } from "./networkTypes";
+import {
+	Item,
+	ItemName,
+	ItemType,
+	NetworkedTarget,
+	PlayerDigInfo,
+	QuestProgress,
+	SkillName,
+	Target,
+} from "./networkTypes";
 import { MetalDetector, metalDetectorConfig } from "./config/metalDetectorConfig";
 import { Shovel, shovelConfig } from "./config/shovelConfig";
 import { fullTargetConfig, targetConfig } from "./config/targetConfig";
@@ -88,6 +97,10 @@ interface ServerToClientEvents {
 	profileReady: () => void;
 	replicateDig: (target: NetworkedTarget) => void;
 	endDigReplication: (target: NetworkedTarget) => void;
+	sendClaimedPopup: (kind: ItemType | "Money", recieved?: ItemName | number) => void;
+	sendInvalidActionPopup: (message: string) => void;
+	boatSpawnResponse: (success: boolean, response: string) => void;
+	notifyBought: (productName: string, productType: Enum.InfoType) => void;
 }
 
 interface ClientToServerFunctions {

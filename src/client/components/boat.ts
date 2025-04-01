@@ -4,7 +4,6 @@ import { Component, BaseComponent } from "@flamework/components";
 import { ContextActionService, Players, UserInputService } from "@rbxts/services";
 import { Events, Functions } from "client/network";
 import { boatConfig, DEFAULT_BOAT_SPEED, DEFAULT_BOAT_TURN_SPEED } from "shared/config/boatConfig";
-import { is } from "@rbxts/sift/out/Array";
 import { gameConstants } from "shared/gameConstants";
 import { ObjectPool } from "shared/util/objectPool";
 

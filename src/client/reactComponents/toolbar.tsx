@@ -168,7 +168,9 @@ export const Toolbar = () => {
 		if (item.tool.Parent === character) {
 			humanoid.UnequipTools();
 		} else {
-			const handle = item.tool.FindFirstChild("Handle");
+			const handle = item.tool.RequiresHandle
+				? item.tool.WaitForChild("Handle", 5)
+				: item.tool.FindFirstChild("Handle");
 
 			if (!handle) {
 				const toolMotor = character.FindFirstChild("RightHand")?.FindFirstChild("ToolMotor") as
@@ -220,7 +222,7 @@ export const Toolbar = () => {
 					descendant.Anchored = false;
 					descendant.Massless = true;
 					descendant.CanCollide = false;
-					descendant.Transparency = handle ? 0 : 1;
+					// descendant.Transparency = handle ? 0 : 1;
 				}
 			}
 

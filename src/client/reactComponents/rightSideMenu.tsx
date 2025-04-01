@@ -10,6 +10,8 @@ import { RunService, UserInputService } from "@rbxts/services";
 import { gameConstants } from "shared/gameConstants";
 import { subscribe } from "@rbxts/charm";
 import { hasDailyAtom, hasGiftAtom } from "client/atoms/rewardAtoms";
+import { shortenNumber } from "shared/util/nameUtil";
+import { usePx } from "client/hooks/usePx";
 
 interface MoneyVectorProps {
 	offset: UDim2;
@@ -131,6 +133,8 @@ export const RightSideMenu = (props: MenuProps) => {
 	const [hasGift, setHasGift] = useState(hasGiftAtom());
 	const [hasDaily, setHasDaily] = useState(hasDailyAtom());
 
+	const px = usePx();
+
 	const updateMoneyValue = (value: string) => {
 		const etNum = EternityNum.fromString(value);
 		const num = EternityNum.toNumber(etNum);
@@ -248,27 +252,24 @@ export const RightSideMenu = (props: MenuProps) => {
 
 					<textlabel
 						AnchorPoint={new Vector2(0, 0.5)}
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-						key={"Amount"}
-						Position={UDim2.fromScale(0.05, 0.45)}
-						Size={UDim2.fromScale(0.676, 0.638)}
+						FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						key={".$Amount"}
+						Position={UDim2.fromScale(0.1, 0.475)}
+						Size={UDim2.fromScale(0.597257, 0.563684)}
 						Text={moneyValue}
 						TextColor3={Color3.fromRGB(92, 255, 133)}
-						TextScaled={true}
-						TextWrapped={true}
+						// TextScaled={true}
+						TextSize={px(30)}
 						TextXAlignment={Enum.TextXAlignment.Left}
 					>
-						<uistroke key={"UIStroke"} Thickness={4} />
-
 						<uipadding
 							key={"UIPadding"}
 							PaddingBottom={new UDim(0.00285, 0)}
 							PaddingTop={new UDim(0.00285, 0)}
 						/>
+
+						<uistroke key={"UIStroke"} Thickness={4} Transparency={0.5} />
 					</textlabel>
 
 					<imagelabel
@@ -345,8 +346,9 @@ export const RightSideMenu = (props: MenuProps) => {
 								Size={UDim2.fromScale(1.25, 0.246)}
 								Text={"Gift"}
 								TextColor3={Color3.fromRGB(255, 255, 255)}
-								TextScaled={true}
-								TextWrapped={true}
+								// TextScaled={true}
+								// TextWrapped={true}
+								TextSize={px(25)}
 								ZIndex={10}
 							>
 								<uistroke key={"UIStroke"} Thickness={3} />
@@ -365,9 +367,7 @@ export const RightSideMenu = (props: MenuProps) => {
 
 						<frame
 							BackgroundColor3={Color3.fromRGB(255, 0, 0)}
-							BorderColor3={Color3.fromRGB(0, 0, 0)}
-							BorderSizePixel={0}
-							key={"Notification"}
+							key={".$Notification"}
 							Position={UDim2.fromScale(0.6, 0.0908)}
 							Size={UDim2.fromScale(0.307, 0.307)}
 							Visible={hasGift}
@@ -377,10 +377,7 @@ export const RightSideMenu = (props: MenuProps) => {
 
 							<textlabel
 								AnchorPoint={new Vector2(0.5, 0.5)}
-								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 								BackgroundTransparency={1}
-								BorderColor3={Color3.fromRGB(0, 0, 0)}
-								BorderSizePixel={0}
 								FontFace={
 									new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
 								}
@@ -388,9 +385,8 @@ export const RightSideMenu = (props: MenuProps) => {
 								Position={UDim2.fromScale(0.5, 0.5)}
 								Size={UDim2.fromScale(1, 1)}
 								Text={"!"}
-								TextColor3={Color3.fromRGB(255, 255, 255)}
+								TextColor3={new Color3(1, 1, 1)}
 								TextScaled={true}
-								TextWrapped={true}
 								ZIndex={10}
 							>
 								<uistroke key={"UIStroke"} Thickness={2} />
@@ -404,7 +400,7 @@ export const RightSideMenu = (props: MenuProps) => {
 								/>
 							</textlabel>
 
-							<uistroke key={"UIStroke"} Thickness={2} />
+							<uistroke key={"UIStroke"} Thickness={3} />
 
 							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 						</frame>
@@ -419,7 +415,6 @@ export const RightSideMenu = (props: MenuProps) => {
 						>
 							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 						</imagelabel>
-
 						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 					</AnimatedButton>
 
@@ -442,22 +437,17 @@ export const RightSideMenu = (props: MenuProps) => {
 						>
 							<frame
 								BackgroundColor3={Color3.fromRGB(255, 0, 0)}
-								BorderColor3={Color3.fromRGB(0, 0, 0)}
-								BorderSizePixel={0}
-								key={"Notification"}
+								key={".$Notification"}
 								Position={UDim2.fromScale(0.6, 0.0908)}
 								Size={UDim2.fromScale(0.307, 0.307)}
+								ZIndex={34}
 								Visible={hasDaily}
-								ZIndex={32}
 							>
 								<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
 
 								<textlabel
 									AnchorPoint={new Vector2(0.5, 0.5)}
-									BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 									BackgroundTransparency={1}
-									BorderColor3={Color3.fromRGB(0, 0, 0)}
-									BorderSizePixel={0}
 									FontFace={
 										new Font(
 											"rbxassetid://16658221428",
@@ -469,9 +459,8 @@ export const RightSideMenu = (props: MenuProps) => {
 									Position={UDim2.fromScale(0.5, 0.5)}
 									Size={UDim2.fromScale(1, 1)}
 									Text={"!"}
-									TextColor3={Color3.fromRGB(255, 255, 255)}
+									TextColor3={new Color3(1, 1, 1)}
 									TextScaled={true}
-									TextWrapped={true}
 									ZIndex={10}
 								>
 									<uistroke key={"UIStroke"} Thickness={2} />
@@ -485,7 +474,7 @@ export const RightSideMenu = (props: MenuProps) => {
 									/>
 								</textlabel>
 
-								<uistroke key={"UIStroke"} Thickness={2} />
+								<uistroke key={"UIStroke"} Thickness={3} />
 
 								<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 							</frame>
@@ -502,7 +491,6 @@ export const RightSideMenu = (props: MenuProps) => {
 								ScaleType={Enum.ScaleType.Fit}
 								Size={UDim2.fromScale(0.8, 0.8)}
 							/>
-
 							<imagelabel
 								Image={UserInputService.GetImageForKeyCode(Enum.KeyCode.DPadLeft)}
 								Position={UDim2.fromScale(0.5, 1)}
@@ -513,7 +501,6 @@ export const RightSideMenu = (props: MenuProps) => {
 							>
 								<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 							</imagelabel>
-
 							<textlabel
 								AnchorPoint={new Vector2(0.5, 0.5)}
 								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -528,8 +515,9 @@ export const RightSideMenu = (props: MenuProps) => {
 								Size={UDim2.fromScale(1.25, 0.246)}
 								Text={"Daily"}
 								TextColor3={Color3.fromRGB(255, 255, 255)}
-								TextScaled={true}
-								TextWrapped={true}
+								// TextScaled={true}
+								// TextWrapped={true}
+								TextSize={px(25)}
 								ZIndex={10}
 							>
 								<uistroke key={"UIStroke"} Thickness={3} />
@@ -542,7 +530,6 @@ export const RightSideMenu = (props: MenuProps) => {
 									PaddingTop={new UDim(0.0056, 0)}
 								/>
 							</textlabel>
-
 							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 						</AnimatedButton>
 
@@ -606,8 +593,9 @@ export const RightSideMenu = (props: MenuProps) => {
 								Size={UDim2.fromScale(1.25, 0.246)}
 								Text={"Codes"}
 								TextColor3={Color3.fromRGB(255, 255, 255)}
-								TextScaled={true}
-								TextWrapped={true}
+								// TextScaled={true}
+								// TextWrapped={true}
+								TextSize={px(25)}
 								ZIndex={10}
 							>
 								<uistroke key={"UIStroke"} Thickness={3} />

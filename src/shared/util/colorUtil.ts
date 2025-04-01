@@ -30,3 +30,21 @@ export function redToGreen(t: number): Color3 {
 
 	return hsvToRgb(hue, 1, 1);
 }
+
+export function greenToRed(t: number): Color3 {
+	t = math.clamp(t, 0, 1);
+
+	const hue = 120 - t * 120;
+
+	return hsvToRgb(hue, 1, 1);
+}
+
+export function whiteToRed(t: number, redSaturation: number = 1): Color3 {
+	t = math.clamp(t, 0, 1);
+	redSaturation = math.clamp(redSaturation, 0, 1);
+
+	const saturation = t * redSaturation;
+	const value = 1;
+
+	return hsvToRgb(0, saturation, value);
+}

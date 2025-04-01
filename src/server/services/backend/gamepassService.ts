@@ -4,12 +4,9 @@ import { MarketplaceService } from "@rbxts/services";
 import { gameConstants } from "shared/gameConstants";
 import { ProfileService } from "./profileService";
 import { Events, Functions } from "server/network";
-import { InventoryService } from "../gameplay/inventoryService";
+import { spaceWords } from "shared/util/nameUtil";
 
-// 🗣️🗣️🗣️
-type ValueOf<T> = T[keyof T];
-
-const CREATOR_NAME = "xFrozen A2";
+const GAME_CREATOR_ID = game.CreatorId;
 
 @Service({})
 export class GamepassService implements OnStart {
@@ -38,7 +35,6 @@ export class GamepassService implements OnStart {
 		MarketplaceService.PromptGamePassPurchaseFinished.Connect((player, assetId, wasPurchased) => {
 			if (!wasPurchased) return;
 			const gamepassName = this.gamepassIdToName.get(assetId);
-
 			if (!gamepassName) {
 				error("What are you buying??", assetId);
 			}
@@ -55,6 +51,8 @@ export class GamepassService implements OnStart {
 			profile.Data.ownedGamepasses.set(gamepassName, true);
 			this.profileService.setProfile(player, profile);
 			Events.updateOwnedGamepasses(player, profile.Data.ownedGamepasses);
+
+			Events.notifyBought(player, spaceWords(gamepassName), Enum.InfoType.Product);
 
 			if (gamepassName === "BiggerBackpack") {
 				const inventorySize = profile.Data.inventorySize * gameConstants.BIGGER_BACKPACK_SIZE_MODIFIER;
@@ -74,7 +72,7 @@ export class GamepassService implements OnStart {
 					const info = MarketplaceService.GetProductInfo(id, Enum.InfoType.GamePass);
 
 					// Furthermore, validate that the owner of the gamepass is the creator of the game
-					if (info.Creator.CreatorType !== "Group" && info.Creator.Name !== CREATOR_NAME) {
+					if (info.Creator.CreatorTargetId !== GAME_CREATOR_ID) {
 						error(`Gamepass ${name} is not owned by the game creator`);
 					}
 				} catch (error) {

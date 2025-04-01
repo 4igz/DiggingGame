@@ -26,9 +26,9 @@ local timePlayedRewards: { PlaytimeReward } = {
 		unlockTime = 10,
 	},
 	{
-		rewardType = "Money",
-		rewardAmount = 100,
-		unlockTime = minutes(2),
+		rewardType = "Potions",
+		itemName = "Small Strength Potion",
+		unlockTime = 15,
 	},
 	{
 		rewardType = "Money",

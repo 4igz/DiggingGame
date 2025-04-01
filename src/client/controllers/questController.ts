@@ -1,6 +1,6 @@
 //!optimize 2
 import { Controller, OnStart } from "@flamework/core";
-import { CollectionService, Players, ReplicatedStorage, TweenService } from "@rbxts/services";
+import { CollectionService, Players, ReplicatedStorage, SoundService, TweenService } from "@rbxts/services";
 import {
 	DialogResponse,
 	IDLE,
@@ -20,16 +20,19 @@ import React from "@rbxts/react";
 import Object from "@rbxts/object-utils";
 import { debugWarn } from "shared/util/logUtil";
 import UiController from "./uiController";
+import { Signals } from "shared/signals";
 
 const registeredNpcs = new Set<Instance>();
 let questProgress = new Map<keyof typeof questConfig, QuestProgress>();
-const animationFolder = ReplicatedStorage.WaitForChild("Assets").WaitForChild("Animations");
 
 @Controller({})
 export class QuestController implements OnStart {
 	constructor(private readonly uiController: UiController) {}
 
 	onStart(): void | Promise<void> {
+		const animationFolder = ReplicatedStorage.WaitForChild("Assets").WaitForChild("Animations");
+		const npcChatter = SoundService.WaitForChild("UI").WaitForChild("NpcChatter");
+
 		const createQuestGiver = (questNpc: Model) => {
 			const npcName = questNpc.Name;
 			const questline = questConfig[npcName];
@@ -138,6 +141,7 @@ export class QuestController implements OnStart {
 				if (currentProgress.stage >= questline.size()) {
 					// Questline is complete
 					debugWarn(`Questline for ${npcName} is complete`);
+					Signals.actionPopup.Fire(`${npcName} questline is complete.`);
 					return;
 				}
 				const quest = questline[currentProgress.stage];
@@ -159,6 +163,7 @@ export class QuestController implements OnStart {
 				}
 
 				playAnimation(TALK);
+				SoundService.PlayLocalSound(npcChatter as Sound);
 
 				dialogRoot.render(
 					React.createElement(TypewriterBillboard, {

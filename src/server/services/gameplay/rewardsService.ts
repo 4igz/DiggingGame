@@ -156,6 +156,7 @@ export class DailyRewardsService implements OnStart {
 					"rewardAmount must be specfied on daily streak when rewardType is 'Money'`",
 				);
 				this.moneyService.giveMoney(player, reward.rewardAmount!, true);
+				Events.sendClaimedPopup.fire(player, "Money", reward.rewardAmount);
 				break;
 			case "LuckMultiplier":
 				if (reward.rewardLength === undefined) {
@@ -168,14 +169,19 @@ export class DailyRewardsService implements OnStart {
 					error(`No potion found for reward ${reward.itemName}`);
 				}
 				this.inventoryService.givePotion(player, reward.itemName!);
+				Events.sendClaimedPopup.fire(player, "Potions", reward.itemName!);
+				break;
 			case "Boats":
 				this.inventoryService.onBoatBoughtSuccess(player, reward.itemName!);
+				Events.sendClaimedPopup.fire(player, "Boats", reward.itemName!);
 				break;
 			case "Shovels":
 				this.inventoryService.onItemBoughtSuccess(player, "Shovels", reward.itemName!);
+				Events.sendClaimedPopup.fire(player, "Shovels", reward.itemName!);
 				break;
 			case "MetalDetectors":
 				this.inventoryService.onItemBoughtSuccess(player, "MetalDetectors", reward.itemName!);
+				Events.sendClaimedPopup.fire(player, "MetalDetectors", reward.itemName!);
 				break;
 			default:
 				error(`Unknown reward type: ${reward.rewardType}`);

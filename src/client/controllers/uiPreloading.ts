@@ -21,6 +21,7 @@ const MANUAL_PRELOAD = [
 	"rbxassetid://109286116672247",
 	"rbxassetid://136665615709133",
 	"rbxassetid://104138540870658",
+	"rbxassetid://117435155005447",
 ];
 
 @Controller()

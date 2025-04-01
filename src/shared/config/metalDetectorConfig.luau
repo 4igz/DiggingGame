@@ -8,7 +8,6 @@ local metalDetectorConfig = {
 		itemImage = "rbxassetid://108661613310540",
 		rarityType = "Common",
 		price = 0,
-		shopOrder = -2,
 	},
 	CommonDetector = {
 		strength = 1.25,
@@ -17,7 +16,6 @@ local metalDetectorConfig = {
 		itemImage = "rbxassetid://123445201960643",
 		rarityType = "Common",
 		price = 750,
-		shopOrder = -1,
 	},
 	SilverDetector = {
 		strength = 1.5,
@@ -26,7 +24,6 @@ local metalDetectorConfig = {
 		itemImage = "rbxassetid://134806989248925",
 		rarityType = "Common",
 		price = 2000,
-		shopOrder = 0,
 	},
 	GoldDetector = {
 		strength = 1.5,
@@ -35,7 +32,6 @@ local metalDetectorConfig = {
 		itemImage = "rbxassetid://124439509844599",
 		rarityType = "Common",
 		price = 5000,
-		shopOrder = 1,
 	},
 	DiamondDetector = {
 		strength = 1.75,
@@ -44,7 +40,6 @@ local metalDetectorConfig = {
 		itemImage = "rbxassetid://102615131234174",
 		rarityType = "Uncommon",
 		price = 10000,
-		shopOrder = 2,
 	},
 	AmethystDetector = {
 		strength = 2,
@@ -53,7 +48,6 @@ local metalDetectorConfig = {
 		itemImage = "rbxassetid://123979343978192",
 		rarityType = "Uncommon",
 		price = 25000,
-		shopOrder = 3,
 	},
 	RubyDetector = {
 		strength = 2.25,
@@ -62,7 +56,6 @@ local metalDetectorConfig = {
 		itemImage = "rbxassetid://80842349596350",
 		rarityType = "Rare",
 		price = 100000,
-		shopOrder = 4,
 	},
 	EnchantedDetector = {
 		strength = 2.50,
@@ -71,7 +64,6 @@ local metalDetectorConfig = {
 		itemImage = "rbxassetid://100950657608323",
 		rarityType = "Rare",
 		price = 250000,
-		shopOrder = 5,
 	},
 	DemonicDetector = {
 		strength = 2.75,
@@ -80,7 +72,6 @@ local metalDetectorConfig = {
 		itemImage = "rbxassetid://76078468216770",
 		rarityType = "Epic",
 		price = 750000,
-		shopOrder = 6,
 	},
 	HeavenlyDetector = {
 		strength = 3,
@@ -89,8 +80,35 @@ local metalDetectorConfig = {
 		itemImage = "rbxassetid://133401921939429",
 		rarityType = "Epic",
 		price = 2000000,
-		shopOrder = 7,
 	},
+
+	-- New additions:
+	NatureDetector = {
+		strength = 3,
+		luck = 40,
+		searchRadius = 25,
+		rarityType = "Epic",
+		itemImage = "rbxassetid://133401921939429",
+		price = 200,
+	},
+	RetroDetector = {
+		strength = 3,
+		luck = 40,
+		searchRadius = 25,
+		rarityType = "Epic",
+		itemImage = "rbxassetid://133401921939429",
+		price = 200,
+	},
+	SteampunkDetector = {
+		strength = 3,
+		luck = 40,
+		searchRadius = 25,
+		rarityType = "Epic",
+		itemImage = "rbxassetid://133401921939429",
+		price = 200,
+	},
+	--
+
 	CyberDetector = {
 		strength = 3.25,
 		luck = 45,
@@ -98,7 +116,6 @@ local metalDetectorConfig = {
 		itemImage = "rbxassetid://121233275974009",
 		rarityType = "Legendary",
 		price = 10000000,
-		shopOrder = 8,
 	},
 	AlienDetector = {
 		strength = 3.50,
@@ -107,7 +124,6 @@ local metalDetectorConfig = {
 		itemImage = "rbxassetid://70623998291755",
 		rarityType = "Legendary",
 		price = 50000000,
-		shopOrder = 9,
 	},
 	MonsterDetector = {
 		strength = 3.75,
@@ -116,7 +132,6 @@ local metalDetectorConfig = {
 		itemImage = "rbxassetid://110685529014774",
 		rarityType = "Mythical",
 		price = 250000000,
-		shopOrder = 10,
 	},
 	PureDetector = {
 		strength = 4,
@@ -125,7 +140,6 @@ local metalDetectorConfig = {
 		itemImage = "rbxassetid://98289595849939",
 		rarityType = "Secret",
 		price = 1000000000,
-		shopOrder = 11,
 	},
 }
 return {

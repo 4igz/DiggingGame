@@ -9,6 +9,7 @@ import { AutoDigging } from "client/controllers/autoDigController";
 import { Players, UserInputService } from "@rbxts/services";
 import { Signals } from "shared/signals";
 import { Events, Functions } from "client/network";
+import { usePx } from "client/hooks/usePx";
 
 interface SidebarButtonProps {
 	icon: string;
@@ -23,11 +24,13 @@ interface SidebarButtonProps {
 }
 
 const SidebarButton = (props: SidebarButtonProps) => {
-	const START_SZ = UDim2.fromScale(0.396, 0.251);
+	const START_SZ = UDim2.fromScale(0.302, 0.231);
 	const SZ_INC = UDim2.fromScale(0.025, 0.025);
 	const [isHovered, setIsHovered] = React.useState(false);
 	const [isPressed, setPressed] = React.useState(false);
 	const [size, sizeMotion] = useMotion(START_SZ);
+
+	const px = usePx();
 
 	useEffect(() => {
 		sizeMotion.spring(isHovered ? START_SZ.add(SZ_INC) : START_SZ, springs.responsive);
@@ -107,8 +110,9 @@ const SidebarButton = (props: SidebarButtonProps) => {
 				Size={UDim2.fromScale(1.38, 0.261)}
 				Text={props.text}
 				TextColor3={Color3.fromRGB(255, 255, 255)}
-				TextScaled={true}
-				TextWrapped={true}
+				// TextScaled={true}
+				// TextWrapped={true}
+				TextSize={px(25)}
 			>
 				<uistroke key={"UIStroke"} Thickness={3} />
 			</textlabel>
@@ -222,6 +226,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 				key={"UIListLayout"}
 				SortOrder={Enum.SortOrder.LayoutOrder}
 				VerticalAlignment={Enum.VerticalAlignment.Center}
+				HorizontalAlignment={Enum.HorizontalAlignment.Left}
 			/>
 
 			<SidebarButton

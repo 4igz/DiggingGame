@@ -32,4 +32,6 @@ export const Signals = {
 	startLuckbar: new Signal(),
 	pauseLuckbar: new Signal(),
 	closeLuckbar: new Signal(),
+	invalidAction: new Signal<(text?: string) => void>(),
+	actionPopup: new Signal<(text?: string) => void>(),
 };

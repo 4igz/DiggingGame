@@ -1,12 +1,13 @@
 import { Service, OnStart, OnTick, OnInit } from "@flamework/core";
 import { MarketplaceService, Players } from "@rbxts/services";
-import { developerProducts, getDevProduct, handlePurchase } from "shared/config/devproducts";
+import { getDevProduct, handlePurchase } from "shared/config/devproducts";
 import { Signals } from "shared/signals";
 import { ProfileService } from "./profileService";
 import { gameConstants } from "shared/gameConstants";
 import { Events, Functions } from "server/network";
 import { interval } from "shared/util/interval";
 import { LevelService } from "../gameplay/levelService";
+import { spaceWords } from "shared/util/nameUtil";
 
 const SEC = interval(1);
 
@@ -41,6 +42,12 @@ export class DevproductService implements OnStart, OnTick, OnInit {
 			const canBuy = this.verifyCanBuyDevProduct(player, receiptInfo.ProductId);
 			if (!canBuy) return Enum.ProductPurchaseDecision.NotProcessedYet;
 
+			Events.notifyBought(
+				player,
+				spaceWords(getDevProduct(receiptInfo.ProductId)?.name ?? "UNREACHABLE"),
+				Enum.InfoType.Product,
+			);
+
 			return handlePurchase(player, receiptInfo.ProductId);
 		};
 	}
@@ -72,6 +79,7 @@ export class DevproductService implements OnStart, OnTick, OnInit {
 				luck: profile.Data.luck,
 			});
 			this.levelService.addExperience(player, 0); // updates level ui
+			// Events.notifyBought(player, `reset skills!`, Enum.InfoType.Product);
 		});
 
 		Signals.giveMultiDig.Connect((player) => {
@@ -80,6 +88,7 @@ export class DevproductService implements OnStart, OnTick, OnInit {
 			profile.Data.multiDigLevel++;
 			this.profileService.setProfile(player, profile);
 			Events.updateMultiDigLevel(player, profile.Data.multiDigLevel);
+			// Events.notifyBought(player, `Multi-Dig (Level ${profile.Data.multiDigLevel})`, Enum.InfoType.Product);
 		});
 
 		Functions.getMultiDigLevel.setCallback((player: Player) => {

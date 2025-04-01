@@ -101,6 +101,7 @@ export class BoatService implements OnStart, OnTick {
 
 		Events.spawnBoat.connect((player, boatName) => {
 			if (!boatSpawnCooldown(player.UserId)) {
+				Events.boatSpawnResponse(player, false, `Spawning too quickly!`);
 				return;
 			}
 
@@ -109,6 +110,7 @@ export class BoatService implements OnStart, OnTick {
 				return;
 			}
 			if (!boatConfig[boatName]) {
+				Events.boatSpawnResponse(player, false, `Found no boat named ${boatName}!`);
 				error(`Invalid boat name: ${boatName}`);
 			}
 
@@ -117,7 +119,12 @@ export class BoatService implements OnStart, OnTick {
 			if (result) {
 				const [boatId] = result;
 				const boat = this.spawnedBoats.get(boatId);
-				if (boat && boat.Name === boatName) return; // Player already has this boat spawned
+				// Player already has this boat spawned.
+				if (boat && boat.Name === boatName) {
+					Events.boatSpawnResponse(player, false, `You already have this boat spawned!`);
+					return;
+				}
+				// Player has a different boat spawned.
 				if (boat) {
 					boat.Destroy();
 					this.spawnedBoats.delete(boatId);
@@ -125,18 +132,23 @@ export class BoatService implements OnStart, OnTick {
 				}
 			}
 
-			if (profile.Data.ownedBoats.get(boatName) === false) return; // Player doesn't own this boat, so they can't spawn it
+			const boatModel = this.boatModelFolder.FindFirstChild(boatName);
+			if (!boatModel) {
+				Events.boatSpawnResponse(player, false, `No boat model named ${boatName}!`);
+				error(`Couldn't find boat model for boat: ${boatName}`);
+			}
+
+			if (profile.Data.ownedBoats.get(boatName) === false) {
+				Events.boatSpawnResponse(player, false, `You don't own this boat!`);
+				return;
+			}
 			const currentMap = profile.Data.currentMap;
 
 			const unoccupiedBoatSpawn = this.getUnoccupiedBoatSpawn(player, currentMap);
 			if (!unoccupiedBoatSpawn) {
+				Events.boatSpawnResponse(player, false, `Couldn't find unoccupied boat spawn for map: ${currentMap}`);
 				warn(`Couldn't find unoccupied boat spawn for map: ${currentMap}`);
 				return;
-			}
-
-			const boatModel = this.boatModelFolder.FindFirstChild(boatName);
-			if (!boatModel) {
-				error(`Couldn't find boat model for boat: ${boatName}`);
 			}
 
 			const boatId = HttpService.GenerateGUID();
@@ -148,6 +160,7 @@ export class BoatService implements OnStart, OnTick {
 			boat.Parent = Workspace;
 			this.spawnedBoats.set(boatId, boat);
 			this.lastActiveBoatTimes.set(boatId, tick());
+			Events.boatSpawnResponse(player, true, boatName);
 
 			for (const descendant of boat.GetDescendants()) {
 				if (descendant.IsA("BasePart")) {

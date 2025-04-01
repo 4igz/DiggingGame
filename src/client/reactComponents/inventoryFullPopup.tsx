@@ -12,6 +12,7 @@ const RC = gameConstants.RARITY_COLORS;
 
 export interface InventoryFullPopupProps {
 	onComplete: () => void;
+	count: number;
 }
 
 export const InventoryFullPopup = (props: InventoryFullPopupProps) => {

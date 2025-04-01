@@ -3,10 +3,15 @@ import { Events, Functions } from "server/network";
 import { SkillName } from "shared/networkTypes";
 import { ProfileService } from "../backend/profileService";
 import Signal from "@rbxts/goodsignal";
+import { GamepassService } from "../backend/gamepassService";
+import { gameConstants } from "shared/gameConstants";
 
 @Service({})
 export class LevelService implements OnStart {
-	constructor(private readonly playerDataService: ProfileService) {}
+	constructor(
+		private readonly playerDataService: ProfileService,
+		private readonly gamepassService: GamepassService,
+	) {}
 
 	public leveledUp = new Signal<(player: Player, level: number) => void>();
 
@@ -81,6 +86,10 @@ export class LevelService implements OnStart {
 	public addExperience(player: Player, amt: number): void {
 		const playerProfile = this.playerDataService.getProfile(player);
 		if (!playerProfile) return;
+
+		if (player.MembershipType === Enum.MembershipType.Premium) {
+			amt *= 1.1;
+		}
 
 		const data = playerProfile.Data;
 		data.experience += amt;

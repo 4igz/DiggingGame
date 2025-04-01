@@ -41,6 +41,7 @@ import { ClickEffectContainer } from "client/reactComponents/clickEffect";
 import { DetectorHint } from "client/reactComponents/detectorHint";
 import { NoYield } from "@rbxts/thread-utilities";
 import { QuestInfoSideButton } from "client/reactComponents/questInfoSidebutton";
+import { BottomTips } from "client/reactComponents/bottomTips";
 
 const LOW_LAYER = 0;
 const MENU_LAYER = 1;
@@ -445,6 +446,8 @@ export default class UiController implements OnStart, OnInit {
 			undefined,
 			LOW_LAYER,
 		);
+
+		this.registerUi("BottomTips", React.createElement(BottomTips), {}, undefined, undefined, LOW_LAYER);
 
 		// Hide some stuff from the client that we already have cached.
 		// By the time we init here, all modules have been loaded already, so we can safely remove them.

@@ -9,7 +9,6 @@ export interface MetalDetector {
 	searchRadius: number; // Determines the radius that is provided to the player to find a nearby target.
 	itemImage: string;
 	price: number;
-	shopOrder?: number;
 }
 
 export type MetalDetectorModule = Readonly<Record<string, MetalDetector>>;

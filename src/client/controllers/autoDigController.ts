@@ -352,7 +352,13 @@ export class AutoDigging implements OnStart {
 				if (!autoDiggingEnabled) return;
 				if (!target) {
 					logWarn("Target request failed. Retrying...");
-					task.delay(0.1, () => this.requestAndPathToNextTarget()); // Retry after delay
+					task.delay(0.1, () => this.requestAndPathToNextTarget());
+					return;
+				}
+				if (treasureCountAtom() >= inventorySizeAtom()) {
+					Signals.inventoryFull.Fire();
+					this.setAutoDiggingEnabled(false);
+					this.quitCurrentTarget();
 					return;
 				}
 				this.tryResetIfStuck();
@@ -405,6 +411,7 @@ export class AutoDigging implements OnStart {
 		if (enabled) {
 			if (treasureCountAtom() >= inventorySizeAtom()) {
 				this.setAutoDiggingEnabled(false);
+				Signals.inventoryFull.Fire();
 				return;
 			}
 

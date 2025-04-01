@@ -1,15 +1,13 @@
 --!optimize 2
 --!native
 local function interval(s, cleanupInterval)
-	local pins = {} -- Table to store last execution time for each ID
-	local lastCleanup = os.clock() -- Tracks the last time cleanup was run
-	cleanupInterval = cleanupInterval or s * 10 -- Default cleanup interval is 10x the throttle interval
+	local pins = {} -- stores the last execution time for each ID
+	local lastCleanup = os.clock()
+	cleanupInterval = cleanupInterval or s * 10
 
 	local function throttle(id: any?)
-		-- Ensure the ID is specified
 		id = id or 0
 
-		-- Perform cleanup if necessary
 		if os.clock() - lastCleanup > cleanupInterval then
 			for key, lastTime in pins do
 				-- Remove IDs that have not been used for a long time
@@ -20,7 +18,6 @@ local function interval(s, cleanupInterval)
 			lastCleanup = os.clock()
 		end
 
-		-- Update the throttle logic
 		if not pins[id] then
 			pins[id] = 0
 		end

@@ -37,7 +37,7 @@ const SellTargetComponent: React.FC<SellTargetProps> = (props) => {
 					Events.sellTarget(props.target.itemId);
 				}}
 			>
-				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+				{/* <uiaspectratioconstraint key={"UIAspectRatioConstraint"} /> */}
 				<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
 				<uistroke key={"UIStroke"} Color={gameConstants.RARITY_COLORS[cfg.rarityType]} Thickness={3} />
 				<imagelabel
@@ -256,21 +256,11 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 					ScrollingDirection={Enum.ScrollingDirection.Y}
 					Size={UDim2.fromScale(0.968, 0.963)}
 				>
-					{/* <uilistlayout
-						key={"UIListLayout"}
-						FillDirection={Enum.FillDirection.Horizontal}
-						Padding={new UDim(0.025, 0)}
-						SortOrder={Enum.SortOrder.LayoutOrder}
-						Wraps={true}
-					/> */}
 					<uigridlayout
 						key={"UIGridLayout"}
-						CellPadding={UDim2.fromScale(0.02, 0.03)}
-						CellSize={UDim2.fromScale(0.18, 0.4)}
-						FillDirection={Enum.FillDirection.Horizontal}
-						HorizontalAlignment={Enum.HorizontalAlignment.Left}
+						CellPadding={UDim2.fromScale(0.025, 0.1)}
+						CellSize={UDim2.fromScale(0.18, 0.423)}
 						SortOrder={Enum.SortOrder.LayoutOrder}
-						VerticalAlignment={Enum.VerticalAlignment.Top}
 					/>
 
 					{shopContent.map((target) => (

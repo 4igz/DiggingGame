@@ -6,7 +6,6 @@ export interface Shovel {
 	strengthMult: number;
 	rarityType: Rarity;
 	itemImage: string;
-	shopOrder?: number;
 	price: number;
 }
 

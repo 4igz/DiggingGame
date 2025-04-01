@@ -18,6 +18,7 @@ export interface TreasurePopupProps {
 	itemWeight: number;
 	mapName: string;
 	onComplete: () => void;
+	count: number;
 }
 
 const MAX_IMAGE_ROTATION = 25;

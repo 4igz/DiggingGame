@@ -15,6 +15,7 @@ export interface BoughtItemPopupProps {
 	itemImage: string;
 	itemRarity: Rarity;
 	onComplete: () => void;
+	count: number;
 }
 
 export const BoughtItemPopup = (props: BoughtItemPopupProps) => {
@@ -41,7 +42,7 @@ export const BoughtItemPopup = (props: BoughtItemPopupProps) => {
 			while (true) {
 				// Make image bob back and forth
 				task.wait(1);
-				currentRotation = currentRotation < MAX_ROTATION ? MAX_ROTATION : 0;
+				currentRotation = currentRotation < MAX_ROTATION ? MAX_ROTATION : -MAX_ROTATION;
 				setImageRotation.spring(currentRotation, springs.bubbly);
 			}
 		});

@@ -14,8 +14,8 @@ local DAILY_REWARD_COOLDOWN = 60 * 60 * 18
 
 local dailyRewards: { Reward } = {
 	{ -- Index corresponds to day, so this first one is day 1, and the last one is day 7.
-		rewardType = "Money",
-		rewardAmount = 100,
+		rewardType = "Potions",
+		itemName = "Small Luck Potion",
 	},
 	{
 		rewardType = "LuckMultiplier",
@@ -40,7 +40,7 @@ local dailyRewards: { Reward } = {
 	},
 	{
 		rewardType = "Boats",
-		itemName = "Jetski",
+		itemName = "Yacht",
 	},
 }
 return {

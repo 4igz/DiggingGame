@@ -4,13 +4,12 @@ import { Events, Functions } from "client/network";
 import { dailyRewards, DAILY_REWARD_COOLDOWN } from "shared/config/dailyRewardConfig";
 import { gameConstants, REWARD_IMAGES } from "shared/gameConstants";
 import { ItemType, RewardType } from "shared/networkTypes";
-import { formatShortTime, shortenNumber } from "shared/util/nameUtil";
+import { formatShortTime, shortenNumber, spaceWords } from "shared/util/nameUtil";
 import { AnimatedButton, ExitButton } from "./inventory";
 import UiController from "client/controllers/uiController";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
-import Sift from "@rbxts/sift";
-import { hasDailyAtom } from "client/atoms/rewardAtoms";
+import { usePx } from "client/hooks/usePx";
 
 interface DailyRewardsProps {
 	visible: boolean;
@@ -25,6 +24,7 @@ interface DailyRewardTileProps {
 	rewardType: RewardType;
 	rewardName?: string;
 	onClaim: () => void;
+	size: UDim2;
 }
 
 // This component represents a single daily reward tile
@@ -36,6 +36,7 @@ const DailyRewardTile = ({
 	onClaim,
 	rewardType,
 	rewardName,
+	size,
 }: DailyRewardTileProps) => {
 	// Calculate visual states based on streak and day
 	const [rewardImage] = useState(
@@ -53,13 +54,14 @@ const DailyRewardTile = ({
 	}, [rewardImage]);
 
 	return (
-		<frame BackgroundTransparency={1} LayoutOrder={day} key={`day-${day}`} Size={UDim2.fromScale(0.134, 0.931)}>
+		<frame BackgroundTransparency={1} LayoutOrder={0} key={day} Size={size}>
 			<AnimatedButton
 				size={UDim2.fromScale(1, 1)}
-				active={day === 7 || (isToday && isClaimable)}
+				// active={!isCompleted}
 				clickable={isToday && isClaimable}
 				selectable={isToday && isClaimable}
 				onClick={onClaim}
+				errorText={isCompleted ? "Already claimed this!" : "Can't claim this yet!"}
 			>
 				<imagelabel
 					AnchorPoint={new Vector2(0.5, 0.5)}
@@ -76,13 +78,19 @@ const DailyRewardTile = ({
 					<uigradient
 						key={"UIGradient"}
 						Color={
-							new ColorSequence([
-								new ColorSequenceKeypoint(0, Color3.fromRGB(255, 255, 255)),
-								new ColorSequenceKeypoint(0.483, Color3.fromRGB(255, 251, 126)),
-								new ColorSequenceKeypoint(1, Color3.fromRGB(255, 154, 53)),
-							])
+							day !== 7
+								? new ColorSequence([
+										new ColorSequenceKeypoint(0, new Color3(1, 1, 1)),
+										new ColorSequenceKeypoint(0.50692, Color3.fromRGB(251, 235, 64)),
+										new ColorSequenceKeypoint(1, Color3.fromRGB(255, 128, 124)),
+								  ])
+								: new ColorSequence([
+										new ColorSequenceKeypoint(0, Color3.fromRGB(255, 187, 69)),
+										new ColorSequenceKeypoint(0.49654, Color3.fromRGB(146, 160, 251)),
+										new ColorSequenceKeypoint(1, Color3.fromRGB(255, 60, 60)),
+								  ])
 						}
-						Rotation={45}
+						Rotation={50}
 					/>
 				</imagelabel>
 
@@ -100,7 +108,7 @@ const DailyRewardTile = ({
 					SliceCenter={new Rect(154, 133, 512, 596)}
 					SliceScale={0.2}
 					Visible={isCompleted}
-					ZIndex={4}
+					ZIndex={50}
 				/>
 
 				{/* Check mark for completed days */}
@@ -115,37 +123,134 @@ const DailyRewardTile = ({
 					Size={UDim2.fromScale(0.7, 0.7)}
 					SliceCenter={new Rect(0, 0, 1024, 1024)}
 					Visible={isCompleted}
-					ZIndex={6}
+					ZIndex={500}
 				/>
-
 				{/* Reward icon */}
 				<imagelabel
+					key={"ImageLabel"}
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundTransparency={1}
 					Image={rewardImage}
-					key={"Reward Icon"}
-					Position={UDim2.fromScale(0.5, 0.5)}
+					Position={UDim2.fromScale(0.5, 0.53)}
 					ScaleType={Enum.ScaleType.Fit}
-					Size={UDim2.fromScale(0.75, 0.75)}
-					SliceCenter={new Rect(0, 0, 1024, 1024)}
-					ZIndex={3}
-				/>
+					Size={UDim2.fromScale(0.717771, 0.71777)}
+					ZIndex={20}
+				>
+					<imagelabel
+						key={"ImageLabel"}
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						Image={"rbxassetid://116607654900413"}
+						Position={UDim2.fromScale(0.945742, 0.748929)}
+						ScaleType={Enum.ScaleType.Fit}
+						Size={UDim2.fromScale(0.262258, 0.262258)}
+						ZIndex={20}
+						Visible={day === 6}
+					>
+						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+					</imagelabel>
 
+					<imagelabel
+						key={"ImageLabel"}
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						Image={"rbxassetid://116607654900413"}
+						Position={UDim2.fromScale(0.0315809, 0.208903)}
+						ScaleType={Enum.ScaleType.Fit}
+						Size={UDim2.fromScale(0.209279, 0.209279)}
+						ZIndex={20}
+						Visible={day === 6}
+					>
+						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+					</imagelabel>
+
+					<imagelabel
+						key={"ImageLabel"}
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						Image={"rbxassetid://116607654900413"}
+						Position={UDim2.fromScale(0.816955, 0.891513)}
+						ScaleType={Enum.ScaleType.Fit}
+						Size={UDim2.fromScale(0.175156, 0.175156)}
+						ZIndex={20}
+						Visible={day === 6}
+					>
+						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+					</imagelabel>
+				</imagelabel>
+				<textlabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundTransparency={1}
+					FontFace={Font.fromEnum(Enum.Font.FredokaOne)}
+					key={"PetName"}
+					Position={UDim2.fromScale(0.17, 0.2)}
+					Size={UDim2.fromScale(0.39149, 0.192151)}
+					Text={"OP!"}
+					TextColor3={Color3.fromRGB(109, 97, 27)}
+					TextScaled={true}
+					TextXAlignment={Enum.TextXAlignment.Left}
+					ZIndex={10}
+					Visible={day === 7}
+				>
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(109, 97, 27)} Thickness={3.5} />
+
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						FontFace={Font.fromEnum(Enum.Font.FredokaOne)}
+						key={"PetName"}
+						Position={UDim2.fromScale(0.5, 0.45)}
+						Size={UDim2.fromScale(1, 1)}
+						Text={"OP!"}
+						TextColor3={new Color3(1, 1, 1)}
+						TextScaled={true}
+						TextXAlignment={Enum.TextXAlignment.Left}
+						ZIndex={12}
+					>
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(109, 97, 27)} Thickness={3.5} />
+
+						<uigradient
+							key={"UIGradient"}
+							Color={
+								new ColorSequence([
+									new ColorSequenceKeypoint(0, Color3.fromRGB(255, 152, 35)),
+									new ColorSequenceKeypoint(1, Color3.fromRGB(243, 255, 162)),
+								])
+							}
+							Rotation={-90}
+						/>
+					</textlabel>
+				</textlabel>
 				{/* Day label */}
 				<textlabel
+					AnchorPoint={new Vector2(0.5, 0)}
 					BackgroundTransparency={1}
-					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-					key={"Day Label"}
-					Position={UDim2.fromScale(0.0412, -0.106)}
-					Size={UDim2.fromScale(0.911, 0.25)}
+					FontFace={Font.fromEnum(Enum.Font.FredokaOne)}
+					key={"Day"}
+					Position={UDim2.fromScale(0.5, -0.069)}
+					Size={UDim2.fromScale(0.578014, 0.152524)}
 					Text={`Day ${day}`}
-					TextColor3={Color3.fromRGB(255, 255, 255)}
+					TextColor3={Color3.fromRGB(43, 43, 43)}
 					TextScaled={true}
-					ZIndex={5}
+					ZIndex={100}
 				>
-					<uistroke key={"UIStroke"} Thickness={3} />
-				</textlabel>
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(43, 43, 43)} Thickness={2.8} />
 
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						FontFace={Font.fromEnum(Enum.Font.FredokaOne)}
+						key={"Day"}
+						Position={UDim2.fromScale(0.5, 0.4)}
+						Size={UDim2.fromScale(1, 1)}
+						Text={`Day ${day}`}
+						TextColor3={new Color3(1, 1, 1)}
+						TextScaled={true}
+						ZIndex={101}
+					>
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(43, 43, 43)} Thickness={2.8} />
+					</textlabel>
+				</textlabel>
 				{/* Reward amount */}
 				<textlabel
 					BackgroundTransparency={1}
@@ -156,23 +261,69 @@ const DailyRewardTile = ({
 					Text={`x${reward}` || "x2k"}
 					TextColor3={Color3.fromRGB(255, 255, 255)}
 					TextScaled={true}
-					ZIndex={3}
+					ZIndex={21}
+					Visible={day !== 7}
 				>
 					<uistroke key={"UIStroke"} Thickness={3} />
 				</textlabel>
 
+				<textlabel
+					AnchorPoint={new Vector2(0.5, 0)}
+					BackgroundTransparency={1}
+					FontFace={Font.fromEnum(Enum.Font.FredokaOne)}
+					key={"Name"}
+					Position={UDim2.fromScale(0.495733, 0.793151)}
+					Size={UDim2.fromScale(0.806989, 0.145015)}
+					Text={rewardType !== "Money" ? spaceWords(rewardName ?? "") : `x${reward}`}
+					TextColor3={Color3.fromRGB(21, 21, 21)}
+					TextScaled={true}
+					ZIndex={21}
+					Visible={day === 7}
+				>
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(21, 21, 21)} Thickness={3} />
+
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						FontFace={Font.fromEnum(Enum.Font.FredokaOne)}
+						key={"Amount"}
+						Position={UDim2.fromScale(0.5, 0.43)}
+						Size={UDim2.fromScale(1, 1)}
+						Text={rewardType !== "Money" ? spaceWords(rewardName ?? "") : `x${reward}`}
+						TextColor3={new Color3(1, 1, 1)}
+						TextScaled={true}
+						ZIndex={22}
+					>
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(21, 21, 21)} Thickness={3} />
+					</textlabel>
+				</textlabel>
+
 				{/* Background radial */}
 				<imagelabel
-					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundTransparency={1}
-					Image={"rbxassetid://122246063149121"}
-					key={"Radial"}
-					Position={UDim2.fromScale(0.5, 0.5)}
+					Image={"rbxassetid://127815852198424"}
+					ImageTransparency={0.3}
+					key={"Money Cover"}
+					Position={UDim2.fromScale(0, 0)}
 					ScaleType={Enum.ScaleType.Fit}
 					Size={UDim2.fromScale(1, 1)}
-					ZIndex={2}
-				/>
+					Visible={day === 7}
+					ZIndex={11}
+				>
+					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 
+					<uigradient
+						key={"UIGradient"}
+						Rotation={90}
+						Transparency={
+							new NumberSequence([
+								new NumberSequenceKeypoint(0, 0),
+								new NumberSequenceKeypoint(0.366584, 0.4875),
+								new NumberSequenceKeypoint(1, 1),
+							])
+						}
+					/>
+				</imagelabel>
 				{/* Claim button - only visible on the current day if claimable */}
 				<imagelabel
 					Active={false}
@@ -185,7 +336,7 @@ const DailyRewardTile = ({
 					Size={UDim2.fromScale(1, 0.5)}
 					SliceCenter={new Rect(0, 0, 1024, 1024)}
 					Visible={isToday && isClaimable}
-					ZIndex={4}
+					ZIndex={500}
 				>
 					<uigradient
 						key={"UIGradient"}
@@ -227,7 +378,7 @@ const DailyRewardTile = ({
 						Text={"Claim!"}
 						TextColor3={Color3.fromRGB(255, 255, 255)}
 						TextScaled={true}
-						ZIndex={4}
+						ZIndex={500}
 					>
 						<uistroke key={"UIStroke"} Thickness={3.2} />
 
@@ -248,7 +399,6 @@ const DailyRewardTile = ({
 						/>
 					</textlabel>
 				</imagelabel>
-
 				{/* Glow effect for today's reward */}
 				{isToday && (
 					<imagelabel
@@ -271,14 +421,19 @@ const DailyRewardTile = ({
 	);
 };
 
+const MAX_IMAGE_ROTATION = 25;
+
 export const DailyRewards = (props: DailyRewardsProps) => {
 	const [lastClaimed, setLastClaimed] = React.useState(0);
 	const [timeLeft, setTimeLeft] = React.useState(0);
 	const [streak, setStreak] = React.useState(0);
 	const [visible, setVisible] = React.useState(false);
 	const [popInSz, popInMotion] = useMotion(UDim2.fromScale(0, 0));
+	const [imageRotation, setImageRotation] = useMotion(-MAX_IMAGE_ROTATION);
 
 	const menuRef = createRef<Frame>();
+
+	const px = usePx();
 
 	// Effect to fetch last claim time and streak
 	useEffect(() => {
@@ -327,11 +482,27 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 	// Effect to handle animation
 	React.useEffect(() => {
 		if (visible) {
-			popInMotion.spring(UDim2.fromScale(0.538, 0.465), springs.responsive);
+			popInMotion.spring(UDim2.fromScale(0.631, 0.704), springs.responsive);
 		} else {
 			popInMotion.immediate(UDim2.fromScale(0, 0));
 		}
 	}, [visible]);
+
+	useEffect(() => {
+		let currentRotation = imageRotation.getValue();
+		const rotationThread = task.spawn(() => {
+			while (true) {
+				// Make gift image bob back and forth
+				task.wait(1);
+				currentRotation = currentRotation < MAX_IMAGE_ROTATION ? MAX_IMAGE_ROTATION : -MAX_IMAGE_ROTATION;
+				setImageRotation.spring(currentRotation, springs.bubbly);
+			}
+		});
+
+		return () => {
+			task.cancel(rotationThread);
+		};
+	}, []);
 
 	// Handler for claiming rewards
 	const handleClaim = () => {
@@ -346,163 +517,156 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 			AnchorPoint={new Vector2(0.5, 0.5)}
 			BackgroundTransparency={1}
 			key={"Daily Reward Container"}
-			Position={UDim2.fromScale(0.5, 0.49)}
+			Position={UDim2.fromScale(0.504851, 0.50365)}
 			Size={popInSz}
-			Visible={visible}
 			ref={menuRef}
 		>
-			{/* Background */}
 			<imagelabel
 				AnchorPoint={new Vector2(0.5, 0.5)}
 				BackgroundTransparency={1}
-				Image={"rbxassetid://100601270697881"}
+				Image={"rbxassetid://133515423550411"}
 				key={"Background"}
-				Position={UDim2.fromScale(0.5, 0.526)}
+				Position={UDim2.fromScale(0.5, 0.5)}
+				SliceCenter={new Rect(70, 183, 979, 449)}
 				ScaleType={Enum.ScaleType.Slice}
-				Size={UDim2.fromScale(1, 1.37)}
-				SliceCenter={new Rect(65, 82, 555, 626)}
-				SliceScale={0.25}
+				Size={UDim2.fromScale(1, 1)}
 			>
+				<frame
+					key={"Frame"}
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundTransparency={1}
+					ClipsDescendants={true}
+					Position={UDim2.fromScale(0.5, 0.486)}
+					Size={UDim2.fromScale(0.947, 0.87)}
+				>
+					<uicorner key={"UICorner"} CornerRadius={new UDim(0.05, 0)} />
+
+					<imagelabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						Image={"rbxassetid://101723443450777"}
+						key={"Bubbles"}
+						Position={UDim2.fromScale(0.499779, 0.498256)}
+						ScaleType={Enum.ScaleType.Slice}
+						SliceCenter={new Rect(367, 222, 694, 222)}
+						Size={UDim2.fromScale(1, 1)}
+					>
+						<uicorner key={"UICorner"} CornerRadius={new UDim(0.0289, 0)} />
+					</imagelabel>
+				</frame>
+
 				<ExitButton
-					uiName={gameConstants.DAILY_REWARD_UI}
 					uiController={props.uiController}
-					menuRefToClose={menuRef}
+					uiName={gameConstants.DAILY_REWARD_UI}
 					isMenuVisible={visible}
-				/>
-				<uigradient
-					key={"UIGradient"}
-					Color={
-						new ColorSequence([
-							new ColorSequenceKeypoint(0, Color3.fromRGB(88, 108, 200)),
-							new ColorSequenceKeypoint(0.23, Color3.fromRGB(67, 82, 152)),
-							new ColorSequenceKeypoint(0.5, Color3.fromRGB(56, 69, 128)),
-							new ColorSequenceKeypoint(0.751, Color3.fromRGB(65, 80, 148)),
-							new ColorSequenceKeypoint(1, Color3.fromRGB(88, 108, 200)),
-						])
-					}
-					Rotation={90}
+					menuRefToClose={menuRef}
 				/>
 			</imagelabel>
 
-			<imagelabel
+			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.8} />
+
+			<frame
 				AnchorPoint={new Vector2(0.5, 0.5)}
 				BackgroundTransparency={1}
-				Image={"rbxassetid://82246683047981"}
-				key={".$Icon"}
-				Position={UDim2.fromScale(0.0678, -0.151)}
-				ScaleType={Enum.ScaleType.Fit}
-				Size={UDim2.fromScale(0.239, 0.243)}
-			/>
-
-			<frame
-				BackgroundTransparency={1}
-				key={"Info"}
-				Position={UDim2.fromScale(0.0263, 0.0868)}
-				Size={UDim2.fromScale(0.945, 0.189)}
-			>
-				<textlabel
-					BackgroundTransparency={1}
-					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-					key={"Timer"}
-					Position={UDim2.fromScale(0.636, -1.75)}
-					Size={UDim2.fromScale(0.195, 1)}
-					Text={timeLeft > 0 ? formatShortTime(timeLeft) : "CLAIM NOW!"}
-					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextScaled={true}
-				>
-					<uistroke key={"UIStroke"} Thickness={4} />
-				</textlabel>
-
-				<textlabel
-					BackgroundTransparency={1}
-					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-					key={"Title"}
-					Position={UDim2.fromScale(0.107, -1.97)}
-					Size={UDim2.fromScale(0.47, 1.46)}
-					Text={"Daily Rewards!"}
-					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextScaled={true}
-				>
-					<uistroke key={"UIStroke"} Thickness={4} />
-				</textlabel>
-			</frame>
-			{/* Container for reward tiles */}
-			<frame
-				BackgroundTransparency={1}
 				key={"Container"}
-				Position={UDim2.fromScale(0.0263, -0.0106)}
-				Size={UDim2.fromScale(0.946, 1.11)}
+				Position={UDim2.fromScale(0.5, 0.5)}
+				Size={UDim2.fromScale(0.998463, 0.853392)}
 			>
 				<uilistlayout
 					key={"UIListLayout"}
-					FillDirection={Enum.FillDirection.Horizontal}
 					HorizontalAlignment={Enum.HorizontalAlignment.Center}
-					Padding={new UDim(0.01, 0)}
+					Padding={new UDim(0.02, 0)}
 					SortOrder={Enum.SortOrder.LayoutOrder}
+					FillDirection={"Vertical"}
 					VerticalAlignment={Enum.VerticalAlignment.Center}
 					Wraps={true}
 				/>
+				<uicorner key={"UICorner"} CornerRadius={new UDim(0, 16)} />
 
-				{/* Left side grid with 6 tiles */}
-				<frame
-					key={"LeftFrame"}
+				{dailyRewards.map((reward, index) => {
+					return (
+						<DailyRewardTile
+							key={`reward-${index + 1}`}
+							day={index + 1}
+							streak={streak}
+							reward={shortenNumber(reward.rewardAmount ?? 1, false)}
+							isClaimable={isClaimable}
+							onClaim={handleClaim}
+							rewardType={reward.rewardType}
+							rewardName={reward.itemName}
+							size={index !== 6 ? UDim2.fromScale(0.179, 0.377) : UDim2.fromScale(0.3, 0.845)}
+						/>
+					);
+				})}
+			</frame>
+
+			<frame
+				BackgroundTransparency={1}
+				key={"Title"}
+				Position={UDim2.fromScale(-0.0358, -0.083)}
+				Size={UDim2.fromScale(0.469, 0.168)}
+				ZIndex={10}
+			>
+				<textlabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundTransparency={1}
-					Position={UDim2.fromScale(4.55e-8, 0)}
-					Size={UDim2.fromScale(0.59, 1)}
+					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					LayoutOrder={1}
+					key={"Title"}
+					Position={UDim2.fromScale(0.9, 0.5)}
+					Size={UDim2.fromScale(1.04396, 1.1697)}
+					Text={`Daily Rewards ${timeLeft > 0 ? `- ${formatShortTime(timeLeft)}` : ""}`}
+					TextColor3={Color3.fromRGB(23, 30, 52)}
+					TextScaled={false}
+					TextSize={px(60)}
+					TextXAlignment={"Left"}
 				>
-					<uigridlayout
-						key={"UIGridLayout"}
-						CellPadding={UDim2.fromScale(0.02, 0.02)}
-						CellSize={UDim2.fromScale(0.32, 0.46)}
-						HorizontalAlignment={Enum.HorizontalAlignment.Center}
-						SortOrder={Enum.SortOrder.LayoutOrder}
-						VerticalAlignment={Enum.VerticalAlignment.Center}
-					/>
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={5.3} />
 
-					{/* Render first 6 reward tiles */}
-					{Sift.Array.slice(dailyRewards, 1, 6).map((reward, index) => {
-						return (
-							<DailyRewardTile
-								key={`reward-${index + 1}`}
-								day={index + 1}
-								streak={streak}
-								reward={shortenNumber(reward.rewardAmount ?? 1, false)}
-								isClaimable={isClaimable}
-								onClaim={handleClaim}
-								rewardType={reward.rewardType}
-								rewardName={reward.itemName}
-							/>
-						);
-					})}
-				</frame>
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						LayoutOrder={1}
+						key={"Title"}
+						Position={UDim2.fromScale(0.5, 0.45)}
+						Size={UDim2.fromScale(1, 1)}
+						Text={`Daily Rewards ${timeLeft > 0 ? `- ${formatShortTime(timeLeft)}` : ""}`}
+						TextColor3={new Color3(1, 1, 1)}
+						TextScaled={false}
+						TextXAlignment={"Left"}
+						TextSize={px(60)}
+					>
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={5.3} />
+					</textlabel>
+				</textlabel>
 
-				{/* Right side with day 7 */}
-				<frame
-					key={"RightFrame"}
+				<imagelabel
 					BackgroundTransparency={1}
-					Position={UDim2.fromScale(4.55e-8, 0)}
-					Size={UDim2.fromScale(0.39, 1)}
+					key={"Icon"}
+					Position={UDim2.fromScale(0.00590958, -0.34286)}
+					ScaleType={Enum.ScaleType.Fit}
+					Size={UDim2.fromScale(0.285, 1.38)}
+					ZIndex={10}
+					Rotation={0 /*imageRotation.map((v) => v - 10)*/}
 				>
-					<uigridlayout
-						key={"UIGridLayout"}
-						CellSize={UDim2.fromScale(1, 0.94)}
-						HorizontalAlignment={Enum.HorizontalAlignment.Center}
-						SortOrder={Enum.SortOrder.LayoutOrder}
-						VerticalAlignment={Enum.VerticalAlignment.Center}
-					/>
+					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 
-					{/* Day 7 is special - it gets its own container */}
-					<DailyRewardTile
-						key="reward-7"
-						day={7}
-						streak={streak}
-						reward={shortenNumber(dailyRewards[6].rewardAmount ?? 1, false)}
-						isClaimable={isClaimable}
-						onClaim={handleClaim}
-						rewardType={dailyRewards[6].rewardType}
-						rewardName={dailyRewards[6].itemName}
-					/>
-				</frame>
+					<imagelabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						Image={"rbxassetid://82246683047981"}
+						key={"Icon"}
+						Position={UDim2.fromScale(0.676524, 0.493855)}
+						ScaleType={Enum.ScaleType.Fit}
+						Size={UDim2.fromScale(1.18132, 1.18559)}
+						ZIndex={10}
+					>
+						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+					</imagelabel>
+				</imagelabel>
+
+				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={4.85} />
 			</frame>
 		</frame>
 	);

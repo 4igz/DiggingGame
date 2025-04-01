@@ -20,71 +20,53 @@ interface ItemProps {
 
 const IsleItem = (props: ItemProps) => {
 	return (
-		<AnimatedButton size={UDim2.fromScale(1, 1)} layoutOrder={props.order} active={false}>
-			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-
+		<AnimatedButton
+			clickable={false}
+			size={UDim2.fromScale(0.075, 1)}
+			anchorPoint={new Vector2(0.5, 0.5)}
+			layoutOrder={props.order}
+			position={UDim2.fromScale(0.5, 0.5)}
+			zindex={10}
+		>
 			<imagelabel
 				AnchorPoint={new Vector2(0.5, 0.5)}
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				Image={"rbxassetid://138923309919912"}
-				ImageColor3={props.bgColor}
-				key={"ItemBackground"}
+				Image={"rbxassetid://117435155005447"}
+				ImageColor3={gameConstants.RARITY_COLORS[props.rarity]}
+				ImageTransparency={0.5}
+				key={"Background"}
 				Position={UDim2.fromScale(0.5, 0.5)}
 				ScaleType={Enum.ScaleType.Fit}
 				Size={UDim2.fromScale(1, 1)}
+				SliceScale={0.15}
 			>
 				<imagelabel
-					Size={UDim2.fromScale(1, 1)}
-					Image={fullTargetConfig[props.itemName].itemImage}
 					BackgroundTransparency={1}
+					ImageTransparency={0}
+					Image={fullTargetConfig[props.itemName].itemImage}
+					key={"Icon"}
+					Size={UDim2.fromScale(1, 1)}
 				>
-					<uilistlayout
-						key={"UIListLayout"}
-						HorizontalAlignment={Enum.HorizontalAlignment.Center}
-						Padding={new UDim(0.05, 0)}
-						SortOrder={Enum.SortOrder.LayoutOrder}
-						VerticalAlignment={Enum.VerticalAlignment.Bottom}
-					/>
 					<textlabel
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
 						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 						key={"ItemName"}
-						Size={UDim2.fromScale(1, 0.2)}
+						Position={UDim2.fromScale(-0.312769, -0.123462)}
+						Rotation={-15}
+						Size={UDim2.fromScale(1.3, 0.35)}
 						Text={props.itemName}
-						TextTruncate={"AtEnd"}
-						TextColor3={Color3.fromRGB(255, 255, 255)}
-						TextSize={14}
-					>
-						<uistroke key={"UIStroke"} />
-					</textlabel>
-
-					<uipadding key={"UIPadding"} PaddingBottom={new UDim(0.2, 0)} />
-
-					<textlabel
-						AnchorPoint={new Vector2(0.5, 0)}
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-						LayoutOrder={1}
-						key={"Rarity"}
-						Size={UDim2.fromScale(1, 0.2)}
-						Text={props.rarity}
 						TextColor3={gameConstants.RARITY_COLORS[props.rarity]}
 						TextScaled={true}
-						TextWrapped={true}
+						TextTransparency={-0.142746}
+						TextTruncate={Enum.TextTruncate.AtEnd}
+						ZIndex={2351823}
 					>
-						<uistroke key={"UIStroke"} />
+						<uistroke key={"UIStroke"} Thickness={2} />
 					</textlabel>
 				</imagelabel>
 			</imagelabel>
+
+			<uiaspectratioconstraint DominantAxis={Enum.DominantAxis.Height} key={".$UIAspectRatioConstraint"} />
 		</AnimatedButton>
 	);
 };
@@ -164,7 +146,7 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 
 		task.defer(() => {
 			transparencyMotion.spring(0, springs.pitch);
-			posMotion.spring(UDim2.fromScale(0.5, 0.01), springs.heavy);
+			posMotion.spring(UDim2.fromScale(0.5, 0.05), springs.heavy);
 		});
 
 		return () => {
@@ -222,7 +204,7 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 			BorderSizePixel={0}
 			key={"Top Bar Frame"}
 			Position={pos}
-			Size={UDim2.fromScale(3.31, 0.2)}
+			Size={UDim2.fromScale(1, 0.2)}
 			ref={frameRef}
 		>
 			<uilistlayout
@@ -230,7 +212,9 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 				HorizontalAlignment={Enum.HorizontalAlignment.Center}
 				SortOrder={Enum.SortOrder.LayoutOrder}
 				VerticalFlex={Enum.UIFlexAlignment.SpaceEvenly}
+				Padding={new UDim(0.08, 0)}
 			/>
+
 			<textlabel
 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 				BackgroundTransparency={1}
@@ -239,7 +223,7 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 				FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 				key={"Title"}
 				Position={UDim2.fromScale(0.0164, 0.0261)}
-				Size={UDim2.fromScale(0.967, 0.3)}
+				Size={UDim2.fromScale(1.2, 0.3)}
 				Text={`${isleName} - ${mapConfig[isleName]?.difficulty ?? "Easy"}`}
 				TextColor3={difficulties[mapConfig[isleName]?.difficulty] ?? Color3.fromRGB(0, 255, 162)}
 				TextScaled={true}
@@ -255,6 +239,7 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 					PaddingTop={new UDim(0.00545, 0)}
 				/>
 			</textlabel>
+
 			<frame
 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 				BackgroundTransparency={1}
@@ -262,7 +247,7 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 				BorderSizePixel={0}
 				key={"Container"}
 				Position={UDim2.fromScale(0.0749, 0.351)}
-				Size={UDim2.fromScale(0.982, 0.511)}
+				Size={UDim2.fromScale(1.3, 0.511)}
 			>
 				<uilistlayout
 					key={"UIListLayout"}
@@ -270,6 +255,7 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 					HorizontalAlignment={Enum.HorizontalAlignment.Center}
 					SortOrder={Enum.SortOrder.LayoutOrder}
 					VerticalAlignment={Enum.VerticalAlignment.Center}
+					Padding={new UDim(0.008, 0)}
 				/>
 
 				{isleItems.map((item) => (

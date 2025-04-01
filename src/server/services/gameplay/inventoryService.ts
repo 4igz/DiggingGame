@@ -12,7 +12,7 @@ import { ProfileTemplate } from "server/profileTemplate";
 import { MoneyService } from "../backend/moneyService";
 import { Signals } from "shared/signals";
 import { boatConfig } from "shared/config/boatConfig";
-import { potionConfig } from "shared/config/potionConfig";
+import { potionConfig, PotionKind } from "shared/config/potionConfig";
 import { interval } from "shared/util/interval";
 import { gameConstants } from "shared/gameConstants";
 import { GamepassService } from "../backend/gamepassService";
@@ -27,6 +27,11 @@ const BIGGER_BACKPACK_SIZE_MODIFIER = gameConstants.BIGGER_BACKPACK_SIZE_MODIFIE
 type InventoryKeys<T> = {
 	[K in keyof T]: T[K] extends Array<string> | Array<TargetItem> ? K : never;
 }[keyof T];
+
+export interface PotionEffect {
+	timeRemaining: number;
+	multiplier: number;
+}
 
 const inventoryConfigMap: Record<
 	ItemType,
@@ -133,7 +138,7 @@ export class InventoryService implements OnStart, OnTick {
 
 			const selected = inventoryConfigMap[itemType];
 			if (!selected) {
-				warn("Invalid inventory type requested");
+				warn("Invalid inventory type requested " + itemType);
 				return;
 			}
 
@@ -143,6 +148,7 @@ export class InventoryService implements OnStart, OnTick {
 			// Check if player already owns the item
 			if (profile.Data[inventoryKey].includes(item)) {
 				Events.purchaseFailed(player, itemType);
+				Events.sendInvalidActionPopup(player, `You already own this!`);
 				return;
 			}
 
@@ -150,6 +156,7 @@ export class InventoryService implements OnStart, OnTick {
 
 			if (!this.moneyService.hasEnoughMoney(player, cost)) {
 				Events.purchaseFailed(player, itemType);
+				Events.sendInvalidActionPopup(player, `You can't afford this!`);
 				return;
 			}
 
@@ -163,6 +170,7 @@ export class InventoryService implements OnStart, OnTick {
 
 			if (!cost || !this.moneyService.hasEnoughMoney(player, cost)) {
 				Events.purchaseFailed(player, "Boats");
+				Events.sendInvalidActionPopup(player, `You can't afford this!`);
 				return;
 			}
 
@@ -189,7 +197,10 @@ export class InventoryService implements OnStart, OnTick {
 			if (inventoryKey === "targetInventory") return;
 
 			// Check if player has the item
-			if (!profile.Data[inventoryKey].includes(itemName)) return;
+			if (!profile.Data[inventoryKey].includes(itemName)) {
+				Events.sendInvalidActionPopup(player, `You don't own this item!`);
+				return;
+			}
 
 			profile.Data[`equipped${itemType === "MetalDetectors" ? "Detector" : "Shovel"}`] = itemName;
 			this.profileService.setProfile(player, profile);
@@ -215,17 +226,32 @@ export class InventoryService implements OnStart, OnTick {
 
 			if (profile.Data.potionInventory.includes(potionName)) {
 				const potionIndex = profile.Data.potionInventory.indexOf(potionName);
-				profile.Data.potionInventory.remove(potionIndex);
+				profile.Data.potionInventory.remove(potionIndex); // remove from their inventory
 
-				const existingTimeThisPotion = profile.Data.activePotions.get(potionName);
-				profile.Data.activePotions.set(potionName, (existingTimeThisPotion ?? 0) + potion.duration);
-				const [, highestMultiplier] = this.getHighestMultiplierPotionName(profile.Data.activePotions);
-				profile.Data.potionLuckMultiplier = highestMultiplier;
+				// Get the effect type from the potion
+				const effectType = potion.kind;
+
+				// Check if this effect type is already active
+				const existingEffect = profile.Data.activePotions.get(effectType);
+
+				// Create or update the effect
+				const updatedEffect: PotionEffect = {
+					timeRemaining: (existingEffect?.timeRemaining || 0) + potion.duration,
+					multiplier: math.max(existingEffect?.multiplier || 1, potion.multiplier),
+				};
+
+				// Store the updated effect
+				profile.Data.activePotions.set(effectType, updatedEffect);
+
+				// Update the appropriate multiplier based on effect type
+				this.updatePotionMultipliers(profile);
 
 				this.profileService.setProfile(player, profile);
 				if (!this.potionDrinkers.includes(player)) {
 					this.potionDrinkers.push(player);
 				}
+
+				// Update the inventory UI
 				Events.updateInventory(player, "Potions", [
 					{
 						equippedShovel: profile.Data.equippedShovel,
@@ -363,8 +389,28 @@ export class InventoryService implements OnStart, OnTick {
 		Events.boughtItem(player, boatName, "Boats", boatConfig[boatName]);
 	}
 
+	// Add a helper method to update all potion multipliers
+	private updatePotionMultipliers(profile: LoadedProfile) {
+		// Reset all multipliers to default value
+		profile.Data.potionLuckMultiplier = 1;
+		profile.Data.potionStrengthMultiplier = 1;
+
+		// Update each multiplier based on active effects
+		for (const [effectType, effect] of profile.Data.activePotions) {
+			switch (effectType) {
+				case PotionKind.LUCK:
+					profile.Data.potionLuckMultiplier = effect.multiplier;
+					break;
+				case PotionKind.STRENGTH:
+					profile.Data.potionStrengthMultiplier = effect.multiplier;
+					break;
+			}
+		}
+	}
+
 	private POTION_SEC_INTERVAL = interval(1);
 
+	// Update the onTick method to handle multiple potion types
 	onTick(): void {
 		const playersToRemove = new Array<Player>();
 
@@ -373,20 +419,35 @@ export class InventoryService implements OnStart, OnTick {
 				playersToRemove.push(player);
 				continue;
 			}
+
 			if (this.POTION_SEC_INTERVAL(player.UserId)) {
 				const profile = this.profileService.getProfile(player);
 				if (!profile) continue;
-				if (profile.Data.activePotions.size() > 0) {
-					const [wasSet, highestMultiplier] = this.subtractFromHighestMultiplierPotion(
-						profile.Data.activePotions,
-					);
 
-					if (!wasSet || highestMultiplier === 1) {
-						profile.Data.activePotions.clear();
+				if (profile.Data.activePotions.size() > 0) {
+					let anyPotionActive = false;
+
+					// Iterate through all active effects
+					for (const [effectType, effect] of profile.Data.activePotions) {
+						// Reduce the time remaining
+						effect.timeRemaining--;
+
+						// If the effect has expired, remove it
+						if (effect.timeRemaining <= 0) {
+							profile.Data.activePotions.delete(effectType);
+						} else {
+							anyPotionActive = true;
+						}
+					}
+
+					// Update all multipliers based on remaining effects
+					this.updatePotionMultipliers(profile);
+
+					// If no effects remain active, remove player from potionDrinkers
+					if (!anyPotionActive) {
 						playersToRemove.push(player);
 					}
 
-					profile.Data.potionLuckMultiplier = highestMultiplier;
 					this.profileService.setProfile(player, profile);
 				} else {
 					playersToRemove.push(player);
@@ -394,7 +455,7 @@ export class InventoryService implements OnStart, OnTick {
 			}
 		}
 
-		// Remove players after the loop to avoid modifying the array while iterating and causing ordering issues
+		// Remove players after the loop
 		this.potionDrinkers = this.potionDrinkers.filter((p) => !playersToRemove.includes(p));
 	}
 

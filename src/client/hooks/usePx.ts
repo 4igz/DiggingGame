@@ -26,7 +26,7 @@ interface ScaleFunction {
 }
 
 const BASE_RESOLUTION = new Vector2(1280, 832);
-const MIN_SCALE = 0.75;
+const MIN_SCALE = 0.5;
 const DOMINANT_AXIS = 0.5;
 
 /**

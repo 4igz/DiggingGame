@@ -485,53 +485,6 @@ export class TargetService implements OnStart {
 		});
 	}
 
-	// private dig(player: Player, target: Target, batchNum: number) {
-	// 	const character = player.Character;
-	// 	if (!character || !character.Parent) return;
-
-	// 	const profile = this.profileService.getProfile(player);
-	// 	if (!profile) return;
-	// 	this.playerDigCooldown.set(player, true);
-
-	// 	const cfg = shovelConfig[profile.Data.equippedShovel];
-	// 	assert(cfg, `Shovel config for ${profile.Data.equippedShovel} not found`);
-
-	// 	// Update the digging progress by incrementing the digProgress
-	// 	let digStrength = profile.Data.strength + cfg.strengthMult * BASE_SHOVEL_STRENGTH * batchNum;
-
-	// 	if (this.gamepassService.ownsGamepass(player, gameConstants.GAMEPASS_IDS.x2Strength)) {
-	// 		digStrength *= 2;
-	// 	}
-
-	// 	target.digProgress += digStrength;
-	// 	const maxProgress = target.maxProgress;
-	// 	Events.replicateDig.broadcast({
-	// 		itemId: target.itemId,
-	// 		name: target.name,
-	// 		position: target.position,
-	// 		digProgress: target.digProgress,
-	// 		owner: player,
-	// 		mapName: target.mapName,
-	// 		base: target.base,
-	// 		maxProgress,
-	// 	});
-
-	// 	// Check if the target is fully dug
-	// 	if (target.digProgress >= maxProgress) {
-	// 		// Remove the target from the active targets
-	// 		target.activelyDigging = false;
-	// 		// print(`${player.Name} dug up ${target.name} with weight ${target.weight}`);
-
-	// 		this.endDigging(player);
-	// 		this.digSuccess(player, target);
-	// 	}
-
-	// 	// End dig cooldown
-	// 	task.delay(gameConstants.DIG_TIME_SEC, () => {
-	// 		this.playerDigCooldown.set(player, false);
-	// 	});
-	// }
-
 	public endDigging(player: Player, failed: boolean = false, reparentDetector: boolean = true) {
 		const profile = this.profileService.getProfile(player);
 		if (!profile) return;

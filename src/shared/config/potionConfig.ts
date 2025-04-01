@@ -3,8 +3,9 @@ import { Rarity } from "shared/networkTypes";
 
 const minute = 60;
 
-enum PotionKind {
+export enum PotionKind {
 	LUCK,
+	STRENGTH,
 }
 
 export interface PotionConfig {
@@ -32,6 +33,28 @@ export const potionConfig: Record<string, PotionConfig> = {
 	},
 	["Large Luck Potion"]: {
 		kind: PotionKind.LUCK,
+		multiplier: 2,
+		duration: minute * 15,
+		itemImage: "rbxassetid://130939767297479",
+		rarityType: "Rare",
+	},
+
+	["Small Strength Potion"]: {
+		kind: PotionKind.STRENGTH,
+		multiplier: 1.2,
+		duration: minute * 5,
+		itemImage: "rbxassetid://93760012973987",
+		rarityType: "Common",
+	},
+	["Medium Strength Potion"]: {
+		kind: PotionKind.STRENGTH,
+		multiplier: 1.5,
+		duration: minute * 10,
+		itemImage: "rbxassetid://79594618973792",
+		rarityType: "Uncommon",
+	},
+	["Large Strength Potion"]: {
+		kind: PotionKind.STRENGTH,
 		multiplier: 2,
 		duration: minute * 15,
 		itemImage: "rbxassetid://130939767297479",

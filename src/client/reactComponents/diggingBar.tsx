@@ -1,8 +1,8 @@
 //!optimize 2
 import React, { ReactNode, useEffect, useRef, useState } from "@rbxts/react";
-import { RunService, Lighting, Workspace } from "@rbxts/services";
+import { RunService, Lighting, Workspace, UserInputService } from "@rbxts/services";
 import { useMotion } from "client/hooks/useMotion";
-import { Events, Functions } from "client/network";
+import { Events } from "client/network";
 import { springs } from "client/utils/springs";
 import { gameConstants } from "shared/gameConstants";
 import { NetworkedTarget, PlayerDigInfo, Target } from "shared/networkTypes";
@@ -15,6 +15,7 @@ import { interval } from "shared/util/interval";
 import { numberSerializer } from "shared/network";
 import UiController from "client/controllers/uiController";
 import { GamepassController } from "client/controllers/gamepassController";
+import { greenToRed, redToGreen } from "shared/util/colorUtil";
 
 export interface DiggingBarProps {
 	target?: Target;
@@ -37,13 +38,34 @@ const whiteTint = new Color3(1, 1, 1);
 
 const camera = Workspace.CurrentCamera;
 const defaultFov = camera?.FieldOfView ?? 70;
-const fovGoal = 50;
+const fovGoal = 83;
+
+const DIG_REMINDER_TIMER = 3;
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 const replicateInterval = interval(1 / 10);
 const digInterval = interval(gameConstants.DIG_TIME_SEC);
 const frameInterval = interval(1 / 60);
+
+const DIG_STAGES = [
+	0.18, // Going higher than this, highlight 8, going lower, highlight 4
+	0.37, // Going higher than this, highlight 12, going lower, highlight 8
+	0.59, // Going higher than this, highlight 16, going lower, highlight 12
+	0.81, // Going higher than this, highlight 20, going lower, highlight 16
+];
+
+const COLOR_TO_STAGE = [
+	Color3.fromRGB(48, 68, 137),
+	Color3.fromRGB(64, 86, 162),
+	Color3.fromRGB(48, 68, 137),
+	Color3.fromRGB(64, 86, 162),
+	Color3.fromRGB(48, 68, 137),
+];
+
+const RED = new Color3(1, 0, 0);
+const GREEN = new Color3(0, 1, 0);
+const PROC_LERP_AMT = 0.5;
 
 export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 	const [barProgress, setBarProgress] = useMotion(1);
@@ -52,6 +74,8 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 	const [fov, fovMotion] = useMotion(defaultFov);
 	const [clientTarget, setClientTarget] = useState<NetworkedTarget | undefined>();
 	const [digInfo, setDigInfo] = useState<PlayerDigInfo>();
+	const [digStage, setDigStage] = useState(0);
+	const [prevDigStage, setPrevDigStage] = useState(0);
 
 	const progressRef = useRef(0);
 
@@ -59,6 +83,14 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 
 	const [warnStage, setWarnStage] = React.useState(0);
 	const [visible, setVisible] = React.useState(false);
+
+	const [dugYet, setHasDugYet] = useState(false);
+	const [showReminder, setShowReminder] = useState(false);
+
+	const [reminderVisibility, reminderMotion] = useMotion(1);
+
+	const [stageSize, stageMotion] = useMotion(UDim2.fromScale(1, 1));
+	const [stageColor, stageColorMotion] = useMotion(COLOR_TO_STAGE[0]);
 
 	const warnStages = [{ 0.4: 1 }, { 0.25: 2 }, { 0.1: 3 }];
 
@@ -97,6 +129,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				shovelCfg.strengthMult * BASE_SHOVEL_STRENGTH * (owns2x ? 2 : 1);
 			let lastReplicatedProgress = 0;
 			let finished = false;
+			setHasDugYet(false);
 
 			// Create mock data for the target
 			progressRef.current = clientTarget.digProgress;
@@ -104,6 +137,8 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 
 			const clickConnection = Signals.gotDigInput.Connect(() => {
 				if (!props.shovelController.canStartDigging) return;
+				setShowReminder(false);
+				setHasDugYet(true);
 
 				// Since the server is rate limited by this same timer, we should
 				// ratelimit on the client too incase they are autoclicking
@@ -131,6 +166,8 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				if (digInterval()) {
 					progressRef.current += increment;
 				}
+				setHasDugYet(true);
+				setShowReminder(false);
 
 				setRotation.spring(math.clamp(rotation.getValue() + math.random(-2, 2), -12, 12), springs.responsive);
 				setScale.spring(math.max(scale.getValue() + math.random(0.01, 0.05), 1.1), springs.responsive);
@@ -229,16 +266,73 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 			};
 		} else {
 			setBarProgress.immediate(1);
-			fovMotion.spring(defaultFov, springs.slow);
+			fovMotion.spring(defaultFov, springs.wobble2);
 			setClientTarget(undefined);
 			setDigInfo(undefined);
+			setHasDugYet(false);
+			setShowReminder(false);
+			setDigStage(0);
+			setPrevDigStage(0);
 		}
 	}, [visible, clientTarget, digInfo]);
 
 	useEffect(() => {
-		if (!visible) return;
+		if (!visible) {
+			return;
+		}
 		fovMotion.spring(lerp(fovGoal, defaultFov, barProgress.getValue() / 1), springs.default);
+
+		const progress = barProgress.getValue();
+		let currentStage = 0;
+
+		for (let i = DIG_STAGES.size() - 1; i >= 0; i--) {
+			if (progress > DIG_STAGES[i]) {
+				currentStage = i + 1;
+				break;
+			}
+		}
+
+		setDigStage(currentStage);
 	}, [barProgress.getValue(), visible]);
+
+	useEffect(() => {
+		if (visible && !dugYet) {
+			let running = true;
+			const beganDigging = tick();
+
+			task.spawn(() => {
+				while (running) {
+					if (tick() - beganDigging > DIG_REMINDER_TIMER) {
+						setShowReminder(true);
+						break;
+					}
+					task.wait();
+				}
+			});
+
+			const inputConnection = UserInputService.InputBegan.Connect((input) => {
+				if (input.UserInputType === Enum.UserInputType.MouseButton1) {
+					setShowReminder(false);
+					setHasDugYet(true);
+					running = false;
+				}
+			});
+
+			return () => {
+				running = false;
+				inputConnection.Disconnect();
+				setShowReminder(false);
+			};
+		}
+	}, [dugYet, visible]);
+
+	useEffect(() => {
+		if (showReminder) {
+			reminderMotion.spring(0, springs.default);
+		} else {
+			reminderMotion.immediate(1);
+		}
+	}, [showReminder]);
 
 	useEffect(() => {
 		fovMotion.onStep((value) => {
@@ -258,228 +352,227 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 		});
 	}, []);
 
+	useEffect(() => {
+		if (!visible) return;
+
+		const stageColor = COLOR_TO_STAGE[prevDigStage];
+
+		stageMotion.immediate(UDim2.fromScale(1, 1));
+		stageColorMotion.immediate(stageColor);
+		stageMotion.spring(UDim2.fromScale(1.2, 1.2), springs.bubbly);
+		stageColorMotion.spring(stageColor.Lerp(digStage > prevDigStage ? RED : GREEN, PROC_LERP_AMT), springs.bubbly);
+
+		const unsub = stageMotion.onComplete(() => {
+			stageMotion.spring(UDim2.fromScale(1, 1));
+			stageColorMotion.spring(stageColor, springs.bubbly);
+		});
+
+		setPrevDigStage(digStage);
+		return () => {
+			unsub();
+		};
+	}, [digStage, visible]);
+
 	const platform = getPlayerPlatform();
 
 	return (
 		<frame Size={new UDim2(1, 0, 1, 0)} BackgroundTransparency={1} Visible={visible}>
 			<frame
 				AnchorPoint={new Vector2(0.5, 0.5)}
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
 				key={"Digging Progress Bar Frame"}
-				Position={UDim2.fromScale(0.75, 0.5)}
 				Size={scale.map((s) => UDim2.fromScale(0.3 * s, 0.5 * s))}
 				Visible={visible}
+				Position={UDim2.fromScale(0.75, 0.5)}
 				Rotation={rotation.map((r) => math.clamp(math.max(1, r) * (cycle * 4), -8, 8))}
 			>
-				<frame
-					AnchorPoint={new Vector2(0.5, 0.5)}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					key={"Progress Bar Frame"}
-					Position={UDim2.fromScale(0.229, 0.482)}
-					Size={UDim2.fromScale(0.277, 0.826)}
-					ZIndex={10}
-				>
-					<imagelabel
-						AnchorPoint={new Vector2(0.5, 0.5)}
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						Image={"rbxassetid://71521093457489"}
-						key={"Filled Progress Bar"}
-						Position={UDim2.fromScale(0.522, 0.495)}
-						Size={UDim2.fromScale(1, 1.01)}
-					>
-						<uigradient
-							key={"UIGradient"}
-							Offset={barProgress.map((p) => {
-								return new Vector2(0.98, p);
-							})}
-							Rotation={90}
-							Transparency={
-								new NumberSequence([
-									new NumberSequenceKeypoint(0, 1),
-									new NumberSequenceKeypoint(0.00125, 0),
-									new NumberSequenceKeypoint(1, 0),
-								])
-							}
-						/>
-					</imagelabel>
-				</frame>
-
 				<imagelabel
 					AnchorPoint={new Vector2(0.5, 0.5)}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					Image={"rbxassetid://133217364331896"}
+					Image={"rbxassetid://131382351827899"}
 					key={"Background"}
 					Position={UDim2.fromScale(0.5, 0.5)}
 					Size={UDim2.fromScale(1, 1)}
 				/>
 
-				<frame
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					key={"Shovel Progress"}
-					Position={UDim2.fromScale(-0.397, 0.0781)}
-					Size={UDim2.fromScale(0.298, 0.809)}
-					AnchorPoint={new Vector2(0.5, 0.5)}
-				></frame>
-
-				<frame
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					key={"Ruler"}
-					Position={UDim2.fromScale(0.45, 0)}
-					Size={UDim2.fromScale(0.55, 0.919)}
-				>
-					<textlabel
-						AnchorPoint={new Vector2(0.5, 0.5)}
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+				<folder key={"Bars"}>
+					<imagelabel
+						Active={true}
+						AnchorPoint={new Vector2(0.692078114, 0.633055806)}
 						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-						key={"1st Increment"}
-						Position={UDim2.fromScale(0.35, 0.127)}
-						Size={UDim2.fromScale(0.548, 0.085)}
-						Text={"4 FT"}
-						TextColor3={Color3.fromRGB(255, 255, 255)}
-						TextScaled={true}
-						TextWrapped={true}
-						ZIndex={105}
+						Image={"rbxassetid://99229586290044"}
+						ImageColor3={digStage === 3 ? stageColor : Color3.fromRGB(48, 68, 137)}
+						key={"16"}
+						Position={UDim2.fromScale(0.692078, 0.633056)}
+						Size={digStage === 3 ? stageSize : UDim2.fromScale(1.03, 1.03)}
+						ZIndex={digStage === 3 ? 10 : 1}
 					>
-						<uistroke key={"UIStroke"} Thickness={3} />
+						<textlabel
+							AnchorPoint={new Vector2(0, 0.5)}
+							BackgroundTransparency={1}
+							FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+							key={"Number"}
+							Position={UDim2.fromScale(0.5, 0.633056)}
+							Size={UDim2.fromScale(0.384156, 0.085)}
+							Text={"16 FT"}
+							TextColor3={new Color3(1, 1, 1)}
+							TextScaled={true}
+							ZIndex={4}
+						>
+							<uistroke key={"UIStroke"} Thickness={3} />
 
-						<uipadding
-							key={"UIPadding"}
-							PaddingBottom={new UDim(0.000288, 0)}
-							PaddingLeft={new UDim(0.157, 0)}
-							PaddingRight={new UDim(0.157, 0)}
-							PaddingTop={new UDim(0.000288, 0)}
-						/>
-					</textlabel>
+							<uipadding
+								key={"UIPadding"}
+								PaddingBottom={new UDim(0.000288, 0)}
+								PaddingLeft={new UDim(0.0883, 0)}
+								PaddingRight={new UDim(0.0883, 0)}
+								PaddingTop={new UDim(0.000288, 0)}
+							/>
+						</textlabel>
+					</imagelabel>
 
-					<textlabel
-						AnchorPoint={new Vector2(0.5, 0.5)}
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					<imagelabel
+						Active={true}
+						AnchorPoint={new Vector2(0.67500025, 0.459999919)}
 						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-						key={"2nd Increment"}
-						Position={UDim2.fromScale(0.37, 0.308)}
-						Size={UDim2.fromScale(0.548, 0.085)}
-						Text={"8 FT"}
-						TextColor3={Color3.fromRGB(255, 255, 255)}
-						TextScaled={true}
-						TextWrapped={true}
-						ZIndex={105}
+						Image={"rbxassetid://126856902854073"}
+						ImageColor3={digStage === 2 ? stageColor : Color3.fromRGB(64, 86, 162)}
+						key={"12"}
+						Position={UDim2.fromScale(0.675, 0.46)}
+						Size={digStage === 2 ? stageSize : UDim2.fromScale(1.03, 1.03)}
+						ZIndex={digStage === 2 ? 10 : 1}
 					>
-						<uistroke key={"UIStroke"} Thickness={3} />
+						<textlabel
+							AnchorPoint={new Vector2(0, 0.5)}
+							BackgroundTransparency={1}
+							FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+							key={"Number"}
+							Position={UDim2.fromScale(0.5, 0.46)}
+							Size={UDim2.fromScale(0.35, 0.085)}
+							Text={"12 FT"}
+							TextColor3={new Color3(1, 1, 1)}
+							TextScaled={true}
+							ZIndex={4}
+						>
+							<uistroke key={"UIStroke"} Thickness={3} />
 
-						<uipadding
-							key={"UIPadding"}
-							PaddingBottom={new UDim(0.000288, 0)}
-							PaddingLeft={new UDim(0.15, 0)}
-							PaddingRight={new UDim(0.15, 0)}
-							PaddingTop={new UDim(0.000288, 0)}
-						/>
-					</textlabel>
+							<uipadding
+								key={"UIPadding"}
+								PaddingBottom={new UDim(0.000288, 0)}
+								PaddingLeft={new UDim(0.0952, 0)}
+								PaddingRight={new UDim(0.0952, 0)}
+								PaddingTop={new UDim(0.000288, 0)}
+							/>
+						</textlabel>
+					</imagelabel>
 
-					<textlabel
-						AnchorPoint={new Vector2(0.5, 0.5)}
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					<imagelabel
+						Active={true}
+						AnchorPoint={new Vector2(0.665000021, 0.279999942)}
 						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-						key={"3rd Increment"}
-						Position={UDim2.fromScale(0.4, 0.5)}
-						Size={UDim2.fromScale(0.548, 0.085)}
-						Text={"12 FT"}
-						TextColor3={Color3.fromRGB(255, 255, 255)}
-						TextScaled={true}
-						TextWrapped={true}
-						ZIndex={105}
+						Image={"rbxassetid://140382903871140"}
+						ImageColor3={digStage === 1 ? stageColor : Color3.fromRGB(48, 68, 137)}
+						key={"8"}
+						Position={UDim2.fromScale(0.665, 0.28)}
+						Size={digStage === 1 ? stageSize : UDim2.fromScale(1.03, 1.03)}
+						ZIndex={digStage === 1 ? 10 : 1}
 					>
-						<uistroke key={"UIStroke"} Thickness={3} />
+						<textlabel
+							AnchorPoint={new Vector2(0, 0.5)}
+							BackgroundTransparency={1}
+							FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+							key={"Number"}
+							Position={UDim2.fromScale(0.5, 0.28)}
+							Size={UDim2.fromScale(0.33, 0.085)}
+							Text={"8 FT"}
+							TextColor3={new Color3(1, 1, 1)}
+							TextScaled={true}
+							ZIndex={4}
+						>
+							<uistroke key={"UIStroke"} Thickness={3} />
 
-						<uipadding
-							key={"UIPadding"}
-							PaddingBottom={new UDim(0.000288, 0)}
-							PaddingLeft={new UDim(0.0952, 0)}
-							PaddingRight={new UDim(0.0952, 0)}
-							PaddingTop={new UDim(0.000288, 0)}
-						/>
-					</textlabel>
+							<uipadding
+								key={"UIPadding"}
+								PaddingBottom={new UDim(0.000288, 0)}
+								PaddingLeft={new UDim(0.15, 0)}
+								PaddingRight={new UDim(0.15, 0)}
+								PaddingTop={new UDim(0.000288, 0)}
+							/>
+						</textlabel>
+					</imagelabel>
 
-					<textlabel
-						AnchorPoint={new Vector2(0.5, 0.5)}
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					<imagelabel
+						Active={true}
+						AnchorPoint={new Vector2(0.712000728, 0.832972407)}
 						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-						key={"4th  Increment"}
-						Position={UDim2.fromScale(0.42, 0.7)}
-						Size={UDim2.fromScale(0.548, 0.085)}
-						Text={"16 FT"}
-						TextColor3={Color3.fromRGB(255, 255, 255)}
-						TextScaled={true}
-						TextWrapped={true}
-						ZIndex={105}
+						Image={"rbxassetid://121836677630694"}
+						ImageColor3={digStage === 4 ? stageColor : Color3.fromRGB(64, 86, 162)}
+						key={"20"}
+						Position={UDim2.fromScale(0.712001, 0.832972)}
+						Size={digStage === 4 ? stageSize : UDim2.fromScale(1.03, 1.03)}
+						ZIndex={digStage === 4 ? 10 : 1}
 					>
-						<uistroke key={"UIStroke"} Thickness={3} />
+						<textlabel
+							AnchorPoint={new Vector2(0, 0.5)}
+							BackgroundTransparency={1}
+							FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+							key={"Number"}
+							Position={UDim2.fromScale(0.5, 0.832972)}
+							Size={UDim2.fromScale(0.424001, 0.085)}
+							Text={"20 FT"}
+							TextColor3={new Color3(1, 1, 1)}
+							TextScaled={true}
+							ZIndex={4}
+						>
+							<uistroke key={"UIStroke"} Thickness={3} />
 
-						<uipadding
-							key={"UIPadding"}
-							PaddingBottom={new UDim(0.000288, 0)}
-							PaddingLeft={new UDim(0.0883, 0)}
-							PaddingRight={new UDim(0.0883, 0)}
-							PaddingTop={new UDim(0.000288, 0)}
-						/>
-					</textlabel>
+							<uipadding
+								key={"UIPadding"}
+								PaddingBottom={new UDim(0.000288, 0)}
+								PaddingLeft={new UDim(0.054, 0)}
+								PaddingRight={new UDim(0.054, 0)}
+								PaddingTop={new UDim(0.000288, 0)}
+							/>
+						</textlabel>
+					</imagelabel>
 
-					<textlabel
-						AnchorPoint={new Vector2(0.5, 0.5)}
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					<imagelabel
+						Active={true}
+						AnchorPoint={new Vector2(0.644309998, 0.109999977)}
 						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-						key={"5th  Increment"}
-						Position={UDim2.fromScale(0.45, 0.892)}
-						Size={UDim2.fromScale(0.548, 0.085)}
-						Text={"20 FT"}
-						TextColor3={Color3.fromRGB(255, 255, 255)}
-						TextScaled={true}
-						TextWrapped={true}
-						ZIndex={105}
+						Image={"rbxassetid://81833790422645"}
+						ImageColor3={digStage === 0 ? stageColor : Color3.fromRGB(64, 86, 162)}
+						key={"4"}
+						Position={UDim2.fromScale(0.64431, 0.11)}
+						Size={digStage === 0 ? stageSize : UDim2.fromScale(1.03, 1.03)}
+						ZIndex={digStage === 0 ? 10 : 1}
 					>
-						<uistroke key={"UIStroke"} Thickness={3} />
+						<textlabel
+							AnchorPoint={new Vector2(0, 0.5)}
+							BackgroundTransparency={1}
+							FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+							key={"Number"}
+							Position={UDim2.fromScale(0.5, 0.11)}
+							Size={UDim2.fromScale(0.288619, 0.085)}
+							Text={"4 FT"}
+							TextColor3={new Color3(1, 1, 1)}
+							TextScaled={true}
+							ZIndex={4}
+						>
+							<uistroke key={"UIStroke"} Thickness={3} />
 
-						<uipadding
-							key={"UIPadding"}
-							PaddingBottom={new UDim(0.000288, 0)}
-							PaddingLeft={new UDim(0.054, 0)}
-							PaddingRight={new UDim(0.054, 0)}
-							PaddingTop={new UDim(0.000288, 0)}
-						/>
-					</textlabel>
-				</frame>
+							<uipadding
+								key={"UIPadding"}
+								PaddingBottom={new UDim(0.000288, 0)}
+								PaddingLeft={new UDim(0.157, 0)}
+								PaddingRight={new UDim(0.157, 0)}
+								PaddingTop={new UDim(0.000288, 0)}
+							/>
+						</textlabel>
+					</imagelabel>
+				</folder>
+
+				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.61} />
 
 				<frame
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -550,21 +643,321 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 					</imagelabel>
 				</frame>
 
-				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.61} />
+				<frame
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					BackgroundTransparency={1}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					key={"Progress Bar Frame"}
+					Position={UDim2.fromScale(0.229, 0.482)}
+					Size={UDim2.fromScale(0.277, 0.826)}
+					ZIndex={2}
+				>
+					<imagelabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+						BackgroundTransparency={1}
+						BorderColor3={Color3.fromRGB(0, 0, 0)}
+						BorderSizePixel={0}
+						Image={"rbxassetid://95707056401845"}
+						key={"Filled Progress Bar"}
+						ImageColor3={barProgress.map((v) => greenToRed(v))}
+						Position={UDim2.fromScale(0.522, 0.495)}
+						Size={UDim2.fromScale(1, 1.01)}
+					>
+						<uigradient
+							key={"UIGradient"}
+							Offset={barProgress.map((p) => {
+								return new Vector2(0.98, p);
+							})}
+							Rotation={90}
+							Transparency={
+								new NumberSequence([
+									new NumberSequenceKeypoint(0, 1),
+									new NumberSequenceKeypoint(0.00125, 0),
+									new NumberSequenceKeypoint(1, 0),
+								])
+							}
+						/>
+					</imagelabel>
+				</frame>
+
+				<uiscale key={"UIScale"} />
+
+				<folder key={"Bars2"}>
+					<imagelabel
+						Active={true}
+						AnchorPoint={new Vector2(0.692078114, 0.633055806)}
+						BackgroundTransparency={1}
+						Image={"rbxassetid://133323928788153"}
+						ImageColor3={digStage === 3 ? stageColor : Color3.fromRGB(48, 68, 137)}
+						ImageTransparency={1}
+						key={"16"}
+						Position={UDim2.fromScale(0.692078, 0.633056)}
+						Rotation={-0.002105}
+						Size={digStage === 3 ? stageSize : UDim2.fromScale(1, 1)}
+						ZIndex={digStage === 3 ? 15 : 5}
+					>
+						<textlabel
+							AnchorPoint={new Vector2(0, 0.5)}
+							BackgroundTransparency={1}
+							FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+							key={"Number"}
+							Position={UDim2.fromScale(0.5, 0.633056)}
+							Size={UDim2.fromScale(0.384156, 0.085)}
+							Text={"16 FT"}
+							TextColor3={new Color3(1, 1, 1)}
+							TextScaled={true}
+							ZIndex={6}
+						>
+							<uistroke key={"UIStroke"} Thickness={3} />
+
+							<uipadding
+								key={"UIPadding"}
+								PaddingBottom={new UDim(0.000288, 0)}
+								PaddingLeft={new UDim(0.0883, 0)}
+								PaddingRight={new UDim(0.0883, 0)}
+								PaddingTop={new UDim(0.000288, 0)}
+							/>
+						</textlabel>
+
+						<uiscale key={"UIScale"} Scale={1.1} />
+					</imagelabel>
+
+					<imagelabel
+						Active={true}
+						AnchorPoint={new Vector2(0.67500025, 0.459999919)}
+						BackgroundTransparency={1}
+						Image={"rbxassetid://95711239284393"}
+						ImageColor3={digStage === 2 ? stageColor : Color3.fromRGB(166, 188, 255)}
+						ImageTransparency={1}
+						key={"12"}
+						Position={UDim2.fromScale(0.675, 0.46)}
+						Size={digStage === 2 ? stageSize : UDim2.fromScale(1, 1)}
+						ZIndex={digStage === 2 ? 15 : 5}
+					>
+						<textlabel
+							AnchorPoint={new Vector2(0, 0.5)}
+							BackgroundTransparency={1}
+							FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+							key={"Number"}
+							Position={UDim2.fromScale(0.5, 0.46)}
+							Size={UDim2.fromScale(0.35, 0.085)}
+							Text={"12 FT"}
+							TextColor3={new Color3(1, 1, 1)}
+							TextScaled={true}
+							ZIndex={6}
+						>
+							<uistroke key={"UIStroke"} Thickness={3} />
+
+							<uipadding
+								key={"UIPadding"}
+								PaddingBottom={new UDim(0.000288, 0)}
+								PaddingLeft={new UDim(0.0952, 0)}
+								PaddingRight={new UDim(0.0952, 0)}
+								PaddingTop={new UDim(0.000288, 0)}
+							/>
+						</textlabel>
+
+						<uiscale key={"UIScale"} Scale={1.1} />
+					</imagelabel>
+
+					<imagelabel
+						Active={true}
+						AnchorPoint={new Vector2(0.665000021, 0.279999942)}
+						BackgroundTransparency={1}
+						Image={"rbxassetid://76687140716470"}
+						ImageColor3={digStage === 1 ? stageColor : Color3.fromRGB(48, 68, 137)}
+						ImageTransparency={1}
+						key={"8"}
+						Position={UDim2.fromScale(0.665, 0.28)}
+						Size={digStage === 1 ? stageSize : UDim2.fromScale(1, 1)}
+						ZIndex={digStage === 1 ? 15 : 5}
+					>
+						<textlabel
+							AnchorPoint={new Vector2(0, 0.5)}
+							BackgroundTransparency={1}
+							FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+							key={"Number"}
+							Position={UDim2.fromScale(0.5, 0.28)}
+							Size={UDim2.fromScale(0.33, 0.085)}
+							Text={"8 FT"}
+							TextColor3={new Color3(1, 1, 1)}
+							TextScaled={true}
+							ZIndex={6}
+						>
+							<uistroke key={"UIStroke"} Thickness={3} />
+
+							<uipadding
+								key={"UIPadding"}
+								PaddingBottom={new UDim(0.000288, 0)}
+								PaddingLeft={new UDim(0.15, 0)}
+								PaddingRight={new UDim(0.15, 0)}
+								PaddingTop={new UDim(0.000288, 0)}
+							/>
+						</textlabel>
+
+						<uiscale key={"UIScale"} Scale={1.1} />
+					</imagelabel>
+
+					<imagelabel
+						Active={true}
+						AnchorPoint={new Vector2(0.712000728, 0.832972407)}
+						BackgroundTransparency={1}
+						Image={"rbxassetid://114830222118525"}
+						ImageColor3={digStage === 4 ? stageColor : Color3.fromRGB(64, 86, 162)}
+						ImageTransparency={1}
+						key={"20"}
+						Position={UDim2.fromScale(0.712001, 0.832972)}
+						Rotation={-0.0016744}
+						Size={digStage === 4 ? stageSize : UDim2.fromScale(1, 1)}
+						ZIndex={digStage === 4 ? 15 : 5}
+					>
+						<textlabel
+							AnchorPoint={new Vector2(0, 0.5)}
+							BackgroundTransparency={1}
+							FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+							key={"Number"}
+							Position={UDim2.fromScale(0.5, 0.832972)}
+							Size={UDim2.fromScale(0.424001, 0.085)}
+							Text={"20 FT"}
+							TextColor3={new Color3(1, 1, 1)}
+							TextScaled={true}
+							ZIndex={6}
+						>
+							<uistroke key={"UIStroke"} Thickness={3} />
+
+							<uipadding
+								key={"UIPadding"}
+								PaddingBottom={new UDim(0.000288, 0)}
+								PaddingLeft={new UDim(0.054, 0)}
+								PaddingRight={new UDim(0.054, 0)}
+								PaddingTop={new UDim(0.000288, 0)}
+							/>
+						</textlabel>
+
+						<uiscale key={"UIScale"} Scale={1.1} />
+					</imagelabel>
+
+					<imagelabel
+						Active={true}
+						AnchorPoint={new Vector2(0.644309998, 0.109999977)}
+						BackgroundTransparency={1}
+						Image={"rbxassetid://91647746850914"}
+						ImageColor3={digStage === 0 ? stageColor : Color3.fromRGB(115, 137, 213)}
+						ImageTransparency={1}
+						key={"4"}
+						Position={UDim2.fromScale(0.64431, 0.11)}
+						Size={digStage === 0 ? stageSize : UDim2.fromScale(1, 1)}
+						ZIndex={digStage === 0 ? 15 : 5}
+					>
+						<textlabel
+							AnchorPoint={new Vector2(0, 0.5)}
+							BackgroundTransparency={1}
+							FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+							key={"Number"}
+							Position={UDim2.fromScale(0.5, 0.11)}
+							Size={UDim2.fromScale(0.288619, 0.085)}
+							Text={"4 FT"}
+							TextColor3={new Color3(1, 1, 1)}
+							TextScaled={true}
+							ZIndex={6}
+						>
+							<uistroke key={"UIStroke"} Thickness={3} />
+
+							<uipadding
+								key={"UIPadding"}
+								PaddingBottom={new UDim(0.000288, 0)}
+								PaddingLeft={new UDim(0.157, 0)}
+								PaddingRight={new UDim(0.157, 0)}
+								PaddingTop={new UDim(0.000288, 0)}
+							/>
+						</textlabel>
+
+						<uiscale key={"UIScale"} Scale={1.1} />
+					</imagelabel>
+				</folder>
 			</frame>
 
-			<textlabel
-				Text={`${platform === "Mobile" ? "Tap" : platform === "Console" ? "L2/R2" : "Click"} to dig!`}
-				Position={UDim2.fromScale(0.5, 0.78)}
-				AnchorPoint={new Vector2(0.5, 0)}
+			<frame
+				key={"Frame"}
+				AnchorPoint={new Vector2(0.5, 0.5)}
 				BackgroundTransparency={1}
-				Font={Enum.Font.BuilderSansBold}
-				TextColor3={Color3.fromRGB(0, 120, 255)}
-				Size={UDim2.fromScale(0.5, 0.05)}
-				TextScaled={true}
+				Position={UDim2.fromScale(0.5, 0.75)}
+				Size={UDim2.fromScale(0.233, 0.076)}
+				Visible={showReminder}
 			>
-				<uistroke Thickness={2} />
-			</textlabel>
+				<textlabel
+					key={"TextLabel"}
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundTransparency={1}
+					FontFace={
+						new Font(
+							"rbxasset://fonts/families/FredokaOne.json",
+							Enum.FontWeight.Bold,
+							Enum.FontStyle.Normal,
+						)
+					}
+					Position={UDim2.fromScale(0.5, 0.5)}
+					Size={UDim2.fromScale(0.85, 0.85)}
+					Text={`${platform === "Mobile" ? "Tap" : platform === "Console" ? "L2/R2" : "Click"} to dig!`}
+					TextColor3={new Color3(1, 1, 1)}
+					TextScaled={true}
+					TextTransparency={reminderVisibility}
+					ZIndex={2}
+				>
+					<uistroke key={"UIStroke"} Thickness={3.4} Transparency={reminderVisibility} />
+				</textlabel>
+
+				<frame
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundColor3={new Color3(1, 1, 1)}
+					BorderColor3={new Color3()}
+					BorderSizePixel={0}
+					key={"Claim"}
+					Position={UDim2.fromScale(0.5, 0.5)}
+					Size={UDim2.fromScale(1, 1)}
+					Transparency={reminderVisibility}
+				>
+					<uigradient
+						key={"UIGradient"}
+						Color={
+							new ColorSequence([
+								new ColorSequenceKeypoint(0, new Color3(0.459, 0.459, 0.459)),
+								new ColorSequenceKeypoint(1, new Color3(0.459, 0.459, 0.459)),
+							])
+						}
+						Transparency={
+							new NumberSequence([
+								new NumberSequenceKeypoint(0, 1),
+								new NumberSequenceKeypoint(0.501, 0.494),
+								new NumberSequenceKeypoint(1, 1),
+							])
+						}
+					/>
+
+					<uistroke
+						key={"UIStroke"}
+						Color={new Color3(1, 1, 1)}
+						Thickness={3}
+						Transparency={reminderVisibility}
+					>
+						<uigradient
+							key={"UIGradient"}
+							Transparency={
+								new NumberSequence([
+									new NumberSequenceKeypoint(0, 1),
+									new NumberSequenceKeypoint(0.0362, 1),
+									new NumberSequenceKeypoint(0.5, 0),
+									new NumberSequenceKeypoint(0.951, 1),
+									new NumberSequenceKeypoint(1, 1),
+								])
+							}
+						/>
+					</uistroke>
+				</frame>
+			</frame>
 		</frame>
 	);
 };

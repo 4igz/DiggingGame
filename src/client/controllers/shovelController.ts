@@ -749,7 +749,7 @@ export class ShovelController implements OnStart {
 
 						// A larger camera bump
 						if (!usingDigEverywhere) {
-							const c = new CameraShaker.CameraShakeInstance(2, 10, 0, 0.3);
+							const c = new CameraShaker.CameraShakeInstance(2, 10, 0, 0.75);
 							c.PositionInfluence = new Vector3(2, 2, 2);
 							c.RotationInfluence = new Vector3(5, 5, 0);
 							camShake.Shake(c);
