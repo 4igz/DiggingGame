@@ -53,7 +53,7 @@ export const profileTemplate = {
 	shovelInventory: ["StarterShovel"] as Array<keyof typeof shovelConfig>,
 	potionInventory: [] as Array<keyof typeof potionConfig>,
 
-	ownedBoats: new Map(Object.keys(boatConfig).map((boatName) => [boatName, false])),
+	ownedBoats: new Map<string, boolean>(Object.keys(boatConfig).map((boatName) => [boatName, false])),
 	ownedGamepasses: new Map(Object.keys(gameConstants.GAMEPASS_IDS).map((id) => [id, false])),
 
 	questProgress: new Map<keyof typeof questConfig, QuestProgress>(
@@ -74,7 +74,6 @@ export const profileTemplate = {
 	firedWrongEventDataTimes: 0,
 };
 
-// Export the inferred type for use in other files
 export type ProfileTemplate = typeof profileTemplate;
 
 export default profileTemplate;

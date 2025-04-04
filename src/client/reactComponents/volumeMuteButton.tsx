@@ -2,6 +2,7 @@
 import React, { useEffect } from "@rbxts/react";
 import { AnimatedButton } from "./inventory";
 import { SoundService } from "@rbxts/services";
+import { Signals } from "shared/signals";
 
 const areasSoundGroup = SoundService.WaitForChild("Areas") as SoundGroup;
 const areasStartVolume = areasSoundGroup.Volume;
@@ -14,6 +15,12 @@ export const VolumeMuteButton = () => {
 
 	useEffect(() => {
 		areasSoundGroup.Volume = muted ? 0 : areasStartVolume;
+
+		if (muted) {
+			Signals.invalidAction.Fire("Muted music"); // Not actually invalid, just red text
+		} else {
+			Signals.actionPopup.Fire("Now playing music");
+		}
 	}, [muted]);
 
 	return (

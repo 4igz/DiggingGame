@@ -10,6 +10,7 @@ import UiController from "client/controllers/uiController";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
 import { usePx } from "client/hooks/usePx";
+import { SoundService } from "@rbxts/services";
 
 interface DailyRewardsProps {
 	visible: boolean;
@@ -507,6 +508,7 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 	// Handler for claiming rewards
 	const handleClaim = () => {
 		Events.claimDailyReward();
+		SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("Claim") as Sound);
 	};
 
 	// Check if rewards are claimable

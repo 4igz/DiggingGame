@@ -23,6 +23,7 @@ export const numberSerializer = createBinarySerializer<number>();
 
 interface ClientToServerEvents {
 	finishedDigging: () => void;
+	digRequest: () => void;
 	replicateDigProgress: Networking.Unreliable<(progress: unknown) => void>;
 	sellAll: () => void;
 	sellTarget: (id: string) => void;

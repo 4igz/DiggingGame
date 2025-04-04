@@ -1,13 +1,15 @@
 import { Service, OnStart, OnInit } from "@flamework/core";
 import Signal from "@rbxts/goodsignal";
 import { GetProfileStore, Profile } from "@rbxts/rbx-profileservice-plus";
-import { Players } from "@rbxts/services";
+import { BadgeService, Players } from "@rbxts/services";
 import { Events } from "server/network";
 import { PROFILE_STORE_NAME, ProfileTemplate, profileTemplate } from "server/profileTemplate";
 import { debugWarn } from "shared/util/logUtil";
 import { promisePlayerDisconnected } from "shared/util/playerUtil";
 
 export type LoadedProfile = Profile<ProfileTemplate>;
+
+const WELCOME_BADGE = 196079645562510;
 
 @Service({
 	loadOrder: 0, // We want this service to exist before other services
@@ -79,6 +81,10 @@ export class ProfileService implements OnInit, OnStart {
 					this.profileCache.set(player, profile);
 					this.onProfileLoaded.Fire(player, profile as LoadedProfile);
 					Events.profileReady.fire(player);
+
+					pcall(() => {
+						BadgeService.AwardBadge(player.UserId, WELCOME_BADGE);
+					});
 				} else {
 					profile?.Release();
 				}

@@ -67,6 +67,7 @@ const RewardSlot = (props: {
 
 	useEffect(() => {
 		const thread = task.spawn(() => {
+			if (serverAllowedToClaim) return;
 			while (time() < props.requiredTime) {
 				if (SEC_INTERVAL(props.order)) {
 					setTimeLeft(props.requiredTime - time());
@@ -85,7 +86,7 @@ const RewardSlot = (props: {
 		return () => {
 			task.cancel(thread);
 		};
-	}, [timeLeft]);
+	}, [timeLeft, serverAllowedToClaim]);
 
 	useEffect(() => {
 		if (props.serverClaimed) {
@@ -126,8 +127,6 @@ const RewardSlot = (props: {
 								}
 
 								props.onClaimed(props.order);
-
-								// TODO: Add a UI notification for the player that they claimed the reward.
 							})
 							.catch(warn);
 					} else {
@@ -278,7 +277,7 @@ interface PlaytimeRewardsProps {
 const MAX_IMAGE_ROTATION = 25;
 
 export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
-	const [popInSz, popInMotion] = useMotion(UDim2.fromScale(0, 0));
+	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0, 0));
 	const [visible, setVisible] = useState(false);
 	const [claimedAll, setClaimedAll] = useState(false);
 	const [allowClaimAll, setAllowClaimAll] = useState(false);
@@ -295,9 +294,9 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 
 	useEffect(() => {
 		if (visible) {
-			popInMotion.spring(UDim2.fromScale(0.604, 0.791), springs.responsive);
+			popInMotion.spring(UDim2.fromScale(0.5, 0.5), springs.responsive);
 		} else {
-			popInMotion.immediate(UDim2.fromScale(0, 0));
+			popInMotion.immediate(UDim2.fromScale(0.5, 0.6));
 		}
 
 		getDeveloperProductInfo(
@@ -349,8 +348,8 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 			BorderColor3={Color3.fromRGB(0, 0, 0)}
 			BorderSizePixel={0}
 			key={"Playtime Reward Frame"}
-			Position={UDim2.fromScale(0.5, 0.5)}
-			Size={popInSz}
+			Position={popInPos}
+			Size={UDim2.fromScale(0.604, 0.791)}
 			Visible={visible}
 			ref={menuRef}
 		>
@@ -366,7 +365,7 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 				Size={UDim2.fromScale(1, 1)}
 			/>
 			<ExitButton
-				menuRefToClose={menuRef}
+				// menuRefToClose={menuRef}
 				uiController={props.uiController}
 				uiName={gameConstants.PLAYTIME_REWARD_UI}
 				isMenuVisible={visible}
@@ -658,7 +657,7 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 						LayoutOrder={1}
 						key={"Label"}
-						Position={UDim2.fromScale(0.5, 0.45)}
+						Position={UDim2.fromScale(0.5, 0.46)}
 						Size={UDim2.fromScale(1, 1)}
 						Text={"Leaving Resets Progress!"}
 						TextColor3={Color3.fromRGB(253, 83, 86)}

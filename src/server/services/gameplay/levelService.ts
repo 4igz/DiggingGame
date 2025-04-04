@@ -91,6 +91,10 @@ export class LevelService implements OnStart {
 			amt *= 1.1;
 		}
 
+		if (player.IsInGroup(game.CreatorId)) {
+			amt *= 1.1;
+		}
+
 		const data = playerProfile.Data;
 		data.experience += amt;
 

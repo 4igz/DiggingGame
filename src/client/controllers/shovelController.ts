@@ -27,6 +27,7 @@ import { inventorySizeAtom, treasureCountAtom } from "client/atoms/inventoryAtom
 import { findFurthestPointWithinRadius } from "shared/util/detectorUtil";
 import { observeAttribute } from "shared/util/attributeUtil";
 import { NetworkedTarget } from "shared/networkTypes";
+import { allowDigging } from "client/atoms/detectorAtoms";
 
 const camera = Workspace.CurrentCamera;
 const holeTroveMap = new Map<Trove, [Signal<(size: number) => void>, Sound, BasePart]>();
@@ -86,6 +87,8 @@ export class ShovelController implements OnStart {
 		const CANDIG_shovelUpperbodyAnimation = AnimationFolder.WaitForChild("ShovelUpperbodyIdleCANDIG");
 		const DIG_ANIMATION_MARKER = "ShovelHitsDirt";
 
+		const mouse = Players.LocalPlayer.GetMouse();
+
 		const setupCharacter = (character: Model) => {
 			const humanoid = character.WaitForChild("Humanoid") as Humanoid;
 			const animator = humanoid.WaitForChild("Animator") as Animator;
@@ -114,6 +117,8 @@ export class ShovelController implements OnStart {
 			character.ChildAdded.Connect((child) => {
 				if (child.IsA("Tool") && shovelConfig[child.Name] !== undefined) {
 					const toolTrove = new Trove();
+
+					mouse.Icon = "";
 
 					toolTrove.add(
 						character.ChildRemoved.Connect((child2) => {
@@ -306,6 +311,11 @@ export class ShovelController implements OnStart {
 							return;
 						}
 
+						if (targetActive && allowDigging()) {
+							Events.digRequest();
+							return;
+						}
+
 						// "Dig Everywhere" logic here
 						if (!targetActive && !noPositionFound) {
 							if (isInventoryFull) {
@@ -333,7 +343,10 @@ export class ShovelController implements OnStart {
 										usingDigEverywhere = true;
 									}
 								})
-								.catch(warn);
+								.catch((err) => {
+									warn(err);
+									humanoid.WalkSpeed = 16;
+								});
 						}
 					};
 
@@ -364,7 +377,7 @@ export class ShovelController implements OnStart {
 						steppedConnection?.Disconnect();
 						ContextActionService.UnbindAction(actionName);
 						uisConnection.Disconnect();
-
+						mouse.Icon = "";
 						digTrack.Stop();
 
 						// Reset speed

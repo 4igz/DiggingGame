@@ -397,7 +397,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 
 				<folder key={"Bars"}>
 					<imagelabel
-						Active={true}
+						Active={false}
 						AnchorPoint={new Vector2(0.692078114, 0.633055806)}
 						BackgroundTransparency={1}
 						Image={"rbxassetid://99229586290044"}
@@ -432,7 +432,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 					</imagelabel>
 
 					<imagelabel
-						Active={true}
+						Active={false}
 						AnchorPoint={new Vector2(0.67500025, 0.459999919)}
 						BackgroundTransparency={1}
 						Image={"rbxassetid://126856902854073"}
@@ -467,7 +467,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 					</imagelabel>
 
 					<imagelabel
-						Active={true}
+						Active={false}
 						AnchorPoint={new Vector2(0.665000021, 0.279999942)}
 						BackgroundTransparency={1}
 						Image={"rbxassetid://140382903871140"}
@@ -502,7 +502,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 					</imagelabel>
 
 					<imagelabel
-						Active={true}
+						Active={false}
 						AnchorPoint={new Vector2(0.712000728, 0.832972407)}
 						BackgroundTransparency={1}
 						Image={"rbxassetid://121836677630694"}
@@ -537,7 +537,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 					</imagelabel>
 
 					<imagelabel
-						Active={true}
+						Active={false}
 						AnchorPoint={new Vector2(0.644309998, 0.109999977)}
 						BackgroundTransparency={1}
 						Image={"rbxassetid://81833790422645"}
@@ -687,7 +687,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 
 				<folder key={"Bars2"}>
 					<imagelabel
-						Active={true}
+						Active={false}
 						AnchorPoint={new Vector2(0.692078114, 0.633055806)}
 						BackgroundTransparency={1}
 						Image={"rbxassetid://133323928788153"}
@@ -726,7 +726,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 					</imagelabel>
 
 					<imagelabel
-						Active={true}
+						Active={false}
 						AnchorPoint={new Vector2(0.67500025, 0.459999919)}
 						BackgroundTransparency={1}
 						Image={"rbxassetid://95711239284393"}
@@ -764,7 +764,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 					</imagelabel>
 
 					<imagelabel
-						Active={true}
+						Active={false}
 						AnchorPoint={new Vector2(0.665000021, 0.279999942)}
 						BackgroundTransparency={1}
 						Image={"rbxassetid://76687140716470"}
@@ -802,7 +802,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 					</imagelabel>
 
 					<imagelabel
-						Active={true}
+						Active={false}
 						AnchorPoint={new Vector2(0.712000728, 0.832972407)}
 						BackgroundTransparency={1}
 						Image={"rbxassetid://114830222118525"}
@@ -841,7 +841,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 					</imagelabel>
 
 					<imagelabel
-						Active={true}
+						Active={false}
 						AnchorPoint={new Vector2(0.644309998, 0.109999977)}
 						BackgroundTransparency={1}
 						Image={"rbxassetid://91647746850914"}

@@ -63,6 +63,7 @@ export declare const gameConstants: {
 	readonly SUCCESSFUL_DIG_COOLDOWN: number; // Prevent player from immediately digging again after just finishing digging
 	readonly MAX_DIG_REPLICATE_DISTANCE: number;
 	readonly BIGGER_BACKPACK_SIZE_MODIFIER: number;
+	readonly MIN_DIG_REQ_DIST: number;
 
 	readonly LEVEL_INCREASE_EXPONENT: number;
 

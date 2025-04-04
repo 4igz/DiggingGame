@@ -108,8 +108,6 @@ local shovelConfig = {
 		itemImage = "rbxassetid://117172719154128",
 		price = 1000000000,
 	},
-
-
 }
 return {
 	BASE_SHOVEL_STRENGTH = BASE_SHOVEL_STRENGTH,

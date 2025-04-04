@@ -10,6 +10,7 @@ import { AnimatedButton, ExitButton, SellAllBtn } from "./inventory";
 import { fullTargetConfig } from "shared/config/targetConfig";
 import { shortenNumber } from "shared/util/nameUtil";
 import { getOrderFromRarity } from "shared/util/rarityUtil";
+import { SoundService } from "@rbxts/services";
 
 interface SellTargetProps {
 	target: TargetItem;
@@ -35,6 +36,7 @@ const SellTargetComponent: React.FC<SellTargetProps> = (props) => {
 				active={true}
 				onClick={() => {
 					Events.sellTarget(props.target.itemId);
+					SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("Sell") as Sound);
 				}}
 			>
 				{/* <uiaspectratioconstraint key={"UIAspectRatioConstraint"} /> */}

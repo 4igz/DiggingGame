@@ -28,6 +28,7 @@ import { DevproductService } from "../backend/devproductService";
 import { ZoneService } from "../backend/zoneService";
 import { numberSerializer } from "shared/network";
 import Signal from "@rbxts/goodsignal";
+import { count } from "@rbxts/sift/out/Array";
 
 const Maps = CollectionService.GetTagged("Map");
 
@@ -240,10 +241,21 @@ export class TargetService implements OnStart {
 			this.endDigging(player, true);
 		});
 
+		Events.digRequest.connect((player) => {
+			const target = this.getPlayerTarget(player);
+			if (!target) return;
+
+			const character = player.Character;
+			if (!character) return false;
+
+			if (character.GetPivot().Position.sub(target.position).Magnitude > gameConstants.MIN_DIG_REQ_DIST) return;
+			Signals.startDigging.Fire(player, target);
+		});
+
 		// "Dig Everywhere" dig request
 		Functions.requestDigging.setCallback((player) => {
 			if (this.playerLastSuccessfulDigCooldown.has(player)) return false;
-			if (this.getPlayerTarget(player)) return false; // Why requesting to dig if they already have a target?
+			if (this.getPlayerTarget(player)) return false;
 
 			const profile = this.profileService.getProfileLoaded(player).expect();
 

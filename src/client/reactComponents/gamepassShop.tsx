@@ -1,5 +1,5 @@
 //!optimize 2
-import React, { createRef, useState } from "@rbxts/react";
+import React, { createRef, useEffect, useState } from "@rbxts/react";
 import { AnimatedButton, ExitButton } from "./inventory";
 import UiController from "client/controllers/uiController";
 import { gameConstants } from "shared/gameConstants";
@@ -163,7 +163,7 @@ const DigProduct = (props: MoreDiggingProduct) => {
 					TextColor3={new Color3(1, 1, 1)}
 					TextXAlignment={Enum.TextXAlignment.Center}
 					TextYAlignment={Enum.TextYAlignment.Top}
-					TextSize={px(45)}
+					TextSize={px(TITLE_PX)}
 					ZIndex={2}
 				>
 					<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={4} />
@@ -363,7 +363,7 @@ const LimitedOffer = () => {
 					Text={"Limited Offer!"}
 					TextColor3={Color3.fromRGB(255, 255, 255)}
 					TextXAlignment={Enum.TextXAlignment.Left}
-					TextSize={px(30)}
+					TextSize={px(SUBTITLE_PX)}
 					ZIndex={10}
 				>
 					<uistroke key={"UIStroke"} Thickness={3} />
@@ -385,7 +385,7 @@ const LimitedOffer = () => {
 					Size={UDim2.fromScale(0.499, 1)}
 					Text={"24:00:00"}
 					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextSize={px(30)}
+					TextSize={px(SUBTITLE_PX)}
 					TextXAlignment={Enum.TextXAlignment.Right}
 					ZIndex={10}
 				>
@@ -675,11 +675,17 @@ interface GamepassShopProps {
 
 const MAX_IMAGE_ROTATION = 15;
 
+// Text sizes
+const PRODUCT_NAME_PX = 21;
+const SUBTITLE_PX = 32;
+const TITLE_PX = 43;
+const TAB_PX = 23;
+const DESC_PX = 20;
+
 export const GamepassShopComponent = (props: GamepassShopProps) => {
 	const [visible, setVisible] = React.useState(false);
-	const [popInSz, popInMotion] = useMotion(UDim2.fromScale(0, 0));
+	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0, 0));
 	const [serverLuckTimer, setServerLuckTimer] = React.useState(0);
-	const [serverLuck, setServerLuck] = React.useState(1);
 	const [imageRotation, setImageRotation] = useMotion(0);
 	const [limitedTimeLeft, setLimitedTimeLeft] = useState(60 * 60 * 24);
 
@@ -694,28 +700,27 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 		currency: React.createRef<Frame>(),
 	};
 
-	React.useEffect(() => {
+	useEffect(() => {
 		if (visible) {
-			popInMotion.spring(UDim2.fromScale(0.47, 0.829315), springs.responsive);
-
-			const connection = Events.updateServerLuckMultiplier.connect((multiplier: number, time: number) => {
-				setServerLuck(multiplier);
-				setServerLuckTimer(time);
-			});
-
-			return () => {
-				connection.Disconnect();
-			};
+			popInMotion.spring(UDim2.fromScale(0.5, 0.51), springs.responsive);
 		} else {
-			popInMotion.immediate(UDim2.fromScale(0, 0));
+			popInMotion.immediate(UDim2.fromScale(0.5, 0.6));
 		}
+
+		const connection = Events.updateServerLuckMultiplier.connect((multiplier: number, time: number) => {
+			setServerLuckTimer(time);
+		});
+
+		return () => {
+			connection.Disconnect();
+		};
 	}, [visible]);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		setVisible(props.visible);
 	}, [props.visible]);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		let currentRotation = imageRotation.getValue();
 		const rotationThread = task.spawn(() => {
 			while (true) {
@@ -738,8 +743,8 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 			AnchorPoint={new Vector2(0.5, 0.5)}
 			BackgroundTransparency={1}
 			key={"Container"}
-			Position={UDim2.fromScale(0.5, 0.51)}
-			Size={popInSz}
+			Position={popInPos}
+			Size={UDim2.fromScale(0.47, 0.829315)}
 			ref={menuRef}
 			Visible={visible}
 		>
@@ -837,7 +842,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Text={"OP"}
 								TextColor3={Color3.fromRGB(116, 48, 13)}
 								// TextScaled={true}
-								TextSize={px(26)}
+								TextSize={px(TAB_PX)}
 								ZIndex={2}
 							>
 								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={4} />
@@ -858,7 +863,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									Text={"OP"}
 									TextColor3={new Color3(1, 1, 1)}
 									// TextScaled={true}
-									TextSize={px(26)}
+									TextSize={px(TAB_PX)}
 									ZIndex={2}
 								>
 									<uigradient
@@ -888,7 +893,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									Text={"OP"}
 									TextColor3={Color3.fromRGB(116, 48, 13)}
 									// TextScaled={true}
-									TextSize={px(26)}
+									TextSize={px(TAB_PX)}
 								/>
 							</textlabel>
 
@@ -904,7 +909,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Text={"Featured"}
 								TextColor3={new Color3(1, 1, 1)}
 								// TextScaled={true}
-								TextSize={px(26)}
+								TextSize={px(TAB_PX)}
 								ZIndex={105}
 							>
 								<uistroke key={"UIStroke"} Thickness={3.5} />
@@ -949,7 +954,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Text={"Gamepasses"}
 								TextColor3={new Color3(1, 1, 1)}
 								// TextScaled={true}
-								TextSize={px(24)}
+								TextSize={px(TAB_PX)}
 								ZIndex={105}
 							>
 								<uistroke key={"UIStroke"} Thickness={3.5} />
@@ -1018,7 +1023,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Text={"Currency"}
 								TextColor3={new Color3(1, 1, 1)}
 								// TextScaled={true}
-								TextSize={px(26)}
+								TextSize={px(TAB_PX)}
 								ZIndex={105}
 							>
 								<uistroke key={"UIStroke"} Thickness={3.5} />
@@ -1052,7 +1057,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 				uiController={props.uiController}
 				uiName={gameConstants.GAMEPASS_SHOP_UI}
 				isMenuVisible={visible}
-				menuRefToClose={menuRef}
+				// menuRefToClose={menuRef}
 			/>
 
 			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.5} />
@@ -1067,8 +1072,8 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 				CanvasSize={new UDim2()}
 				key={"Content"}
 				Position={UDim2.fromScale(0.5, 0.934211)}
-				ScrollBarImageColor3={new Color3()}
-				ScrollBarThickness={0}
+				ScrollBarImageColor3={new Color3(0.79, 0.79, 0.79)}
+				ScrollBarThickness={7}
 				Size={UDim2.fromScale(0.970395, 0.583882)}
 				TopImage={"rbxasset://textures/ui/Scroll/scroll-middle.png"}
 				ref={scrollingFrameRef}
@@ -1078,6 +1083,8 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 					HorizontalAlignment={Enum.HorizontalAlignment.Center}
 					SortOrder={Enum.SortOrder.LayoutOrder}
 				/>
+
+				<uipadding PaddingLeft={new UDim(0.05)} PaddingRight={new UDim(0.05)} />
 
 				<frame
 					BackgroundTransparency={1}
@@ -1149,7 +1156,8 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							Size={UDim2.fromScale(0.373821, 0.236842)}
 							Text={"Limited Offer!"}
 							TextColor3={new Color3(1, 1, 1)}
-							TextScaled={true}
+							// TextScaled={true}
+							TextSize={px(TITLE_PX)}
 							TextXAlignment={Enum.TextXAlignment.Left}
 							ZIndex={2}
 						>
@@ -1160,11 +1168,12 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							BackgroundTransparency={1}
 							FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 							key={"Timer"}
-							Position={UDim2.fromScale(0.423793, 0.174875)}
+							Position={UDim2.fromScale(0.75, 0.174875)}
 							Size={UDim2.fromScale(0.160377, 0.105263)}
 							Text={formatTime(limitedTimeLeft)}
 							TextColor3={new Color3(1, 1, 1)}
-							TextScaled={true}
+							// TextScaled={true}
+							TextSize={px(SUBTITLE_PX)}
 							TextXAlignment={Enum.TextXAlignment.Left}
 							ZIndex={2}
 						>
@@ -1332,7 +1341,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							Size={UDim2.fromScale(0.668632, 0.236842)}
 							Text={"Multiply  Server  Luck"}
 							TextColor3={new Color3(1, 1, 1)}
-							TextSize={px(40)}
+							TextSize={px(TITLE_PX)}
 							// TextScaled={true}
 							TextXAlignment={Enum.TextXAlignment.Left}
 							ZIndex={2}
@@ -1344,13 +1353,13 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							BackgroundTransparency={1}
 							FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 							key={"Timer"}
-							Position={UDim2.fromScale(0.72, 0.175)}
+							Position={UDim2.fromScale(0.75, 0.175)}
 							Size={UDim2.fromScale(0.160377, 0.105263)}
 							Text={formatTime(serverLuckTimer)}
 							TextColor3={new Color3(1, 1, 1)}
 							TextScaled={false}
-							TextSize={px(30)}
-							TextXAlignment={Enum.TextXAlignment.Right}
+							TextSize={px(SUBTITLE_PX)}
+							TextXAlignment={Enum.TextXAlignment.Left}
 							ZIndex={2}
 						>
 							<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={3} />
@@ -1602,7 +1611,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.9, 0.115044)}
 								Text={"2x Cash!"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								// TextScaled={true}
 								ZIndex={105}
 							>
@@ -1640,7 +1649,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.8, 0.137168)}
 								Text={"BEST VALUE!"}
 								TextColor3={Color3.fromRGB(116, 48, 13)}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								// TextScaled={true}
 								ZIndex={2}
 							>
@@ -1661,7 +1670,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									Size={UDim2.fromScale(1, 1)}
 									Text={"BEST VALUE!"}
 									TextColor3={new Color3(1, 1, 1)}
-									TextSize={px(20)}
+									TextSize={px(PRODUCT_NAME_PX)}
 									// TextScaled={true}
 									ZIndex={2}
 								>
@@ -1691,7 +1700,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									Size={UDim2.fromScale(1, 1)}
 									Text={"BEST VALUE!"}
 									TextColor3={Color3.fromRGB(116, 48, 13)}
-									TextSize={px(20)}
+									TextSize={px(PRODUCT_NAME_PX)}
 									// TextScaled={true}
 								/>
 							</textlabel>
@@ -1722,7 +1731,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(1, 0.115044)}
 								Text={"Bigger Backpack!"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								// TextScaled={true}
 								ZIndex={105}
 							>
@@ -1760,7 +1769,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.8, 0.137168)}
 								Text={"OP!"}
 								TextColor3={Color3.fromRGB(116, 48, 13)}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								// TextScaled={true}
 								ZIndex={2}
 							>
@@ -1781,7 +1790,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									Size={UDim2.fromScale(1, 1)}
 									Text={"OP!"}
 									TextColor3={new Color3(1, 1, 1)}
-									TextSize={px(20)}
+									TextSize={px(PRODUCT_NAME_PX)}
 									// TextScaled={true}
 									ZIndex={2}
 								>
@@ -1811,7 +1820,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									Size={UDim2.fromScale(1, 1)}
 									Text={"OP!"}
 									TextColor3={Color3.fromRGB(116, 48, 13)}
-									TextSize={px(20)}
+									TextSize={px(PRODUCT_NAME_PX)}
 									// TextScaled={true}
 								/>
 							</textlabel>
@@ -1842,7 +1851,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.9, 0.110619)}
 								Text={"x2 Strength!"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								// TextScaled={true}
 								ZIndex={105}
 							>
@@ -1891,7 +1900,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.9, 0.115044)}
 								Text={"x2 Luck!"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								// TextScaled={true}
 								ZIndex={105}
 							>
@@ -1957,7 +1966,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.276675, 0.137168)}
 								Text={"MOST PURCHASED!"}
 								TextColor3={Color3.fromRGB(116, 48, 13)}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								// TextScaled={true}
 								ZIndex={2}
 							>
@@ -1978,7 +1987,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									Size={UDim2.fromScale(0.993423, 1)}
 									Text={"MOST PURCHASED!"}
 									TextColor3={new Color3(1, 1, 1)}
-									TextSize={px(20)}
+									TextSize={px(PRODUCT_NAME_PX)}
 									// TextScaled={true}
 									ZIndex={2}
 								>
@@ -2008,7 +2017,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									Size={UDim2.fromScale(0.993423, 1)}
 									Text={"MOST PURCHASED!"}
 									TextColor3={Color3.fromRGB(116, 48, 13)}
-									TextSize={px(20)}
+									TextSize={px(DESC_PX)}
 									// TextScaled={true}
 								/>
 							</textlabel>
@@ -2037,7 +2046,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.4, 0.287611)}
 								Text={"Sell  Anywhere!"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								// TextScaled={true}
 								TextXAlignment={Enum.TextXAlignment.Left}
 								ZIndex={105}
@@ -2061,7 +2070,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.502469, 0.115044)}
 								Text={"Get the ability to sell anywhere on the map."}
 								TextColor3={Color3.fromRGB(27, 37, 76)}
-								TextSize={px(20)}
+								TextSize={px(DESC_PX)}
 								// TextScaled={true}
 								TextXAlignment={Enum.TextXAlignment.Left}
 								ZIndex={105}
@@ -2110,7 +2119,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 						Size={UDim2.fromScale(0.123465, 0.999479)}
 						Text={"Currency"}
 						TextColor3={Color3.fromRGB(60, 80, 138)}
-						TextSize={px(20)}
+						TextSize={px(PRODUCT_NAME_PX)}
 						// TextScaled={true}
 						ZIndex={105}
 					/>
@@ -2165,7 +2174,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.9, 0.115044)}
 								Text={"Handful  Of  Cash"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								// TextScaled={true}
 								ZIndex={105}
 							>
@@ -2205,7 +2214,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.795953, 0.115473)}
 								Text={"+2,500"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								// TextScaled={true}
 								ZIndex={105}
 							>
@@ -2254,7 +2263,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Text={"Sack  Of  Cash"}
 								TextColor3={new Color3(1, 1, 1)}
 								// TextScaled={true}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								ZIndex={105}
 							>
 								<uistroke key={"UIStroke"} Thickness={2.5} />
@@ -2294,7 +2303,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Text={"+7,500"}
 								TextColor3={new Color3(1, 1, 1)}
 								TextScaled={false}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								ZIndex={105}
 							>
 								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={1.8} />
@@ -2341,7 +2350,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.9, 0.110619)}
 								Text={"Bag  Of  Cash"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								// TextScaled={true}
 								ZIndex={105}
 							>
@@ -2381,7 +2390,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Text={"+15,000"}
 								TextColor3={new Color3(1, 1, 1)}
 								// TextScaled={true}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								ZIndex={105}
 							>
 								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={1.8} />
@@ -2428,7 +2437,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.9, 0.115044)}
 								Text={"Crate  Of  Cash"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								// TextScaled={true}
 								ZIndex={105}
 							>
@@ -2468,7 +2477,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Text={"+40,000"}
 								TextColor3={new Color3(1, 1, 1)}
 								TextScaled={false}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								ZIndex={105}
 							>
 								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={1.8} />
@@ -2537,7 +2546,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.9, 0.115044)}
 								Text={"Chest  Of  Cash"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								// TextScaled={true}
 								ZIndex={105}
 							>
@@ -2577,7 +2586,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.795953, 0.11364)}
 								Text={"+75,000"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								// TextScaled={true}
 								ZIndex={105}
 							>
@@ -2610,7 +2619,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.8, 0.137168)}
 								Text={"10% EXTRA"}
 								TextColor3={Color3.fromRGB(116, 48, 13)}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								// TextScaled={true}
 								ZIndex={2}
 							>
@@ -2631,7 +2640,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									Size={UDim2.fromScale(1, 1)}
 									Text={"10% EXTRA"}
 									TextColor3={new Color3(1, 1, 1)}
-									TextSize={px(20)}
+									TextSize={px(PRODUCT_NAME_PX)}
 									// TextScaled={true}
 									ZIndex={2}
 								>
@@ -2661,7 +2670,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									Size={UDim2.fromScale(1, 1)}
 									Text={"10% EXTRA"}
 									TextColor3={Color3.fromRGB(116, 48, 13)}
-									TextSize={px(20)}
+									TextSize={px(PRODUCT_NAME_PX)}
 									// TextScaled={true}
 								/>
 							</textlabel>
@@ -2696,7 +2705,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.9, 0.115044)}
 								Text={"Vault  Of  Cash"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								// TextScaled={true}
 								ZIndex={105}
 							>
@@ -2736,7 +2745,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.795953, 0.11364)}
 								Text={"+250,000"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								// TextScaled={true}
 								ZIndex={105}
 							>
@@ -2769,7 +2778,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.8, 0.137168)}
 								Text={"15% EXTRA"}
 								TextColor3={Color3.fromRGB(116, 48, 13)}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								// TextScaled={true}
 								ZIndex={2}
 							>
@@ -2790,7 +2799,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									Size={UDim2.fromScale(1, 1)}
 									Text={"15% EXTRA"}
 									TextColor3={new Color3(1, 1, 1)}
-									TextSize={px(20)}
+									TextSize={px(PRODUCT_NAME_PX)}
 									// TextScaled={true}
 									ZIndex={2}
 								>
@@ -2820,7 +2829,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									Size={UDim2.fromScale(1, 1)}
 									Text={"15% EXTRA"}
 									TextColor3={Color3.fromRGB(116, 48, 13)}
-									TextSize={px(20)}
+									TextSize={px(PRODUCT_NAME_PX)}
 									// TextScaled={true}
 								/>
 							</textlabel>
@@ -2855,7 +2864,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.9, 0.115044)}
 								Text={"Fortune  Of  Cash"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								// TextScaled={true}
 								ZIndex={105}
 							>
@@ -2894,7 +2903,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.795953, 0.11364)}
 								Text={"+1,000,000"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								// TextScaled={true}
 								ZIndex={105}
 							>
@@ -2927,7 +2936,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.8, 0.137168)}
 								Text={"20% EXTRA"}
 								TextColor3={Color3.fromRGB(116, 48, 13)}
-								TextSize={px(20)}
+								TextSize={px(PRODUCT_NAME_PX)}
 								// TextScaled={true}
 								ZIndex={2}
 							>
@@ -2948,7 +2957,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									Size={UDim2.fromScale(1, 1)}
 									Text={"20% EXTRA"}
 									TextColor3={new Color3(1, 1, 1)}
-									TextSize={px(20)}
+									TextSize={px(PRODUCT_NAME_PX)}
 									// TextScaled={true}
 									ZIndex={2}
 								>
@@ -2978,7 +2987,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									Size={UDim2.fromScale(1, 1)}
 									Text={"20% EXTRA"}
 									TextColor3={Color3.fromRGB(116, 48, 13)}
-									TextSize={px(20)}
+									TextSize={px(PRODUCT_NAME_PX)}
 									// TextScaled={true}
 								/>
 							</textlabel>
@@ -3026,7 +3035,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.220342, 0.137168)}
 								Text={"BEST VALUE"}
 								TextColor3={Color3.fromRGB(116, 48, 13)}
-								TextSize={px(30)}
+								TextSize={px(SUBTITLE_PX)}
 								// TextScaled={true}
 								ZIndex={2}
 							>
@@ -3047,7 +3056,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									Size={UDim2.fromScale(0.993423, 1)}
 									Text={"BEST VALUE"}
 									TextColor3={new Color3(1, 1, 1)}
-									TextSize={px(30)}
+									TextSize={px(SUBTITLE_PX)}
 									// TextScaled={true}
 									ZIndex={2}
 								>
@@ -3077,7 +3086,8 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									Size={UDim2.fromScale(0.993423, 1)}
 									Text={"BEST VALUE"}
 									TextColor3={Color3.fromRGB(116, 48, 13)}
-									TextScaled={true}
+									TextSize={SUBTITLE_PX}
+									// TextScaled={true}
 								/>
 							</textlabel>
 
@@ -3097,7 +3107,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.335765, 0.192518)}
 								Text={"+2,500,000 MONEY"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(35)}
+								TextSize={px(SUBTITLE_PX)}
 								// TextScaled={true}
 								TextXAlignment={Enum.TextXAlignment.Left}
 								ZIndex={105}
@@ -3149,7 +3159,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.417901, 0.249631)}
 								Text={"PIRATE’S TREASURE"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(35)}
+								TextSize={px(TITLE_PX)}
 								// TextScaled={true}
 								TextXAlignment={Enum.TextXAlignment.Left}
 								ZIndex={105}

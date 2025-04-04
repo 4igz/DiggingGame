@@ -6,7 +6,7 @@ import { springs } from "client/utils/springs";
 import { gameConstants } from "shared/gameConstants";
 import { MENUS } from "./inventory";
 import { AutoDigging } from "client/controllers/autoDigController";
-import { Players, UserInputService } from "@rbxts/services";
+import { UserInputService } from "@rbxts/services";
 import { Signals } from "shared/signals";
 import { Events, Functions } from "client/network";
 import { usePx } from "client/hooks/usePx";
@@ -21,6 +21,7 @@ interface SidebarButtonProps {
 	gamepadEnabled?: boolean;
 	uiController: UiController;
 	onClick?: () => void;
+	pxProvider: (px: number) => number;
 }
 
 const SidebarButton = (props: SidebarButtonProps) => {
@@ -30,7 +31,7 @@ const SidebarButton = (props: SidebarButtonProps) => {
 	const [isPressed, setPressed] = React.useState(false);
 	const [size, sizeMotion] = useMotion(START_SZ);
 
-	const px = usePx();
+	const px = props.pxProvider;
 
 	useEffect(() => {
 		sizeMotion.spring(isHovered ? START_SZ.add(SZ_INC) : START_SZ, springs.responsive);
@@ -186,6 +187,8 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 	const [availableSkillPoints, setAvailableSkillPoints] = React.useState(0);
 	const [gamepadEnabled, setGamepadEnabled] = React.useState(UserInputService.GamepadEnabled);
 
+	const px = usePx();
+
 	useEffect(() => {
 		Signals.setAutoDiggingEnabled.Connect((enabled: boolean) => {
 			setAutoDiggingEnabled(enabled);
@@ -238,6 +241,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 				onClick={() => {
 					props.uiController.toggleUi(gameConstants.MAIN_UI, { menu: MENUS.Inventory });
 				}}
+				pxProvider={px}
 			/>
 			<SidebarButton
 				icon={"rbxassetid://90345162177443"}
@@ -250,6 +254,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 				}}
 				notificationVisible={availableSkillPoints > 0}
 				notificationColor={Color3.fromRGB(230, 42, 25)}
+				pxProvider={px}
 				notificationText={tostring(availableSkillPoints)}
 			/>
 			<SidebarButton
@@ -261,6 +266,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 				onClick={() => {
 					props.uiController.toggleUi(gameConstants.GAMEPASS_SHOP_UI);
 				}}
+				pxProvider={px}
 			/>
 			<SidebarButton
 				icon={"rbxassetid://108568741864610"}
@@ -276,6 +282,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 
 					props.autoDigController.setAutoDiggingEnabled(enabled);
 				}}
+				pxProvider={px}
 			/>
 		</frame>
 	);

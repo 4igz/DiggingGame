@@ -11,6 +11,7 @@ import { subscribe } from "@rbxts/charm";
 import { inventorySizeAtom, treasureCountAtom } from "client/atoms/inventoryAtoms";
 import { gameConstants } from "shared/gameConstants";
 import { ObjectPool } from "shared/util/objectPool";
+import { allowDigging } from "client/atoms/detectorAtoms";
 
 const DING_SOUND_INTERVAL = interval(1);
 const RENDER_STEP_ID = "WaypointArrow";
@@ -64,7 +65,7 @@ export class DetectorController implements OnStart {
 
 		let understandsInput = false;
 
-		const HOLD_LENGTH = 0.1;
+		const HOLD_LENGTH = 0.2;
 		const DETECTION_KEYBINDS = [Enum.KeyCode.ButtonR2, Enum.UserInputType.MouseButton1];
 
 		// Wait for onStart so we arent holding up other systems while we wait for the PlayerModule to load.
@@ -407,7 +408,7 @@ export class DetectorController implements OnStart {
 
 			// Rotate the arrow to match the angle from camera to waypoint
 			const MAX_DIST = BASE_DETECTOR_STRENGTH;
-			const MIN_DIST = 20;
+			const MIN_DIST = gameConstants.MIN_DIG_REQ_DIST;
 			let canDig = false;
 			let isReallyClose = false;
 			if (distance > MIN_DIST) {
@@ -478,6 +479,7 @@ export class DetectorController implements OnStart {
 			shovel.Rotation = sinVal * 10;
 
 			this.onCanDig(canDig);
+			allowDigging(isReallyClose);
 
 			// 4) Check zero-crossing (- => +) for beep & blink
 			if (sinVal <= 0 && prevSinVal > 0 && !canDig) {
@@ -500,6 +502,7 @@ export class DetectorController implements OnStart {
 		// Unbind our render-step
 		RunService.UnbindFromRenderStep(RENDER_STEP_ID);
 		this.onCanDig(false);
+		allowDigging(false);
 
 		// Destroy the arrow if needed
 		if (arrowIndicator) {

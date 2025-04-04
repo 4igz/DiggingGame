@@ -67,8 +67,8 @@ export const QuestInfoSideButton = () => {
 			BorderColor3={Color3.fromRGB(0, 0, 0)}
 			BorderSizePixel={0}
 			key={"Sidebar"}
-			Position={UDim2.fromScale(1.013, 0.6)}
-			Size={UDim2.fromScale(0.275, 0.124)}
+			Position={UDim2.fromScale(1.013, 0.63)}
+			Size={UDim2.fromScale(0.275, 0.11)}
 			Visible={activeQuest !== undefined}
 		>
 			<imagelabel

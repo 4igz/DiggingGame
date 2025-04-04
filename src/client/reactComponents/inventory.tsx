@@ -868,6 +868,7 @@ interface SkillFrameProps {
 	title: SkillName;
 	levelText: string;
 	titleSize?: UDim2;
+	canUpgrade: boolean;
 }
 
 const SkillFrame: React.FC<SkillFrameProps> = (props) => {
@@ -905,6 +906,10 @@ const SkillFrame: React.FC<SkillFrameProps> = (props) => {
 				Selectable={true}
 				Event={{
 					MouseButton1Down: () => {
+						if (!props.canUpgrade) {
+							Signals.invalidAction.Fire("No skill points!");
+							return;
+						}
 						Events.upgradeSkill.fire(string.lower(props.title) as SkillName);
 						SoundService.PlayLocalSound(skillUpgrade);
 					},
@@ -1284,60 +1289,15 @@ interface ExitButtonProps {
 }
 
 export const ExitButton = (props: ExitButtonProps) => {
-	const [isHovered, setIsHovered] = React.useState(false);
-	const [isPressed, setPressed] = React.useState(false);
-	const [size, sizeMotion] = useMotion(1);
-	const [, closingMotion] = useMotion(0);
-
 	const exit = () => {
-		const startSz = props.menuRefToClose?.current!.Size;
-		const endSz = UDim2.fromScale(0, 0);
-		let cleanedStep = false;
-		let cleanupStep = closingMotion.onStep((v) => {
-			if (!props.menuRefToClose || !props.menuRefToClose.current || !startSz) {
-				cleanupStep();
-				cleanedStep = true;
-				return;
-			}
-			props.menuRefToClose.current!.Size = startSz.Lerp(endSz, v);
-			// TODO: Maybe also add fade out effect.
-		});
-		const cleanup = closingMotion.onComplete(() => {
-			cleanup();
-			props.uiController.closeUi(props.uiName);
-			closingMotion.immediate(0);
-			if (!cleanedStep) {
-				cleanupStep();
-				cleanedStep = true;
-			}
-		});
-		if (props.menuRefToClose) {
-			closingMotion.tween(1, {
-				time: 0.1,
-				style: Enum.EasingStyle.Linear,
-				direction: Enum.EasingDirection.In,
-			});
-		} else {
-			closingMotion.immediate(1);
-		}
+		props.uiController.closeUi(props.uiName);
 		props.onClick?.();
-		setPressed(true);
-		task.delay(0.1, () => setPressed(false));
 	};
-
-	useEffect(() => {
-		// sizeMotion.spring(isHovered ? START_SZ.add(SZ_INC) : START_SZ, springs.bubbly);
-		sizeMotion.spring(isHovered ? 1.2 : 1, springs.responsive);
-	}, [isHovered]);
-
-	useEffect(() => {
-		sizeMotion.spring(isPressed ? 0.8 : isHovered ? 1.2 : 1, springs.responsive);
-	}, [isPressed]);
 
 	useEffect(() => {
 		// Listen to Gamepad B button for our controller enjoyers
 		const inputBegan = UserInputService.InputBegan.Connect((input) => {
-			if (input.KeyCode === Enum.KeyCode.ButtonB && props.menuRefToClose?.current && props.isMenuVisible) {
+			if (input.KeyCode === Enum.KeyCode.ButtonB && props.isMenuVisible) {
 				exit();
 			}
 		});
@@ -2388,11 +2348,13 @@ export const InventoryComponent = (props: MainUiProps) => {
 							image="rbxassetid://115275171647711"
 							title="strength"
 							levelText={`LV. ${skillState?.strength ?? 1}`}
+							canUpgrade={(levelState?.skillPoints ?? 0) > 0}
 						/>
 						<SkillFrame
 							image="rbxassetid://83833460426334"
 							title="luck"
 							levelText={`LV. ${skillState?.luck ?? 1}`}
+							canUpgrade={(levelState?.skillPoints ?? 0) > 0}
 						/>
 						<SkillFrame
 							image="rbxassetid://121224666125765"
@@ -2400,6 +2362,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 							title="detection"
 							titleSize={new UDim2(0.402, 0, 0.659, 0)}
 							levelText={`LV. ${skillState?.detection ?? 1}`}
+							canUpgrade={(levelState?.skillPoints ?? 0) > 0}
 						/>
 					</frame>
 
@@ -2971,8 +2934,8 @@ export const InventoryComponent = (props: MainUiProps) => {
 				BorderColor3={Color3.fromRGB(0, 0, 0)}
 				BorderSizePixel={0}
 				key={"Categories"}
-				Position={UDim2.fromScale(0.16, 0.58)}
-				Size={UDim2.fromScale(0.295, 0.842)}
+				Position={UDim2.fromScale(0.16, 0.5)}
+				Size={UDim2.fromScale(0.25, 0.7)}
 			>
 				<uilistlayout
 					key={"UIListLayout"}
@@ -3014,7 +2977,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 					iconSz={UDim2.fromScale(0.72, 1.596)}
 					position={UDim2.fromScale(0.617, 0.54)}
 					size={UDim2.fromScale(0.766, 0.212)}
-					paddingSz={-0.2}
+					paddingSz={-0.19}
 					leftPad={-0.3}
 					currentCategory={enabledMenu}
 					setCategory={setEnabledMenu}

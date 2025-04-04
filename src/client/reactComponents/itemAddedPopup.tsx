@@ -32,7 +32,7 @@ export const TreasureAddedPopup = (props: TreasurePopupProps) => {
 	const POPUP_TIME = 5;
 
 	useEffect(() => {
-		setSizeMotion.spring(UDim2.fromScale(0.3, 0.1), springs.responsive);
+		setSizeMotion.spring(UDim2.fromScale(0.3, 0.05), springs.responsive);
 
 		task.delay(POPUP_TIME, () => {
 			setSizeMotion.onComplete(() => {
