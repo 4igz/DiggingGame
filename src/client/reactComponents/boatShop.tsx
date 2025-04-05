@@ -76,6 +76,11 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							SoundService.PlayLocalSound(
 								SoundService.WaitForChild("UI").WaitForChild("BoatSpawn") as Sound,
 							);
+							task.delay(0.5, () => {
+								SoundService.PlayLocalSound(
+									SoundService.WaitForChild("UI").WaitForChild("Bubble") as Sound,
+								);
+							});
 						} else {
 							Events.buyBoat(boatName);
 						}

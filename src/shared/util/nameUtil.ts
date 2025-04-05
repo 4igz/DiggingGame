@@ -121,3 +121,17 @@ export function randomString(length = 16): string {
 
 	return result;
 }
+
+// Unique ID generator
+const iotaMap = new Map<string, number>();
+
+export const iota = (name: string) => {
+	const current = iotaMap.get(name);
+	if (current !== undefined) {
+		iotaMap.set(name, current + 1);
+		return current;
+	} else {
+		iotaMap.set(name, 0);
+		return 0;
+	}
+};

@@ -13,6 +13,7 @@ import { gameConstants } from "shared/gameConstants";
 import { ItemName, ItemType } from "shared/networkTypes";
 import { ActionPopup, ActionPopupProps } from "./actionPopup";
 import { pop } from "@rbxts/sift/out/Array";
+import { SoundService } from "@rbxts/services";
 
 const POPUP_TYPES = {
 	ItemAdded: "ItemAdded",
@@ -329,6 +330,7 @@ export const Popups = () => {
 			queuePopup("InvalidAction", popupText, {
 				text: popupText,
 			});
+			SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("ErrorSound") as Sound)
 		});
 
 		Events.sendInvalidActionPopup.connect((message) => {

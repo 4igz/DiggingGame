@@ -27,7 +27,7 @@ export class GamepassController implements OnStart {
 
 		Events.notifyBought.connect((productName, _) => {
 			Signals.actionPopup.Fire("Thanks for supporting us!");
-			SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("Claim") as Sound);
+			SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("GpPurchase") as Sound);
 		});
 	}
 

@@ -1,4 +1,8 @@
-local targetConfig = require(script.Parent.targetConfig)
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local iota = require(ReplicatedStorage.TS.util.nameUtil).iota
+local targetConfig = require(ReplicatedStorage.TS.config.targetConfig)
+
 type ItemType = "MetalDetectors" | "Shovels" | "Target" | "Boats" | "Potions"
 type QuestRewardType = "Money" | "Experience" | ItemType | "None"
 type QuestType = "Collect"
@@ -23,11 +27,11 @@ type QuestConfig = {
 	collectAmount: number?,
 }
 
-local QUEST_ACCEPT = 1
-local QUEST_DECLINE = 2
-
-local TALK = 3
-local IDLE = 4
+local uid = script:GetFullName()
+local QUEST_ACCEPT = iota(uid)
+local QUEST_DECLINE = iota(uid)
+local TALK = iota(uid)
+local IDLE = iota(uid)
 
 local questConfig: { [string]: { QuestConfig } } = {
 	["Plankwalker Paul"] = {

@@ -16,12 +16,14 @@ interface ItemProps {
 	rarity: Rarity;
 	order: number;
 	bgColor: Color3;
+	active?: boolean;
 }
 
 const IsleItem = (props: ItemProps) => {
 	return (
 		<AnimatedButton
 			clickable={false}
+			active={props.active ?? false}
 			size={UDim2.fromScale(0.075, 1)}
 			anchorPoint={new Vector2(0.5, 0.5)}
 			layoutOrder={props.order}
@@ -85,6 +87,7 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 	const [isleItems, setIsleItems] = useState<ItemProps[]>([]);
 	const [currentStrength, setCurrentStrength] = useState(0);
 	const [resetTick, setResetTick] = useState(0);
+	const [disappearing, setDisappearing] = useState(true);
 	const frameRef = createRef<Frame>();
 
 	useEffect(() => {
@@ -115,6 +118,7 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 		// Reset states:
 		transparencyMotion.immediate(1);
 		posMotion.immediate(UDim2.fromScale(0.5, -0.3));
+		setDisappearing(false);
 		// setIsleItems([]); // Reset previous items
 
 		// Iterate through the targetList and add the items to the list
@@ -142,6 +146,7 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 				return;
 			}
 			transparencyMotion.spring(1, springs.molasses);
+			setDisappearing(true);
 		});
 
 		task.defer(() => {
@@ -259,7 +264,7 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 				/>
 
 				{isleItems.map((item) => (
-					<IsleItem {...item} />
+					<IsleItem {...item} active={!disappearing} />
 				))}
 			</frame>
 

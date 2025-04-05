@@ -36,7 +36,9 @@ const SellTargetComponent: React.FC<SellTargetProps> = (props) => {
 				active={true}
 				onClick={() => {
 					Events.sellTarget(props.target.itemId);
-					SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("Sell") as Sound);
+					SoundService.PlayLocalSound(
+						SoundService.WaitForChild("UI").WaitForChild("IndividualSell") as Sound,
+					);
 				}}
 			>
 				{/* <uiaspectratioconstraint key={"UIAspectRatioConstraint"} /> */}
