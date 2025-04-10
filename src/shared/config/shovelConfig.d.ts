@@ -7,6 +7,9 @@ export interface Shovel {
 	rarityType: Rarity;
 	itemImage: string;
 	price: number;
+
+	notForSale?: boolean;
+	obtainLocation?: string;
 }
 
 export type ShovelModule = Readonly<Record<string, Shovel>>;

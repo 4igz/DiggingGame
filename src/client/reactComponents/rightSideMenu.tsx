@@ -4,7 +4,6 @@ import { useMotion } from "client/hooks/useMotion";
 import { Events, Functions } from "client/network";
 import { springs } from "client/utils/springs";
 import EternityNum, { IsInf, IsNaN } from "shared/util/eternityNum";
-import { AnimatedButton } from "./inventory";
 import UiController from "client/controllers/uiController";
 import { RunService, UserInputService } from "@rbxts/services";
 import { gameConstants } from "shared/gameConstants";
@@ -12,6 +11,9 @@ import { subscribe } from "@rbxts/charm";
 import { hasDailyAtom, hasGiftAtom } from "client/atoms/rewardAtoms";
 import { shortenNumber } from "shared/util/nameUtil";
 import { usePx } from "client/hooks/usePx";
+import { AnimatedButton } from "./buttons";
+import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
+import { Signals } from "shared/signals";
 
 interface MoneyVectorProps {
 	offset: UDim2;
@@ -124,6 +126,9 @@ interface MenuProps {
 
 const MONEY_VECTOR_CREATION_AMT = new NumberRange(4, 6);
 
+const DEFAULT_POS = UDim2.fromScale(0.972, 0.28);
+const CLOSED_POS = UDim2.fromScale(1.25, 0.28);
+
 export const RightSideMenu = (props: MenuProps) => {
 	const [moneyVectors, setMoneyVectors] = useState<MoneyVectorProps[]>([]);
 	const [moneyValue, setMoneyValue] = useState("0");
@@ -132,6 +137,7 @@ export const RightSideMenu = (props: MenuProps) => {
 	const moneyFrameRef = createRef<Frame>();
 	const [hasGift, setHasGift] = useState(hasGiftAtom());
 	const [hasDaily, setHasDaily] = useState(hasDailyAtom());
+	const [menuPos, setMenuPos] = useMotion(DEFAULT_POS);
 
 	const px = usePx();
 
@@ -182,6 +188,10 @@ export const RightSideMenu = (props: MenuProps) => {
 			}
 		});
 
+		Signals.menuOpened.Connect((isOpen) => {
+			setMenuPos.spring(isOpen ? CLOSED_POS : DEFAULT_POS, springs.default);
+		});
+
 		subscribe(hasGiftAtom, (hasGift) => {
 			setHasGift(hasGift);
 		});
@@ -190,6 +200,8 @@ export const RightSideMenu = (props: MenuProps) => {
 			setHasDaily(hasDaily);
 		});
 	}, []);
+
+	const MENU_MOBILE_SCALE = 1.25;
 
 	return (
 		<frame Size={UDim2.fromScale(1, 1)} BackgroundTransparency={1}>
@@ -203,8 +215,11 @@ export const RightSideMenu = (props: MenuProps) => {
 				BorderColor3={Color3.fromRGB(0, 0, 0)}
 				BorderSizePixel={0}
 				key={"Menu Container Frame"}
-				Position={UDim2.fromScale(0.972, 0.28)}
-				Size={UDim2.fromScale(0.211, 0.512)}
+				Position={menuPos}
+				Size={UDim2.fromScale(
+					0.211 * (getPlayerPlatform() === "Mobile" ? MENU_MOBILE_SCALE : 1),
+					0.512 * (getPlayerPlatform() === "Mobile" ? MENU_MOBILE_SCALE : 1),
+				)}
 			>
 				<AnimatedButton
 					position={UDim2.fromScale(0.5, 0.5)}
@@ -269,7 +284,7 @@ export const RightSideMenu = (props: MenuProps) => {
 							PaddingTop={new UDim(0.00285, 0)}
 						/>
 
-						<uistroke key={"UIStroke"} Thickness={4} Transparency={0.5} />
+						<uistroke key={"UIStroke"} Thickness={px(4)} Transparency={0.5} />
 					</textlabel>
 
 					<imagelabel
@@ -351,7 +366,7 @@ export const RightSideMenu = (props: MenuProps) => {
 								TextSize={px(25)}
 								ZIndex={10}
 							>
-								<uistroke key={"UIStroke"} Thickness={3} />
+								<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 								<uipadding
 									key={"UIPadding"}
@@ -389,7 +404,7 @@ export const RightSideMenu = (props: MenuProps) => {
 								TextScaled={true}
 								ZIndex={10}
 							>
-								<uistroke key={"UIStroke"} Thickness={2} />
+								<uistroke key={"UIStroke"} Thickness={px(2)} />
 
 								<uipadding
 									key={"UIPadding"}
@@ -400,7 +415,7 @@ export const RightSideMenu = (props: MenuProps) => {
 								/>
 							</textlabel>
 
-							<uistroke key={"UIStroke"} Thickness={3} />
+							<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 						</frame>
@@ -463,7 +478,7 @@ export const RightSideMenu = (props: MenuProps) => {
 									TextScaled={true}
 									ZIndex={10}
 								>
-									<uistroke key={"UIStroke"} Thickness={2} />
+									<uistroke key={"UIStroke"} Thickness={px(2)} />
 
 									<uipadding
 										key={"UIPadding"}
@@ -474,7 +489,7 @@ export const RightSideMenu = (props: MenuProps) => {
 									/>
 								</textlabel>
 
-								<uistroke key={"UIStroke"} Thickness={3} />
+								<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 								<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 							</frame>
@@ -520,7 +535,7 @@ export const RightSideMenu = (props: MenuProps) => {
 								TextSize={px(25)}
 								ZIndex={10}
 							>
-								<uistroke key={"UIStroke"} Thickness={3} />
+								<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 								<uipadding
 									key={"UIPadding"}
@@ -598,7 +613,7 @@ export const RightSideMenu = (props: MenuProps) => {
 								TextSize={px(25)}
 								ZIndex={10}
 							>
-								<uistroke key={"UIStroke"} Thickness={3} />
+								<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 								<uipadding
 									key={"UIPadding"}

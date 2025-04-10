@@ -20,6 +20,8 @@ local ROLL_TYPES = {
 local REWARD_IMAGES = {
 	Money = "rbxassetid://96446480715038",
 	LuckMultiplier = "rbxassetid://83833460426334",
+	Experience = "rbxassetid://105806277189798",
+	SkillPoints = "rbxassetid://107635803594907",
 }
 local gameConstants = {
 	-- Gameplay constants
@@ -44,7 +46,7 @@ local gameConstants = {
 	BASE_EXP = 100,
 
 	TARGET_INVENTORY_DEFAULT_CAPACITY = 50,
-	BIGGER_BACKPACK_SIZE_MODIFIER = 2,
+	BIGGER_BACKPACK_SIZE_MODIFIER = 3,
 
 	-- Skills modifiers
 	STRENGTH_MODIFIER = 0.1,
@@ -141,6 +143,7 @@ local gameConstants = {
 	DIALOG_PROMPT = "DialogPromptUi",
 	DETECTOR_HINT_TEXT = "DetectorHintText",
 	QUEST_INFO_SIDEBUTTON = "QuestInfoSideButton",
+	FREE_REWARD_UI = "FreeRewardUI",
 
 	-- Attributes
 	BOAT_DRIVER_SITTING = "SittingInBoatDriverSeat",

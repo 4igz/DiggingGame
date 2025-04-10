@@ -6,7 +6,7 @@ import { Events, Functions } from "client/network";
 import { springs } from "client/utils/springs";
 import { gameConstants } from "shared/gameConstants";
 import { Rarity } from "shared/networkTypes";
-import { separateWithCommas, shortenNumber, spaceWords } from "shared/util/nameUtil";
+import { separateWithCommas, shortenNumber } from "shared/util/nameUtil";
 import { ExitButton } from "./inventory";
 import { boatConfig } from "shared/config/boatConfig";
 import Object from "@rbxts/object-utils";
@@ -25,6 +25,7 @@ interface GenericItemProps {
 	image: string;
 	owned: boolean;
 	price: number;
+	obtainLocation?: string; // The location where the boat can be obtained displayed to user.
 }
 
 const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
@@ -76,11 +77,6 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							SoundService.PlayLocalSound(
 								SoundService.WaitForChild("UI").WaitForChild("BoatSpawn") as Sound,
 							);
-							task.delay(0.5, () => {
-								SoundService.PlayLocalSound(
-									SoundService.WaitForChild("UI").WaitForChild("Bubble") as Sound,
-								);
-							});
 						} else {
 							Events.buyBoat(boatName);
 						}
@@ -165,7 +161,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							TextSize={px(30)}
 							TextXAlignment={Enum.TextXAlignment.Left}
 						>
-							<uistroke key={"UIStroke"} Thickness={3} />
+							<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 							<uipadding
 								key={"UIPadding"}
@@ -204,7 +200,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							TextSize={px(25)}
 							TextXAlignment={Enum.TextXAlignment.Right}
 						>
-							<uistroke key={"UIStroke"} Thickness={1.9} />
+							<uistroke key={"UIStroke"} Thickness={px(1.9)} />
 
 							<textlabel
 								AnchorPoint={new Vector2(0.5, 0.5)}
@@ -221,7 +217,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 								TextSize={px(25)}
 								TextXAlignment={Enum.TextXAlignment.Right}
 							>
-								<uistroke key={"UIStroke"} Thickness={1.9} />
+								<uistroke key={"UIStroke"} Thickness={px(1.9)} />
 							</textlabel>
 						</textlabel>
 
@@ -245,7 +241,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							TextSize={px(25)}
 							TextXAlignment={Enum.TextXAlignment.Right}
 						>
-							<uistroke key={"UIStroke"} Thickness={3} />
+							<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 							<textlabel
 								AnchorPoint={new Vector2(0.5, 0.5)}
@@ -263,7 +259,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 								TextSize={px(25)}
 								TextXAlignment={Enum.TextXAlignment.Right}
 							>
-								<uistroke key={"UIStroke"} Thickness={3} />
+								<uistroke key={"UIStroke"} Thickness={px(3)} />
 							</textlabel>
 						</textlabel>
 					</frame>
@@ -296,7 +292,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 					key={"2"}
 					Position={UDim2.fromScale(0.5, 0.971)}
 					Size={UDim2.fromScale(0.551, 0.11)}
-					Text={`$${separateWithCommas(props.price)}`}
+					Text={props.obtainLocation ?? `$${separateWithCommas(props.price)}`}
 					TextColor3={Color3.fromRGB(92, 255, 133)}
 					// TextScaled={true}
 					TextSize={px(28)}
@@ -304,7 +300,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 					Visible={!owned}
 					ZIndex={16}
 				>
-					<uistroke Color={Color3.fromRGB(23, 30, 52)} key={"2"} Thickness={4.6} />
+					<uistroke Color={Color3.fromRGB(23, 30, 52)} key={"2"} Thickness={px(4.6)} />
 				</textlabel>
 				<frame
 					BackgroundColor3={new Color3()}
@@ -337,7 +333,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 						TextColor3={new Color3()}
 						TextScaled={true}
 					>
-						<uistroke key={"1"} Thickness={5} />
+						<uistroke key={"1"} Thickness={px(5)} />
 
 						<textlabel
 							AnchorPoint={new Vector2(0.5, 0.5)}
@@ -350,7 +346,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							TextColor3={new Color3(1, 1, 1)}
 							TextScaled={true}
 						>
-							<uistroke key={"1"} Thickness={5} />
+							<uistroke key={"1"} Thickness={px(5)} />
 						</textlabel>
 					</textlabel>
 				</frame>
@@ -368,8 +364,10 @@ export const BoatShopComponent: React.FC<ShopProps> = (props) => {
 	const [visible, setVisible] = React.useState(props.visible);
 	const [selectedShop, setSelectedShop] = React.useState<keyof typeof BOATSHOP_MENUS | "">("Boats");
 	const [ownedBoats, setOwnedBoats] = React.useState<Map<keyof typeof boatConfig, boolean>>(new Map());
-	const [popInSz, popInMotion] = useMotion(UDim2.fromScale(0, 0));
+	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0.5, 0.6));
 	const menuRef = React.createRef<Frame>();
+
+	const px = usePx();
 
 	React.useEffect(() => {
 		setVisible(props.visible);
@@ -377,7 +375,7 @@ export const BoatShopComponent: React.FC<ShopProps> = (props) => {
 
 	React.useEffect(() => {
 		if (visible) {
-			popInMotion.spring(UDim2.fromScale(0.631, 0.704), springs.responsive);
+			popInMotion.spring(UDim2.fromScale(0.5, 0.5), springs.responsive);
 			Functions.getOwnedBoats()
 				.then((ownedBoats) => {
 					setOwnedBoats(ownedBoats);
@@ -392,7 +390,7 @@ export const BoatShopComponent: React.FC<ShopProps> = (props) => {
 				connection.Disconnect();
 			};
 		} else {
-			popInMotion.immediate(UDim2.fromScale(0, 0));
+			popInMotion.immediate(UDim2.fromScale(0.5, 0.6));
 		}
 	}, [visible]);
 
@@ -428,8 +426,8 @@ export const BoatShopComponent: React.FC<ShopProps> = (props) => {
 			BorderColor3={Color3.fromRGB(0, 0, 0)}
 			BorderSizePixel={0}
 			key={"Shop Sub-Menu"}
-			Position={UDim2.fromScale(0.5, 0.5)}
-			Size={popInSz}
+			Position={popInPos}
+			Size={UDim2.fromScale(0.631, 0.704)}
 			Visible={visible}
 			ref={menuRef}
 		>
@@ -492,7 +490,7 @@ export const BoatShopComponent: React.FC<ShopProps> = (props) => {
 				TextScaled={true}
 				TextXAlignment={Enum.TextXAlignment.Left}
 			>
-				<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={7} />
+				<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(7)} />
 
 				<uipadding
 					key={"UIPadding"}
@@ -545,6 +543,11 @@ export const BoatShopComponent: React.FC<ShopProps> = (props) => {
 
 				{Object.entries(boatConfig).map(([boatName, boatCfg]) => {
 					const owned = ownedBoats.get(boatName) ?? false;
+
+					if (boatCfg.notForSale && !owned && boatCfg.obtainLocation === undefined) {
+						return;
+					}
+
 					return (
 						<GenericItemComponent
 							itemName={boatName}
@@ -553,6 +556,7 @@ export const BoatShopComponent: React.FC<ShopProps> = (props) => {
 							speed={boatCfg.speed}
 							owned={owned}
 							price={boatCfg.price}
+							obtainLocation={boatCfg.obtainLocation}
 						/>
 					);
 				})}

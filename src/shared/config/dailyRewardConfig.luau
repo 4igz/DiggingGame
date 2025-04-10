@@ -14,29 +14,28 @@ local DAILY_REWARD_COOLDOWN = 60 * 60 * 18
 
 local dailyRewards: { Reward } = {
 	{ -- Index corresponds to day, so this first one is day 1, and the last one is day 7.
+		rewardType = "Money",
+		rewardAmount = 100,
+	},
+	{
+		rewardType = "Boats",
+		itemName = "Jetski",
+	},
+	{
 		rewardType = "Potions",
-		itemName = "Small Luck Potion",
+		itemName = "Medium Luck Potion",
 	},
 	{
-		rewardType = "LuckMultiplier",
-		rewardAmount = 2,
-		rewardLength = 60 * 10,
-	},
-	{
-		rewardType = "Shovels",
-		itemName = "EnchantedShovel",
+		rewardType = "Potions",
+		itemName = "Medium Strength Potion",
 	},
 	{
 		rewardType = "Money",
-		rewardAmount = 100,
+		rewardAmount = 100000,
 	},
 	{
-		rewardType = "Money",
-		rewardAmount = 100,
-	},
-	{
-		rewardType = "Money",
-		rewardAmount = 100,
+		rewardType = "Potions",
+		itemName = "Large Luck Potion",
 	},
 	{
 		rewardType = "Boats",

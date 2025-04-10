@@ -1,94 +1,30 @@
 //!optimize 2
 import React, { createRef, useEffect, useState } from "@rbxts/react";
-import { AnimatedButton, ExitButton } from "./inventory";
+import { ExitButton } from "./inventory";
 import UiController from "client/controllers/uiController";
 import { gameConstants } from "shared/gameConstants";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
-import { MarketplaceService, Players, TweenService } from "@rbxts/services";
+import { MarketplaceService, Players, SoundService, TweenService } from "@rbxts/services";
 import { formatTime } from "shared/util/nameUtil";
-import { getDeveloperProductInfo } from "shared/util/monetizationUtil";
 import SpriteClip from "@rbxts/spriteclip";
 import { Events, Functions } from "client/network";
 import { usePx } from "client/hooks/usePx";
+import { GamepassController } from "client/controllers/gamepassController";
+import { AnimatedButton, BuyButton } from "./buttons";
 
-interface BuyButtonProps {
-	position?: UDim2;
-	size?: UDim2;
-	price?: string;
-	layoutOrder?: number;
-	id: number;
-	isDiscounted?: boolean;
-	discountedPrice?: number;
-	productType: Enum.InfoType.Product | Enum.InfoType.GamePass;
-	anchorPoint?: Vector2;
-	textSize?: number;
-}
+const MAX_IMAGE_ROTATION = 15;
 
-const BuyButton = (props: BuyButtonProps) => {
-	const px = usePx();
-
-	const [marketplaceInfo, setMarketplaceInfo] = React.useState<
-		DeveloperProductInfo | GamePassProductInfo | undefined
-	>();
-
-	React.useEffect(() => {
-		getDeveloperProductInfo(props.id, props.productType).then((info) => {
-			setMarketplaceInfo(info);
-		});
-	}, [props.id]);
-
-	return (
-		<AnimatedButton
-			anchorPoint={props.anchorPoint ?? new Vector2(0.5, 1)}
-			position={props.position ?? UDim2.fromScale(0.5, 0.902655)}
-			size={props.size ?? UDim2.fromScale(0.851282, 0.212389)}
-			active={false}
-		>
-			<imagelabel
-				key={"ImageButton"}
-				BackgroundTransparency={1}
-				Image={"rbxassetid://140291815990566"}
-				Size={UDim2.fromScale(1, 1)}
-			>
-				<uilistlayout
-					key={"UIListLayout"}
-					FillDirection={Enum.FillDirection.Horizontal}
-					HorizontalAlignment={Enum.HorizontalAlignment.Center}
-					Padding={new UDim(0.02, 0)}
-					SortOrder={Enum.SortOrder.LayoutOrder}
-					VerticalAlignment={Enum.VerticalAlignment.Center}
-				/>
-
-				<textlabel
-					AnchorPoint={new Vector2(0.5, 0.5)}
-					BackgroundTransparency={1}
-					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-					key={"Amount"}
-					Position={UDim2.fromScale(0.552466, 0.5)}
-					Size={UDim2.fromScale(1, 0.806)}
-					Text={
-						!props.isDiscounted
-							? ` ${props.price ?? tostring(marketplaceInfo?.PriceInRobux) ?? "Priceless"}`
-							: `<font color="rgb(255,0,0)"><s>${props.discountedPrice}</s></font>  ${
-									props.price ?? tostring(marketplaceInfo?.PriceInRobux) ?? "Priceless"
-							  }`
-					}
-					RichText={true}
-					TextColor3={new Color3(1, 1, 1)}
-					TextSize={px(props.textSize ?? 27)}
-					TextXAlignment={Enum.TextXAlignment.Center}
-					ZIndex={10}
-				>
-					<uistroke key={"UIStroke"} Thickness={2} />
-				</textlabel>
-			</imagelabel>
-		</AnimatedButton>
-	);
-};
+// Text sizes
+const PRODUCT_NAME_PX = 21;
+const SUBTITLE_PX = 32;
+const TITLE_PX = 43;
+const TAB_PX = 23;
+const DESC_PX = 20;
 
 interface MoreDiggingProduct {
 	runAnimation: boolean;
+	gamepassController: GamepassController;
 }
 
 const animation = new SpriteClip();
@@ -148,6 +84,7 @@ const DigProduct = (props: MoreDiggingProduct) => {
 					size={UDim2.fromScale(0.318396, 0.256579)}
 					position={UDim2.fromScale(0.96816, 0.888158)}
 					id={gameConstants.DEVPRODUCT_IDS["MoreDigging"]}
+					gamepassController={props.gamepassController}
 					productType={Enum.InfoType.Product}
 					textSize={50}
 				/>
@@ -166,8 +103,9 @@ const DigProduct = (props: MoreDiggingProduct) => {
 					TextSize={px(TITLE_PX)}
 					ZIndex={2}
 				>
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={4} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(4)} />
 				</textlabel>
+
 				<canvasgroup
 					BackgroundTransparency={1}
 					GroupTransparency={0.84}
@@ -301,207 +239,52 @@ const DigProduct = (props: MoreDiggingProduct) => {
 					Size={UDim2.fromScale(0.7, 0.65)}
 					ref={animationRef}
 				>
+					<textlabel
+						BackgroundTransparency={1}
+						FontFace={
+							new Font("rbxassetid://11702779409", Enum.FontWeight.ExtraBold, Enum.FontStyle.Normal)
+						}
+						key={"OP"}
+						Position={UDim2.fromScale(-0.0635838, -0.358381)}
+						Size={UDim2.fromScale(0.289017, 0.752601)}
+						Text={"OP"}
+						TextColor3={Color3.fromRGB(116, 48, 13)}
+						// TextScaled={true}
+						TextSize={px(TITLE_PX)}
+						ZIndex={2}
+					>
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={px(4)} />
+
+						<textlabel
+							AnchorPoint={new Vector2(0.5, 0.5)}
+							BackgroundTransparency={1}
+							FontFace={
+								new Font("rbxassetid://11702779409", Enum.FontWeight.ExtraBold, Enum.FontStyle.Normal)
+							}
+							key={"OP"}
+							Position={UDim2.fromScale(0.5, 0.5)}
+							Size={UDim2.fromScale(1, 1)}
+							Text={"OP"}
+							TextColor3={new Color3(1, 1, 1)}
+							// TextScaled={true}
+							TextSize={px(TITLE_PX)}
+							ZIndex={2}
+						>
+							<uigradient
+								key={"UIGradient"}
+								Color={
+									new ColorSequence([
+										new ColorSequenceKeypoint(0, Color3.fromRGB(246, 231, 133)),
+										new ColorSequenceKeypoint(1, Color3.fromRGB(253, 174, 62)),
+									])
+								}
+							/>
+						</textlabel>
+					</textlabel>
 					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 					<uicorner key={"UICorner"} CornerRadius={new UDim(0.08, 0)} />
 				</imagelabel>
 			</imagelabel>
-		</AnimatedProductButton>
-	);
-};
-
-const LimitedOffer = () => {
-	const px = usePx();
-
-	return (
-		<AnimatedProductButton
-			position={UDim2.fromScale(0.5, 0.443)}
-			size={UDim2.fromScale(0.961, 0.6)}
-			scales={new NumberRange(0.975, 1.025)}
-			layoutOrder={1}
-			productType={Enum.InfoType.Product}
-			productId={1}
-		>
-			<imagelabel
-				AnchorPoint={new Vector2(0.5, 0.5)}
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				Image={"rbxassetid://125454463017246"}
-				key={"background"}
-				Position={UDim2.fromScale(0.5, 0.508)}
-				ScaleType={Enum.ScaleType.Fit}
-				Size={UDim2.fromScale(1, 1.02)}
-			/>
-
-			<frame
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				key={"Top"}
-				Position={UDim2.fromScale(0.0252, 0.132)}
-				Size={UDim2.fromScale(0.943, 0.224)}
-			>
-				<uilistlayout
-					key={"UIListLayout"}
-					FillDirection={Enum.FillDirection.Horizontal}
-					HorizontalFlex={Enum.UIFlexAlignment.SpaceBetween}
-					SortOrder={Enum.SortOrder.LayoutOrder}
-				/>
-
-				<textlabel
-					AnchorPoint={new Vector2(0.5, 0.5)}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-					key={"Title"}
-					Position={UDim2.fromScale(0.249, 0.5)}
-					Size={UDim2.fromScale(0.499, 1)}
-					Text={"Limited Offer!"}
-					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextXAlignment={Enum.TextXAlignment.Left}
-					TextSize={px(SUBTITLE_PX)}
-					ZIndex={10}
-				>
-					<uistroke key={"UIStroke"} Thickness={3} />
-
-					<uipadding key={"UIPadding"} />
-				</textlabel>
-
-				<uipadding key={"UIPadding"} PaddingLeft={new UDim(0.01, 0)} />
-
-				<textlabel
-					AnchorPoint={new Vector2(0.5, 0.5)}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-					key={"Timer"}
-					Position={UDim2.fromScale(0.249, 0.5)}
-					Size={UDim2.fromScale(0.499, 1)}
-					Text={"24:00:00"}
-					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextSize={px(SUBTITLE_PX)}
-					TextXAlignment={Enum.TextXAlignment.Right}
-					ZIndex={10}
-				>
-					<uistroke key={"UIStroke"} Thickness={3} />
-				</textlabel>
-			</frame>
-
-			<frame
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				key={"Info"}
-				Position={UDim2.fromScale(0.048, 0.355)}
-				Size={UDim2.fromScale(0.904, 0.476)}
-			>
-				<frame
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					key={"PackageInfo"}
-					Size={UDim2.fromScale(0.57, 1)}
-				>
-					<frame
-						BackgroundColor3={Color3.fromRGB(170, 19, 22)}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						key={"Item One"}
-						Size={UDim2.fromScale(0.244, 1)}
-					>
-						<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
-
-						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-					</frame>
-
-					<imagelabel
-						AnchorPoint={new Vector2(0.5, 0.5)}
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						Image={"rbxassetid://114369521200815"}
-						key={"Plus"}
-						Position={UDim2.fromScale(0.3, 0.49)}
-						ScaleType={Enum.ScaleType.Fit}
-						Size={UDim2.fromScale(0.091, 0.386)}
-						ZIndex={10}
-					>
-						<uipadding
-							key={"UIPadding"}
-							PaddingBottom={new UDim(0.0947, 0)}
-							PaddingLeft={new UDim(0.295, 0)}
-							PaddingRight={new UDim(0.295, 0)}
-							PaddingTop={new UDim(0.0947, 0)}
-						/>
-					</imagelabel>
-
-					<frame
-						BackgroundColor3={Color3.fromRGB(170, 19, 22)}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						key={"Item Two"}
-						Position={UDim2.fromScale(0.36, 0)}
-						Size={UDim2.fromScale(0.244, 1)}
-					>
-						<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
-
-						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-					</frame>
-
-					<imagelabel
-						AnchorPoint={new Vector2(0.5, 0.5)}
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						Image={"rbxassetid://114369521200815"}
-						key={"Plus"}
-						Position={UDim2.fromScale(0.66, 0.49)}
-						ScaleType={Enum.ScaleType.Fit}
-						Size={UDim2.fromScale(0.091, 0.386)}
-						ZIndex={10}
-					>
-						<uipadding
-							key={"UIPadding"}
-							PaddingBottom={new UDim(0.0947, 0)}
-							PaddingLeft={new UDim(0.295, 0)}
-							PaddingRight={new UDim(0.295, 0)}
-							PaddingTop={new UDim(0.0947, 0)}
-						/>
-					</imagelabel>
-
-					<frame
-						BackgroundColor3={Color3.fromRGB(170, 19, 22)}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						key={"Item Three"}
-						Position={UDim2.fromScale(0.72, 0)}
-						Size={UDim2.fromScale(0.244, 1)}
-					>
-						<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
-
-						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-					</frame>
-				</frame>
-				<BuyButton
-					position={UDim2.fromScale(0.82, 0.5)}
-					id={gameConstants.DEVPRODUCT_IDS["MoreDigging"]}
-					layoutOrder={2}
-					size={UDim2.fromScale(0.421, 0.58)}
-					isDiscounted={true}
-					discountedPrice={1299}
-					productType={Enum.InfoType.Product}
-				/>
-			</frame>
 		</AnimatedProductButton>
 	);
 };
@@ -568,8 +351,11 @@ export const AnimatedProductButton = (props: AnimatedProductButtonProps) => {
 				scales={props.scales}
 				onClick={() => {
 					// Prompt product purchase
-					const canBuy = props.predicate ? props.predicate() : true;
+					const canBuy = props.predicate?.() ?? true;
 					if (!canBuy) return;
+					SoundService.PlayLocalSound(
+						SoundService.WaitForChild("UI").WaitForChild("PromptPurchase") as Sound,
+					);
 					switch (props.productType) {
 						case Enum.InfoType.GamePass:
 							MarketplaceService.PromptGamePassPurchase(Players.LocalPlayer, props.productId);
@@ -586,105 +372,15 @@ export const AnimatedProductButton = (props: AnimatedProductButtonProps) => {
 	);
 };
 
-interface GamepassButtonProps {
-	gamepassId: number;
-	gamepassName: string;
-}
-
-const GamepassButton = (props: GamepassButtonProps) => {
-	const px = usePx();
-
-	return (
-		<AnimatedProductButton
-			size={UDim2.fromScale(0.324, 0.5)}
-			scales={new NumberRange(0.95, 1.05)}
-			productType={Enum.InfoType.GamePass}
-			productId={props.gamepassId}
-		>
-			<imagelabel
-				AnchorPoint={new Vector2(0.5, 0.5)}
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				Image={"rbxassetid://116495925226068"}
-				key={"Background"}
-				Position={UDim2.fromScale(0.496, 0.494)}
-				ScaleType={Enum.ScaleType.Fit}
-				Size={UDim2.fromScale(0.991, 0.989)}
-			>
-				<imagelabel
-					key={"ImageLabel"}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					Image={"rbxassetid://85733831609212"}
-					LayoutOrder={1}
-					Position={UDim2.fromScale(0.252, 0.281)}
-					ScaleType={Enum.ScaleType.Fit}
-					Size={UDim2.fromScale(0.495, 0.427)}
-				>
-					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-				</imagelabel>
-
-				<textlabel
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-					key={"Title"}
-					Position={UDim2.fromScale(0.0929, 0.0989)}
-					Size={UDim2.fromScale(0.817, 0.115)}
-					Text={props.gamepassName}
-					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextSize={px(24)}
-				>
-					<uistroke key={"UIStroke"} Thickness={3} />
-
-					<uipadding key={"UIPadding"} PaddingLeft={new UDim(0.0984, 0)} PaddingRight={new UDim(0.0984, 0)} />
-				</textlabel>
-
-				<uilistlayout
-					key={"UIListLayout"}
-					HorizontalAlignment={Enum.HorizontalAlignment.Center}
-					Padding={new UDim(0.05, 0)}
-					SortOrder={Enum.SortOrder.LayoutOrder}
-					VerticalAlignment={Enum.VerticalAlignment.Center}
-				/>
-
-				<BuyButton
-					position={UDim2.fromScale(0.151, 0.727)}
-					size={UDim2.fromScale(0.671, 0.173)}
-					layoutOrder={2}
-					id={props.gamepassId}
-					productType={Enum.InfoType.GamePass}
-				/>
-			</imagelabel>
-
-			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.85} />
-		</AnimatedProductButton>
-	);
-};
-
 interface GamepassShopProps {
 	uiController: UiController;
 	visible: boolean;
+	gamepassController: GamepassController;
 }
-
-const MAX_IMAGE_ROTATION = 15;
-
-// Text sizes
-const PRODUCT_NAME_PX = 21;
-const SUBTITLE_PX = 32;
-const TITLE_PX = 43;
-const TAB_PX = 23;
-const DESC_PX = 20;
 
 export const GamepassShopComponent = (props: GamepassShopProps) => {
 	const [visible, setVisible] = React.useState(false);
-	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0, 0));
+	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0.5, 0.6));
 	const [serverLuckTimer, setServerLuckTimer] = React.useState(0);
 	const [imageRotation, setImageRotation] = useMotion(0);
 	const [limitedTimeLeft, setLimitedTimeLeft] = useState(60 * 60 * 24);
@@ -703,6 +399,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 	useEffect(() => {
 		if (visible) {
 			popInMotion.spring(UDim2.fromScale(0.5, 0.51), springs.responsive);
+			SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("OpenShop") as Sound);
 		} else {
 			popInMotion.immediate(UDim2.fromScale(0.5, 0.6));
 		}
@@ -744,7 +441,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 			BackgroundTransparency={1}
 			key={"Container"}
 			Position={popInPos}
-			Size={UDim2.fromScale(0.47, 0.829315)}
+			Size={UDim2.fromScale(0.6, 0.8)}
 			ref={menuRef}
 			Visible={visible}
 		>
@@ -784,7 +481,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 				TextXAlignment={Enum.TextXAlignment.Left}
 				ZIndex={2}
 			>
-				<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={6} />
+				<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(6)} />
 			</textlabel>
 
 			<frame
@@ -845,7 +542,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								TextSize={px(TAB_PX)}
 								ZIndex={2}
 							>
-								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={4} />
+								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={px(4)} />
 
 								<textlabel
 									AnchorPoint={new Vector2(0.5, 0.5)}
@@ -912,7 +609,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								TextSize={px(TAB_PX)}
 								ZIndex={105}
 							>
-								<uistroke key={"UIStroke"} Thickness={3.5} />
+								<uistroke key={"UIStroke"} Thickness={px(3.5)} />
 							</textlabel>
 						</imagelabel>
 
@@ -957,7 +654,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								TextSize={px(TAB_PX)}
 								ZIndex={105}
 							>
-								<uistroke key={"UIStroke"} Thickness={3.5} />
+								<uistroke key={"UIStroke"} Thickness={px(3.5)} />
 							</textlabel>
 						</imagelabel>
 
@@ -1026,7 +723,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								TextSize={px(TAB_PX)}
 								ZIndex={105}
 							>
-								<uistroke key={"UIStroke"} Thickness={3.5} />
+								<uistroke key={"UIStroke"} Thickness={px(3.5)} />
 							</textlabel>
 						</imagelabel>
 
@@ -1069,11 +766,12 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 				BackgroundTransparency={1}
 				BottomImage={"rbxasset://textures/ui/Scroll/scroll-middle.png"}
 				CanvasPosition={new Vector2(0, 1346.38464)}
-				CanvasSize={new UDim2()}
+				CanvasSize={UDim2.fromScale(0, 0)}
 				key={"Content"}
 				Position={UDim2.fromScale(0.5, 0.934211)}
 				ScrollBarImageColor3={new Color3(0.79, 0.79, 0.79)}
 				ScrollBarThickness={7}
+				ScrollingDirection={Enum.ScrollingDirection.Y}
 				Size={UDim2.fromScale(0.970395, 0.583882)}
 				TopImage={"rbxasset://textures/ui/Scroll/scroll-middle.png"}
 				ref={scrollingFrameRef}
@@ -1145,6 +843,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							position={UDim2.fromScale(0.96816, 0.888158)}
 							size={UDim2.fromScale(0.318396, 0.256579)}
 							id={gameConstants.DEVPRODUCT_IDS["StarterPack"]}
+							gamepassController={props.gamepassController}
 							productType={Enum.InfoType.Product}
 						/>
 
@@ -1161,7 +860,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							TextXAlignment={Enum.TextXAlignment.Left}
 							ZIndex={2}
 						>
-							<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={4} />
+							<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(4)} />
 						</textlabel>
 
 						<textlabel
@@ -1177,7 +876,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							TextXAlignment={Enum.TextXAlignment.Left}
 							ZIndex={2}
 						>
-							<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={3} />
+							<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(3)} />
 						</textlabel>
 
 						<frame
@@ -1198,7 +897,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								<uistroke
 									key={"UIStroke"}
 									Color={Color3.fromRGB(138, 0, 0)}
-									Thickness={3}
+									Thickness={px(3)}
 									Transparency={0.5}
 								/>
 
@@ -1225,7 +924,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								<uistroke
 									key={"UIStroke"}
 									Color={Color3.fromRGB(138, 0, 0)}
-									Thickness={3}
+									Thickness={px(3)}
 									Transparency={0.5}
 								/>
 
@@ -1252,7 +951,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								<uistroke
 									key={"UIStroke"}
 									Color={Color3.fromRGB(138, 0, 0)}
-									Thickness={3}
+									Thickness={px(3)}
 									Transparency={0.5}
 								/>
 
@@ -1280,7 +979,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								TextScaled={true}
 								ZIndex={2}
 							>
-								<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={3} />
+								<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(3)} />
 							</textlabel>
 
 							<textlabel
@@ -1296,7 +995,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								TextScaled={true}
 								ZIndex={2}
 							>
-								<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={3} />
+								<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(3)} />
 							</textlabel>
 						</frame>
 					</imagelabel>
@@ -1330,6 +1029,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							size={UDim2.fromScale(0.318, 0.257)}
 							position={UDim2.fromScale(0.968, 0.888)}
 							anchorPoint={new Vector2(1, 1)}
+							gamepassController={props.gamepassController}
 							textSize={50}
 						/>
 
@@ -1346,7 +1046,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							TextXAlignment={Enum.TextXAlignment.Left}
 							ZIndex={2}
 						>
-							<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={4} />
+							<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(4)} />
 						</textlabel>
 
 						<textlabel
@@ -1362,7 +1062,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							TextXAlignment={Enum.TextXAlignment.Left}
 							ZIndex={2}
 						>
-							<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={3} />
+							<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(3)} />
 						</textlabel>
 
 						<imagelabel
@@ -1526,7 +1226,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 					Size={UDim2.fromScale(1, 0.0225352)}
 				/>
 
-				<DigProduct runAnimation={visible} />
+				<DigProduct runAnimation={visible} gamepassController={props.gamepassController} />
 
 				<frame
 					BackgroundTransparency={1}
@@ -1615,7 +1315,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								// TextScaled={true}
 								ZIndex={105}
 							>
-								<uistroke key={"UIStroke"} Thickness={3} />
+								<uistroke key={"UIStroke"} Thickness={px(3)} />
 							</textlabel>
 
 							<imagelabel
@@ -1631,6 +1331,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								position={UDim2.fromScale(0.5, 0.902655)}
 								id={gameConstants.GAMEPASS_IDS["x2Cash"]}
 								productType={Enum.InfoType.GamePass}
+								gamepassController={props.gamepassController}
 								size={UDim2.fromScale(0.851282, 0.212389)}
 							/>
 
@@ -1653,7 +1354,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								// TextScaled={true}
 								ZIndex={2}
 							>
-								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={4} />
+								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={px(4)} />
 
 								<textlabel
 									AnchorPoint={new Vector2(0.5, 0.5)}
@@ -1735,7 +1436,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								// TextScaled={true}
 								ZIndex={105}
 							>
-								<uistroke key={"UIStroke"} Thickness={3} />
+								<uistroke key={"UIStroke"} Thickness={px(3)} />
 							</textlabel>
 
 							<imagelabel
@@ -1751,79 +1452,9 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								position={UDim2.fromScale(0.5, 0.902655)}
 								size={UDim2.fromScale(0.851282, 0.212389)}
 								id={gameConstants.GAMEPASS_IDS["BiggerBackpack"]}
+								gamepassController={props.gamepassController}
 								productType={Enum.InfoType.GamePass}
 							/>
-
-							<textlabel
-								AnchorPoint={new Vector2(0.5, 0)}
-								BackgroundTransparency={1}
-								FontFace={
-									new Font(
-										"rbxassetid://11702779409",
-										Enum.FontWeight.ExtraBold,
-										Enum.FontStyle.Normal,
-									)
-								}
-								key={"OP"}
-								Position={UDim2.fromScale(0.5, 0.522124)}
-								Size={UDim2.fromScale(0.8, 0.137168)}
-								Text={"OP!"}
-								TextColor3={Color3.fromRGB(116, 48, 13)}
-								TextSize={px(PRODUCT_NAME_PX)}
-								// TextScaled={true}
-								ZIndex={2}
-							>
-								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={4} />
-
-								<textlabel
-									AnchorPoint={new Vector2(0.5, 0.5)}
-									BackgroundTransparency={1}
-									FontFace={
-										new Font(
-											"rbxassetid://11702779409",
-											Enum.FontWeight.ExtraBold,
-											Enum.FontStyle.Normal,
-										)
-									}
-									key={"OP"}
-									Position={UDim2.fromScale(0.5, 0.5)}
-									Size={UDim2.fromScale(1, 1)}
-									Text={"OP!"}
-									TextColor3={new Color3(1, 1, 1)}
-									TextSize={px(PRODUCT_NAME_PX)}
-									// TextScaled={true}
-									ZIndex={2}
-								>
-									<uigradient
-										key={"UIGradient"}
-										Color={
-											new ColorSequence([
-												new ColorSequenceKeypoint(0, Color3.fromRGB(246, 231, 133)),
-												new ColorSequenceKeypoint(1, Color3.fromRGB(253, 174, 62)),
-											])
-										}
-									/>
-								</textlabel>
-
-								<textlabel
-									AnchorPoint={new Vector2(0.5, 0.5)}
-									BackgroundTransparency={1}
-									FontFace={
-										new Font(
-											"rbxassetid://11702779409",
-											Enum.FontWeight.ExtraBold,
-											Enum.FontStyle.Normal,
-										)
-									}
-									key={"OP"}
-									Position={UDim2.fromScale(0.5, 0.65)}
-									Size={UDim2.fromScale(1, 1)}
-									Text={"OP!"}
-									TextColor3={Color3.fromRGB(116, 48, 13)}
-									TextSize={px(PRODUCT_NAME_PX)}
-									// TextScaled={true}
-								/>
-							</textlabel>
 						</imagelabel>
 					</AnimatedProductButton>
 
@@ -1855,7 +1486,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								// TextScaled={true}
 								ZIndex={105}
 							>
-								<uistroke key={"UIStroke"} Thickness={3} />
+								<uistroke key={"UIStroke"} Thickness={px(3)} />
 							</textlabel>
 
 							<imagelabel
@@ -1871,6 +1502,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								position={UDim2.fromScale(0.5, 0.902655)}
 								size={UDim2.fromScale(0.851282, 0.212389)}
 								id={gameConstants.GAMEPASS_IDS["x2Strength"]}
+								gamepassController={props.gamepassController}
 								productType={Enum.InfoType.GamePass}
 							/>
 						</imagelabel>
@@ -1904,7 +1536,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								// TextScaled={true}
 								ZIndex={105}
 							>
-								<uistroke key={"UIStroke"} Thickness={3} />
+								<uistroke key={"UIStroke"} Thickness={px(3)} />
 							</textlabel>
 
 							<imagelabel
@@ -1920,6 +1552,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								position={UDim2.fromScale(0.5, 0.902655)}
 								size={UDim2.fromScale(0.851282, 0.212389)}
 								id={gameConstants.GAMEPASS_IDS["x2Luck"]}
+								gamepassController={props.gamepassController}
 								productType={Enum.InfoType.GamePass}
 							/>
 						</imagelabel>
@@ -1970,7 +1603,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								// TextScaled={true}
 								ZIndex={2}
 							>
-								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={4} />
+								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={px(4)} />
 
 								<textlabel
 									AnchorPoint={new Vector2(0.5, 0.5)}
@@ -2051,7 +1684,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								TextXAlignment={Enum.TextXAlignment.Left}
 								ZIndex={105}
 							>
-								<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={4} />
+								<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(4)} />
 							</textlabel>
 
 							<textlabel
@@ -2081,6 +1714,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								size={UDim2.fromScale(0.204938, 0.212389)}
 								anchorPoint={new Vector2(1, 1)}
 								id={gameConstants.GAMEPASS_IDS["SellEverywhere"]}
+								gamepassController={props.gamepassController}
 								productType={Enum.InfoType.GamePass}
 							/>
 						</imagelabel>
@@ -2178,7 +1812,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								// TextScaled={true}
 								ZIndex={105}
 							>
-								<uistroke key={"UIStroke"} Thickness={2.5} />
+								<uistroke key={"UIStroke"} Thickness={px(2.5)} />
 							</textlabel>
 
 							<imagelabel
@@ -2195,6 +1829,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								position={UDim2.fromScale(0.5, 0.902655)}
 								size={UDim2.fromScale(0.851282, 0.212389)}
 								id={gameConstants.DEVPRODUCT_IDS["2.5k Money Pack"]}
+								gamepassController={props.gamepassController}
 								productType={Enum.InfoType.Product}
 								anchorPoint={new Vector2(0.5, 1)}
 							/>
@@ -2266,7 +1901,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								TextSize={px(PRODUCT_NAME_PX)}
 								ZIndex={105}
 							>
-								<uistroke key={"UIStroke"} Thickness={2.5} />
+								<uistroke key={"UIStroke"} Thickness={px(2.5)} />
 							</textlabel>
 
 							<imagelabel
@@ -2283,6 +1918,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								position={UDim2.fromScale(0.5, 0.902655)}
 								size={UDim2.fromScale(0.851282, 0.212389)}
 								id={gameConstants.DEVPRODUCT_IDS["7.5k Money Pack"]}
+								gamepassController={props.gamepassController}
 								productType={Enum.InfoType.Product}
 								anchorPoint={new Vector2(0.5, 1)}
 							/>
@@ -2354,7 +1990,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								// TextScaled={true}
 								ZIndex={105}
 							>
-								<uistroke key={"UIStroke"} Thickness={2.5} />
+								<uistroke key={"UIStroke"} Thickness={px(2.5)} />
 							</textlabel>
 
 							<imagelabel
@@ -2370,6 +2006,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							<BuyButton
 								position={UDim2.fromScale(0.5, 0.902655)}
 								size={UDim2.fromScale(0.851282, 0.212389)}
+								gamepassController={props.gamepassController}
 								id={gameConstants.DEVPRODUCT_IDS["15k Money Pack"]}
 								productType={Enum.InfoType.Product}
 							/>
@@ -2441,7 +2078,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								// TextScaled={true}
 								ZIndex={105}
 							>
-								<uistroke key={"UIStroke"} Thickness={2.5} />
+								<uistroke key={"UIStroke"} Thickness={px(2.5)} />
 							</textlabel>
 
 							<imagelabel
@@ -2458,6 +2095,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								position={UDim2.fromScale(0.5, 0.902655)}
 								size={UDim2.fromScale(0.851282, 0.212389)}
 								id={gameConstants.DEVPRODUCT_IDS["40k Money Pack"]}
+								gamepassController={props.gamepassController}
 								productType={Enum.InfoType.Product}
 							/>
 
@@ -2550,7 +2188,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								// TextScaled={true}
 								ZIndex={105}
 							>
-								<uistroke key={"UIStroke"} Thickness={2.5} />
+								<uistroke key={"UIStroke"} Thickness={px(2.5)} />
 							</textlabel>
 
 							<imagelabel
@@ -2568,6 +2206,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								size={UDim2.fromScale(0.849219, 0.201142)}
 								id={gameConstants.DEVPRODUCT_IDS["75k Medium Money Pack"]}
 								productType={Enum.InfoType.Product}
+								gamepassController={props.gamepassController}
 								anchorPoint={new Vector2(0.5, 1)}
 							/>
 
@@ -2623,7 +2262,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								// TextScaled={true}
 								ZIndex={2}
 							>
-								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={4} />
+								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={px(4)} />
 
 								<textlabel
 									AnchorPoint={new Vector2(0.5, 0.5)}
@@ -2709,7 +2348,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								// TextScaled={true}
 								ZIndex={105}
 							>
-								<uistroke key={"UIStroke"} Thickness={2.5} />
+								<uistroke key={"UIStroke"} Thickness={px(2.5)} />
 							</textlabel>
 
 							<imagelabel
@@ -2727,6 +2366,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								size={UDim2.fromScale(0.849219, 0.201142)}
 								id={gameConstants.DEVPRODUCT_IDS["250k Big Money Pack"]}
 								productType={Enum.InfoType.Product}
+								gamepassController={props.gamepassController}
 								anchorPoint={new Vector2(0.5, 1)}
 							/>
 
@@ -2782,7 +2422,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								// TextScaled={true}
 								ZIndex={2}
 							>
-								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={4} />
+								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={px(4)} />
 
 								<textlabel
 									AnchorPoint={new Vector2(0.5, 0.5)}
@@ -2868,7 +2508,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								// TextScaled={true}
 								ZIndex={105}
 							>
-								<uistroke key={"UIStroke"} Thickness={2.5} />
+								<uistroke key={"UIStroke"} Thickness={px(2.5)} />
 							</textlabel>
 
 							<imagelabel
@@ -2885,6 +2525,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								position={UDim2.fromScale(0.5, 0.89)}
 								size={UDim2.fromScale(0.849219, 0.201142)}
 								id={gameConstants.DEVPRODUCT_IDS["1M Massive Money Pack"]}
+								gamepassController={props.gamepassController}
 								productType={Enum.InfoType.Product}
 							/>
 
@@ -2940,7 +2581,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								// TextScaled={true}
 								ZIndex={2}
 							>
-								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={4} />
+								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={px(4)} />
 
 								<textlabel
 									AnchorPoint={new Vector2(0.5, 0.5)}
@@ -3039,7 +2680,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								// TextScaled={true}
 								ZIndex={2}
 							>
-								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={4} />
+								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={px(4)} />
 
 								<textlabel
 									AnchorPoint={new Vector2(0.5, 0.5)}
@@ -3086,7 +2727,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									Size={UDim2.fromScale(0.993423, 1)}
 									Text={"BEST VALUE"}
 									TextColor3={Color3.fromRGB(116, 48, 13)}
-									TextSize={SUBTITLE_PX}
+									TextSize={px(SUBTITLE_PX)}
 									// TextScaled={true}
 								/>
 							</textlabel>
@@ -3132,6 +2773,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								id={gameConstants.DEVPRODUCT_IDS["2.5M Pirate's Treasure"]}
 								productType={Enum.InfoType.Product}
 								anchorPoint={new Vector2(1, 1)}
+								gamepassController={props.gamepassController}
 							/>
 
 							<imagelabel
@@ -3164,7 +2806,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								TextXAlignment={Enum.TextXAlignment.Left}
 								ZIndex={105}
 							>
-								<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={4} />
+								<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(4)} />
 							</textlabel>
 						</imagelabel>
 					</AnimatedProductButton>

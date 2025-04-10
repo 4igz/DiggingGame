@@ -2,7 +2,7 @@
 import { useCamera, useDebounceState, useEventListener } from "@rbxts/pretty-react-hooks";
 import { useMemo } from "@rbxts/react";
 
-interface ScaleFunction {
+export interface ScaleFunction {
 	/**
 	 * Scales `pixels` based on the current viewport size and rounds the result.
 	 */

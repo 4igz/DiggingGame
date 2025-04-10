@@ -4,11 +4,6 @@ import { RunService } from "@rbxts/services";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
 import { gameConstants } from "shared/gameConstants";
-import { Rarity } from "shared/networkTypes";
-import { interval } from "shared/util/interval";
-import { shortenNumber, spaceWords } from "shared/util/nameUtil";
-
-const RC = gameConstants.RARITY_COLORS;
 
 export interface InventoryFullPopupProps {
 	onComplete: () => void;

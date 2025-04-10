@@ -11,7 +11,7 @@ import { questConfig } from "shared/config/questConfig";
 import { PotionEffect } from "./services/gameplay/inventoryService";
 import { ReplicatedStorage } from "@rbxts/services";
 
-export const PROFILE_STORE_NAME = "pre_test15";
+export const PROFILE_STORE_NAME = "pre_test18";
 
 ReplicatedStorage.SetAttribute("CurrentStore", PROFILE_STORE_NAME);
 
@@ -72,6 +72,7 @@ export const profileTemplate = {
 	// Analytics
 	isFirstJoin: true, // Replicated to client, then set to false. Subsequent joins will replicate false.
 	firedWrongEventDataTimes: 0,
+	claimedFreeReward: false,
 };
 
 export type ProfileTemplate = typeof profileTemplate;

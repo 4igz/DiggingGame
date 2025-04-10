@@ -15,7 +15,7 @@ import { fullTargetConfig, targetConfig } from "./config/targetConfig";
 import { gameConstants } from "./gameConstants";
 import { mapConfig } from "./config/mapConfig";
 import { BoatConfig, boatConfig } from "./config/boatConfig";
-import { potionConfig } from "./config/potionConfig";
+import { PotionConfig, potionConfig } from "./config/potionConfig";
 import { questConfig } from "./config/questConfig";
 import { createBinarySerializer } from "@rbxts/flamework-binary-serializer";
 
@@ -47,6 +47,7 @@ interface ClientToServerEvents {
 	teleportSuccess: () => void;
 	claimDailyReward: () => void;
 	startNextQuest: (questName: keyof typeof questConfig) => void;
+	claimFreeReward: () => void;
 
 	// Anti exploit event
 	selfReport: (flag: string) => void;
@@ -85,7 +86,11 @@ interface ServerToClientEvents {
 		sellAmount: number,
 	) => void;
 	soldAllItems: (count: number, sellAmount: number) => void;
-	boughtItem: (itemName: string, itemType: ItemType, itemConfig: Shovel | MetalDetector | BoatConfig) => void;
+	boughtItem: (
+		itemName: string,
+		itemType: ItemType,
+		itemConfig: Partial<Shovel | MetalDetector | BoatConfig>,
+	) => void;
 	purchaseFailed: (itemType: ItemType) => void;
 	teleportToIsland: (islandName: keyof typeof mapConfig) => void;
 	updateDailyStreak: (streak: number, lastClaimTime: number) => void;
@@ -98,10 +103,13 @@ interface ServerToClientEvents {
 	profileReady: () => void;
 	replicateDig: (target: NetworkedTarget) => void;
 	endDigReplication: (target: NetworkedTarget) => void;
-	sendClaimedPopup: (kind: ItemType | "Money", recieved?: ItemName | number) => void;
+	sendClaimedPopup: (kind: ItemType | "Money" | "SkillPoints", recieved?: ItemName | number) => void;
 	sendInvalidActionPopup: (message: string) => void;
 	boatSpawnResponse: (success: boolean, response: string) => void;
 	notifyBought: (productName: string, productType: Enum.InfoType) => void;
+	updateActivePotions: (
+		potions: (PotionConfig & { potionName: keyof typeof potionConfig; timeLeft: number })[],
+	) => void;
 }
 
 interface ClientToServerFunctions {
@@ -133,6 +141,7 @@ interface ClientToServerFunctions {
 	sitInBoat(boatId: string): boolean;
 	requestNextTarget: () => NetworkedTarget | undefined;
 	getCurrentStrength: () => number;
+	getHasClaimedFreeReward: () => boolean;
 }
 
 interface ServerToClientFunctions {}

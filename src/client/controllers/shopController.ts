@@ -192,7 +192,7 @@ export class ShopController implements OnStart, OnRender {
 			const purchaseFailedAnimationName = itemType === "Boats" ? "PurchaseFailedBoat" : "PurchaseFailedStore";
 
 			playAnimation(nearestNPC, purchaseFailedAnimationName, "Action");
-			SoundService.PlayLocalSound(npcChatter as Sound);
+			// SoundService.PlayLocalSound(npcChatter as Sound);
 		});
 
 		Events.boughtItem.connect((_, itemType: ItemType) => {
@@ -211,7 +211,7 @@ export class ShopController implements OnStart, OnRender {
 			const animationName = itemType === "Boats" ? "BoatGuyBought" : "StoreGuyBought";
 
 			playAnimation(nearestNPC, animationName, "Action");
-			// SoundService.PlayLocalSound(npcChatter as Sound);
+			SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("Buy") as Sound);
 		});
 	}
 

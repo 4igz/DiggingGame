@@ -1,8 +1,8 @@
 //!optimize 2
 import React, { useEffect } from "@rbxts/react";
-import { AnimatedButton } from "./inventory";
 import { SoundService } from "@rbxts/services";
 import { Signals } from "shared/signals";
+import { AnimatedButton } from "./buttons";
 
 const areasSoundGroup = SoundService.WaitForChild("Areas") as SoundGroup;
 const areasStartVolume = areasSoundGroup.Volume;
@@ -15,20 +15,21 @@ export const VolumeMuteButton = () => {
 
 	useEffect(() => {
 		areasSoundGroup.Volume = muted ? 0 : areasStartVolume;
-
-		if (muted) {
-			Signals.invalidAction.Fire("Muted music"); // Not actually invalid, just red text
-		} else {
-			Signals.actionPopup.Fire("Now playing music");
-		}
 	}, [muted]);
 
 	return (
 		<AnimatedButton
 			size={UDim2.fromScale(0.1, 0.1)}
-			position={new UDim2(1, -15, 1, -15)}
+			position={UDim2.fromScale(1, 1)}
 			anchorPoint={new Vector2(1, 1)}
-			onClick={() => setMuted(!muted)}
+			onClick={() => {
+				setMuted(!muted);
+				if (!muted) {
+					Signals.invalidAction.Fire("Muted music");
+				} else {
+					Signals.actionPopup.Fire("Now playing music");
+				}
+			}}
 		>
 			<imagelabel
 				Size={UDim2.fromScale(1, 1)}

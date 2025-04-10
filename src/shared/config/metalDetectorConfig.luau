@@ -1,6 +1,17 @@
--- Compiled with roblox-ts v3.0.0
+type MetalDetector = {
+	strength: number,
+	rarityType: Rarity,
+	luck: number,
+	searchRadius: number,
+	itemImage: string,
+	price: number,
+
+	notForSale: boolean?,
+	obtainLocation: string?, -- If not specified it won't show in shop.
+}
+
 local BASE_DETECTOR_STRENGTH = 175
-local metalDetectorConfig = {
+local metalDetectorConfig: { [string]: MetalDetector } = {
 	StarterDetector = {
 		strength = 1,
 		luck = 1,
@@ -90,6 +101,11 @@ local metalDetectorConfig = {
 		rarityType = "Epic",
 		itemImage = "rbxassetid://133401921939429",
 		price = 200,
+
+		notForSale = true,
+
+		-- This is here as an example to show that you can indicate to the player how to obtain a non-purchaseable item. If not specified then it won't show in the shop
+		obtainLocation = "Limited Offer!",
 	},
 	RetroDetector = {
 		strength = 3,
@@ -98,6 +114,8 @@ local metalDetectorConfig = {
 		rarityType = "Epic",
 		itemImage = "rbxassetid://133401921939429",
 		price = 200,
+
+		notForSale = true,
 	},
 	SteampunkDetector = {
 		strength = 3,
@@ -106,6 +124,8 @@ local metalDetectorConfig = {
 		rarityType = "Epic",
 		itemImage = "rbxassetid://133401921939429",
 		price = 200,
+
+		notForSale = true,
 	},
 	--
 

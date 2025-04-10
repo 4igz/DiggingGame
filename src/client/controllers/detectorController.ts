@@ -12,6 +12,7 @@ import { inventorySizeAtom, treasureCountAtom } from "client/atoms/inventoryAtom
 import { gameConstants } from "shared/gameConstants";
 import { ObjectPool } from "shared/util/objectPool";
 import { allowDigging } from "client/atoms/detectorAtoms";
+import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 
 const DING_SOUND_INTERVAL = interval(1);
 const RENDER_STEP_ID = "WaypointArrow";
@@ -171,6 +172,10 @@ export class DetectorController implements OnStart {
 						_inputObject: InputObject,
 					) => {
 						if (inputState === Enum.UserInputState.Begin) {
+							const button = ContextActionService.GetButton(actionName);
+							if (button) {
+								button.Image = "rbxassetid://5713982324";
+							}
 							if (
 								holding || // Not currently holding down the detector button
 								awaitingResponse || // And not currently waiting for a target to spawn
@@ -186,6 +191,10 @@ export class DetectorController implements OnStart {
 							holding = true;
 							holdStart = tick();
 						} else if (inputState === Enum.UserInputState.End) {
+							const button = ContextActionService.GetButton(actionName);
+							if (button) {
+								button.Image = "rbxassetid://5713982324";
+							}
 							if (!holding || (isAutoDigging && autoDigRunning)) return;
 							holding = false;
 							if (isRolling) {
@@ -203,14 +212,32 @@ export class DetectorController implements OnStart {
 						}
 					};
 
-					trove.add(() => {
-						ContextActionService.UnbindAction(actionName);
-					});
-
 					if (!understandsInput && autoDigRunning) {
 						// Player hasn't shown yet that they understand how the detector works
 						Signals.setUiToggled.Fire(gameConstants.DETECTOR_HINT_TEXT, true, true);
 					}
+
+					ContextActionService.BindAction(actionName, detectorAction, true, ...DETECTION_KEYBINDS);
+
+					task.defer(() => {
+						ContextActionService.SetImage(actionName, cfg.itemImage);
+						ContextActionService.SetPosition(actionName, UDim2.fromScale(0.25, 0));
+						pcall(() => {
+							const button = ContextActionService.GetButton(actionName);
+							if (button) {
+								button.Size = new UDim2(0, 100, 0, 100);
+								button.Image = "rbxassetid://5713982324";
+								button.HoverImage = "rbxassetid://5713982324";
+								button.PressedImage = "rbxassetid://5713982324";
+								button.ImageTransparency = 0.6;
+
+								const btnImage = button.WaitForChild("ActionIcon") as ImageLabel;
+								btnImage.AnchorPoint = new Vector2(0.5, 0.5);
+								btnImage.Size = UDim2.fromScale(0.75, 0.75);
+								btnImage.Position = UDim2.fromScale(0.5, 0.5);
+							}
+						});
+					});
 
 					trove.add(() => {
 						this.detectorActive = false;
@@ -237,13 +264,11 @@ export class DetectorController implements OnStart {
 						});
 					});
 
-					ContextActionService.BindAction(actionName, detectorAction, true, ...DETECTION_KEYBINDS);
-					ContextActionService.SetImage(actionName, cfg.itemImage);
-					ContextActionService.SetPosition(actionName, UDim2.fromScale(0.25, 0));
-					const button = ContextActionService.GetButton(actionName);
-					if (button) {
-						button.Size = new UDim2(0, 75, 0, 75);
-					}
+					trove.add(() => {
+						pcall(() => {
+							ContextActionService.UnbindAction(actionName);
+						});
+					});
 				}
 			});
 		};
@@ -344,6 +369,45 @@ export class DetectorController implements OnStart {
 			// This should be your old arrow part with a BillboardGui inside
 			arrowIndicator = arrowPool.acquire();
 			arrowIndicator.Parent = Workspace;
+
+			const platform = getPlayerPlatform();
+			const MOBILE_SCALE = 0.75; // Scale down arrow on mobile
+
+			const billboardGui = arrowIndicator.WaitForChild("BillboardGui") as BillboardGui;
+			const dot = billboardGui.WaitForChild("Arrow") as ImageLabel;
+			const exclamationMarkBlur = billboardGui.WaitForChild("ExclamationMarkBlur") as Frame;
+			const exclamationMark = exclamationMarkBlur.WaitForChild("ExclamationMark") as ImageLabel;
+			const shovel = exclamationMarkBlur.WaitForChild("Shovel") as ImageLabel;
+
+			if (platform === "Mobile") {
+				if (dot.GetAttribute("ScaledMobile") !== true) {
+					dot.SetAttribute("ScaledMobile", true);
+					dot.Size = new UDim2(
+						dot.Size.X.Scale * MOBILE_SCALE,
+						dot.Size.X.Offset * MOBILE_SCALE,
+						dot.Size.Y.Scale * MOBILE_SCALE,
+						dot.Size.Y.Offset * MOBILE_SCALE,
+					);
+					exclamationMark.Size = new UDim2(
+						exclamationMark.Size.X.Scale * MOBILE_SCALE,
+						exclamationMark.Size.X.Offset * MOBILE_SCALE,
+						exclamationMark.Size.Y.Scale * MOBILE_SCALE,
+						exclamationMark.Size.Y.Offset * MOBILE_SCALE,
+					);
+					exclamationMarkBlur.Size = new UDim2(
+						exclamationMarkBlur.Size.X.Scale * MOBILE_SCALE,
+						exclamationMarkBlur.Size.X.Offset * MOBILE_SCALE,
+						exclamationMarkBlur.Size.Y.Scale * MOBILE_SCALE,
+						exclamationMarkBlur.Size.Y.Offset * MOBILE_SCALE,
+					);
+					shovel.Size = new UDim2(
+						shovel.Size.X.Scale * MOBILE_SCALE,
+						shovel.Size.X.Offset * MOBILE_SCALE,
+						shovel.Size.Y.Scale * MOBILE_SCALE,
+						shovel.Size.Y.Offset * MOBILE_SCALE,
+					);
+				}
+			}
 		}
 
 		// Make sure we unbind any old render-step so we don't stack multiple
@@ -358,6 +422,7 @@ export class DetectorController implements OnStart {
 		const exclamationMarkBlur = billboardGui.WaitForChild("ExclamationMarkBlur") as Frame;
 		const exclamationMark = exclamationMarkBlur.WaitForChild("ExclamationMark") as ImageLabel;
 		const shovel = exclamationMarkBlur.WaitForChild("Shovel") as ImageLabel;
+
 		// First create a path to the target position and line it with indicators.
 		const player = Players.LocalPlayer;
 		const character = player.Character;

@@ -22,6 +22,7 @@ import { getOrderFromRarity } from "shared/util/rarityUtil";
 import { NetworkingFunctionError } from "@flamework/networking";
 import { whiteToRed } from "shared/util/colorUtil";
 import { usePx } from "client/hooks/usePx";
+import { AnimatedButton, BuyButton } from "./buttons";
 
 export function capitalizeWords(str: string): string {
 	return str
@@ -32,112 +33,6 @@ export function capitalizeWords(str: string): string {
 		})
 		.join(" ");
 }
-
-interface AnimatedButtonProps {
-	size?: { X: { Scale: number }; Y: { Scale: number } };
-	position?: UDim2;
-	anchorPoint?: Vector2;
-	onClick?: () => void;
-	onHover?: () => void;
-	onLeave?: () => void;
-	scales?: NumberRange;
-	layoutOrder?: number;
-	children?: React.ReactNode;
-	zindex?: number;
-	Ref?: React.Ref<Frame>;
-	active?: boolean;
-	selectable?: boolean;
-	clickable?: boolean;
-	visible?: boolean;
-	errorText?: string;
-	modal?: boolean;
-}
-
-export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
-	size = { X: { Scale: 1 }, Y: { Scale: 1 } },
-	position = new UDim2(0.5, 0, 0.5, 0),
-	anchorPoint = new Vector2(0.5, 0.5),
-	onClick,
-	onHover,
-	onLeave,
-	layoutOrder,
-	scales,
-	children,
-	zindex,
-	visible,
-	selectable,
-	clickable = true,
-	errorText,
-	Ref: ref,
-	active = true,
-	modal,
-}) => {
-	const [isHovered, setIsHovered] = useState(false);
-	const [isPressed, setPressed] = useState(false);
-	const [scale, sizeMotion] = useMotion(1);
-	const [MIN_SCALE, MAX_SCALE] = scales ? [scales.Min, scales.Max] : [0.95, 1.05];
-
-	useEffect(() => {
-		sizeMotion.spring(isHovered ? MAX_SCALE : 1, { tension: 300, friction: 20 });
-	}, [isHovered]);
-
-	useEffect(() => {
-		sizeMotion.spring(isPressed ? MIN_SCALE : isHovered ? MAX_SCALE : 1, { tension: 300, friction: 20 });
-	}, [isPressed]);
-
-	return (
-		<frame
-			BackgroundTransparency={1}
-			Size={scale.map((s) => UDim2.fromScale(size.X.Scale * s, size.Y.Scale * s))}
-			Position={position}
-			AnchorPoint={anchorPoint}
-			LayoutOrder={layoutOrder ?? 0}
-			ZIndex={zindex ?? 10}
-			ref={ref}
-			Visible={visible}
-		>
-			<imagebutton
-				BackgroundTransparency={1}
-				Position={UDim2.fromScale(0.5, 0.5)}
-				AnchorPoint={new Vector2(0.5, 0.5)}
-				Size={UDim2.fromScale(1, 1)}
-				ZIndex={zindex ?? 10}
-				Active={active}
-				Selectable={selectable}
-				Modal={modal}
-				Event={{
-					MouseEnter: () => {
-						if (!active) return;
-						onHover?.();
-						setIsHovered(true);
-					},
-					MouseLeave: () => {
-						if (!active) return;
-						onLeave?.();
-						setIsHovered(false);
-					},
-					MouseButton1Click: () => {
-						if (!active || !clickable) {
-							if (errorText) {
-								Signals.invalidAction.Fire(errorText);
-							}
-							return;
-						}
-						// Check for undefined, because we only want a pressing animation if a click event is defined
-						if (onClick !== undefined) {
-							setPressed(true);
-							task.delay(0.1, () => setPressed(false));
-							onClick();
-						}
-					},
-				}}
-			></imagebutton>
-			{React.Children.map(children, (child) => {
-				return child;
-			})}
-		</frame>
-	);
-};
 
 interface ItemStat {
 	key: string;
@@ -152,6 +47,7 @@ interface GenericItemProps {
 	itemType: Exclude<ItemType, "Target">;
 	stats: ItemStat[]; // List of stats to display
 	isEquipped: boolean;
+	count?: number;
 }
 
 const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
@@ -206,11 +102,18 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 				Selectable={true}
 				Event={{
 					MouseButton1Click: () => {
+						if (isEquipped) {
+							Signals.invalidAction.Fire("Item already equipped");
+							return;
+						}
 						// Equip the item
 						if (itemType === "Shovels" || itemType === "MetalDetectors") {
 							Events.equipItem(itemType as Exclude<ItemType, "Target" | "Boats">, itemName);
+							Signals.actionPopup.Fire(`Equipped ${spaceWords(itemName)}`);
 						} else if (itemType === "Potions") {
 							Events.drinkPotion(itemName);
+							Signals.actionPopup.Fire(`Drank potion ${spaceWords(itemName)}`);
+							Signals.drankPotion.Fire(props.itemName);
 						}
 						setPressed(true);
 						task.delay(0.1, () => setPressed(false));
@@ -221,7 +124,26 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 			>
 				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.748} />
 
-				<imagelabel BackgroundTransparency={1} Image={itemImage} key={"2"} Size={UDim2.fromScale(1, 1)} />
+				<imagelabel
+					BackgroundTransparency={1}
+					Image={itemImage}
+					key={"2"}
+					Size={UDim2.fromScale(1, 1)}
+					ScaleType={"Fit"}
+				>
+					<textlabel
+						Text={`x${tostring(props.count)}`}
+						Visible={props.count !== undefined && props.count > 1}
+						BackgroundTransparency={1}
+						TextSize={px(20)}
+						Size={UDim2.fromScale(1, 0.2)}
+						TextColor3={new Color3(1, 1, 1)}
+						ZIndex={10}
+						FontFace={Font.fromEnum(Enum.Font.BuilderSansExtraBold)}
+					>
+						<uistroke Thickness={px(3)} />
+					</textlabel>
+				</imagelabel>
 
 				<frame
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -302,7 +224,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 									TextSize={px(30)}
 									TextXAlignment={Enum.TextXAlignment.Left}
 								>
-									<uistroke key={"UIStroke"} Thickness={3} />
+									<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 									<uipadding
 										key={"UIPadding"}
@@ -357,7 +279,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							TextSize={px(25)}
 							TextXAlignment={Enum.TextXAlignment.Right}
 						>
-							<uistroke key={"UIStroke"} Thickness={1.9} />
+							<uistroke key={"UIStroke"} Thickness={px(1.9)} />
 
 							<textlabel
 								AnchorPoint={new Vector2(0.5, 0.5)}
@@ -378,7 +300,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 								TextSize={px(25)}
 								TextXAlignment={Enum.TextXAlignment.Right}
 							>
-								<uistroke key={"UIStroke"} Thickness={1.9} />
+								<uistroke key={"UIStroke"} Thickness={px(1.9)} />
 							</textlabel>
 						</textlabel>
 
@@ -397,10 +319,10 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							TextColor3={Color3.fromRGB(255, 255, 255)}
 							// TextScaled={true}
 							// TextWrapped={true}
-							TextSize={px(25)}
+							TextSize={px(22)}
 							TextXAlignment={Enum.TextXAlignment.Right}
 						>
-							<uistroke key={"UIStroke"} Thickness={3} />
+							<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 							<textlabel
 								AnchorPoint={new Vector2(0.5, 0.5)}
@@ -419,11 +341,11 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 								TextColor3={Color3.fromRGB(255, 255, 255)}
 								// TextScaled={true}
 								// TextWrapped={true}
-								TextSize={px(25)}
+								TextSize={px(22)}
 								TextXAlignment={Enum.TextXAlignment.Right}
 								Visible={true}
 							>
-								<uistroke key={"UIStroke"} Thickness={3} />
+								<uistroke key={"UIStroke"} Thickness={px(3)} />
 							</textlabel>
 						</textlabel>
 					</frame>
@@ -461,7 +383,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 						// TextScaled={true}
 						TextSize={px(55)}
 					>
-						<uistroke key={"1"} Thickness={5} />
+						<uistroke key={"1"} Thickness={px(5)} />
 
 						<textlabel
 							AnchorPoint={new Vector2(0.5, 0.5)}
@@ -475,7 +397,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							// TextScaled={true}
 							TextSize={px(55)}
 						>
-							<uistroke key={"1"} Thickness={5} />
+							<uistroke key={"1"} Thickness={px(5)} />
 						</textlabel>
 					</textlabel>
 				</frame>
@@ -503,6 +425,8 @@ const TreasureItemComponent: React.FC<TreasureItemComponentProps> = ({
 	count,
 	// itemType,
 }) => {
+	const px = usePx();
+
 	return (
 		<AnimatedButton
 			layoutOrder={trashConfig[itemName] ? 2147483647 : getOrderFromRarity(rarity)}
@@ -526,7 +450,7 @@ const TreasureItemComponent: React.FC<TreasureItemComponentProps> = ({
 			>
 				<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
 
-				<uistroke key={"UIStroke"} Color={gameConstants.RARITY_COLORS[rarity]} Thickness={3} />
+				<uistroke key={"UIStroke"} Color={gameConstants.RARITY_COLORS[rarity]} Thickness={px(3)} />
 
 				<frame
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -597,7 +521,7 @@ const TreasureItemComponent: React.FC<TreasureItemComponentProps> = ({
 									TextWrapped={true}
 									TextXAlignment={Enum.TextXAlignment.Left}
 								>
-									<uistroke key={"UIStroke"} Thickness={2} />
+									<uistroke key={"UIStroke"} Thickness={px(2)} />
 
 									<uipadding
 										key={"UIPadding"}
@@ -623,7 +547,7 @@ const TreasureItemComponent: React.FC<TreasureItemComponentProps> = ({
 					Visible={count > 1}
 					ZIndex={10}
 				>
-					<uistroke key={"UIStroke"} Thickness={2} />
+					<uistroke key={"UIStroke"} Thickness={px(2)} />
 				</textlabel>
 
 				<imagelabel
@@ -646,7 +570,7 @@ const TreasureItemComponent: React.FC<TreasureItemComponentProps> = ({
 						TextColor3={Color3.fromRGB(255, 255, 255)}
 						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 					>
-						<uistroke Thickness={2} />
+						<uistroke Thickness={px(2)} />
 					</textlabel>
 				</imagelabel>
 			</frame>
@@ -826,7 +750,7 @@ const CategoryButton = (props: CategoryButtonProps) => {
 					TextXAlignment={Enum.TextXAlignment.Left}
 					ZIndex={10}
 				>
-					<uistroke key={"UIStroke"} Thickness={3} />
+					<uistroke key={"UIStroke"} Thickness={px(3)} />
 					<textlabel
 						AnchorPoint={new Vector2(0.5, 0.5)}
 						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -846,7 +770,7 @@ const CategoryButton = (props: CategoryButtonProps) => {
 						TextXAlignment={Enum.TextXAlignment.Left}
 						ZIndex={11}
 					>
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(7, 7, 7)} Thickness={3} />
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(7, 7, 7)} Thickness={px(3)} />
 					</textlabel>
 
 					<uipadding
@@ -875,6 +799,8 @@ const SkillFrame: React.FC<SkillFrameProps> = (props) => {
 	const [size, sizeMotion] = useMotion(1);
 	const [bgColor, bgColorMotion] = useMotion(Color3.fromRGB(255, 255, 255));
 	const skillUpgrade = SoundService.WaitForChild("UI").WaitForChild("Skill upgrade") as Sound;
+
+	const px = usePx();
 
 	return (
 		<frame
@@ -910,14 +836,22 @@ const SkillFrame: React.FC<SkillFrameProps> = (props) => {
 							Signals.invalidAction.Fire("No skill points!");
 							return;
 						}
-						Events.upgradeSkill.fire(string.lower(props.title) as SkillName);
 						SoundService.PlayLocalSound(skillUpgrade);
+						Events.upgradeSkill.fire(string.lower(props.title) as SkillName);
 					},
 					MouseEnter: () => {
 						bgColorMotion.spring(Color3.fromRGB(255, 255, 255).Lerp(new Color3(), 0.5));
 						sizeMotion.spring(1.05, springs.responsive);
 					},
 					MouseLeave: () => {
+						bgColorMotion.spring(Color3.fromRGB(255, 255, 255).Lerp(new Color3(), 0));
+						sizeMotion.spring(1, springs.responsive);
+					},
+					SelectionGained: () => {
+						bgColorMotion.spring(Color3.fromRGB(255, 255, 255).Lerp(new Color3(), 0.5));
+						sizeMotion.spring(1.05, springs.responsive);
+					},
+					SelectionLost: () => {
 						bgColorMotion.spring(Color3.fromRGB(255, 255, 255).Lerp(new Color3(), 0));
 						sizeMotion.spring(1, springs.responsive);
 					},
@@ -980,7 +914,7 @@ const SkillFrame: React.FC<SkillFrameProps> = (props) => {
 							TextWrapped={true}
 							TextXAlignment={Enum.TextXAlignment.Left}
 						>
-							<uistroke key={"UIStroke"} Thickness={3} />
+							<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 							<uipadding
 								key={"UIPadding"}
@@ -1038,7 +972,7 @@ const SkillFrame: React.FC<SkillFrameProps> = (props) => {
 							TextScaled={true}
 							TextWrapped={true}
 						>
-							<uistroke key={"UIStroke"} Thickness={3} />
+							<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 							<uipadding
 								key={"UIPadding"}
@@ -1063,9 +997,14 @@ const SkillFrame: React.FC<SkillFrameProps> = (props) => {
 							layoutOrder={4}
 							key={"NoSoundOnHover"}
 							onClick={() => {
-								Events.upgradeSkill.fire(string.lower(props.title) as SkillName);
+								if (!props.canUpgrade) {
+									Signals.invalidAction.Fire("No skill points!");
+									return;
+								}
 								SoundService.PlayLocalSound(skillUpgrade);
+								Events.upgradeSkill.fire(string.lower(props.title) as SkillName);
 							}}
+							selectable={false}
 						>
 							<imagelabel
 								AnchorPoint={new Vector2(0.5, 0.5)}
@@ -1094,7 +1033,7 @@ const SkillFrame: React.FC<SkillFrameProps> = (props) => {
 									TextColor3={new Color3(1, 1, 1)}
 									TextScaled={true}
 								>
-									<uistroke key={"UIStroke"} Color={Color3.fromRGB(1, 75, 33)} Thickness={3} />
+									<uistroke key={"UIStroke"} Color={Color3.fromRGB(1, 75, 33)} Thickness={px(3)} />
 
 									<uipadding
 										key={"UIPadding"}
@@ -1204,6 +1143,8 @@ interface SellAllBtnProps {
 }
 
 export const SellAllBtn = (props: SellAllBtnProps) => {
+	const px = usePx();
+
 	return (
 		<AnimatedButton
 			size={props.size ?? UDim2.fromScale(0.268, 1)}
@@ -1218,6 +1159,9 @@ export const SellAllBtn = (props: SellAllBtnProps) => {
 					MarketplaceService.PromptGamePassPurchase(
 						Players.LocalPlayer,
 						gameConstants.GAMEPASS_IDS.SellEverywhere,
+					);
+					SoundService.PlayLocalSound(
+						SoundService.WaitForChild("UI").WaitForChild("PromptPurchase") as Sound,
 					);
 					return;
 				}
@@ -1255,7 +1199,7 @@ export const SellAllBtn = (props: SellAllBtnProps) => {
 					TextScaled={true}
 					TextWrapped={true}
 				>
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(1, 75, 33)} Thickness={3} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(1, 75, 33)} Thickness={px(3)} />
 
 					<textlabel
 						AnchorPoint={new Vector2(0.5, 0.5)}
@@ -1272,7 +1216,7 @@ export const SellAllBtn = (props: SellAllBtnProps) => {
 						TextScaled={true}
 						TextWrapped={true}
 					>
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(1, 75, 33)} Thickness={3} />
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(1, 75, 33)} Thickness={px(3)} />
 					</textlabel>
 				</textlabel>
 			</imagelabel>
@@ -1295,7 +1239,7 @@ export const ExitButton = (props: ExitButtonProps) => {
 	};
 
 	useEffect(() => {
-		// Listen to Gamepad B button for our controller enjoyers
+		// Listen to Gamepad B button for our controller enjoyers to close UIs
 		const inputBegan = UserInputService.InputBegan.Connect((input) => {
 			if (input.KeyCode === Enum.KeyCode.ButtonB && props.isMenuVisible) {
 				exit();
@@ -1305,7 +1249,7 @@ export const ExitButton = (props: ExitButtonProps) => {
 		return () => {
 			inputBegan.Disconnect();
 		};
-	}, [props.menuRefToClose]);
+	}, [props.isMenuVisible]);
 
 	return (
 		<AnimatedButton
@@ -1315,6 +1259,7 @@ export const ExitButton = (props: ExitButtonProps) => {
 			size={UDim2.fromScale(0.123, 0.194)}
 			zindex={100}
 			onClick={exit}
+			selectable={false}
 		>
 			<imagelabel
 				AnchorPoint={new Vector2(0.5, 0.5)}
@@ -1401,12 +1346,15 @@ const IndexPageItem = (props: IndexPageItemProps) => {
 		"Sapphire gem": UDim2.fromScale(0.8375303149223328, 0.8884709477424622),
 	};
 
+	const px = usePx();
+
 	return (
 		<frame
 			BackgroundTransparency={1}
 			key={props.itemName}
 			Size={UDim2.fromScale(0.25, 0.343)}
 			LayoutOrder={itemCfg.rarity}
+			SelectionOrder={itemCfg.rarity}
 		>
 			<AnimatedButton
 				size={UDim2.fromScale(1, 1)}
@@ -1473,7 +1421,7 @@ const IndexPageItem = (props: IndexPageItemProps) => {
 							Rotation={90}
 						/>
 
-						<uistroke key={"UIStroke"} Thickness={3} Transparency={0.5} />
+						<uistroke key={"UIStroke"} Thickness={px(3)} Transparency={0.5} />
 					</frame>
 				</imagelabel>
 			</AnimatedButton>
@@ -1481,19 +1429,12 @@ const IndexPageItem = (props: IndexPageItemProps) => {
 	);
 };
 
-const RefundPointFrame = () => {
-	const [isHovered, setIsHovered] = React.useState(false);
-	const [isPressed, setPressed] = React.useState(false);
-	const [size, sizeMotion] = useMotion(1);
-	const [MIN_SCALE, MAX_SCALE] = [0.95, 1.05];
+interface RefundPointFrameProps {
+	gamepassController: GamepassController;
+}
 
-	useEffect(() => {
-		sizeMotion.spring(isHovered ? MAX_SCALE : 1, springs.responsive);
-	}, [isHovered]);
-
-	useEffect(() => {
-		sizeMotion.spring(isPressed ? MIN_SCALE : isHovered ? MAX_SCALE : 1, springs.responsive);
-	}, [isPressed]);
+const RefundPointFrame = (props: RefundPointFrameProps) => {
+	const px = usePx();
 
 	return (
 		<frame
@@ -1518,110 +1459,16 @@ const RefundPointFrame = () => {
 				TextScaled={true}
 				TextWrapped={true}
 			>
-				<uistroke key={"UIStroke"} Thickness={3} />
+				<uistroke key={"UIStroke"} Thickness={px(3)} />
 			</textlabel>
 
-			<frame
-				AnchorPoint={new Vector2(0.5, 0.5)}
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				key={"Refund Points  Btn Frame"}
-				Position={UDim2.fromScale(0.558, 0.722)}
-				Size={UDim2.fromScale(0.981, 0.636)}
-			>
-				<imagebutton
-					AnchorPoint={new Vector2(0.5, 0.5)}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					Image={"rbxassetid://92239062767450"}
-					key={"Buy Btn"}
-					Position={UDim2.fromScale(0.5, 0.5)}
-					ScaleType={Enum.ScaleType.Slice}
-					Size={size.map((s) => {
-						return UDim2.fromScale(1.03 * s, 1.07 * s);
-					})}
-					SliceCenter={new Rect(47, 94, 539, 94)}
-					Selectable={true}
-					Event={{
-						MouseEnter: () => setIsHovered(true),
-						MouseLeave: () => setIsHovered(false),
-						MouseButton1Click: () => {
-							// TODO: Prompt refund point devproduct
-							MarketplaceService.PromptProductPurchase(
-								Players.LocalPlayer,
-								gameConstants.DEVPRODUCT_IDS.RefundPoints,
-							);
-							setPressed(true);
-							task.delay(0.1, () => setPressed(false));
-						},
-					}}
-				>
-					<frame
-						AnchorPoint={new Vector2(0.5, 0.5)}
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						key={"Discount Number"}
-						Position={UDim2.fromScale(0.5, 0.492)}
-						Size={UDim2.fromScale(0.829, 0.524)}
-					>
-						<uilistlayout
-							key={"UIListLayout"}
-							FillDirection={Enum.FillDirection.Horizontal}
-							HorizontalAlignment={Enum.HorizontalAlignment.Center}
-							Padding={new UDim(0.05, 0)}
-							SortOrder={Enum.SortOrder.LayoutOrder}
-							VerticalAlignment={Enum.VerticalAlignment.Center}
-						/>
-
-						<imagelabel
-							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-							BackgroundTransparency={1}
-							BorderColor3={Color3.fromRGB(0, 0, 0)}
-							BorderSizePixel={0}
-							Image={"rbxassetid://75287275007438"}
-							key={"Robux"}
-							Position={UDim2.fromScale(0.262, 0.00802)}
-							ScaleType={Enum.ScaleType.Fit}
-							Size={UDim2.fromScale(0.399, 0.984)}
-						>
-							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-						</imagelabel>
-
-						<textlabel
-							AnchorPoint={new Vector2(0.5, 0.5)}
-							AutomaticSize={Enum.AutomaticSize.X}
-							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-							BackgroundTransparency={1}
-							BorderColor3={Color3.fromRGB(0, 0, 0)}
-							BorderSizePixel={0}
-							FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-							key={"Timer"}
-							Position={UDim2.fromScale(0.569, 0.5)}
-							Size={UDim2.fromScale(0.223, 1)}
-							Text={"99"}
-							TextColor3={Color3.fromRGB(255, 255, 255)}
-							TextScaled={true}
-							TextWrapped={true}
-							TextXAlignment={Enum.TextXAlignment.Left}
-							ZIndex={10}
-						>
-							<uistroke key={"UIStroke"} Color={Color3.fromRGB(8, 66, 34)} Thickness={4} />
-
-							<uipadding
-								key={"UIPadding"}
-								PaddingBottom={new UDim(0.00487, 0)}
-								PaddingTop={new UDim(0.00487, 0)}
-							/>
-						</textlabel>
-					</frame>
-				</imagebutton>
-			</frame>
+			<BuyButton
+				id={gameConstants.DEVPRODUCT_IDS.RefundPoints}
+				productType={Enum.InfoType.Product}
+				gamepassController={props.gamepassController}
+				active={true}
+				size={UDim2.fromScale(1, 0.6)}
+			/>
 
 			<uilistlayout
 				key={"UIListLayout"}
@@ -1686,7 +1533,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 	const [targetInventoryUsedSize, setTargetInventoryUsedSize] = useState(0);
 	const [enabledMenu, setEnabledMenu] = React.useState(MENUS.Inventory);
 	const [, setMenuIndex] = React.useState(0);
-	const [popInSz, popInMotion] = useMotion(UDim2.fromScale(0, 0));
+	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0.5, 0.6));
 	const [selectedIndexItem, setSelectedIndexItem] = useState<{
 		targetName: keyof typeof targetConfig | "";
 		mapName: keyof typeof mapConfig | "";
@@ -1699,6 +1546,8 @@ export const InventoryComponent = (props: MainUiProps) => {
 	const [visible, setVisible] = React.useState(false);
 	const [gamepadEnabled, setGamepadEnabled] = React.useState(UserInputService.GamepadEnabled);
 	const menuRef = createRef<Frame>();
+
+	const px = usePx();
 
 	function updateInventory(
 		inventoryType: ItemType,
@@ -1834,7 +1683,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 
 	React.useEffect(() => {
 		if (visible) {
-			popInMotion.spring(UDim2.fromScale(0.8, 0.792), springs.responsive);
+			popInMotion.spring(UDim2.fromScale(0.48, 0.45), springs.responsive);
 		} else {
 			const connection = Signals.inventoryFull.Connect(() => {
 				if (visible) {
@@ -1846,7 +1695,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 					displayInventoryType: "Target",
 				});
 			});
-			popInMotion.immediate(UDim2.fromScale(0, 0));
+			popInMotion.immediate(UDim2.fromScale(0.48, 0.55));
 			return () => {
 				connection?.Disconnect();
 			};
@@ -2000,8 +1849,8 @@ export const InventoryComponent = (props: MainUiProps) => {
 			BorderColor3={Color3.fromRGB(0, 0, 0)}
 			BorderSizePixel={0}
 			key={"Container"}
-			Position={UDim2.fromScale(0.48, 0.45)}
-			Size={popInSz}
+			Position={popInPos}
+			Size={UDim2.fromScale(0.8, 0.792)}
 			Visible={visible}
 			ref={menuRef}
 		>
@@ -2089,7 +1938,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 								TextScaled={true}
 								TextWrapped={true}
 							>
-								<uistroke key={"UIStroke"} Color={Color3.fromRGB(17, 24, 46)} Thickness={4} />
+								<uistroke key={"UIStroke"} Color={Color3.fromRGB(17, 24, 46)} Thickness={px(4)} />
 
 								<uipadding
 									key={"UIPadding"}
@@ -2117,7 +1966,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 								TextScaled={true}
 								TextWrapped={true}
 							>
-								<uistroke key={"UIStroke"} Color={Color3.fromRGB(17, 24, 46)} Thickness={4} />
+								<uistroke key={"UIStroke"} Color={Color3.fromRGB(17, 24, 46)} Thickness={px(4)} />
 
 								<uipadding
 									key={"UIPadding"}
@@ -2377,7 +2226,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 						Position={UDim2.fromScale(0.000901, 0.736)}
 						Size={UDim2.fromScale(0.988, 0.25)}
 					>
-						<RefundPointFrame />
+						<RefundPointFrame gamepassController={props.gamepassController} />
 
 						<uilistlayout
 							key={"UIListLayout"}
@@ -2418,7 +2267,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 								TextScaled={true}
 								TextWrapped={true}
 							>
-								<uistroke key={"UIStroke"} Thickness={3} />
+								<uistroke key={"UIStroke"} Thickness={px(3)} />
 							</textlabel>
 
 							<frame
@@ -2460,7 +2309,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 									TextScaled={true}
 									TextWrapped={true}
 								>
-									<uistroke key={"UIStroke"} Thickness={3} />
+									<uistroke key={"UIStroke"} Thickness={px(3)} />
 								</textlabel>
 
 								<frame
@@ -2535,7 +2384,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 									TextScaled={true}
 									TextWrapped={true}
 								>
-									<uistroke key={"UIStroke"} Thickness={3} />
+									<uistroke key={"UIStroke"} Thickness={px(3)} />
 								</textlabel>
 							</frame>
 						</frame>

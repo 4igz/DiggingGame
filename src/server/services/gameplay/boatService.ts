@@ -20,7 +20,7 @@ export class BoatService implements OnStart, OnTick {
 	private lastActiveBoatTimes = new Map<string, number>();
 	private activeBoats = new Set<string>();
 
-	private BOAT_DESPAWN_TIMER = 15;
+	private BOAT_DESPAWN_TIMER = 60;
 
 	constructor(private readonly profileService: ProfileService, private readonly zoneService: ZoneService) {}
 
@@ -146,7 +146,7 @@ export class BoatService implements OnStart, OnTick {
 
 			const unoccupiedBoatSpawn = this.getUnoccupiedBoatSpawn(player, currentMap);
 			if (!unoccupiedBoatSpawn) {
-				Events.boatSpawnResponse(player, false, `Couldn't find unoccupied boat spawn for map: ${currentMap}`);
+				Events.boatSpawnResponse(player, false, `All spawns full!`);
 				warn(`Couldn't find unoccupied boat spawn for map: ${currentMap}`);
 				return;
 			}

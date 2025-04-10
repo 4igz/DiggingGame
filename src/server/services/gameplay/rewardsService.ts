@@ -13,6 +13,8 @@ import { InventoryService } from "./inventoryService";
 import { shovelConfig } from "shared/config/shovelConfig";
 import { boatConfig } from "shared/config/boatConfig";
 import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
+import { LevelService } from "./levelService";
+import groupReward from "shared/config/groupReward";
 
 @Service({})
 export class DailyRewardsService implements OnStart {
@@ -24,6 +26,7 @@ export class DailyRewardsService implements OnStart {
 		private readonly moneyService: MoneyService,
 		private readonly devproductService: DevproductService,
 		private readonly inventoryService: InventoryService,
+		private readonly levelService: LevelService,
 	) {}
 
 	onStart() {
@@ -44,7 +47,7 @@ export class DailyRewardsService implements OnStart {
 		});
 
 		// Quickly test all rewards to make sure they're valid
-		for (const reward of [...dailyRewards, ...timePlayedRewards]) {
+		for (const reward of [...dailyRewards, ...timePlayedRewards, groupReward]) {
 			switch (reward.rewardType) {
 				case "Money":
 					assert(
@@ -79,6 +82,18 @@ export class DailyRewardsService implements OnStart {
 						`No metal detector found for reward ${reward.itemName}`,
 					);
 					break;
+				case "SkillPoints":
+					assert(
+						reward.rewardAmount !== undefined,
+						"Must specify rewardAmount when rewardType is SkillPoints.",
+					);
+					break;
+				case "Experience":
+					assert(
+						reward.rewardAmount !== undefined,
+						"Must specify rewardAmount when rewardType is Experience.",
+					);
+					break;
 				default:
 					error(`Unknown reward type: ${reward.rewardType}`);
 			}
@@ -107,6 +122,21 @@ export class DailyRewardsService implements OnStart {
 			profile.Data.dailyStreak = profile.Data.dailyStreak % dailyRewards.size(); // Resets streak if it reaches the end
 			Events.updateDailyStreak(player, profile.Data.dailyStreak, profile.Data.lastDailyClaimed);
 			this.profileService.setProfile(player, profile);
+		});
+
+		Events.claimFreeReward.connect((player) => {
+			const profile = this.profileService.getProfile(player);
+			if (!profile) return;
+			if (player.IsInGroup(game.CreatorId) && !profile.Data.claimedFreeReward) {
+				this.claimReward(player, groupReward);
+				profile.Data.claimedFreeReward = true;
+				this.profileService.setProfile(player, profile);
+			}
+		});
+
+		Functions.getHasClaimedFreeReward.setCallback((player) => {
+			const profile = this.profileService.getProfileLoaded(player).expect();
+			return profile.Data.claimedFreeReward;
 		});
 
 		Functions.claimPlaytimeReward.setCallback((player: Player, rewardIndex: number) => {
@@ -173,16 +203,24 @@ export class DailyRewardsService implements OnStart {
 				break;
 			case "Boats":
 				this.inventoryService.onBoatBoughtSuccess(player, reward.itemName!);
-				Events.sendClaimedPopup.fire(player, "Boats", reward.itemName!);
+				// Events.sendClaimedPopup.fire(player, "Boats", reward.itemName!);
 				break;
 			case "Shovels":
 				this.inventoryService.onItemBoughtSuccess(player, "Shovels", reward.itemName!);
-				Events.sendClaimedPopup.fire(player, "Shovels", reward.itemName!);
+				// Events.sendClaimedPopup.fire(player, "Shovels", reward.itemName!);
 				break;
 			case "MetalDetectors":
 				this.inventoryService.onItemBoughtSuccess(player, "MetalDetectors", reward.itemName!);
-				Events.sendClaimedPopup.fire(player, "MetalDetectors", reward.itemName!);
+				// Events.sendClaimedPopup.fire(player, "MetalDetectors", reward.itemName!);
 				break;
+			case "Experience":
+				this.levelService.addExperience(player, reward.rewardAmount!);
+			case "SkillPoints":
+				const profile = this.profileService.getProfile(player);
+				if (!profile) break;
+				profile.Data.skillPoints += reward.rewardAmount!;
+				this.profileService.setProfile(player, profile);
+				Events.sendClaimedPopup.fire(player, "SkillPoints", 1);
 			default:
 				error(`Unknown reward type: ${reward.rewardType}`);
 		}

@@ -2,6 +2,7 @@
 import React, { useEffect } from "@rbxts/react";
 import { RunService } from "@rbxts/services";
 import { useMotion } from "client/hooks/useMotion";
+import { usePx } from "client/hooks/usePx";
 import { springs } from "client/utils/springs";
 import { gameConstants } from "shared/gameConstants";
 import { Rarity } from "shared/networkTypes";
@@ -25,6 +26,8 @@ export const BoughtItemPopup = (props: BoughtItemPopupProps) => {
 	const [imageRotation, setImageRotation] = useMotion(0);
 
 	const POPUP_TIME = 5;
+
+	const px = usePx();
 
 	useEffect(() => {
 		setSizeMotion.spring(UDim2.fromScale(0.3, 0.1), springs.responsive);
@@ -150,7 +153,7 @@ export const BoughtItemPopup = (props: BoughtItemPopupProps) => {
 				TextScaled={true}
 				TextWrapped={false}
 			>
-				<uistroke key={"UIStroke"} />
+				<uistroke key={"UIStroke"} Thickness={px(1)} />
 			</textlabel>
 		</frame>
 	);

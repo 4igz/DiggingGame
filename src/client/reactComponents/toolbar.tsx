@@ -2,11 +2,14 @@
 import React, { useEffect, useState, useMemo, useRef } from "@rbxts/react";
 import { Players, UserInputService, SoundService } from "@rbxts/services";
 import { Trove } from "@rbxts/trove";
+import { useMotion } from "client/hooks/useMotion";
+import { springs } from "client/utils/springs";
 import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
 import { shovelConfig } from "shared/config/shovelConfig";
 import { fullTargetConfig } from "shared/config/targetConfig";
 import { gameConstants } from "shared/gameConstants";
 import { ItemType, Rarity } from "shared/networkTypes";
+import { Signals } from "shared/signals";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 
 interface ToolbarItemProps {
@@ -21,7 +24,7 @@ interface ToolbarItemProps {
 	equipToolByOrder: (order: number) => void;
 }
 
-const MOBILE_TOOLBAR_SCALE = 1.5;
+const MOBILE_TOOLBAR_SCALE = 1.25;
 
 const ToolbarItemComponent: React.FC<ToolbarItemProps> = (props) => {
 	return (
@@ -102,6 +105,7 @@ const ToolbarItemComponent: React.FC<ToolbarItemProps> = (props) => {
 				TextColor3={Color3.fromRGB(255, 255, 255)}
 				TextScaled={true}
 				TextWrapped={true}
+				ZIndex={100}
 			>
 				<uistroke key={"UIStroke"} Thickness={3} />
 			</textlabel>
@@ -124,10 +128,14 @@ const ToolbarItemComponent: React.FC<ToolbarItemProps> = (props) => {
 
 const cleanupCallbacks: Array<() => void> = [];
 
+const DEFAULT_POS = UDim2.fromScale(0.5, 1);
+const CLOSED_POS = UDim2.fromScale(0.5, 1.5);
+
 export const Toolbar = () => {
 	const [items, setItems] = useState<Array<ToolbarItemProps>>([]);
 	const [platform, setPlatform] = useState(getPlayerPlatform());
 	const itemsRef = useRef<Array<ToolbarItemProps>>([]);
+	const [menuPos, menuPosMotion] = useMotion(DEFAULT_POS);
 
 	itemsRef.current = items; // Keep ref updated with latest items
 
@@ -140,6 +148,12 @@ export const Toolbar = () => {
 			setPlatform(getPlayerPlatform());
 		});
 		return () => connection.Disconnect();
+	}, []);
+
+	useEffect(() => {
+		Signals.menuOpened.Connect((isOpen) => {
+			menuPosMotion.spring(isOpen ? CLOSED_POS : DEFAULT_POS, springs.default);
+		});
 	}, []);
 
 	const cleanupPreviousTool = () => {
@@ -380,7 +394,7 @@ export const Toolbar = () => {
 			AnchorPoint={new Vector2(0.5, 1)}
 			Size={UDim2.fromScale(0.75, 0.15 * (platform === "Mobile" ? MOBILE_TOOLBAR_SCALE : 1))}
 			BackgroundTransparency={1}
-			Position={UDim2.fromScale(0.5, 1)}
+			Position={menuPos}
 			ZIndex={1}
 		>
 			<uilistlayout

@@ -475,7 +475,7 @@ export class TargetService implements OnStart {
 		for (let i = 0; i < multiDigLevel; i++) {
 			const usedSz = profile.Data.targetInventory.size();
 			if (usedSz >= this.inventoryService.getInventorySize(player)) break;
-			const targetResult = this.createTarget(player, target.usedLuckMult);
+			const targetResult = this.createTarget(player, target.usedLuckMult, true);
 			if (!targetResult) break;
 			const [extraTarget] = targetResult;
 			this.inventoryService.addItemToTargetInventory(player, extraTarget);

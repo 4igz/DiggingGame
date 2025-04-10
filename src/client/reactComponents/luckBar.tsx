@@ -15,10 +15,6 @@ interface LuckBarProps {
 	uiController: UiController;
 }
 
-function lerp(a: number, b: number, t: number): number {
-	return a + (b - a) * t;
-}
-
 const camera = Workspace.CurrentCamera;
 const defaultFov = camera?.FieldOfView ?? 70;
 const fovGoal = 60;
@@ -40,6 +36,7 @@ export default function LuckBar(props: LuckBarProps) {
 	const [paused, setPaused] = useState(false);
 	const [startTime, setStartTime] = useState(0);
 	const [, fovMotion] = useMotion(defaultFov);
+	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0.65, 0.55));
 
 	const px = usePx();
 
@@ -53,11 +50,13 @@ export default function LuckBar(props: LuckBarProps) {
 			setPaused(false);
 			setVisible(true);
 			fovMotion.spring(fovGoal, springs.walk);
+			popInMotion.spring(UDim2.fromScale(0.65, 0.5), springs.bubbly);
 		} else {
 			fovMotion.spring(defaultFov, springs.molasses);
 			setVisible(false);
 			setPaused(true);
 			lastPlayedLuck = 1;
+			popInMotion.spring(UDim2.fromScale(0.65, 0.55), springs.responsive);
 		}
 	};
 
@@ -163,7 +162,7 @@ export default function LuckBar(props: LuckBarProps) {
 			BorderColor3={Color3.fromRGB(0, 0, 0)}
 			BorderSizePixel={0}
 			key={"Luck Container"}
-			Position={new UDim2(0.65, 0, 0.5, 0)}
+			Position={popInPos}
 			Size={UDim2.fromScale(0.0466, 0.495)}
 			Visible={visible}
 		>

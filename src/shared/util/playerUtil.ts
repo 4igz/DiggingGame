@@ -1,6 +1,6 @@
 //!optimize 2
 
-import { Players } from "@rbxts/services";
+import { HttpService, Players } from "@rbxts/services";
 
 //!native
 const humanoidCache = new Map<Player, Humanoid>();
@@ -44,4 +44,42 @@ export async function promisePlayerDisconnected(player: Player): Promise<void> {
 	}
 
 	await Promise.fromEvent(Players.PlayerRemoving, (playerWhoLeft) => playerWhoLeft === player);
+}
+
+/**
+ * Checks if a player has liked the current game
+ * @param userId The user ID to check
+ * @returns Promise that resolves to true if the player liked the game, false otherwise
+ */
+export function checkIfPlayerLikedGame(userId: number): Promise<boolean> {
+	const placeId = game.PlaceId;
+
+	return new Promise<boolean>((resolve, reject) => {
+		try {
+			const url = `https://apis.roblox.com/game-votes/v1/votes?userId=${userId}&assetId=${placeId}`;
+
+			(async () => {
+				try {
+					const response = HttpService.RequestAsync({
+						Url: url,
+						Method: "GET",
+					});
+
+					if (response.Success) {
+						const data = HttpService.JSONDecode(response.Body) as { isVotedByUser: boolean };
+						resolve(data.isVotedByUser);
+					} else {
+						warn(`Failed to check if player liked game. Status code: ${response.StatusCode}`);
+						resolve(false);
+					}
+				} catch (error) {
+					warn(`Error checking if player liked game: ${error}`);
+					resolve(false);
+				}
+			})();
+		} catch (error) {
+			warn(`Exception while checking if player liked game: ${error}`);
+			resolve(false);
+		}
+	});
 }

@@ -1,8 +1,19 @@
 --!optimize 2
--- Compiled with roblox-ts v3.0.0
+
+type BoatConfig = {
+	price: number,
+	itemImage: string,
+	speed: number,
+	rarityType: Rarity,
+	notForSale: boolean?,
+	obtainLocation: string?, -- Tell the user where the boat can be obtained, otherwise, it will not appear in the shop
+
+	turnSpeed: number,
+}
+
 local DEFAULT_BOAT_TURN_SPEED = 1000
 local DEFAULT_BOAT_SPEED = 1000
-local boatConfig = {
+local boatConfig: { [string]: BoatConfig } = {
 	["Wooden boat"] = {
 		price = 1000,
 		itemImage = "rbxassetid://119081046401633",
@@ -23,6 +34,9 @@ local boatConfig = {
 		rarityType = "Uncommon",
 		turnSpeed = 2,
 		speed = 4,
+
+		notForSale = true,
+		obtainLocation = "Daily Reward",
 	},
 	["Turbo boat"] = {
 		price = 5000000,
@@ -51,6 +65,9 @@ local boatConfig = {
 		rarityType = "Mythical",
 		turnSpeed = 100,
 		speed = 20,
+
+		notForSale = true,
+		obtainLocation = "Daily Reward",
 	},
 }
 return {

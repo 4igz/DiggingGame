@@ -1,7 +1,7 @@
 //!optimize 2
 import { OnRender, OnStart } from "@flamework/core";
 import { Component, BaseComponent } from "@flamework/components";
-import { ContextActionService, Players, UserInputService } from "@rbxts/services";
+import { Players, UserInputService } from "@rbxts/services";
 import { Events, Functions } from "client/network";
 import { boatConfig, DEFAULT_BOAT_SPEED, DEFAULT_BOAT_TURN_SPEED } from "shared/config/boatConfig";
 import { gameConstants } from "shared/gameConstants";
@@ -192,16 +192,6 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 			this.instance.Physics.ForceAttachment.AngularVelocity.AngularVelocity = this.currentAngularVelocity;
 		};
 
-		ContextActionService.BindAction(
-			"ExitBoat",
-			(_, userInputState) => exitBoatAction(userInputState),
-			true,
-			ownerSeatPrompt.GamepadKeyCode,
-			ownerSeatPrompt.KeyboardKeyCode,
-			// Enum.KeyCode.ButtonA,
-			// Enum.KeyCode.Space,
-		);
-
 		UserInputService.JumpRequest.Connect(() => {
 			if (!this.isSittingInDriverSeat) return;
 			exitBoatAction(Enum.UserInputState.Begin);
@@ -225,7 +215,7 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 
 		const character = Players.LocalPlayer.Character;
 		if (character) {
-			const humanoid = character.WaitForChild("Humanoid") as Humanoid;
+			const humanoid = character.WaitForChild("Humanoid", 2) as Humanoid;
 			if (humanoid) {
 				connectHumanoidDied(humanoid);
 			}

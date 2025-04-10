@@ -2,7 +2,8 @@
 import Object from "@rbxts/object-utils";
 import React from "@rbxts/react";
 import { DialogResponse, QUEST_ACCEPT, QUEST_DECLINE } from "shared/config/questConfig";
-import { AnimatedButton } from "./inventory";
+import { AnimatedButton } from "./buttons";
+import { usePx } from "client/hooks/usePx";
 
 interface DialogOptionProps {
 	description: string;
@@ -11,6 +12,8 @@ interface DialogOptionProps {
 }
 
 const DialogOption = (props: DialogOptionProps) => {
+	const px = usePx();
+
 	return (
 		<AnimatedButton
 			anchorPoint={new Vector2(0.5, 0)}
@@ -64,7 +67,7 @@ const DialogOption = (props: DialogOptionProps) => {
 							key={"UIStroke"}
 							Enabled={false}
 							LineJoinMode={Enum.LineJoinMode.Bevel}
-							Thickness={2}
+							Thickness={px(2)}
 							Transparency={0.4}
 						/>
 					</textlabel>
@@ -88,7 +91,7 @@ const DialogOption = (props: DialogOptionProps) => {
 							key={"UIStroke"}
 							Enabled={false}
 							LineJoinMode={Enum.LineJoinMode.Bevel}
-							Thickness={2}
+							Thickness={px(2)}
 							Transparency={0.4}
 						/>
 					</textlabel>

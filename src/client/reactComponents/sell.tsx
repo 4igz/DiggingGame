@@ -6,11 +6,13 @@ import { Events, Functions } from "client/network";
 import { springs } from "client/utils/springs";
 import { gameConstants } from "shared/gameConstants";
 import { TargetItem } from "shared/networkTypes";
-import { AnimatedButton, ExitButton, SellAllBtn } from "./inventory";
+import { ExitButton, SellAllBtn } from "./inventory";
 import { fullTargetConfig } from "shared/config/targetConfig";
 import { shortenNumber } from "shared/util/nameUtil";
 import { getOrderFromRarity } from "shared/util/rarityUtil";
-import { SoundService } from "@rbxts/services";
+import { SoundService, UserInputService } from "@rbxts/services";
+import { AnimatedButton } from "./buttons";
+import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 
 interface SellTargetProps {
 	target: TargetItem;
@@ -36,9 +38,7 @@ const SellTargetComponent: React.FC<SellTargetProps> = (props) => {
 				active={true}
 				onClick={() => {
 					Events.sellTarget(props.target.itemId);
-					SoundService.PlayLocalSound(
-						SoundService.WaitForChild("UI").WaitForChild("IndividualSell") as Sound,
-					);
+					SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("Sell") as Sound);
 				}}
 			>
 				{/* <uiaspectratioconstraint key={"UIAspectRatioConstraint"} /> */}
@@ -96,8 +96,9 @@ interface SellUiProps {
 export const Sell: React.FC<SellUiProps> = (props) => {
 	const [shopContent, setShopContent] = React.useState<TargetItem[]>([]);
 	const [visible, setVisible] = React.useState(false);
-	const [popInSz, popInMotion] = useMotion(UDim2.fromScale(0, 0));
+	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0.5, 0.6));
 	const menuRef = React.useRef<Frame>();
+	const [platform, setPlatform] = React.useState(getPlayerPlatform());
 
 	React.useEffect(() => {
 		setVisible(props.visible);
@@ -105,9 +106,9 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 
 	React.useEffect(() => {
 		if (visible) {
-			popInMotion.spring(UDim2.fromScale(0.629, 0.702), springs.responsive);
+			popInMotion.spring(UDim2.fromScale(0.5, 0.5), springs.responsive);
 		} else {
-			popInMotion.immediate(UDim2.fromScale(0, 0));
+			popInMotion.immediate(UDim2.fromScale(0.5, 0.6));
 		}
 	}, [visible]);
 
@@ -132,6 +133,17 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 			if (invType !== "Target") return;
 			setShopContent(inventory as TargetItem[]);
 		});
+
+		UserInputService.InputChanged.Connect((input) => {
+			setPlatform(getPlayerPlatform());
+		});
+
+		UserInputService.InputBegan.Connect((input) => {
+			if (input.KeyCode === Enum.KeyCode.ButtonY) {
+				Events.sellAll();
+				SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("Sell") as Sound);
+			}
+		});
 	}, []);
 
 	return (
@@ -142,8 +154,8 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 			BorderColor3={Color3.fromRGB(0, 0, 0)}
 			BorderSizePixel={0}
 			key={"Sell Treasures Sub-Menu"}
-			Position={UDim2.fromScale(0.5, 0.5)}
-			Size={popInSz}
+			Position={popInPos}
+			Size={UDim2.fromScale(0.629, 0.702)}
 			Visible={visible}
 			ref={menuRef}
 		>
@@ -283,6 +295,17 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 				requiresGamepass={false}
 				visible={true}
 			/>
+
+			<imagelabel
+				AnchorPoint={new Vector2(0, 0.5)}
+				BackgroundTransparency={1}
+				Position={UDim2.fromScale(0.65, 0.85)}
+				Size={UDim2.fromScale(0.278, 0.154)}
+				Visible={platform === "Console"}
+				Image={UserInputService.GetImageForKeyCode(Enum.KeyCode.ButtonY)}
+			>
+				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1} />
+			</imagelabel>
 		</frame>
 	);
 };

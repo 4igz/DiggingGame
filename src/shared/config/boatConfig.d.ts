@@ -9,6 +9,8 @@ export interface BoatConfig {
 	itemImage: string;
 	speed: number;
 	rarityType: Rarity;
+	notForSale: boolean; // If true, the boat is not for sale in the shop.
+	obtainLocation: string; // The location where the boat can be obtained displayed to user.
 
 	turnSpeed: number; // Not displayed anywhere, but different boats need to turn quicker than others depending on size.
 }

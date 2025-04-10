@@ -1,6 +1,6 @@
 //!optimize 2
 import React, { createRef, useEffect, useState } from "@rbxts/react";
-import { AnimatedButton, ExitButton } from "./inventory";
+import { ExitButton } from "./inventory";
 import UiController from "client/controllers/uiController";
 import { gameConstants, REWARD_IMAGES } from "shared/gameConstants";
 import { useMotion } from "client/hooks/useMotion";
@@ -16,6 +16,7 @@ import { ItemType, RewardType } from "shared/networkTypes";
 import { hasGiftAtom } from "client/atoms/rewardAtoms";
 import { Signals } from "shared/signals";
 import { SoundService } from "@rbxts/services";
+import { AnimatedButton } from "./buttons";
 
 const SEC_INTERVAL = interval(1);
 
@@ -277,7 +278,7 @@ interface PlaytimeRewardsProps {
 const MAX_IMAGE_ROTATION = 25;
 
 export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
-	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0, 0));
+	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0.5, 0.6));
 	const [visible, setVisible] = useState(false);
 	const [claimedAll, setClaimedAll] = useState(false);
 	const [allowClaimAll, setAllowClaimAll] = useState(false);

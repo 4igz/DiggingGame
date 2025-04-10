@@ -3,6 +3,7 @@ import { Controller, OnInit, OnStart } from "@flamework/core";
 import React from "@rbxts/react";
 import ReactRoblox from "@rbxts/react-roblox";
 import {
+	CollectionService,
 	Players,
 	ReplicatedStorage,
 	RunService,
@@ -42,6 +43,8 @@ import { DetectorHint } from "client/reactComponents/detectorHint";
 import { NoYield } from "@rbxts/thread-utilities";
 import { QuestInfoSideButton } from "client/reactComponents/questInfoSidebutton";
 import { BottomTips } from "client/reactComponents/bottomTips";
+import { Zone } from "@rbxts/zone-plus";
+import { FreeReward } from "client/reactComponents/freeReward";
 
 const LOW_LAYER = 0;
 const MENU_LAYER = 1;
@@ -88,7 +91,11 @@ export default class UiController implements OnStart, OnInit {
 	 * Toggle the visibility of a UI by name.
 	 * Special handling for DIG_BAR_UI if autoDiggingEnabled is true.
 	 */
-	public toggleUi(name: string, newProps: Partial<Record<string, unknown>> = {}) {
+	public toggleUi(
+		name: string,
+		newProps: Partial<Record<string, unknown>> = {},
+		closeIfAlreadyToggled: boolean = true,
+	) {
 		const menu = menus.get(name);
 		if (!menu) return;
 
@@ -113,7 +120,7 @@ export default class UiController implements OnStart, OnInit {
 		}
 
 		// If we get here, we're toggling a "normal" UI (not the dig bar)
-		if (currentOpenUi === name) {
+		if (currentOpenUi === name && closeIfAlreadyToggled) {
 			// If it's already open, close it
 			this.closeUi(name);
 		} else {
@@ -140,6 +147,7 @@ export default class UiController implements OnStart, OnInit {
 					Size: TARGET_BLUR_SZ,
 				}).Play();
 				effectsActive = true;
+				Signals.menuOpened.Fire(true);
 			}
 		}
 	}
@@ -164,6 +172,7 @@ export default class UiController implements OnStart, OnInit {
 
 		// Undo blur and FOV effects on close
 		if (effectsActive && menu.layer === MENU_LAYER) {
+			Signals.menuOpened.Fire(false);
 			TweenService.Create(camera, EFFECTS_TWEEN_INFO, {
 				FieldOfView: DEFAULT_FOV,
 			}).Play();
@@ -261,6 +270,23 @@ export default class UiController implements OnStart, OnInit {
 		debugWarn(
 			"Client module onStart lifecycle began.\n------------------------------------------------------------------------------------------------------",
 		);
+
+		const createGiftUIZone = (inst: PVInstance) => {
+			const zone = new Zone(inst);
+			zone.localPlayerEntered.Connect(() => {
+				this.toggleUi(gameConstants.FREE_REWARD_UI, {}, false);
+			});
+		};
+
+		CollectionService.GetTagged("FreeGiftZone").forEach((i) => {
+			assert(i.IsA("PVInstance"));
+			createGiftUIZone(i);
+		});
+
+		CollectionService.GetInstanceAddedSignal("FreeGiftZone").Connect((i) => {
+			assert(i.IsA("PVInstance"));
+			createGiftUIZone(i);
+		});
 	}
 
 	toString() {
@@ -291,6 +317,18 @@ export default class UiController implements OnStart, OnInit {
 				this.updateUiProps(name, { visible: uiVisible });
 			}
 		});
+
+		this.registerUi(
+			gameConstants.FREE_REWARD_UI,
+			React.createElement(FreeReward),
+			{
+				visible: false,
+				uiController: this,
+			},
+			undefined,
+			undefined,
+			MENU_LAYER,
+		);
 
 		this.registerUi(
 			gameConstants.DIG_BAR_UI,
@@ -364,12 +402,13 @@ export default class UiController implements OnStart, OnInit {
 			{
 				visible: false,
 				uiController: this,
+				gamepassController: this.gamepassController,
 			},
 			true,
 			true,
 			MENU_LAYER,
 		);
-		this.registerUi(gameConstants.POPUP_UI, React.createElement(Popups), {}, undefined, true, OVERLAY_LAYER);
+		this.registerUi(gameConstants.POPUP_UI, React.createElement(Popups), {}, undefined, false, OVERLAY_LAYER);
 		this.registerUi(
 			gameConstants.ISLE_POPUP_UI,
 			React.createElement(IsleEnterPopup),
@@ -441,144 +480,151 @@ export default class UiController implements OnStart, OnInit {
 		this.registerUi(
 			gameConstants.QUEST_INFO_SIDEBUTTON,
 			React.createElement(QuestInfoSideButton),
-			{},
+			{ UiController: this },
 			undefined,
 			undefined,
 			LOW_LAYER,
 		);
 
-		this.registerUi("BottomTips", React.createElement(BottomTips), {}, undefined, undefined, LOW_LAYER);
+		this.registerUi(
+			"BottomTips",
+			React.createElement(BottomTips),
+			{ uiController: this },
+			undefined,
+			undefined,
+			LOW_LAYER,
+		);
 
-		// Hide some stuff from the client that we already have cached.
-		// By the time we init here, all modules have been loaded already, so we can safely remove them.
-		// The goal of destroying all the scripts and renaming them to something ambiguous is to make
-		// it harder for exploiters to find modules they're looking for, thus making it harder to exploit the game.
-		//
-		// No, this isn't 100% foolproof, but it's a good deterrent. It will definitely be a pain for anyone trying
-		// to reverse engineer the game to find what they're looking for. Anyone with decent exploiting knowledge will
-		// know how to find these nil'd scripts, but it's a good way to ward off inexperienced or ignorant exploit devs.
-		//
-		// The same guid is used for all destroyed module scripts and UIs to make it harder to distinguish them from each other.
-		//
-		// To my knowledge, the only way to distinguish them is to get their debug id's somehow, which is different per instance,
-		// and then use that to find the instance in nilinstances. But that's a lot of work.
-		//
-		// What they will more likely do is hook the game metatable and prevent ModuleScripts, folders, etc. from being destroyed and renamed.
-		// It does require a decent bit of exploiting knowledge to actually perform this, but it's not impossible, and will be done.
-		// They will probably start by preventing ModuleScripts from being destroyed, but the folders containing the ModuleScripts are also destroyed,
-		// so they will have to figure that out too. Doing this may break the game for them in unintended ways though due to certain CoreScripts doing the same thing.
-		//
-		// However, this is only one of the many layers of "security". They have to get past this first though before they can move further.
-		task.spawn(() => {
-			xpcall(() => {
-				// Make it harder to hook the game metatable and prevent scripts from being destroyed.
-				// This can be bypassed but it will be more difficult.
-				// If they try hooking destroying modules with an infinite wait, we'll know they yielded here.
-				// If they hook destroying modules or renaming modules to error then we'll know if something went wrong.
-				const safeDispose = (instance: Instance) => {
-					if (instance === undefined || typeOf(instance) !== "Instance") return;
+		// // Hide some stuff from the client that we already have cached.
+		// // By the time we init here, all modules have been loaded already, so we can safely remove them.
+		// // The goal of destroying all the scripts and renaming them to something ambiguous is to make
+		// // it harder for exploiters to find modules they're looking for, thus making it harder to exploit the game.
+		// //
+		// // No, this isn't 100% foolproof, but it's a good deterrent. It will definitely be a pain for anyone trying
+		// // to reverse engineer the game to find what they're looking for. Anyone with decent exploiting knowledge will
+		// // know how to find these nil'd scripts, but it's a good way to ward off inexperienced or ignorant exploit devs.
+		// //
+		// // The same guid is used for all destroyed module scripts and UIs to make it harder to distinguish them from each other.
+		// //
+		// // To my knowledge, the only way to distinguish them is to get their debug id's somehow, which is different per instance,
+		// // and then use that to find the instance in nilinstances. But that's a lot of work.
+		// //
+		// // What they will more likely do is hook the game metatable and prevent ModuleScripts, folders, etc. from being destroyed and renamed.
+		// // It does require a decent bit of exploiting knowledge to actually perform this, but it's not impossible, and will be done.
+		// // They will probably start by preventing ModuleScripts from being destroyed, but the folders containing the ModuleScripts are also destroyed,
+		// // so they will have to figure that out too. Doing this may break the game for them in unintended ways though due to certain CoreScripts doing the same thing.
+		// //
+		// // However, this is only one of the many layers of "security". They have to get past this first though before they can move further.
+		// task.spawn(() => {
+		// 	xpcall(() => {
+		// 		// Make it harder to hook the game metatable and prevent scripts from being destroyed.
+		// 		// This can be bypassed but it will be more difficult.
+		// 		// If they try hooking destroying modules with an infinite wait, we'll know they yielded here.
+		// 		// If they hook destroying modules or renaming modules to error then we'll know if something went wrong.
+		// 		const safeDispose = (instance: Instance) => {
+		// 			if (instance === undefined || typeOf(instance) !== "Instance") return;
 
-					// Any infinite yields (or yields past 1 second) will be caught here.
-					// If something errors, we'll know that something went wrong.
-					//
-					// This will never error under normal circumstances. If this actually happens,
-					// there is definitely something fishy going on on the client side.
-					NoYield(() => {
-						// To disable this in studio, set the DoHide attribute to false.
-						// It will still happen in game.
-						// It's a good idea to leave it enabled to make sure nothing breaks while still in studio!
-						if (RunService.IsStudio() && !ReplicatedStorage.GetAttribute("DoHide")) {
-							return;
-						}
+		// 			// Any infinite yields (or yields past 1 second) will be caught here.
+		// 			// If something errors, we'll know that something went wrong.
+		// 			//
+		// 			// This will never error under normal circumstances. If this actually happens,
+		// 			// there is definitely something fishy going on on the client side.
+		// 			NoYield(() => {
+		// 				// To disable this in studio, set the DoHide attribute to false.
+		// 				// It will still happen in game.
+		// 				// It's a good idea to leave it enabled to make sure nothing breaks while still in studio!
+		// 				if (RunService.IsStudio() && !ReplicatedStorage.GetAttribute("DoHide")) {
+		// 					return;
+		// 				}
 
-						instance.Name = uiGuid;
-						instance.Destroy();
+		// 				instance.Name = uiGuid;
+		// 				instance.Destroy();
 
-						if (!instance.Parent && instance.Name === uiGuid) {
-							// Also check for renames, or ancestry changes. We don't do this outside of this normally!
-							// Someone might bypass this by doing getconnections on these signals and disconnecting them.
-							// This is as far as we'll go to prevent tampering. If they get past this, they're probably going to get past anything else.
-							instance.GetPropertyChangedSignal("Name").Connect(errorHandler);
-							instance.AncestryChanged.Connect(errorHandler);
-						} else {
-							error("Instance was not actually disposed!");
-						}
-					});
-				};
+		// 				if (!instance.Parent && instance.Name === uiGuid) {
+		// 					// Also check for renames, or ancestry changes. We don't do this outside of this normally!
+		// 					// Someone might bypass this by doing getconnections on these signals and disconnecting them.
+		// 					// This is as far as we'll go to prevent tampering. If they get past this, they're probably going to get past anything else.
+		// 					instance.GetPropertyChangedSignal("Name").Connect(errorHandler);
+		// 					instance.AncestryChanged.Connect(errorHandler);
+		// 				} else {
+		// 					error("Instance was not actually disposed!");
+		// 				}
+		// 			});
+		// 		};
 
-				Players.LocalPlayer.WaitForChild("PlayerScripts")
-					.WaitForChild("TS")
-					.GetDescendants()
-					.forEach((child) => {
-						// Can't destroy the runtime script or scripts will stop running.
-						if (child.IsA("LocalScript")) return;
+		// 		Players.LocalPlayer.WaitForChild("PlayerScripts")
+		// 			.WaitForChild("TS")
+		// 			.GetDescendants()
+		// 			.forEach((child) => {
+		// 				// Can't destroy the runtime script or scripts will stop running.
+		// 				if (child.IsA("LocalScript")) return;
 
-						safeDispose(child);
-					});
+		// 				safeDispose(child);
+		// 			});
 
-				const ts = StarterPlayer.WaitForChild("StarterPlayerScripts").WaitForChild("TS");
-				ts.GetDescendants().forEach((child) => {
-					if (child.IsA("LocalScript")) return;
-					safeDispose(child);
-				});
+		// 		const ts = StarterPlayer.WaitForChild("StarterPlayerScripts").WaitForChild("TS");
+		// 		ts.GetDescendants().forEach((child) => {
+		// 			if (child.IsA("LocalScript")) return;
+		// 			safeDispose(child);
+		// 		});
 
-				const tsShared = ReplicatedStorage.WaitForChild("TS");
-				tsShared.GetDescendants().forEach((child) => {
-					safeDispose(child);
-				});
-				safeDispose(tsShared);
+		// 		const tsShared = ReplicatedStorage.WaitForChild("TS");
+		// 		tsShared.GetDescendants().forEach((child) => {
+		// 			safeDispose(child);
+		// 		});
+		// 		safeDispose(tsShared);
 
-				function markSubtree(root: Instance, keepSet: Set<Instance>) {
-					const stack = [root];
-					while (stack.size() > 0) {
-						const current = stack.pop()!;
-						if (!keepSet.has(current)) {
-							keepSet.add(current);
-							for (const child of current.GetChildren()) {
-								stack.push(child);
-							}
-						}
-					}
-				}
+		// 		function markSubtree(root: Instance, keepSet: Set<Instance>) {
+		// 			const stack = [root];
+		// 			while (stack.size() > 0) {
+		// 				const current = stack.pop()!;
+		// 				if (!keepSet.has(current)) {
+		// 					keepSet.add(current);
+		// 					for (const child of current.GetChildren()) {
+		// 						stack.push(child);
+		// 					}
+		// 				}
+		// 			}
+		// 		}
 
-				function markAncestors(instance: Instance, keepSet: Set<Instance>, stopAt: Instance) {
-					let current: Instance | undefined = instance;
-					while (current) {
-						keepSet.add(current);
-						if (current === stopAt) break;
-						current = current.Parent;
-					}
-				}
+		// 		function markAncestors(instance: Instance, keepSet: Set<Instance>, stopAt: Instance) {
+		// 			let current: Instance | undefined = instance;
+		// 			while (current) {
+		// 				keepSet.add(current);
+		// 				if (current === stopAt) break;
+		// 				current = current.Parent;
+		// 			}
+		// 		}
 
-				const includeNames = ["@jsdotlua"];
-				const rbxtsInclude = ReplicatedStorage.WaitForChild("rbxts_include");
-				const keepSet = new Set<Instance>();
-				keepSet.add(rbxtsInclude);
-				const allDescendants = rbxtsInclude.GetDescendants();
+		// 		const includeNames = ["@jsdotlua"];
+		// 		const rbxtsInclude = ReplicatedStorage.WaitForChild("rbxts_include");
+		// 		const keepSet = new Set<Instance>();
+		// 		keepSet.add(rbxtsInclude);
+		// 		const allDescendants = rbxtsInclude.GetDescendants();
 
-				for (const descendant of allDescendants) {
-					if (includeNames.includes(descendant.Name)) {
-						markSubtree(descendant, keepSet);
+		// 		for (const descendant of allDescendants) {
+		// 			if (includeNames.includes(descendant.Name)) {
+		// 				markSubtree(descendant, keepSet);
 
-						markAncestors(descendant, keepSet, rbxtsInclude);
-					}
-				}
+		// 				markAncestors(descendant, keepSet, rbxtsInclude);
+		// 			}
+		// 		}
 
-				for (const descendant of allDescendants) {
-					if (!keepSet.has(descendant)) {
-						safeDispose(descendant);
-					}
-				}
+		// 		for (const descendant of allDescendants) {
+		// 			if (!keepSet.has(descendant)) {
+		// 				safeDispose(descendant);
+		// 			}
+		// 		}
 
-				ReplicatedStorage.SetAttribute("DoHide", undefined);
-			}, errorHandler);
-		});
+		// 		ReplicatedStorage.SetAttribute("DoHide", undefined);
+		// 	}, errorHandler);
+		// });
 	}
 }
 
-function errorHandler() {
-	// If we got here, it's likely that someone is trying to interfere with the game, by erroring when modules are renamed, or
-	// yielding infinitely to prevent the thread from continuing. This should only happen if the user is trying to exploit the game.
-	// It's impossible for a normal player to trigger this.
-	Events.selfReport("Tampering");
-}
+// function errorHandler() {
+// 	// If we got here, it's likely that someone is trying to interfere with the game, by erroring when modules are renamed, or
+// 	// yielding infinitely to prevent the thread from continuing. This should only happen if the user is trying to exploit the game.
+// 	// It's impossible for a normal player to trigger this.
+// 	Events.selfReport("Tampering");
+// }

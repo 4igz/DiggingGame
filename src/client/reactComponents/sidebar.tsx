@@ -9,7 +9,8 @@ import { AutoDigging } from "client/controllers/autoDigController";
 import { UserInputService } from "@rbxts/services";
 import { Signals } from "shared/signals";
 import { Events, Functions } from "client/network";
-import { usePx } from "client/hooks/usePx";
+import { ScaleFunction, usePx } from "client/hooks/usePx";
+import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 
 interface SidebarButtonProps {
 	icon: string;
@@ -21,7 +22,7 @@ interface SidebarButtonProps {
 	gamepadEnabled?: boolean;
 	uiController: UiController;
 	onClick?: () => void;
-	pxProvider: (px: number) => number;
+	pxProvider: ScaleFunction;
 }
 
 const SidebarButton = (props: SidebarButtonProps) => {
@@ -30,6 +31,8 @@ const SidebarButton = (props: SidebarButtonProps) => {
 	const [isHovered, setIsHovered] = React.useState(false);
 	const [isPressed, setPressed] = React.useState(false);
 	const [size, sizeMotion] = useMotion(START_SZ);
+
+	const platform = getPlayerPlatform();
 
 	const px = props.pxProvider;
 
@@ -57,7 +60,7 @@ const SidebarButton = (props: SidebarButtonProps) => {
 			}
 		});
 		return () => con.Disconnect();
-	}, [props.gamepadEnabled]);
+	}, [props.gamepadEnabled, props.onClick]);
 
 	return (
 		<frame
@@ -82,7 +85,11 @@ const SidebarButton = (props: SidebarButtonProps) => {
 				Size={UDim2.fromScale(1, 1)}
 				Selectable={false}
 				Event={{
-					MouseEnter: () => setIsHovered(true),
+					MouseEnter: () => {
+						// Don't allow hover on mobile for these buttons because they can get in the way of the touch controls
+						if (platform === "Mobile") return;
+						setIsHovered(true);
+					},
 					MouseLeave: () => setIsHovered(false),
 					MouseButton1Click: () => {
 						if (props.onClick) {
@@ -115,7 +122,7 @@ const SidebarButton = (props: SidebarButtonProps) => {
 				// TextWrapped={true}
 				TextSize={px(25)}
 			>
-				<uistroke key={"UIStroke"} Thickness={3} />
+				<uistroke key={"UIStroke"} Thickness={px(3)} />
 			</textlabel>
 
 			<frame
@@ -145,7 +152,7 @@ const SidebarButton = (props: SidebarButtonProps) => {
 					TextWrapped={true}
 					ZIndex={10}
 				>
-					<uistroke key={"UIStroke"} Thickness={2} />
+					<uistroke key={"UIStroke"} Thickness={px(2)} />
 
 					<uipadding
 						key={"UIPadding"}
@@ -156,7 +163,7 @@ const SidebarButton = (props: SidebarButtonProps) => {
 					/>
 				</textlabel>
 
-				<uistroke key={"UIStroke"} Thickness={2} />
+				<uistroke key={"UIStroke"} Thickness={px(2)} />
 
 				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 			</frame>
@@ -182,10 +189,14 @@ interface SidebarProps {
 	uiController: UiController;
 }
 
+const DEFAULT_POS = UDim2.fromScale(0.01, 0.4);
+const CLOSED_POS = UDim2.fromScale(-0.6, 0.4);
+
 export const Sidebar: React.FC<SidebarProps> = (props) => {
 	const [autoDigEnabled, setAutoDiggingEnabled] = React.useState(false);
 	const [availableSkillPoints, setAvailableSkillPoints] = React.useState(0);
 	const [gamepadEnabled, setGamepadEnabled] = React.useState(UserInputService.GamepadEnabled);
+	const [menuPos, menuPosMotion] = useMotion(DEFAULT_POS);
 
 	const px = usePx();
 
@@ -212,6 +223,10 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 		UserInputService.GamepadDisconnected.Connect(() => {
 			setGamepadEnabled(false);
 		});
+
+		Signals.menuOpened.Connect((isOpen) => {
+			menuPosMotion.spring(isOpen ? CLOSED_POS : DEFAULT_POS, springs.default);
+		});
 	}, []);
 
 	return (
@@ -221,7 +236,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 			BorderColor3={Color3.fromRGB(0, 0, 0)}
 			BorderSizePixel={0}
 			key={"QuickActionButtons"}
-			Position={UDim2.fromScale(0.01, 0.5)}
+			Position={menuPos}
 			Size={UDim2.fromScale(0.2, 0.6)}
 			AnchorPoint={new Vector2(0, 0.5)}
 		>
@@ -230,6 +245,19 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 				SortOrder={Enum.SortOrder.LayoutOrder}
 				VerticalAlignment={Enum.VerticalAlignment.Center}
 				HorizontalAlignment={Enum.HorizontalAlignment.Left}
+				Padding={new UDim(0, 5)}
+			/>
+
+			<SidebarButton
+				icon={"rbxassetid://125407928227030"}
+				uiController={props.uiController}
+				gamepadEnabled={gamepadEnabled}
+				gamepadCode={Enum.KeyCode.DPadUp}
+				text={"Shop"}
+				onClick={() => {
+					props.uiController.toggleUi(gameConstants.GAMEPASS_SHOP_UI);
+				}}
+				pxProvider={px}
 			/>
 
 			<SidebarButton
@@ -243,6 +271,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 				}}
 				pxProvider={px}
 			/>
+
 			<SidebarButton
 				icon={"rbxassetid://90345162177443"}
 				uiController={props.uiController}
@@ -257,17 +286,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 				pxProvider={px}
 				notificationText={tostring(availableSkillPoints)}
 			/>
-			<SidebarButton
-				icon={"rbxassetid://125407928227030"}
-				uiController={props.uiController}
-				gamepadEnabled={gamepadEnabled}
-				gamepadCode={Enum.KeyCode.ButtonB}
-				text={"Shop"}
-				onClick={() => {
-					props.uiController.toggleUi(gameConstants.GAMEPASS_SHOP_UI);
-				}}
-				pxProvider={px}
-			/>
+
 			<SidebarButton
 				icon={"rbxassetid://108568741864610"}
 				gamepadEnabled={gamepadEnabled}
@@ -278,9 +297,8 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 				gamepadCode={Enum.KeyCode.ButtonL3}
 				onClick={() => {
 					const enabled = !autoDigEnabled;
-					setAutoDiggingEnabled(enabled);
-
 					props.autoDigController.setAutoDiggingEnabled(enabled);
+					setAutoDiggingEnabled(enabled);
 				}}
 				pxProvider={px}
 			/>

@@ -12,7 +12,7 @@ export interface CantdoThisPopupProps {
 
 export const CantdoThisPopup = (props: CantdoThisPopupProps) => {
 	const [popupSize, setSizeMotion] = useMotion(UDim2.fromScale(0, 0));
-	const popupText = props.text ?? "Done!";
+	const popupText = "🚫 " + (props.text ?? "Done!");
 	const count = props.count ?? 1; // Use provided count or default to 1
 
 	useEffect(() => {
@@ -60,49 +60,49 @@ export const CantdoThisPopup = (props: CantdoThisPopupProps) => {
 				ZIndex={2}
 			>
 				<uistroke key={"UIStroke"} Thickness={3.4} />
-			</textlabel>
 
-			<frame
-				AnchorPoint={new Vector2(0.5, 0.5)}
-				BackgroundColor3={new Color3(1, 1, 1)}
-				BorderColor3={new Color3()}
-				BorderSizePixel={0}
-				key={"Claim"}
-				Position={UDim2.fromScale(0.5, 0.5)}
-				Size={UDim2.fromScale(1, 1)}
-			>
-				<uigradient
-					key={"UIGradient"}
-					Color={
-						new ColorSequence([
-							new ColorSequenceKeypoint(0, new Color3(0.459, 0.459, 0.459)),
-							new ColorSequenceKeypoint(1, new Color3(0.459, 0.459, 0.459)),
-						])
-					}
-					Transparency={
-						new NumberSequence([
-							new NumberSequenceKeypoint(0, 1),
-							new NumberSequenceKeypoint(0.501, 0.494),
-							new NumberSequenceKeypoint(1, 1),
-						])
-					}
-				/>
-
-				<uistroke key={"UIStroke"} Color={new Color3(1, 1, 1)} Thickness={3} Transparency={0.8}>
+				<frame
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundColor3={new Color3(1, 1, 1)}
+					BorderColor3={new Color3()}
+					BorderSizePixel={0}
+					key={"Claim"}
+					Position={UDim2.fromScale(0.5, 0.5)}
+					Size={UDim2.fromScale(1, 1.5)}
+				>
 					<uigradient
 						key={"UIGradient"}
+						Color={
+							new ColorSequence([
+								new ColorSequenceKeypoint(0, new Color3(0.459, 0.459, 0.459)),
+								new ColorSequenceKeypoint(1, new Color3(0.459, 0.459, 0.459)),
+							])
+						}
 						Transparency={
 							new NumberSequence([
 								new NumberSequenceKeypoint(0, 1),
-								new NumberSequenceKeypoint(0.0362, 1),
-								new NumberSequenceKeypoint(0.5, 0),
-								new NumberSequenceKeypoint(0.951, 1),
+								new NumberSequenceKeypoint(0.501, 0.494),
 								new NumberSequenceKeypoint(1, 1),
 							])
 						}
 					/>
-				</uistroke>
-			</frame>
+
+					<uistroke key={"UIStroke"} Color={new Color3(1, 1, 1)} Thickness={3} Transparency={0.8}>
+						<uigradient
+							key={"UIGradient"}
+							Transparency={
+								new NumberSequence([
+									new NumberSequenceKeypoint(0, 1),
+									new NumberSequenceKeypoint(0.0362, 1),
+									new NumberSequenceKeypoint(0.5, 0),
+									new NumberSequenceKeypoint(0.951, 1),
+									new NumberSequenceKeypoint(1, 1),
+								])
+							}
+						/>
+					</uistroke>
+				</frame>
+			</textlabel>
 		</frame>
 	);
 };

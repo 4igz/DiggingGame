@@ -16,6 +16,7 @@ import { numberSerializer } from "shared/network";
 import UiController from "client/controllers/uiController";
 import { GamepassController } from "client/controllers/gamepassController";
 import { greenToRed, redToGreen } from "shared/util/colorUtil";
+import { usePx } from "client/hooks/usePx";
 
 export interface DiggingBarProps {
 	target?: Target;
@@ -76,6 +77,9 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 	const [digInfo, setDigInfo] = useState<PlayerDigInfo>();
 	const [digStage, setDigStage] = useState(0);
 	const [prevDigStage, setPrevDigStage] = useState(0);
+	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0.75, 0.5));
+
+	const px = usePx();
 
 	const progressRef = useRef(0);
 
@@ -95,6 +99,12 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 	const warnStages = [{ 0.4: 1 }, { 0.25: 2 }, { 0.1: 3 }];
 
 	useEffect(() => {
+		if (visible) {
+			popInMotion.spring(UDim2.fromScale(0.75, 0.5), springs.bubbly);
+		} else {
+			popInMotion.immediate(UDim2.fromScale(0.75, 0.6));
+		}
+
 		let time = 0;
 		const connection = RunService.Heartbeat.Connect((dt) => {
 			if (!visible) {
@@ -383,7 +393,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				key={"Digging Progress Bar Frame"}
 				Size={scale.map((s) => UDim2.fromScale(0.3 * s, 0.5 * s))}
 				Visible={visible}
-				Position={UDim2.fromScale(0.75, 0.5)}
+				Position={popInPos}
 				Rotation={rotation.map((r) => math.clamp(math.max(1, r) * (cycle * 4), -8, 8))}
 			>
 				<imagelabel
@@ -419,7 +429,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 							TextScaled={true}
 							ZIndex={4}
 						>
-							<uistroke key={"UIStroke"} Thickness={3} />
+							<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 							<uipadding
 								key={"UIPadding"}
@@ -454,7 +464,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 							TextScaled={true}
 							ZIndex={4}
 						>
-							<uistroke key={"UIStroke"} Thickness={3} />
+							<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 							<uipadding
 								key={"UIPadding"}
@@ -489,7 +499,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 							TextScaled={true}
 							ZIndex={4}
 						>
-							<uistroke key={"UIStroke"} Thickness={3} />
+							<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 							<uipadding
 								key={"UIPadding"}
@@ -524,7 +534,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 							TextScaled={true}
 							ZIndex={4}
 						>
-							<uistroke key={"UIStroke"} Thickness={3} />
+							<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 							<uipadding
 								key={"UIPadding"}
@@ -559,7 +569,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 							TextScaled={true}
 							ZIndex={4}
 						>
-							<uistroke key={"UIStroke"} Thickness={3} />
+							<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 							<uipadding
 								key={"UIPadding"}
@@ -711,7 +721,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 							TextScaled={true}
 							ZIndex={6}
 						>
-							<uistroke key={"UIStroke"} Thickness={3} />
+							<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 							<uipadding
 								key={"UIPadding"}
@@ -749,7 +759,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 							TextScaled={true}
 							ZIndex={6}
 						>
-							<uistroke key={"UIStroke"} Thickness={3} />
+							<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 							<uipadding
 								key={"UIPadding"}
@@ -787,7 +797,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 							TextScaled={true}
 							ZIndex={6}
 						>
-							<uistroke key={"UIStroke"} Thickness={3} />
+							<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 							<uipadding
 								key={"UIPadding"}
@@ -826,7 +836,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 							TextScaled={true}
 							ZIndex={6}
 						>
-							<uistroke key={"UIStroke"} Thickness={3} />
+							<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 							<uipadding
 								key={"UIPadding"}
@@ -864,7 +874,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 							TextScaled={true}
 							ZIndex={6}
 						>
-							<uistroke key={"UIStroke"} Thickness={3} />
+							<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 							<uipadding
 								key={"UIPadding"}
@@ -907,7 +917,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 					TextTransparency={reminderVisibility}
 					ZIndex={2}
 				>
-					<uistroke key={"UIStroke"} Thickness={3.4} Transparency={reminderVisibility} />
+					<uistroke key={"UIStroke"} Thickness={px(3.4)} Transparency={reminderVisibility} />
 				</textlabel>
 
 				<frame
@@ -940,7 +950,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 					<uistroke
 						key={"UIStroke"}
 						Color={new Color3(1, 1, 1)}
-						Thickness={3}
+						Thickness={px(3)}
 						Transparency={reminderVisibility}
 					>
 						<uigradient

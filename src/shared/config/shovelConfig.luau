@@ -1,6 +1,15 @@
--- Compiled with roblox-ts v3.0.0
+type Shovel = {
+	strengthMult: number,
+	rarityType: Rarity,
+	itemImage: string,
+	price: number,
+
+	notForSale: boolean?,
+	obtainLocation: string?, -- If not specified then it won't show
+}
+
 local BASE_SHOVEL_STRENGTH = 1
-local shovelConfig = {
+local shovelConfig: { [string]: Shovel } = {
 	StarterShovel = {
 		strengthMult = 1,
 		rarityType = "Common",
@@ -69,18 +78,26 @@ local shovelConfig = {
 		rarityType = "Epic",
 		itemImage = "rbxassetid://115558690172113",
 		price = 200,
+
+		notForSale = true,
+		-- This is here as an example to show that you can indicate to the player how to obtain a non-purchaseable item. If not specified then it won't show in the shop
+		obtainLocation = "Limited Offer!",
 	},
 	RetroShovel = {
 		strengthMult = 35,
 		rarityType = "Epic",
 		itemImage = "rbxassetid://115558690172113",
 		price = 200,
+
+		notForSale = true,
 	},
 	SteampunkShovel = {
 		strengthMult = 35,
 		rarityType = "Epic",
 		itemImage = "rbxassetid://115558690172113",
 		price = 200,
+
+		notForSale = true,
 	},
 	--
 

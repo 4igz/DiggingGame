@@ -66,7 +66,7 @@ export type Item =
 
 export type SkillName = "strength" | "luck" | "detection";
 
-export type RewardType = "Money" | "LuckMultiplier" | ItemType;
+export type RewardType = "Money" | "LuckMultiplier" | "SkillPoints" | "Experience" | ItemType;
 
 export interface Reward {
 	rewardType: RewardType;

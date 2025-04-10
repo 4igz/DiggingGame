@@ -1,5 +1,6 @@
 import React from "@rbxts/react";
 import { useMotion } from "client/hooks/useMotion";
+import { usePx } from "client/hooks/usePx";
 import { springs } from "client/utils/springs";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 
@@ -11,6 +12,8 @@ export const DetectorHint = (props: HintProps) => {
 	const [visible, setVisible] = React.useState(false);
 	const [transparency, setTransparency] = useMotion(1);
 	const platform = getPlayerPlatform();
+
+	const px = usePx();
 
 	React.useEffect(() => {
 		setVisible(props.visible);
@@ -41,7 +44,7 @@ export const DetectorHint = (props: HintProps) => {
 				TextScaled={true}
 				RichText={true}
 			>
-				<uistroke Thickness={2} Transparency={transparency} />
+				<uistroke Thickness={px(2)} Transparency={transparency} />
 			</textlabel>
 		</frame>
 	);

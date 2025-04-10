@@ -298,84 +298,80 @@ export class ShovelController implements OnStart {
 						"Disconnect",
 					);
 
-					const shovelAction = () => {
-						if (this.diggingActive) {
-							startDiggingAnimation();
+					const shovelAction = (_: string, inputState: Enum.UserInputState) => {
+						if (inputState === Enum.UserInputState.Begin) {
+							Signals.gotDigInput.Fire();
 
-							// Record click time
-							const currentTime = tick();
-							clickTimes.push(currentTime);
-							if (clickTimes.size() > maxClickCount) {
-								clickTimes.shift();
-							}
-							return;
-						}
+							if (this.diggingActive) {
+								startDiggingAnimation();
 
-						if (targetActive && allowDigging()) {
-							Events.digRequest();
-							return;
-						}
-
-						// "Dig Everywhere" logic here
-						if (!targetActive && !noPositionFound) {
-							if (isInventoryFull) {
-								Signals.inventoryFull.Fire();
+								// Record click time
+								const currentTime = tick();
+								clickTimes.push(currentTime);
+								if (clickTimes.size() > maxClickCount) {
+									clickTimes.shift();
+								}
 								return;
 							}
 
-							if (
-								digRequestInProgress ||
-								tick() - lastSuccessfulDig < gameConstants.SUCCESSFUL_DIG_COOLDOWN
-							)
+							if (targetActive && allowDigging()) {
+								Events.digRequest();
 								return;
-							digRequestInProgress = true;
-							humanoid.WalkSpeed = 0;
+							}
 
-							// The reason behind using a remote function is because a high latency client
-							// will request and it will be long before they get a response. If you use a normal event,
-							// it will send the dig event multiple times before it gets a response back, causing the client
-							// to have some unexpected and frustrating behavior. Waiting for a response back allows the player
-							// to only send one dig request, and begin digging only after the server responds.
-							Functions.requestDigging()
-								.then((success) => {
-									digRequestInProgress = false;
-									if (success) {
-										usingDigEverywhere = true;
-									}
-								})
-								.catch((err) => {
-									warn(err);
-									humanoid.WalkSpeed = 16;
-								});
+							// "Dig Everywhere" logic here
+							if (!targetActive && !noPositionFound) {
+								if (isInventoryFull) {
+									Signals.inventoryFull.Fire();
+									return;
+								}
+
+								if (
+									digRequestInProgress ||
+									tick() - lastSuccessfulDig < gameConstants.SUCCESSFUL_DIG_COOLDOWN
+								)
+									return;
+								digRequestInProgress = true;
+								humanoid.WalkSpeed = 0;
+
+								// The reason behind using a remote function is because a high latency client
+								// will request and it will be long before they get a response. If you use a normal event,
+								// it will send the dig event multiple times before it gets a response back, causing the client
+								// to have some unexpected and frustrating behavior. Waiting for a response back allows the player
+								// to only send one dig request, and begin digging only after the server responds.
+								Functions.requestDigging()
+									.then((success) => {
+										digRequestInProgress = false;
+										if (success) {
+											usingDigEverywhere = true;
+										}
+									})
+									.catch((err) => {
+										warn(err);
+										humanoid.WalkSpeed = 16;
+									});
+							}
 						}
 					};
 
 					const actionName = "ShovelAction";
 
 					// === Hook into tool activation ===
-					ContextActionService.BindAction(
-						actionName,
-						(_actionName, inputState, _inputObject) => {
-							if (inputState === Enum.UserInputState.Begin) {
-								Signals.gotDigInput.Fire();
-								shovelAction();
-							}
-						},
-						false,
-						...DIG_KEYBINDS,
-					);
+					ContextActionService.BindAction(actionName, shovelAction, false, ...DIG_KEYBINDS);
 
 					const uisConnection = UserInputService.TouchTap.Connect((input, gameProcessedEvent) => {
 						if (gameProcessedEvent) return;
 						Signals.gotDigInput.Fire();
-						shovelAction();
+						shovelAction(actionName, Enum.UserInputState.Begin);
 					});
 
 					// === Cleanup on tool removal ===
 					toolTrove.add(() => {
 						Signals.setShovelEquipped.Fire(false);
 						steppedConnection?.Disconnect();
-						ContextActionService.UnbindAction(actionName);
+						pcall(() => {
+							ContextActionService.UnbindAction(actionName);
+						});
 						uisConnection.Disconnect();
 						mouse.Icon = "";
 						digTrack.Stop();

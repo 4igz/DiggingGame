@@ -5,12 +5,13 @@ import { dailyRewards, DAILY_REWARD_COOLDOWN } from "shared/config/dailyRewardCo
 import { gameConstants, REWARD_IMAGES } from "shared/gameConstants";
 import { ItemType, RewardType } from "shared/networkTypes";
 import { formatShortTime, shortenNumber, spaceWords } from "shared/util/nameUtil";
-import { AnimatedButton, ExitButton } from "./inventory";
+import { ExitButton } from "./inventory";
 import UiController from "client/controllers/uiController";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
 import { usePx } from "client/hooks/usePx";
 import { SoundService } from "@rbxts/services";
+import { AnimatedButton } from "./buttons";
 
 interface DailyRewardsProps {
 	visible: boolean;
@@ -26,6 +27,7 @@ interface DailyRewardTileProps {
 	rewardName?: string;
 	onClaim: () => void;
 	size: UDim2;
+	timeLeft: number;
 }
 
 // This component represents a single daily reward tile
@@ -36,6 +38,7 @@ const DailyRewardTile = ({
 	isClaimable,
 	onClaim,
 	rewardType,
+	timeLeft,
 	rewardName,
 	size,
 }: DailyRewardTileProps) => {
@@ -48,6 +51,8 @@ const DailyRewardTile = ({
 	const isCompleted = streak >= day;
 	const isToday = streak + 1 === day;
 
+	const px = usePx();
+
 	useEffect(() => {
 		if (!rewardImage) {
 			warn(`No image found for reward type ${rewardType} ${rewardName}`);
@@ -55,7 +60,12 @@ const DailyRewardTile = ({
 	}, [rewardImage]);
 
 	return (
-		<frame BackgroundTransparency={1} LayoutOrder={0} key={day} Size={size}>
+		<frame
+			BackgroundTransparency={1}
+			LayoutOrder={day === 7 ? 7 : ((day - 1) % 3) * 2 + math.floor((day - 1) / 3) + 1}
+			key={day}
+			Size={size}
+		>
 			<AnimatedButton
 				size={UDim2.fromScale(1, 1)}
 				// active={!isCompleted}
@@ -193,7 +203,7 @@ const DailyRewardTile = ({
 					ZIndex={10}
 					Visible={day === 7}
 				>
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(109, 97, 27)} Thickness={3.5} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(109, 97, 27)} Thickness={px(3.5)} />
 
 					<textlabel
 						AnchorPoint={new Vector2(0.5, 0.5)}
@@ -208,7 +218,7 @@ const DailyRewardTile = ({
 						TextXAlignment={Enum.TextXAlignment.Left}
 						ZIndex={12}
 					>
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(109, 97, 27)} Thickness={3.5} />
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(109, 97, 27)} Thickness={px(3.5)} />
 
 						<uigradient
 							key={"UIGradient"}
@@ -235,7 +245,7 @@ const DailyRewardTile = ({
 					TextScaled={true}
 					ZIndex={100}
 				>
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(43, 43, 43)} Thickness={2.8} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(43, 43, 43)} Thickness={px(2.8)} />
 
 					<textlabel
 						AnchorPoint={new Vector2(0.5, 0.5)}
@@ -249,7 +259,7 @@ const DailyRewardTile = ({
 						TextScaled={true}
 						ZIndex={101}
 					>
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(43, 43, 43)} Thickness={2.8} />
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(43, 43, 43)} Thickness={px(2.8)} />
 					</textlabel>
 				</textlabel>
 				{/* Reward amount */}
@@ -265,7 +275,7 @@ const DailyRewardTile = ({
 					ZIndex={21}
 					Visible={day !== 7}
 				>
-					<uistroke key={"UIStroke"} Thickness={3} />
+					<uistroke key={"UIStroke"} Thickness={px(3)} />
 				</textlabel>
 
 				<textlabel
@@ -281,7 +291,7 @@ const DailyRewardTile = ({
 					ZIndex={21}
 					Visible={day === 7}
 				>
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(21, 21, 21)} Thickness={3} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(21, 21, 21)} Thickness={px(3)} />
 
 					<textlabel
 						AnchorPoint={new Vector2(0.5, 0.5)}
@@ -295,7 +305,7 @@ const DailyRewardTile = ({
 						TextScaled={true}
 						ZIndex={22}
 					>
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(21, 21, 21)} Thickness={3} />
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(21, 21, 21)} Thickness={px(3)} />
 					</textlabel>
 				</textlabel>
 
@@ -331,24 +341,30 @@ const DailyRewardTile = ({
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundTransparency={1}
 					Image={"rbxassetid://89920685859779"}
-					key={"ClaimButton"}
+					key={"ClaimOrTimerButton"}
 					Position={UDim2.fromScale(0.5, 0.5)}
 					Selectable={isToday && isClaimable}
 					Size={UDim2.fromScale(1, 0.5)}
 					SliceCenter={new Rect(0, 0, 1024, 1024)}
-					Visible={isToday && isClaimable}
+					Visible={isToday}
 					ZIndex={500}
 				>
 					<uigradient
 						key={"UIGradient"}
 						Color={
-							new ColorSequence([
-								new ColorSequenceKeypoint(0, Color3.fromRGB(120, 255, 147)),
-								new ColorSequenceKeypoint(0.223, Color3.fromRGB(84, 178, 102)),
-								new ColorSequenceKeypoint(0.505, Color3.fromRGB(77, 163, 94)),
-								new ColorSequenceKeypoint(0.732, Color3.fromRGB(77, 164, 94)),
-								new ColorSequenceKeypoint(1, Color3.fromRGB(120, 255, 147)),
-							])
+							isClaimable
+								? new ColorSequence([
+										new ColorSequenceKeypoint(0, Color3.fromRGB(120, 255, 147)),
+										new ColorSequenceKeypoint(0.223, Color3.fromRGB(84, 178, 102)),
+										new ColorSequenceKeypoint(0.505, Color3.fromRGB(77, 163, 94)),
+										new ColorSequenceKeypoint(0.732, Color3.fromRGB(77, 164, 94)),
+										new ColorSequenceKeypoint(1, Color3.fromRGB(120, 255, 147)),
+								  ])
+								: new ColorSequence([
+										new ColorSequenceKeypoint(0, Color3.fromRGB(59, 59, 59)),
+										new ColorSequenceKeypoint(0.5, Color3.fromRGB(0, 0, 0)),
+										new ColorSequenceKeypoint(1, Color3.fromRGB(59, 59, 59)),
+								  ])
 						}
 						Transparency={
 							new NumberSequence([
@@ -376,25 +392,33 @@ const DailyRewardTile = ({
 						}
 						Position={UDim2.fromScale(0.5, 0.5)}
 						Size={UDim2.fromScale(0.8, 1)}
-						Text={"Claim!"}
+						Text={isClaimable ? "Claim!" : formatShortTime(timeLeft)}
 						TextColor3={Color3.fromRGB(255, 255, 255)}
-						TextScaled={true}
+						TextSize={px(35)}
 						ZIndex={500}
 					>
-						<uistroke key={"UIStroke"} Thickness={3.2} />
+						<uistroke key={"UIStroke"} Thickness={px(3.2)} />
 
 						<uigradient
 							key={"UIGradient"}
 							Color={
-								new ColorSequence([
-									new ColorSequenceKeypoint(0, Color3.fromRGB(43, 255, 10)),
-									new ColorSequenceKeypoint(0.349, Color3.fromRGB(43, 255, 10)),
-									new ColorSequenceKeypoint(0.438, Color3.fromRGB(186, 255, 185)),
-									new ColorSequenceKeypoint(0.469, Color3.fromRGB(186, 255, 185)),
-									new ColorSequenceKeypoint(0.502, Color3.fromRGB(186, 255, 185)),
-									new ColorSequenceKeypoint(0.645, Color3.fromRGB(43, 255, 10)),
-									new ColorSequenceKeypoint(1, Color3.fromRGB(43, 255, 10)),
-								])
+								isClaimable
+									? new ColorSequence([
+											new ColorSequenceKeypoint(0, Color3.fromRGB(43, 255, 10)),
+											new ColorSequenceKeypoint(0.349, Color3.fromRGB(43, 255, 10)),
+											new ColorSequenceKeypoint(0.438, Color3.fromRGB(186, 255, 185)),
+											new ColorSequenceKeypoint(0.469, Color3.fromRGB(186, 255, 185)),
+											new ColorSequenceKeypoint(0.502, Color3.fromRGB(186, 255, 185)),
+											new ColorSequenceKeypoint(0.645, Color3.fromRGB(43, 255, 10)),
+											new ColorSequenceKeypoint(1, Color3.fromRGB(43, 255, 10)),
+									  ])
+									: new ColorSequence([
+											new ColorSequenceKeypoint(0, Color3.fromRGB(255, 0, 0)),
+											new ColorSequenceKeypoint(0.25, Color3.fromRGB(255, 69, 69)),
+											new ColorSequenceKeypoint(0.5, Color3.fromRGB(255, 204, 204)),
+											new ColorSequenceKeypoint(0.75, Color3.fromRGB(255, 69, 69)),
+											new ColorSequenceKeypoint(1, Color3.fromRGB(255, 0, 0)),
+									  ])
 							}
 							Rotation={90}
 						/>
@@ -429,7 +453,7 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 	const [timeLeft, setTimeLeft] = React.useState(0);
 	const [streak, setStreak] = React.useState(0);
 	const [visible, setVisible] = React.useState(false);
-	const [popInSz, popInMotion] = useMotion(UDim2.fromScale(0, 0));
+	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0.5, 0.6));
 	const [imageRotation, setImageRotation] = useMotion(-MAX_IMAGE_ROTATION);
 
 	const menuRef = createRef<Frame>();
@@ -483,9 +507,9 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 	// Effect to handle animation
 	React.useEffect(() => {
 		if (visible) {
-			popInMotion.spring(UDim2.fromScale(0.631, 0.704), springs.responsive);
+			popInMotion.spring(UDim2.fromScale(0.5, 0.5), springs.responsive);
 		} else {
-			popInMotion.immediate(UDim2.fromScale(0, 0));
+			popInMotion.immediate(UDim2.fromScale(0.5, 0.6));
 		}
 	}, [visible]);
 
@@ -519,8 +543,8 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 			AnchorPoint={new Vector2(0.5, 0.5)}
 			BackgroundTransparency={1}
 			key={"Daily Reward Container"}
-			Position={UDim2.fromScale(0.504851, 0.50365)}
-			Size={popInSz}
+			Position={popInPos}
+			Size={UDim2.fromScale(0.631, 0.704)}
 			ref={menuRef}
 		>
 			<imagelabel
@@ -594,6 +618,7 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 							reward={shortenNumber(reward.rewardAmount ?? 1, false)}
 							isClaimable={isClaimable}
 							onClaim={handleClaim}
+							timeLeft={timeLeft}
 							rewardType={reward.rewardType}
 							rewardName={reward.itemName}
 							size={index !== 6 ? UDim2.fromScale(0.179, 0.377) : UDim2.fromScale(0.3, 0.845)}
@@ -617,13 +642,13 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 					key={"Title"}
 					Position={UDim2.fromScale(0.9, 0.5)}
 					Size={UDim2.fromScale(1.04396, 1.1697)}
-					Text={`Daily Rewards ${timeLeft > 0 ? `- ${formatShortTime(timeLeft)}` : ""}`}
+					Text={`Daily Rewards ${timeLeft > 0 ? `- Come back later!` : ""}`}
 					TextColor3={Color3.fromRGB(23, 30, 52)}
 					TextScaled={false}
-					TextSize={px(60)}
+					TextSize={px(50)}
 					TextXAlignment={"Left"}
 				>
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={5.3} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(5.3)} />
 
 					<textlabel
 						AnchorPoint={new Vector2(0.5, 0.5)}
@@ -633,13 +658,13 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 						key={"Title"}
 						Position={UDim2.fromScale(0.5, 0.45)}
 						Size={UDim2.fromScale(1, 1)}
-						Text={`Daily Rewards ${timeLeft > 0 ? `- ${formatShortTime(timeLeft)}` : ""}`}
+						Text={`Daily Rewards - Come back later!`}
 						TextColor3={new Color3(1, 1, 1)}
 						TextScaled={false}
 						TextXAlignment={"Left"}
-						TextSize={px(60)}
+						TextSize={px(50)}
 					>
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={5.3} />
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(5.3)} />
 					</textlabel>
 				</textlabel>
 

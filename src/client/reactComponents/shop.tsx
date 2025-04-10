@@ -7,11 +7,12 @@ import { springs } from "client/utils/springs";
 import { gameConstants } from "shared/gameConstants";
 import { Item, ItemType, Rarity } from "shared/networkTypes";
 import { separateWithCommas, shortenNumber, spaceWords } from "shared/util/nameUtil";
-import { AnimatedButton, ExitButton } from "./inventory";
+import { ExitButton } from "./inventory";
 import Object from "@rbxts/object-utils";
 import { NetworkingFunctionError } from "@flamework/networking";
 import { usePx } from "client/hooks/usePx";
 import { RunService } from "@rbxts/services";
+import { AnimatedButton } from "./buttons";
 
 const SHOP_MENUS = {
 	MetalDetectors: "Detectors",
@@ -122,6 +123,7 @@ interface GenericItemProps {
 	itemType: Exclude<ItemType, "Target" | "Boats" | "Potions">;
 	price: number;
 	order: number;
+	obtainLocation?: string;
 }
 
 const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
@@ -403,7 +405,13 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 					</textlabel>
 				</frame>
 
-				<imagelabel BackgroundTransparency={1} Image={props.image} Size={UDim2.fromScale(1, 1)} ZIndex={0} />
+				<imagelabel
+					BackgroundTransparency={1}
+					Image={props.image}
+					Size={UDim2.fromScale(1, 1)}
+					ZIndex={0}
+					ScaleType={"Fit"}
+				/>
 				<textlabel
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundTransparency={1}
@@ -417,7 +425,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 					key={"1"}
 					Position={UDim2.fromScale(0.5, 0.971)}
 					Size={UDim2.fromScale(0.9, 0.11)}
-					Text={`$${separateWithCommas(props.price)}`}
+					Text={props.obtainLocation ?? `$${separateWithCommas(props.price)}`}
 					TextColor3={Color3.fromRGB(92, 255, 133)}
 					// TextScaled={true}
 					// TextWrapped={true}
@@ -448,7 +456,7 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 	const [shopContent, setShopContent] = React.useState<
 		Array<Exclude<Item, { type: "Potions" }> & { owned: boolean }>
 	>([]);
-	const [popInSz, popInMotion] = useMotion(UDim2.fromScale(0, 0));
+	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0.5, 0.6));
 	const [radialRotation, setRadialRotation] = useState(0);
 	const menuRef = React.createRef<Frame>();
 
@@ -528,9 +536,9 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 
 	React.useEffect(() => {
 		if (visible) {
-			popInMotion.spring(UDim2.fromScale(0.631, 0.704), springs.responsive);
+			popInMotion.spring(UDim2.fromScale(0.5, 0.5), springs.responsive);
 		} else {
-			popInMotion.immediate(UDim2.fromScale(0, 0));
+			popInMotion.immediate(UDim2.fromScale(0.5, 0.6));
 
 			const unsub = popInMotion.onComplete(() => {
 				setSelectedShop("");
@@ -581,8 +589,8 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 			BorderColor3={Color3.fromRGB(0, 0, 0)}
 			BorderSizePixel={0}
 			key={"Shop Sub-Menu"}
-			Position={UDim2.fromScale(0.5, 0.5)}
-			Size={popInSz}
+			Position={popInPos}
+			Size={UDim2.fromScale(0.631, 0.704)}
 			Visible={visible}
 			ref={menuRef}
 		>
@@ -942,6 +950,10 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 						return;
 					}
 
+					if ("notForSale" in item && item["notForSale"] === true && item.obtainLocation === undefined) {
+						return;
+					}
+
 					return (
 						<GenericItemComponent
 							itemName={item.name}
@@ -952,6 +964,7 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 							order={item.price ?? 0}
 							itemType={item.type}
 							price={item.price}
+							obtainLocation={item.obtainLocation}
 						/>
 					);
 				})}

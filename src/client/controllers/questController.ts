@@ -209,8 +209,10 @@ export class QuestController implements OnStart {
 											});
 											break;
 										case QUEST_DECLINE:
+											playAnimation(IDLE);
 											break;
 										default:
+											playAnimation(IDLE);
 											// Probably a response with no DialogResponse key, or a generic response that doesn't do anything
 											break;
 									}

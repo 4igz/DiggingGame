@@ -12,7 +12,7 @@ import { ProfileTemplate } from "server/profileTemplate";
 import { MoneyService } from "../backend/moneyService";
 import { Signals } from "shared/signals";
 import { boatConfig } from "shared/config/boatConfig";
-import { potionConfig, PotionKind } from "shared/config/potionConfig";
+import { PotionConfig, potionConfig, PotionKind } from "shared/config/potionConfig";
 import { interval } from "shared/util/interval";
 import { gameConstants } from "shared/gameConstants";
 import { GamepassService } from "../backend/gamepassService";
@@ -31,6 +31,7 @@ type InventoryKeys<T> = {
 export interface PotionEffect {
 	timeRemaining: number;
 	multiplier: number;
+	potionName: keyof typeof potionConfig;
 }
 
 const inventoryConfigMap: Record<
@@ -116,6 +117,18 @@ export class InventoryService implements OnStart, OnTick {
 				if (!this.potionDrinkers.includes(player)) {
 					this.potionDrinkers.push(player);
 				}
+				const potions = [];
+				for (const [_kind, effect] of pairs(profile.Data.activePotions)) {
+					const cfg = table.clone(potionConfig[effect.potionName]) as PotionConfig & {
+						potionName: keyof typeof potionConfig;
+						timeLeft: number;
+					};
+					cfg.potionName = effect.potionName;
+					cfg.timeLeft = effect.timeRemaining;
+
+					potions.push(cfg);
+				}
+				Events.updateActivePotions.fire(player, potions);
 			}
 
 			Events.updateInventorySize(player, this.getInventorySize(player));
@@ -152,7 +165,15 @@ export class InventoryService implements OnStart, OnTick {
 				return;
 			}
 
-			const cost = config[item].price;
+			const cfg = config[item];
+
+			if (cfg.notForSale === true) {
+				Events.purchaseFailed(player, itemType);
+				Events.sendInvalidActionPopup(player, `You can't buy this!`);
+				return;
+			}
+
+			const cost = cfg.price;
 
 			if (!this.moneyService.hasEnoughMoney(player, cost)) {
 				Events.purchaseFailed(player, itemType);
@@ -166,7 +187,15 @@ export class InventoryService implements OnStart, OnTick {
 		});
 
 		Events.buyBoat.connect((player, boatName) => {
-			const cost = boatConfig[boatName].price;
+			const cfg = boatConfig[boatName];
+
+			if (cfg.notForSale) {
+				Events.purchaseFailed(player, "Boats");
+				Events.sendInvalidActionPopup(player, `You can't buy this!`);
+				return;
+			}
+
+			const cost = cfg.price;
 
 			if (!cost || !this.moneyService.hasEnoughMoney(player, cost)) {
 				Events.purchaseFailed(player, "Boats");
@@ -238,6 +267,7 @@ export class InventoryService implements OnStart, OnTick {
 				const updatedEffect: PotionEffect = {
 					timeRemaining: (existingEffect?.timeRemaining || 0) + potion.duration,
 					multiplier: math.max(existingEffect?.multiplier || 1, potion.multiplier),
+					potionName: potionName,
 				};
 
 				// Store the updated effect
