@@ -10,6 +10,7 @@ export const Signals = {
 	addMoney: new Signal<(player: Player, amount: number) => void>(),
 	resetSkills: new Signal<(player: Player) => void>(),
 	giveMultiDig: new Signal<(player: Player) => void>(),
+	giveLimitedOffer: new Signal<(player: Player) => void>(),
 	buyServerLuckMultiplier: new Signal<(player: Player) => void>(),
 	unlockPlaytimeRewards: new Signal<(player: Player) => void>(),
 	startDigging: new Signal<(player: Player, target: Target) => void>(),

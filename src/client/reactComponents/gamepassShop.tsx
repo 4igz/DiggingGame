@@ -7,11 +7,14 @@ import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
 import { MarketplaceService, Players, SoundService, TweenService } from "@rbxts/services";
 import { formatTime } from "shared/util/nameUtil";
-import SpriteClip from "@rbxts/spriteclip";
 import { Events, Functions } from "client/network";
 import { usePx } from "client/hooks/usePx";
 import { GamepassController } from "client/controllers/gamepassController";
 import { AnimatedButton, BuyButton } from "./buttons";
+import { limitedOffer } from "shared/config/limitedOffer";
+import { getRewardImage } from "shared/util/rewardUtil";
+import SpriteClip from "@rbxts/spriteclip";
+import { highestLimitedOfferPack } from "client/atoms/rewardAtoms";
 
 const MAX_IMAGE_ROTATION = 15;
 
@@ -383,7 +386,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0.5, 0.6));
 	const [serverLuckTimer, setServerLuckTimer] = React.useState(0);
 	const [imageRotation, setImageRotation] = useMotion(0);
-	const [limitedTimeLeft, setLimitedTimeLeft] = useState(60 * 60 * 24);
+	const [limitedTimeLeft, setLimitedTimeLeft] = useState(60 * 60);
 
 	const px = usePx();
 
@@ -429,12 +432,19 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 			}
 		});
 
+		Functions.getClaimedLimitedOfferPack().then((packNum) => {
+			highestLimitedOfferPack(packNum);
+		});
+
+		Events.updateClaimedLimitedOfferPack.connect((packNum) => {
+			highestLimitedOfferPack(packNum);
+		});
+
 		return () => {
 			task.cancel(rotationThread);
 		};
 	}, []);
 
-	// New UI
 	return (
 		<frame
 			AnchorPoint={new Vector2(0.5, 0.5)}
@@ -826,7 +836,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 					size={UDim2.fromScale(0.958192, 0.856338)}
 					productId={gameConstants.DEVPRODUCT_IDS["StarterPack"]}
 					productType={Enum.InfoType.Product}
-					visible={limitedTimeLeft > 0}
+					visible={limitedTimeLeft > 0 && limitedOffer[highestLimitedOfferPack()] !== undefined}
 					layoutOrder={2}
 				>
 					<imagelabel
@@ -837,6 +847,51 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 						Size={UDim2.fromScale(1, 1)}
 					>
 						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={2.78947} />
+						<textlabel
+							AnchorPoint={new Vector2(0.5, 0)}
+							BackgroundTransparency={1}
+							FontFace={
+								new Font("rbxassetid://11702779409", Enum.FontWeight.ExtraBold, Enum.FontStyle.Normal)
+							}
+							key={"BestValue"}
+							Position={UDim2.fromScale(0.821794, 0.447054)}
+							Size={UDim2.fromScale(0.194584, 0.206476)}
+							Text={"BEST VALUE!"}
+							TextColor3={Color3.fromRGB(116, 48, 13)}
+							TextSize={px(33)}
+							ZIndex={2}
+						>
+							<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={px(4)} />
+
+							<textlabel
+								AnchorPoint={new Vector2(0.5, 0.5)}
+								BackgroundTransparency={1}
+								FontFace={
+									new Font(
+										"rbxassetid://11702779409",
+										Enum.FontWeight.ExtraBold,
+										Enum.FontStyle.Normal,
+									)
+								}
+								key={"BestValue"}
+								Position={UDim2.fromScale(0.5, 0.491008)}
+								Size={UDim2.fromScale(1, 1.01798)}
+								Text={"BEST VALUE!"}
+								TextColor3={new Color3(1, 1, 1)}
+								TextSize={px(33)}
+								ZIndex={2}
+							>
+								<uigradient
+									key={"UIGradient"}
+									Color={
+										new ColorSequence([
+											new ColorSequenceKeypoint(0, Color3.fromRGB(246, 231, 133)),
+											new ColorSequenceKeypoint(1, Color3.fromRGB(253, 174, 62)),
+										])
+									}
+								/>
+							</textlabel>
+						</textlabel>
 
 						<BuyButton
 							anchorPoint={new Vector2(1, 1)}
@@ -846,7 +901,6 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							gamepassController={props.gamepassController}
 							productType={Enum.InfoType.Product}
 						/>
-
 						<textlabel
 							BackgroundTransparency={1}
 							FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
@@ -862,7 +916,6 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 						>
 							<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(4)} />
 						</textlabel>
-
 						<textlabel
 							BackgroundTransparency={1}
 							FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
@@ -878,7 +931,6 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 						>
 							<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(3)} />
 						</textlabel>
-
 						<frame
 							BackgroundTransparency={1}
 							key={"Circles"}
@@ -894,6 +946,70 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							>
 								<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
 
+								<imagelabel
+									key={"ImageLabel"}
+									AnchorPoint={new Vector2(0.5, 0.5)}
+									BackgroundTransparency={1}
+									Image={"rbxassetid://95141846932408"}
+									ImageTransparency={0.63}
+									Position={UDim2.fromScale(0.508875, 0.478922)}
+									Rotation={-180}
+									ScaleType={Enum.ScaleType.Crop}
+									Size={UDim2.fromScale(1.04005, 1.05069)}
+									ZIndex={-5}
+								>
+									<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+								</imagelabel>
+
+								<textlabel
+									BackgroundTransparency={1}
+									FontFace={
+										new Font(
+											"rbxassetid://11702779409",
+											Enum.FontWeight.ExtraBold,
+											Enum.FontStyle.Normal,
+										)
+									}
+									key={"OP"}
+									Position={UDim2.fromScale(0.0490412, -0.263083)}
+									Size={UDim2.fromScale(0.305773, 0.752601)}
+									Text={"OP"}
+									TextColor3={Color3.fromRGB(116, 48, 13)}
+									TextSize={px(46)}
+									ZIndex={2}
+								>
+									<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={4} />
+
+									<textlabel
+										AnchorPoint={new Vector2(0.5, 0.5)}
+										BackgroundTransparency={1}
+										FontFace={
+											new Font(
+												"rbxassetid://11702779409",
+												Enum.FontWeight.ExtraBold,
+												Enum.FontStyle.Normal,
+											)
+										}
+										key={"OP"}
+										Position={UDim2.fromScale(0.5, 0.5)}
+										Size={UDim2.fromScale(1, 1)}
+										Text={"OP"}
+										TextColor3={new Color3(1, 1, 1)}
+										TextSize={px(46)}
+										ZIndex={2}
+									>
+										<uigradient
+											key={"UIGradient"}
+											Color={
+												new ColorSequence([
+													new ColorSequenceKeypoint(0, Color3.fromRGB(246, 231, 133)),
+													new ColorSequenceKeypoint(1, Color3.fromRGB(253, 174, 62)),
+												])
+											}
+										/>
+									</textlabel>
+								</textlabel>
+
 								<uistroke
 									key={"UIStroke"}
 									Color={Color3.fromRGB(138, 0, 0)}
@@ -907,6 +1023,13 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									BackgroundTransparency={1}
 									Position={UDim2.fromScale(0.5, 0.5)}
 									Size={UDim2.fromScale(1, 1)}
+									Image={
+										getRewardImage(
+											limitedOffer[
+												math.min(highestLimitedOfferPack(), limitedOffer.size() - 1)
+											][0],
+										) ?? ""
+									}
 								>
 									<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
 								</imagelabel>
@@ -920,7 +1043,6 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.266667, 1)}
 							>
 								<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
-
 								<uistroke
 									key={"UIStroke"}
 									Color={Color3.fromRGB(138, 0, 0)}
@@ -932,7 +1054,77 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									key={"ImageLabel"}
 									AnchorPoint={new Vector2(0.5, 0.5)}
 									BackgroundTransparency={1}
+									Image={"rbxassetid://95141846932408"}
+									ImageTransparency={0.63}
+									Position={UDim2.fromScale(0.508875, 0.478922)}
+									Rotation={-180}
+									ScaleType={Enum.ScaleType.Crop}
+									Size={UDim2.fromScale(1.04005, 1.05069)}
+									ZIndex={-5}
+								>
+									<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+								</imagelabel>
+
+								<textlabel
+									BackgroundTransparency={1}
+									FontFace={
+										new Font(
+											"rbxassetid://11702779409",
+											Enum.FontWeight.ExtraBold,
+											Enum.FontStyle.Normal,
+										)
+									}
+									key={"OP"}
+									Position={UDim2.fromScale(0.0490412, -0.263083)}
+									Size={UDim2.fromScale(0.305773, 0.752601)}
+									Text={"OP"}
+									TextColor3={Color3.fromRGB(116, 48, 13)}
+									TextSize={px(46)}
+									ZIndex={2}
+								>
+									<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={4} />
+
+									<textlabel
+										AnchorPoint={new Vector2(0.5, 0.5)}
+										BackgroundTransparency={1}
+										FontFace={
+											new Font(
+												"rbxassetid://11702779409",
+												Enum.FontWeight.ExtraBold,
+												Enum.FontStyle.Normal,
+											)
+										}
+										key={"OP"}
+										Position={UDim2.fromScale(0.5, 0.5)}
+										Size={UDim2.fromScale(1, 1)}
+										Text={"OP"}
+										TextColor3={new Color3(1, 1, 1)}
+										TextSize={px(46)}
+										ZIndex={2}
+									>
+										<uigradient
+											key={"UIGradient"}
+											Color={
+												new ColorSequence([
+													new ColorSequenceKeypoint(0, Color3.fromRGB(246, 231, 133)),
+													new ColorSequenceKeypoint(1, Color3.fromRGB(253, 174, 62)),
+												])
+											}
+										/>
+									</textlabel>
+								</textlabel>
+								<imagelabel
+									key={"ImageLabel"}
+									AnchorPoint={new Vector2(0.5, 0.5)}
+									BackgroundTransparency={1}
 									Position={UDim2.fromScale(0.5, 0.5)}
+									Image={
+										getRewardImage(
+											limitedOffer[
+												math.min(highestLimitedOfferPack(), limitedOffer.size() - 1)
+											][1],
+										) ?? ""
+									}
 									Size={UDim2.fromScale(1, 1)}
 								>
 									<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
@@ -960,6 +1152,13 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									AnchorPoint={new Vector2(0.5, 0.5)}
 									BackgroundTransparency={1}
 									Position={UDim2.fromScale(0.5, 0.5)}
+									Image={
+										getRewardImage(
+											limitedOffer[
+												math.min(highestLimitedOfferPack(), limitedOffer.size() - 1)
+											][2],
+										) ?? ""
+									}
 									Size={UDim2.fromScale(1, 1)}
 								>
 									<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
@@ -1004,6 +1203,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 				<frame
 					BackgroundTransparency={1}
 					LayoutOrder={3}
+					Visible={limitedTimeLeft > 0 && limitedOffer[highestLimitedOfferPack()] !== undefined}
 					key={"SpaceAfterLimitedOffer"}
 					Size={UDim2.fromScale(1, 0.0225352)}
 				/>

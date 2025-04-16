@@ -110,6 +110,7 @@ interface ServerToClientEvents {
 	updateActivePotions: (
 		potions: (PotionConfig & { potionName: keyof typeof potionConfig; timeLeft: number })[],
 	) => void;
+	updateClaimedLimitedOfferPack: (packNum: number) => void;
 }
 
 interface ClientToServerFunctions {
@@ -142,6 +143,7 @@ interface ClientToServerFunctions {
 	requestNextTarget: () => NetworkedTarget | undefined;
 	getCurrentStrength: () => number;
 	getHasClaimedFreeReward: () => boolean;
+	getClaimedLimitedOfferPack: () => number;
 }
 
 interface ServerToClientFunctions {}

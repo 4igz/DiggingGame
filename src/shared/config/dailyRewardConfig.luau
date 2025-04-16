@@ -3,7 +3,14 @@
 -- Compiled with roblox-ts v3.0.0
 
 type Reward = {
-	rewardType: "Money" | "LuckMultiplier" | "MetalDetectors" | "Shovels" | "Boats" | "Potions",
+	rewardType: "Money"
+		| "LuckMultiplier"
+		| "MetalDetectors"
+		| "Shovels"
+		| "Boats"
+		| "Potions"
+		| "SkillPoints"
+		| "Experience",
 	itemName: string?, -- Only used if rewardType is Boat, MetalDetectors, or Shovels, must be the exact *name of the item (*index in the respective config).
 	rewardAmount: number?, -- Ignored if rewardType is MetalDetectors, Shovels, or Boats.
 	rewardLength: number?,

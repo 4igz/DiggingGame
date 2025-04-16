@@ -11,7 +11,7 @@ import { questConfig } from "shared/config/questConfig";
 import { PotionEffect } from "./services/gameplay/inventoryService";
 import { ReplicatedStorage } from "@rbxts/services";
 
-export const PROFILE_STORE_NAME = "pre_test18";
+export const PROFILE_STORE_NAME = "pre_test27";
 
 ReplicatedStorage.SetAttribute("CurrentStore", PROFILE_STORE_NAME);
 
@@ -41,6 +41,7 @@ export const profileTemplate = {
 
 	// Devproducts
 	multiDigLevel: 0,
+	claimedLimitedOffer: 0,
 
 	// Luck multiplier
 	potionLuckMultiplier: 1,

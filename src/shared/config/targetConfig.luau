@@ -5,6 +5,7 @@ local Sift =
 	TS.import(script, game:GetService("ReplicatedStorage"), "rbxts_include", "node_modules", "@rbxts", "sift", "out")
 
 type Rarity = "Common" | "Uncommon" | "Rare" | "Epic" | "Legendary" | "Mythical" | "Secret"
+
 type TargetConfig = {
 	rarity: number,
 	baseWeight: NumberRange,
@@ -17,7 +18,6 @@ type TargetConfig = {
 }
 
 local targetConfig: { [string]: TargetConfig } = {
-	-- Grasslands
 	-- Grasslands
 	["Bag of coins"] = {
 		rarity = 3, -- 1 in 3

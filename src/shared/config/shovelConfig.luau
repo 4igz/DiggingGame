@@ -1,3 +1,5 @@
+type Rarity = "Common" | "Uncommon" | "Rare" | "Epic" | "Legendary" | "Mythical" | "Secret";
+
 type Shovel = {
 	strengthMult: number,
 	rarityType: Rarity,
@@ -74,9 +76,9 @@ local shovelConfig: { [string]: Shovel } = {
 
 	-- New additions:
 	NatureShovel = {
-		strengthMult = 35,
+		strengthMult = 3,
 		rarityType = "Epic",
-		itemImage = "rbxassetid://115558690172113",
+		itemImage = "rbxassetid://130545216663621",
 		price = 200,
 
 		notForSale = true,
@@ -84,9 +86,9 @@ local shovelConfig: { [string]: Shovel } = {
 		obtainLocation = "Limited Offer!",
 	},
 	RetroShovel = {
-		strengthMult = 35,
+		strengthMult = 18,
 		rarityType = "Epic",
-		itemImage = "rbxassetid://115558690172113",
+		itemImage = "rbxassetid://93190087905284",
 		price = 200,
 
 		notForSale = true,
@@ -94,7 +96,7 @@ local shovelConfig: { [string]: Shovel } = {
 	SteampunkShovel = {
 		strengthMult = 35,
 		rarityType = "Epic",
-		itemImage = "rbxassetid://115558690172113",
+		itemImage = "rbxassetid://82871848306408",
 		price = 200,
 
 		notForSale = true,
