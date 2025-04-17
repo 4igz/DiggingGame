@@ -15,6 +15,9 @@ import { boatConfig } from "shared/config/boatConfig";
 import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
 import { LevelService } from "./levelService";
 import groupReward from "shared/config/groupReward";
+import { limitedOffer } from "shared/config/limitedOffer";
+
+declare function unpack<T>(arr: Array<T>): T;
 
 @Service({})
 export class DailyRewardsService implements OnStart {
@@ -46,8 +49,12 @@ export class DailyRewardsService implements OnStart {
 			Events.boughtPlaytimeRewardSkip(player);
 		});
 
+		for (const pack of limitedOffer) {
+			assert(pack.size() === 3, "Each limited offer pack must have exactly 3 rewards.");
+		}
+
 		// Quickly test all rewards to make sure they're valid
-		for (const reward of [...dailyRewards, ...timePlayedRewards, groupReward]) {
+		for (const reward of [...dailyRewards, ...timePlayedRewards, groupReward, ...unpack(limitedOffer)]) {
 			switch (reward.rewardType) {
 				case "Money":
 					assert(
@@ -139,6 +146,20 @@ export class DailyRewardsService implements OnStart {
 			return profile.Data.claimedFreeReward;
 		});
 
+		Signals.giveLimitedOffer.Connect((player) => {
+			const profile = this.profileService.getProfileLoaded(player).expect();
+			const offer = limitedOffer[profile.Data.claimedLimitedOffer];
+			if (!offer) {
+				return; // Player already has claimed the best pack.
+			}
+			for (const reward of offer) {
+				this.claimReward(player, reward);
+			}
+			profile.Data.claimedLimitedOffer++;
+			this.profileService.setProfile(player, profile);
+			Events.updateClaimedLimitedOfferPack(player, profile.Data.claimedLimitedOffer);
+		});
+
 		Functions.claimPlaytimeReward.setCallback((player: Player, rewardIndex: number) => {
 			const rewardCfg = timePlayedRewards[rewardIndex];
 			if (!rewardCfg) {
@@ -175,6 +196,15 @@ export class DailyRewardsService implements OnStart {
 		Functions.getDailyStreak.setCallback((player) => {
 			const profile = this.profileService.getProfileLoaded(player).expect();
 			return profile.Data.dailyStreak;
+		});
+
+		this.profileService.onProfileLoaded.Connect((player, profile) => {
+			Events.updateClaimedLimitedOfferPack(player, profile.Data.claimedLimitedOffer);
+		});
+
+		Functions.getClaimedLimitedOfferPack.setCallback((player) => {
+			const profile = this.profileService.getProfileLoaded(player).expect();
+			return profile.Data.claimedLimitedOffer;
 		});
 	}
 

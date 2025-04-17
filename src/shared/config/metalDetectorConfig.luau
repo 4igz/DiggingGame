@@ -1,3 +1,5 @@
+type Rarity = "Common" | "Uncommon" | "Rare" | "Epic" | "Legendary" | "Mythical" | "Secret"
+
 type MetalDetector = {
 	strength: number,
 	rarityType: Rarity,
@@ -32,7 +34,7 @@ local metalDetectorConfig: { [string]: MetalDetector } = {
 		strength = 1.5,
 		luck = 7.5,
 		searchRadius = 42.5,
-		itemImage = "rbxassetid://134806989248925",
+		itemImage = "rbxassetid://135924805977158",
 		rarityType = "Common",
 		price = 2000,
 	},
@@ -95,24 +97,24 @@ local metalDetectorConfig: { [string]: MetalDetector } = {
 
 	-- New additions:
 	NatureDetector = {
-		strength = 3,
-		luck = 40,
-		searchRadius = 25,
+		strength = 1.5,
+		luck = 8,
+		searchRadius = 40,
 		rarityType = "Epic",
-		itemImage = "rbxassetid://133401921939429",
+		itemImage = "rbxassetid://83643047532460",
 		price = 200,
 
 		notForSale = true,
 
 		-- This is here as an example to show that you can indicate to the player how to obtain a non-purchaseable item. If not specified then it won't show in the shop
-		obtainLocation = "Limited Offer!",
+		-- obtainLocation = "Limited Offer!",
 	},
 	RetroDetector = {
-		strength = 3,
-		luck = 40,
-		searchRadius = 25,
+		strength = 2,
+		luck = 28,
+		searchRadius = 30,
 		rarityType = "Epic",
-		itemImage = "rbxassetid://133401921939429",
+		itemImage = "rbxassetid://117885119555688",
 		price = 200,
 
 		notForSale = true,
@@ -122,7 +124,7 @@ local metalDetectorConfig: { [string]: MetalDetector } = {
 		luck = 40,
 		searchRadius = 25,
 		rarityType = "Epic",
-		itemImage = "rbxassetid://133401921939429",
+		itemImage = "rbxassetid://99214897672719",
 		price = 200,
 
 		notForSale = true,

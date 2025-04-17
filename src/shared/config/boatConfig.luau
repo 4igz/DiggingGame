@@ -1,5 +1,7 @@
 --!optimize 2
 
+type Rarity = "Common" | "Uncommon" | "Rare" | "Epic" | "Legendary" | "Mythical" | "Secret"
+
 type BoatConfig = {
 	price: number,
 	itemImage: string,

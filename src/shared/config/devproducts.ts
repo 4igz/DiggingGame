@@ -112,14 +112,13 @@ export const developerProducts: DeveloperProduct[] = [
 			Signals.unlockPlaytimeRewards.Fire(player);
 		},
 	},
-	// {
-	// 	id: IDS.StarterPack,
-	// 	name: "Starter Pack",
-	// 	grantReward: (player) => {
-	// 		Signals.addMoney.Fire(player, 1_000);
-	// 		Signals.giveMultiDig.Fire(player);
-	// 	},
-	// },
+	{
+		id: IDS.StarterPack,
+		name: "Starter Pack",
+		grantReward: (player) => {
+			Signals.giveLimitedOffer.Fire(player);
+		},
+	},
 	// {
 	// 	id: IDS.MediumPack,
 	// 	name: "Medium Pack",
