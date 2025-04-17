@@ -328,7 +328,7 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 	useEffect(() => {
 		let currentRotation = imageRotation.getValue();
 		const rotationThread = task.spawn(() => {
-			while (true) {
+			while (false) {
 				// Make gift image bob back and forth
 				task.wait(0.6);
 				currentRotation = currentRotation < MAX_IMAGE_ROTATION ? MAX_IMAGE_ROTATION : -MAX_IMAGE_ROTATION;

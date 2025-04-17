@@ -17,10 +17,14 @@ interface FreeRewardProps {
 	uiController: UiController;
 }
 
+const MAX_IMAGE_ROTATION = 15;
+
 export const FreeReward = (props: FreeRewardProps) => {
 	const [menuPos, setMenuPos] = useMotion(UDim2.fromScale(0.5, 0.6));
 	const [visible, setVisible] = useState(props.visible);
 	const [hasJoinedGroup, setHasJoinedGroup] = useState(false);
+	const [imageRotation, setImageRotation] = useMotion(0);
+
 	const [hasClaimed, setHasClaimed] = useState(false);
 
 	const [rewardImage] = useState(
@@ -28,6 +32,21 @@ export const FreeReward = (props: FreeRewardProps) => {
 			gameConstants.SHOP_CONFIGS[groupReward.rewardType as ItemType][groupReward.itemName!]?.itemImage ??
 			undefined,
 	);
+
+	useEffect(() => {
+		let currentRotation = imageRotation.getValue();
+		const rotationThread = task.spawn(() => {
+			while (true) {
+				task.wait(1);
+				currentRotation = currentRotation < MAX_IMAGE_ROTATION ? MAX_IMAGE_ROTATION : -MAX_IMAGE_ROTATION;
+				setImageRotation.spring(currentRotation, springs.bubbly);
+			}
+		});
+
+		return () => {
+			task.cancel(rotationThread);
+		};
+	}, []);
 
 	const px = usePx();
 
@@ -57,6 +76,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 			Position={menuPos}
 			Size={UDim2.fromScale(0.55, 0.75)}
 			Visible={visible}
+			ZIndex={-5}
 		>
 			<imagelabel
 				AnchorPoint={new Vector2(0.5, 0.5)}
@@ -76,7 +96,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 				Image={"rbxassetid://127513841052443"}
 				key={"Icon"}
 				Position={UDim2.fromScale(0.0073635, 0.0356735)}
-				Rotation={-15.0155}
+				Rotation={imageRotation}
 				ScaleType={Enum.ScaleType.Fit}
 				Size={UDim2.fromScale(0.196334, 0.307258)}
 				ZIndex={2}
@@ -288,8 +308,8 @@ export const FreeReward = (props: FreeRewardProps) => {
 				BackgroundTransparency={1}
 				Image={"rbxassetid://84909493980683"}
 				key={"DisplayRight"}
-				Position={UDim2.fromScale(0.425, 0.0894969)}
-				Size={UDim2.fromScale(0.59, 0.820724)}
+				Position={UDim2.fromScale(0.4, 0.0894969)}
+				Size={UDim2.fromScale(0.6, 0.820724)}
 				ZIndex={-1}
 			>
 				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1} />
@@ -317,8 +337,13 @@ export const FreeReward = (props: FreeRewardProps) => {
 				<AnimatedButton
 					position={UDim2.fromScale(0.5, 0.85)}
 					size={UDim2.fromScale(0.700375, 0.156313)}
-					clickable={hasJoinedGroup || hasClaimed}
+					clickable={!hasClaimed}
+					active={!hasClaimed}
 					onClick={() => {
+						if (!hasJoinedGroup) {
+							setHasJoinedGroup(Players.LocalPlayer.IsInGroup(game.CreatorId));
+							return;
+						}
 						Events.claimFreeReward();
 						task.defer(() => {
 							Functions.getHasClaimedFreeReward().then((status) => {

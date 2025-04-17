@@ -326,7 +326,7 @@ export default class UiController implements OnStart, OnInit {
 				uiController: this,
 			},
 			undefined,
-			undefined,
+			true,
 			MENU_LAYER,
 		);
 

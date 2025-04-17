@@ -6,7 +6,14 @@ local HOUR = 60 * MINUTE
 
 type PlaytimeReward = {
 	unlockTime: number,
-	rewardType: "Money" | "LuckMultiplier" | "MetalDetectors" | "Shovels" | "Boats" | "Potions",
+	rewardType: "Money"
+		| "LuckMultiplier"
+		| "MetalDetectors"
+		| "Shovels"
+		| "Boats"
+		| "Potions"
+		| "SkillPoints"
+		| "Experience",
 	rewardLength: number?,
 	itemName: string?,
 	rewardAmount: number?,
@@ -21,63 +28,63 @@ end
 
 local timePlayedRewards: { PlaytimeReward } = {
 	{ -- Can have up to 12, these should be in order in terms of how much time they take
-		rewardType = "Shovels",
-		itemName = "EnchantedShovel",
-		unlockTime = 10,
-	},
-	{
-		rewardType = "Potions",
-		itemName = "Small Strength Potion",
+		rewardType = "Experience",
+		rewardAmount = 100,
 		unlockTime = 15,
 	},
 	{
-		rewardType = "Money",
-		rewardAmount = 100,
+		rewardType = "Experience",
+		rewardAmount = 25,
 		unlockTime = minutes(3),
 	},
 	{
 		rewardType = "Money",
-		rewardAmount = 100,
-		unlockTime = minutes(4),
-	},
-	{
-		rewardType = "Money",
-		rewardAmount = 100,
+		rewardAmount = 500,
 		unlockTime = minutes(5),
 	},
 	{
-		rewardType = "Money",
-		rewardAmount = 100,
-		unlockTime = minutes(6),
-	},
-	{
-		rewardType = "Money",
-		rewardAmount = 100,
+		rewardType = "Potions",
+		itemName = "Small Strength Potion",
 		unlockTime = minutes(7),
 	},
 	{
-		rewardType = "Money",
-		rewardAmount = 100,
-		unlockTime = minutes(8),
-	},
-	{
-		rewardType = "Money",
-		rewardAmount = 100,
-		unlockTime = minutes(9),
-	},
-	{
-		rewardType = "Money",
-		rewardAmount = 100,
+		rewardType = "Experience",
+		rewardAmount = 125,
 		unlockTime = minutes(10),
 	},
 	{
 		rewardType = "Money",
-		rewardAmount = 100,
-		unlockTime = hours(1),
+		rewardAmount = 2000,
+		unlockTime = minutes(15),
+	},
+	{
+		rewardType = "Potions",
+		itemName = "Small Luck Potion",
+		unlockTime = minutes(20),
 	},
 	{
 		rewardType = "Money",
-		rewardAmount = 100,
+		rewardAmount = 10000,
+		unlockTime = minutes(30),
+	},
+	{
+		rewardType = "Potions",
+		itemName = "Medium Strength Potion",
+		unlockTime = minutes(45),
+	},
+	{
+		rewardType = "Potions",
+		itemName = "Medium Luck Potion",
+		unlockTime = minutes(60),
+	},
+	{
+		rewardType = "Money",
+		rewardAmount = 50000,
+		unlockTime = minutes(90),
+	},
+	{
+		rewardType = "Potions",
+		itemName = "Large Luck Potion",
 		unlockTime = hours(2),
 	},
 }

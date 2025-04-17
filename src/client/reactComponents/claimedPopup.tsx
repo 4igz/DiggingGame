@@ -3,15 +3,15 @@ import React, { useEffect } from "@rbxts/react";
 import { RunService } from "@rbxts/services";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
-import { gameConstants } from "shared/gameConstants";
-import { ItemName, ItemType, Rarity } from "shared/networkTypes";
+import { gameConstants, REWARD_IMAGES } from "shared/gameConstants";
+import { ItemName, ItemType, Rarity, RewardType } from "shared/networkTypes";
 import { shortenNumber, spaceWords } from "shared/util/nameUtil";
 
 const RC = gameConstants.RARITY_COLORS;
 
 export interface ClaimedPopupProps {
 	itemRarity?: Rarity;
-	reward: ItemType | number;
+	reward: ItemType | number | RewardType;
 	itemName: ItemName | "Money";
 	onComplete: () => void;
 	count: number;
@@ -115,10 +115,11 @@ export const ClaimedPopup = (props: ClaimedPopupProps) => {
 					Size={UDim2.fromScale(1, 1)}
 					ZIndex={5}
 					Image={
-						gameConstants.SHOP_CONFIGS[props.reward as ItemType] !== undefined
+						REWARD_IMAGES[props.reward as RewardType] ??
+						(gameConstants.SHOP_CONFIGS[props.reward as ItemType] !== undefined
 							? gameConstants.SHOP_CONFIGS[props.reward as ItemType][props.itemName as ItemName]
 									?.itemImage
-							: "rbxassetid://96446480715038"
+							: "rbxassetid://96446480715038")
 					}
 					Rotation={imageRotation}
 				>
@@ -150,7 +151,13 @@ export const ClaimedPopup = (props: ClaimedPopupProps) => {
 				TextXAlignment={Enum.TextXAlignment.Center}
 				Text={`Claimed ${
 					type(props.itemName) === "number"
-						? "$" + shortenNumber(props.itemName as unknown as number)
+						? props.reward === "Money"
+							? "$" + shortenNumber(props.itemName as unknown as number, false)
+							: props.reward === "Experience"
+							? shortenNumber(props.itemName as unknown as number, false) + "XP"
+							: props.reward === "SkillPoints"
+							? shortenNumber(props.itemName as unknown as number, false) + "SP"
+							: shortenNumber(props.itemName as unknown as number, false)
 						: spaceWords(props.itemName) ?? "Unknown"
 				}`}
 				TextColor3={type(props.itemName) === "number" ? DEFAULT_COLOR : RC[props.itemRarity ?? "Common"]}

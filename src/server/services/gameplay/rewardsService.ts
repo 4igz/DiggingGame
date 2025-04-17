@@ -215,14 +215,18 @@ export class DailyRewardsService implements OnStart {
 				break;
 			case "Experience":
 				this.levelService.addExperience(player, reward.rewardAmount!);
+				Events.sendClaimedPopup.fire(player, "Experience", reward.rewardAmount);
+
+				break;
 			case "SkillPoints":
 				const profile = this.profileService.getProfile(player);
 				if (!profile) break;
 				profile.Data.skillPoints += reward.rewardAmount!;
 				this.profileService.setProfile(player, profile);
 				Events.sendClaimedPopup.fire(player, "SkillPoints", 1);
+				break;
 			default:
-				error(`Unknown reward type: ${reward.rewardType}`);
+				error(`Can't claim: Unknown reward type: ${reward.rewardType}`);
 		}
 	}
 }

@@ -17,6 +17,7 @@ import UiController from "client/controllers/uiController";
 import { GamepassController } from "client/controllers/gamepassController";
 import { greenToRed, redToGreen } from "shared/util/colorUtil";
 import { usePx } from "client/hooks/usePx";
+import { iota } from "shared/util/nameUtil";
 
 export interface DiggingBarProps {
 	target?: Target;
@@ -64,9 +65,18 @@ const COLOR_TO_STAGE = [
 	Color3.fromRGB(48, 68, 137),
 ];
 
+interface Click {
+	time: number;
+	id: number;
+}
+
 const RED = new Color3(1, 0, 0);
 const GREEN = new Color3(0, 1, 0);
 const PROC_LERP_AMT = 0.5;
+const CLICK_TIMER = 1;
+const CPS_REQ = 3;
+
+let clickId = 0;
 
 export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 	const [barProgress, setBarProgress] = useMotion(1);
@@ -78,6 +88,8 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 	const [digStage, setDigStage] = useState(0);
 	const [prevDigStage, setPrevDigStage] = useState(0);
 	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0.75, 0.5));
+	const [recentClicks, setClicks] = useState<Click[]>([]);
+	const [barColor, barColorSpring] = useMotion(Color3.fromRGB(255, 0, 0));
 
 	const px = usePx();
 
@@ -149,6 +161,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				if (!props.shovelController.canStartDigging) return;
 				setShowReminder(false);
 				setHasDugYet(true);
+				setClicks((prev) => [...prev, { time: tick(), id: clickId++ }]);
 
 				// Since the server is rate limited by this same timer, we should
 				// ratelimit on the client too incase they are autoclicking
@@ -178,6 +191,8 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				}
 				setHasDugYet(true);
 				setShowReminder(false);
+
+				setClicks((prev) => [...prev, { time: tick(), id: clickId++ }]);
 
 				setRotation.spring(math.clamp(rotation.getValue() + math.random(-2, 2), -12, 12), springs.responsive);
 				setScale.spring(math.max(scale.getValue() + math.random(0.01, 0.05), 1.1), springs.responsive);
@@ -361,6 +376,22 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 			setVisible(false);
 		});
 	}, []);
+
+	useEffect(() => {
+		const con = RunService.RenderStepped.Connect(() => {
+			for (const click of recentClicks) {
+				if (tick() - click.time > CLICK_TIMER) {
+					setClicks((prev) => prev.filter((click2) => click2.id !== click.id));
+				}
+			}
+		});
+
+		barColorSpring.spring(redToGreen(recentClicks.size() / CPS_REQ), springs.default);
+
+		return () => {
+			con.Disconnect();
+		};
+	}, [recentClicks]);
 
 	useEffect(() => {
 		if (!visible) return;
@@ -672,7 +703,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 						BorderSizePixel={0}
 						Image={"rbxassetid://95707056401845"}
 						key={"Filled Progress Bar"}
-						ImageColor3={barProgress.map((v) => greenToRed(v))}
+						ImageColor3={barColor}
 						Position={UDim2.fromScale(0.522, 0.495)}
 						Size={UDim2.fromScale(1, 1.01)}
 					>

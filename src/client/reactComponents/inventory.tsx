@@ -2823,8 +2823,8 @@ export const InventoryComponent = (props: MainUiProps) => {
 				<CategoryButton
 					title="Index"
 					iconId="rbxassetid://87735654793952"
-					iconSz={UDim2.fromScale(0.72, 1.596)}
-					position={UDim2.fromScale(0.617, 0.54)}
+					iconSz={UDim2.fromScale(0.72, 1.4)}
+					position={UDim2.fromScale(0.617, 0.52)}
 					size={UDim2.fromScale(0.766, 0.212)}
 					paddingSz={-0.19}
 					leftPad={-0.3}
