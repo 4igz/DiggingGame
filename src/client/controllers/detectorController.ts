@@ -212,7 +212,7 @@ export class DetectorController implements OnStart {
 						}
 					};
 
-					if (!understandsInput && autoDigRunning) {
+					if (!understandsInput && !autoDigRunning) {
 						// Player hasn't shown yet that they understand how the detector works
 						Signals.setUiToggled.Fire(gameConstants.DETECTOR_HINT_TEXT, true, true);
 					}
