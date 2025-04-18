@@ -1,6 +1,5 @@
 --!optimize 2
 --!strict
--- Compiled with roblox-ts v3.0.0
 
 type Reward = {
 	rewardType: "Money"
