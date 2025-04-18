@@ -1,6 +1,5 @@
 --!optimize 2
 --!strict
--- Compiled with roblox-ts v3.0.0
 local MINUTE = 60
 local HOUR = 60 * MINUTE
 

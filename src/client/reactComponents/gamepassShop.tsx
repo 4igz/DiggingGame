@@ -1980,6 +1980,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 						VerticalAlignment={Enum.VerticalAlignment.Center}
 					/>
 
+					{/* 
 					<AnimatedProductButton
 						size={UDim2.fromScale(0.240741, 0.957627)}
 						productId={gameConstants.DEVPRODUCT_IDS["2.5k Money Pack"]}
@@ -2067,9 +2068,9 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								/>
 							</textlabel>
 						</imagelabel>
-					</AnimatedProductButton>
+					</AnimatedProductButton> */}
 
-					<AnimatedProductButton
+					{/* <AnimatedProductButton
 						size={UDim2.fromScale(0.240741, 0.957627)}
 						productId={gameConstants.DEVPRODUCT_IDS["7.5k Money Pack"]}
 						productType={Enum.InfoType.Product}
@@ -2156,7 +2157,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								/>
 							</textlabel>
 						</imagelabel>
-					</AnimatedProductButton>
+					</AnimatedProductButton> */}
 
 					<AnimatedProductButton
 						size={UDim2.fromScale(0.240741, 0.957627)}
