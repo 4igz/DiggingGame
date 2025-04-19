@@ -946,21 +946,6 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							>
 								<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
 
-								<imagelabel
-									key={"ImageLabel"}
-									AnchorPoint={new Vector2(0.5, 0.5)}
-									BackgroundTransparency={1}
-									Image={"rbxassetid://95141846932408"}
-									ImageTransparency={0.63}
-									Position={UDim2.fromScale(0.508875, 0.478922)}
-									Rotation={-180}
-									ScaleType={Enum.ScaleType.Crop}
-									Size={UDim2.fromScale(1.04005, 1.05069)}
-									ZIndex={-5}
-								>
-									<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-								</imagelabel>
-
 								<textlabel
 									BackgroundTransparency={1}
 									FontFace={
@@ -1016,6 +1001,20 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									Thickness={px(3)}
 									Transparency={0.5}
 								/>
+
+								<imagelabel
+									key={"ImageLabel"}
+									AnchorPoint={new Vector2(0.5, 0.5)}
+									BackgroundTransparency={1}
+									Image={"rbxassetid://95141846932408"}
+									ImageTransparency={0.63}
+									Position={UDim2.fromScale(0.508875, 0.478922)}
+									ScaleType={Enum.ScaleType.Crop}
+									Size={UDim2.fromScale(1.04005, 1.05069)}
+									ZIndex={-5}
+								>
+									<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+								</imagelabel>
 
 								<imagelabel
 									key={"ImageLabel"}
@@ -1050,21 +1049,6 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									Transparency={0.5}
 								/>
 
-								<imagelabel
-									key={"ImageLabel"}
-									AnchorPoint={new Vector2(0.5, 0.5)}
-									BackgroundTransparency={1}
-									Image={"rbxassetid://95141846932408"}
-									ImageTransparency={0.63}
-									Position={UDim2.fromScale(0.508875, 0.478922)}
-									Rotation={-180}
-									ScaleType={Enum.ScaleType.Crop}
-									Size={UDim2.fromScale(1.04005, 1.05069)}
-									ZIndex={-5}
-								>
-									<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-								</imagelabel>
-
 								<textlabel
 									BackgroundTransparency={1}
 									FontFace={
@@ -1113,6 +1097,19 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 										/>
 									</textlabel>
 								</textlabel>
+								<imagelabel
+									key={"ImageLabel"}
+									AnchorPoint={new Vector2(0.5, 0.5)}
+									BackgroundTransparency={1}
+									Image={"rbxassetid://95141846932408"}
+									ImageTransparency={0.63}
+									Position={UDim2.fromScale(0.508875, 0.478922)}
+									ScaleType={Enum.ScaleType.Crop}
+									Size={UDim2.fromScale(1, 1)}
+									ZIndex={-5}
+								>
+									<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+								</imagelabel>
 								<imagelabel
 									key={"ImageLabel"}
 									AnchorPoint={new Vector2(0.5, 0.5)}
@@ -1980,19 +1977,18 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 						VerticalAlignment={Enum.VerticalAlignment.Center}
 					/>
 
-					{/* 
 					<AnimatedProductButton
-						size={UDim2.fromScale(0.240741, 0.957627)}
-						productId={gameConstants.DEVPRODUCT_IDS["2.5k Money Pack"]}
+						size={UDim2.fromScale(0.33, 0.970591)}
+						productId={gameConstants.DEVPRODUCT_IDS["15k Money Pack"]}
 						productType={Enum.InfoType.Product}
 					>
 						<imagelabel
 							BackgroundTransparency={1}
-							Image={"rbxassetid://136427287848216"}
+							Image={"rbxassetid://96471574450859"}
 							key={"1"}
 							Size={UDim2.fromScale(1, 1)}
 						>
-							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.862832} />
+							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.15044} />
 
 							<textlabel
 								AnchorPoint={new Vector2(0.5, 0.5)}
@@ -2007,184 +2003,6 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								key={"Title"}
 								Position={UDim2.fromScale(0.5, 0.025)}
 								Size={UDim2.fromScale(0.9, 0.115044)}
-								Text={"Handful  Of  Cash"}
-								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(PRODUCT_NAME_PX)}
-								// TextScaled={true}
-								ZIndex={105}
-							>
-								<uistroke key={"UIStroke"} Thickness={px(2.5)} />
-							</textlabel>
-
-							<imagelabel
-								AnchorPoint={new Vector2(0.5, 0)}
-								BackgroundTransparency={1}
-								Image={"rbxassetid://100095947000779"}
-								key={"CurrIcon"}
-								Position={UDim2.fromScale(0.509649, 0.0476549)}
-								ScaleType={Enum.ScaleType.Fit}
-								Size={UDim2.fromScale(1, 0.75)}
-							/>
-
-							<BuyButton
-								position={UDim2.fromScale(0.5, 0.902655)}
-								size={UDim2.fromScale(0.851282, 0.212389)}
-								id={gameConstants.DEVPRODUCT_IDS["2.5k Money Pack"]}
-								gamepassController={props.gamepassController}
-								productType={Enum.InfoType.Product}
-								anchorPoint={new Vector2(0.5, 1)}
-							/>
-
-							<textlabel
-								AnchorPoint={new Vector2(0.5, 0.5)}
-								BackgroundTransparency={1}
-								FontFace={
-									new Font(
-										"rbxassetid://11702779409",
-										Enum.FontWeight.ExtraBold,
-										Enum.FontStyle.Normal,
-									)
-								}
-								key={"Amount"}
-								Position={UDim2.fromScale(0.5, 0.138)}
-								Size={UDim2.fromScale(0.795953, 0.115473)}
-								Text={"+2,500"}
-								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(PRODUCT_NAME_PX)}
-								// TextScaled={true}
-								ZIndex={105}
-							>
-								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={1.8} />
-
-								<uigradient
-									key={"UIGradient"}
-									Color={
-										new ColorSequence([
-											new ColorSequenceKeypoint(0, Color3.fromRGB(246, 231, 133)),
-											new ColorSequenceKeypoint(1, Color3.fromRGB(253, 174, 62)),
-										])
-									}
-									Rotation={90}
-								/>
-							</textlabel>
-						</imagelabel>
-					</AnimatedProductButton> */}
-
-					{/* <AnimatedProductButton
-						size={UDim2.fromScale(0.240741, 0.957627)}
-						productId={gameConstants.DEVPRODUCT_IDS["7.5k Money Pack"]}
-						productType={Enum.InfoType.Product}
-					>
-						<imagelabel
-							BackgroundTransparency={1}
-							Image={"rbxassetid://136427287848216"}
-							key={"2"}
-							Size={UDim2.fromScale(1, 1)}
-						>
-							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.862832} />
-
-							<textlabel
-								AnchorPoint={new Vector2(0.5, 0.5)}
-								BackgroundTransparency={1}
-								FontFace={
-									new Font(
-										"rbxassetid://11702779409",
-										Enum.FontWeight.ExtraBold,
-										Enum.FontStyle.Normal,
-									)
-								}
-								key={"Title"}
-								Position={UDim2.fromScale(0.5, 0.025)}
-								Size={UDim2.fromScale(1, 0.115044)}
-								Text={"Sack  Of  Cash"}
-								TextColor3={new Color3(1, 1, 1)}
-								// TextScaled={true}
-								TextSize={px(PRODUCT_NAME_PX)}
-								ZIndex={105}
-							>
-								<uistroke key={"UIStroke"} Thickness={px(2.5)} />
-							</textlabel>
-
-							<imagelabel
-								AnchorPoint={new Vector2(0.5, 0)}
-								BackgroundTransparency={1}
-								Image={"rbxassetid://100095947000779"}
-								key={"CurrIcon"}
-								Position={UDim2.fromScale(0.509649, 0.0476549)}
-								ScaleType={Enum.ScaleType.Fit}
-								Size={UDim2.fromScale(1, 0.75)}
-							/>
-
-							<BuyButton
-								position={UDim2.fromScale(0.5, 0.902655)}
-								size={UDim2.fromScale(0.851282, 0.212389)}
-								id={gameConstants.DEVPRODUCT_IDS["7.5k Money Pack"]}
-								gamepassController={props.gamepassController}
-								productType={Enum.InfoType.Product}
-								anchorPoint={new Vector2(0.5, 1)}
-							/>
-
-							<textlabel
-								AnchorPoint={new Vector2(0.5, 0.5)}
-								BackgroundTransparency={1}
-								FontFace={
-									new Font(
-										"rbxassetid://11702779409",
-										Enum.FontWeight.ExtraBold,
-										Enum.FontStyle.Normal,
-									)
-								}
-								key={"Amount"}
-								Position={UDim2.fromScale(0.5, 0.138)}
-								Size={UDim2.fromScale(0.795953, 0.115473)}
-								Text={"+7,500"}
-								TextColor3={new Color3(1, 1, 1)}
-								TextScaled={false}
-								TextSize={px(PRODUCT_NAME_PX)}
-								ZIndex={105}
-							>
-								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={1.8} />
-
-								<uigradient
-									key={"UIGradient"}
-									Color={
-										new ColorSequence([
-											new ColorSequenceKeypoint(0, Color3.fromRGB(246, 231, 133)),
-											new ColorSequenceKeypoint(1, Color3.fromRGB(253, 174, 62)),
-										])
-									}
-									Rotation={90}
-								/>
-							</textlabel>
-						</imagelabel>
-					</AnimatedProductButton> */}
-
-					<AnimatedProductButton
-						size={UDim2.fromScale(0.240741, 0.957627)}
-						productId={gameConstants.DEVPRODUCT_IDS["15k Money Pack"]}
-						productType={Enum.InfoType.Product}
-					>
-						<imagelabel
-							BackgroundTransparency={1}
-							Image={"rbxassetid://136427287848216"}
-							key={"3"}
-							Size={UDim2.fromScale(1, 1)}
-						>
-							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.862832} />
-
-							<textlabel
-								AnchorPoint={new Vector2(0.5, 0.5)}
-								BackgroundTransparency={1}
-								FontFace={
-									new Font(
-										"rbxassetid://11702779409",
-										Enum.FontWeight.ExtraBold,
-										Enum.FontStyle.Normal,
-									)
-								}
-								key={"Title"}
-								Position={UDim2.fromScale(0.5, 0.025)}
-								Size={UDim2.fromScale(0.9, 0.110619)}
 								Text={"Bag  Of  Cash"}
 								TextColor3={new Color3(1, 1, 1)}
 								TextSize={px(PRODUCT_NAME_PX)}
@@ -2205,11 +2023,12 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							/>
 
 							<BuyButton
-								position={UDim2.fromScale(0.5, 0.902655)}
-								size={UDim2.fromScale(0.851282, 0.212389)}
-								gamepassController={props.gamepassController}
+								position={UDim2.fromScale(0.5, 0.89)}
+								size={UDim2.fromScale(0.849219, 0.201142)}
 								id={gameConstants.DEVPRODUCT_IDS["15k Money Pack"]}
 								productType={Enum.InfoType.Product}
+								gamepassController={props.gamepassController}
+								anchorPoint={new Vector2(0.5, 1)}
 							/>
 
 							<textlabel
@@ -2224,11 +2043,11 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								}
 								key={"Amount"}
 								Position={UDim2.fromScale(0.5, 0.138)}
-								Size={UDim2.fromScale(0.795953, 0.115473)}
+								Size={UDim2.fromScale(0.795953, 0.11364)}
 								Text={"+15,000"}
 								TextColor3={new Color3(1, 1, 1)}
-								// TextScaled={true}
 								TextSize={px(PRODUCT_NAME_PX)}
+								// TextScaled={true}
 								ZIndex={105}
 							>
 								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={1.8} />
@@ -2248,17 +2067,17 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 					</AnimatedProductButton>
 
 					<AnimatedProductButton
-						size={UDim2.fromScale(0.240741, 0.957627)}
+						size={UDim2.fromScale(0.33, 0.970591)}
 						productId={gameConstants.DEVPRODUCT_IDS["40k Money Pack"]}
 						productType={Enum.InfoType.Product}
 					>
 						<imagelabel
 							BackgroundTransparency={1}
-							Image={"rbxassetid://136427287848216"}
-							key={"4"}
+							Image={"rbxassetid://96471574450859"}
+							key={"1"}
 							Size={UDim2.fromScale(1, 1)}
 						>
-							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.862832} />
+							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.15044} />
 
 							<textlabel
 								AnchorPoint={new Vector2(0.5, 0.5)}
@@ -2293,11 +2112,12 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							/>
 
 							<BuyButton
-								position={UDim2.fromScale(0.5, 0.902655)}
-								size={UDim2.fromScale(0.851282, 0.212389)}
+								position={UDim2.fromScale(0.5, 0.89)}
+								size={UDim2.fromScale(0.849219, 0.201142)}
 								id={gameConstants.DEVPRODUCT_IDS["40k Money Pack"]}
-								gamepassController={props.gamepassController}
 								productType={Enum.InfoType.Product}
+								gamepassController={props.gamepassController}
+								anchorPoint={new Vector2(0.5, 1)}
 							/>
 
 							<textlabel
@@ -2312,11 +2132,11 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								}
 								key={"Amount"}
 								Position={UDim2.fromScale(0.5, 0.138)}
-								Size={UDim2.fromScale(0.795953, 0.115473)}
+								Size={UDim2.fromScale(0.795953, 0.11364)}
 								Text={"+40,000"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextScaled={false}
 								TextSize={px(PRODUCT_NAME_PX)}
+								// TextScaled={true}
 								ZIndex={105}
 							>
 								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={1.8} />
@@ -2334,31 +2154,9 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							</textlabel>
 						</imagelabel>
 					</AnimatedProductButton>
-				</frame>
-				<frame
-					BackgroundTransparency={1}
-					LayoutOrder={17}
-					key={"SpaceAfterCurrRow1"}
-					Size={UDim2.fromScale(1, 0.03)}
-				/>
-				<frame
-					BackgroundTransparency={1}
-					LayoutOrder={18}
-					key={"CurrRow2"}
-					Position={UDim2.fromScale(0.0423729, 0.723867)}
-					Size={UDim2.fromScale(0.972881, 0.706646)}
-				>
-					<uilistlayout
-						key={"UIListLayout"}
-						FillDirection={Enum.FillDirection.Horizontal}
-						HorizontalAlignment={Enum.HorizontalAlignment.Center}
-						Padding={new UDim(0.01, 0)}
-						SortOrder={Enum.SortOrder.LayoutOrder}
-						VerticalAlignment={Enum.VerticalAlignment.Center}
-					/>
 
 					<AnimatedProductButton
-						size={UDim2.fromScale(0.325333, 0.970591)}
+						size={UDim2.fromScale(0.33, 0.970591)}
 						productId={gameConstants.DEVPRODUCT_IDS["75k Medium Money Pack"]}
 						productType={Enum.InfoType.Product}
 					>
@@ -2516,9 +2314,31 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							</textlabel>
 						</imagelabel>
 					</AnimatedProductButton>
+				</frame>
+				<frame
+					BackgroundTransparency={1}
+					LayoutOrder={17}
+					key={"SpaceAfterCurrRow1"}
+					Size={UDim2.fromScale(1, 0.03)}
+				/>
+				<frame
+					BackgroundTransparency={1}
+					LayoutOrder={18}
+					key={"CurrRow2"}
+					Position={UDim2.fromScale(0.0423729, 0.723867)}
+					Size={UDim2.fromScale(0.972881, 0.706646)}
+				>
+					<uilistlayout
+						key={"UIListLayout"}
+						FillDirection={Enum.FillDirection.Horizontal}
+						HorizontalAlignment={Enum.HorizontalAlignment.Center}
+						Padding={new UDim(0.01, 0)}
+						SortOrder={Enum.SortOrder.LayoutOrder}
+						VerticalAlignment={Enum.VerticalAlignment.Center}
+					/>
 
 					<AnimatedProductButton
-						size={UDim2.fromScale(0.325333, 0.970591)}
+						size={UDim2.fromScale(0.45, 0.970591)}
 						productId={gameConstants.DEVPRODUCT_IDS["250k Big Money Pack"]}
 						productType={Enum.InfoType.Product}
 					>
@@ -2678,7 +2498,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 					</AnimatedProductButton>
 
 					<AnimatedProductButton
-						size={UDim2.fromScale(0.325333, 0.970591)}
+						size={UDim2.fromScale(0.45, 0.970591)}
 						productId={gameConstants.DEVPRODUCT_IDS["1M Massive Money Pack"]}
 						productType={Enum.InfoType.Product}
 					>
