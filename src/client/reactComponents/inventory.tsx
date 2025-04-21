@@ -322,7 +322,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							TextSize={px(22)}
 							TextXAlignment={Enum.TextXAlignment.Right}
 						>
-							<uistroke key={"UIStroke"} Thickness={px(3)} />
+							<uistroke key={"UIStroke"} Thickness={px(2)} />
 
 							<textlabel
 								AnchorPoint={new Vector2(0.5, 0.5)}
@@ -345,7 +345,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 								TextXAlignment={Enum.TextXAlignment.Right}
 								Visible={true}
 							>
-								<uistroke key={"UIStroke"} Thickness={px(3)} />
+								<uistroke key={"UIStroke"} Thickness={px(2)} />
 							</textlabel>
 						</textlabel>
 					</frame>

@@ -25,6 +25,7 @@ interface AnimatedButtonProps {
 	visible?: boolean;
 	errorText?: string;
 	modal?: boolean;
+	backgroundTransparency?: number;
 }
 
 export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
@@ -45,6 +46,7 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
 	Ref: ref,
 	active = true,
 	modal,
+	backgroundTransparency = 1,
 }) => {
 	const [isHovered, setIsHovered] = useState(false);
 	const [isPressed, setPressed] = useState(false);
@@ -61,7 +63,7 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
 
 	return (
 		<frame
-			BackgroundTransparency={1}
+			BackgroundTransparency={backgroundTransparency}
 			Size={scale.map((s) => UDim2.fromScale(size.X.Scale * s, size.Y.Scale * s))}
 			Position={position}
 			AnchorPoint={anchorPoint}

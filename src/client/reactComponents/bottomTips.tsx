@@ -69,7 +69,7 @@ const PotionTimer = (props: PotionProps) => {
 				ScaleType={"Fit"}
 				ZIndex={0}
 			>
-				<uigradient Color={new ColorSequence(new Color3())} />
+				{/* <uigradient Color={new ColorSequence(new Color3())} /> */}
 			</imagelabel>
 
 			<textlabel

@@ -45,6 +45,7 @@ import { QuestInfoSideButton } from "client/reactComponents/questInfoSidebutton"
 import { BottomTips } from "client/reactComponents/bottomTips";
 import { Zone } from "@rbxts/zone-plus";
 import { FreeReward } from "client/reactComponents/freeReward";
+import { PackPopup } from "client/reactComponents/packPopup";
 
 const LOW_LAYER = 0;
 const MENU_LAYER = 1;
@@ -494,6 +495,8 @@ export default class UiController implements OnStart, OnInit {
 			undefined,
 			LOW_LAYER,
 		);
+
+		this.registerUi("PackPopup", React.createElement(PackPopup), {}, true, true, LOW_LAYER);
 
 		// // Hide some stuff from the client that we already have cached.
 		// // By the time we init here, all modules have been loaded already, so we can safely remove them.

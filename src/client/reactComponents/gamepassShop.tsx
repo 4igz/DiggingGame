@@ -1,5 +1,5 @@
 //!optimize 2
-import React, { createRef, useEffect, useState } from "@rbxts/react";
+import React, { Binding, createRef, useEffect, useState } from "@rbxts/react";
 import { ExitButton } from "./inventory";
 import UiController from "client/controllers/uiController";
 import { gameConstants } from "shared/gameConstants";
@@ -328,13 +328,14 @@ interface AnimatedProductButtonProps {
 	productId: number;
 	productType: Enum.InfoType;
 	size?: { X: { Scale: number }; Y: { Scale: number } };
-	position?: UDim2;
+	position?: UDim2 | Binding<UDim2>;
 	anchorPoint?: Vector2;
 	scales?: NumberRange;
 	layoutOrder?: number;
 	children?: React.ReactNode;
 	zindex?: number;
 	predicate?: () => boolean;
+	backgroundTransparency?: number;
 	visible?: boolean;
 }
 
@@ -352,6 +353,7 @@ export const AnimatedProductButton = (props: AnimatedProductButtonProps) => {
 			<AnimatedButton
 				size={UDim2.fromScale(1, 1)}
 				scales={props.scales}
+				backgroundTransparency={props.backgroundTransparency ?? 1}
 				onClick={() => {
 					// Prompt product purchase
 					const canBuy = props.predicate?.() ?? true;
@@ -2338,7 +2340,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 					/>
 
 					<AnimatedProductButton
-						size={UDim2.fromScale(0.45, 0.970591)}
+						size={UDim2.fromScale(0.488, 0.970591)}
 						productId={gameConstants.DEVPRODUCT_IDS["250k Big Money Pack"]}
 						productType={Enum.InfoType.Product}
 					>
@@ -2348,8 +2350,6 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							key={"2"}
 							Size={UDim2.fromScale(1, 1)}
 						>
-							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.15044} />
-
 							<textlabel
 								AnchorPoint={new Vector2(0.5, 0.5)}
 								BackgroundTransparency={1}
@@ -2365,7 +2365,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.9, 0.115044)}
 								Text={"Vault  Of  Cash"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(PRODUCT_NAME_PX)}
+								TextSize={px(SUBTITLE_PX)}
 								// TextScaled={true}
 								ZIndex={105}
 							>
@@ -2406,7 +2406,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.795953, 0.11364)}
 								Text={"+250,000"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(PRODUCT_NAME_PX)}
+								TextSize={px(TAB_PX)}
 								// TextScaled={true}
 								ZIndex={105}
 							>
@@ -2498,7 +2498,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 					</AnimatedProductButton>
 
 					<AnimatedProductButton
-						size={UDim2.fromScale(0.45, 0.970591)}
+						size={UDim2.fromScale(0.488, 0.970591)}
 						productId={gameConstants.DEVPRODUCT_IDS["1M Massive Money Pack"]}
 						productType={Enum.InfoType.Product}
 					>
@@ -2508,8 +2508,6 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							key={"3"}
 							Size={UDim2.fromScale(1, 1)}
 						>
-							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.15044} />
-
 							<textlabel
 								AnchorPoint={new Vector2(0.5, 0.5)}
 								BackgroundTransparency={1}
@@ -2525,7 +2523,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.9, 0.115044)}
 								Text={"Fortune  Of  Cash"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(PRODUCT_NAME_PX)}
+								TextSize={px(SUBTITLE_PX)}
 								// TextScaled={true}
 								ZIndex={105}
 							>
@@ -2565,7 +2563,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.795953, 0.11364)}
 								Text={"+1,000,000"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(PRODUCT_NAME_PX)}
+								TextSize={px(TAB_PX)}
 								// TextScaled={true}
 								ZIndex={105}
 							>
