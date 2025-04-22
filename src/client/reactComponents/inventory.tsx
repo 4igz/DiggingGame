@@ -317,6 +317,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							Size={UDim2.fromScale(1.02, 0.521)}
 							Text={spaceWords(props.itemName)}
 							TextColor3={Color3.fromRGB(255, 255, 255)}
+							TextTruncate={Enum.TextTruncate.SplitWord}
 							// TextScaled={true}
 							// TextWrapped={true}
 							TextSize={px(22)}
@@ -339,6 +340,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 								Size={UDim2.fromScale(1, 1)}
 								Text={spaceWords(props.itemName)}
 								TextColor3={Color3.fromRGB(255, 255, 255)}
+								TextTruncate={Enum.TextTruncate.SplitWord}
 								// TextScaled={true}
 								// TextWrapped={true}
 								TextSize={px(22)}
@@ -1230,6 +1232,7 @@ interface ExitButtonProps {
 	menuRefToClose?: React.RefObject<Frame>;
 	onClick?: () => void;
 	isMenuVisible: boolean;
+	size?: UDim2;
 }
 
 export const ExitButton = (props: ExitButtonProps) => {
@@ -1256,7 +1259,7 @@ export const ExitButton = (props: ExitButtonProps) => {
 			active={true}
 			anchorPoint={new Vector2(0.5, 0.5)}
 			position={UDim2.fromScale(0.978, 0.0365)}
-			size={UDim2.fromScale(0.123, 0.194)}
+			size={props.size ?? UDim2.fromScale(0.123, 0.194)}
 			zindex={100}
 			onClick={exit}
 			selectable={false}

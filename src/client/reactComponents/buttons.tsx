@@ -1,5 +1,5 @@
 import { useMotion } from "@rbxts/pretty-react-hooks";
-import React, { useEffect, useState } from "@rbxts/react";
+import React, { Binding, useEffect, useState } from "@rbxts/react";
 import { MarketplaceService, Players } from "@rbxts/services";
 import { GamepassController } from "client/controllers/gamepassController";
 import { usePx } from "client/hooks/usePx";
@@ -9,7 +9,7 @@ import { getDeveloperProductInfo } from "shared/util/monetizationUtil";
 
 interface AnimatedButtonProps {
 	size?: { X: { Scale: number }; Y: { Scale: number } };
-	position?: UDim2;
+	position?: UDim2 | Binding<UDim2>;
 	anchorPoint?: Vector2;
 	onClick?: () => void;
 	onHover?: () => void;

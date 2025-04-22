@@ -319,6 +319,10 @@ export class ShovelController implements OnStart {
 								return;
 							}
 
+							if (noPositionFound) {
+								Signals.invalidAction.Fire("Can't dig here!");
+							}
+
 							// "Dig Everywhere" logic here
 							if (!targetActive && !noPositionFound) {
 								if (isInventoryFull) {

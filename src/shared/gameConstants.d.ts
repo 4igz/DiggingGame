@@ -36,6 +36,7 @@ export declare const gameConstants: {
 	readonly DETECTOR_HINT_TEXT: string;
 	readonly QUEST_INFO_SIDEBUTTON: string;
 	readonly FREE_REWARD_UI: string;
+	readonly PACK_FRAME_UI: string;
 
 	readonly BOAT_DRIVER_SITTING: "SittingInBoatDriverSeat";
 	readonly AREA_INDICATOR_POS: "OriginalPosition";

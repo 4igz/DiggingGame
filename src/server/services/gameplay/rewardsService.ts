@@ -157,7 +157,7 @@ export class DailyRewardsService implements OnStart {
 			}
 			profile.Data.claimedLimitedOffer++;
 			this.profileService.setProfile(player, profile);
-			Events.updateClaimedLimitedOfferPack(player, profile.Data.claimedLimitedOffer);
+			Events.updateClaimedLimitedOfferPack(player, profile.Data.claimedLimitedOffer as 0 | 1 | 2);
 		});
 
 		Functions.claimPlaytimeReward.setCallback((player: Player, rewardIndex: number) => {
@@ -199,12 +199,12 @@ export class DailyRewardsService implements OnStart {
 		});
 
 		this.profileService.onProfileLoaded.Connect((player, profile) => {
-			Events.updateClaimedLimitedOfferPack(player, profile.Data.claimedLimitedOffer);
+			Events.updateClaimedLimitedOfferPack(player, profile.Data.claimedLimitedOffer as 0 | 1 | 2);
 		});
 
 		Functions.getClaimedLimitedOfferPack.setCallback((player) => {
 			const profile = this.profileService.getProfileLoaded(player).expect();
-			return profile.Data.claimedLimitedOffer;
+			return profile.Data.claimedLimitedOffer as 0 | 1 | 2;
 		});
 	}
 

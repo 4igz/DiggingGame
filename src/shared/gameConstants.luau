@@ -144,6 +144,7 @@ local gameConstants = {
 	DETECTOR_HINT_TEXT = "DetectorHintText",
 	QUEST_INFO_SIDEBUTTON = "QuestInfoSideButton",
 	FREE_REWARD_UI = "FreeRewardUI",
+	PACK_FRAME_UI = "StarterPackFrameUi",
 
 	-- Attributes
 	BOAT_DRIVER_SITTING = "SittingInBoatDriverSeat",

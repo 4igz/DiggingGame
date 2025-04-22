@@ -7,15 +7,21 @@ import { subscribe } from "@rbxts/charm";
 import { useMotion } from "client/hooks/useMotion";
 import { Signals } from "shared/signals";
 import { springs } from "client/utils/springs";
+import { AnimatedButton } from "./buttons";
+import UiController from "client/controllers/uiController";
 
-const RETRO = 2;
-const NATURE = 1;
-const NONE = 0;
+export const RETRO = 2;
+export const NATURE = 1;
+export const NONE = 0;
 
-const DEFAULT_POS = new UDim2(1, -5, 0, 15);
-const CLOSED_POS = UDim2.fromScale(1.2, 0);
+const DEFAULT_POS = new UDim2(0.975, 0, 0.05, 0);
+const CLOSED_POS = UDim2.fromScale(1.2, 0.05);
 
-export const PackPopup = () => {
+interface PackPopupProps {
+	uiController: UiController;
+}
+
+export const PackPopup = (props: PackPopupProps) => {
 	const [offer, setOffer] = useState(highestLimitedOfferPack());
 	const px = usePx();
 	const [menuPos, menuPosMotion] = useMotion(DEFAULT_POS);
@@ -31,15 +37,16 @@ export const PackPopup = () => {
 	}, []);
 
 	return (
-		<AnimatedProductButton
+		<AnimatedButton
 			key={"Pack"}
-			productId={gameConstants.DEVPRODUCT_IDS["StarterPack"]}
-			productType={Enum.InfoType.Product}
 			anchorPoint={new Vector2(1, 0)}
 			position={menuPos}
 			size={UDim2.fromScale(0.120245, 0.187709)}
 			visible={offer < RETRO}
 			backgroundTransparency={0}
+			onClick={() => {
+				props.uiController.toggleUi(gameConstants.PACK_FRAME_UI);
+			}}
 		>
 			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 
@@ -80,38 +87,72 @@ export const PackPopup = () => {
 					</textlabel>
 				)}
 
-				<textlabel
-					BackgroundTransparency={1}
-					FontFace={new Font("rbxassetid://12187371840", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-					key={"OP"}
-					Position={UDim2.fromScale(-0.243544, 0)}
-					Size={UDim2.fromScale(0.82363, 0.337662)}
-					Text={"OP!"}
-					TextColor3={new Color3(1, 1, 1)}
-					// TextScaled={true}
-					TextSize={px(30)}
-					ZIndex={2}
-					Visible={offer === NATURE}
-				>
-					<uistroke
-						key={"UIStroke"}
-						Color={Color3.fromRGB(54, 54, 54)}
-						LineJoinMode={Enum.LineJoinMode.Miter}
-						Thickness={5}
-					/>
+				{offer === NONE ? (
+					<textlabel
+						BackgroundTransparency={1}
+						FontFace={new Font("rbxassetid://12187607287", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						key={"OP"}
+						Position={UDim2.fromScale(-0.243544, 0)}
+						Size={UDim2.fromScale(0.82363, 0.385281)}
+						Text={"OP!"}
+						TextColor3={new Color3(1, 1, 1)}
+						TextScaled={true}
+						Visible={true}
+						ZIndex={2}
+					>
+						<uistroke
+							key={"UIStroke"}
+							Color={Color3.fromRGB(54, 54, 54)}
+							LineJoinMode={Enum.LineJoinMode.Miter}
+							Thickness={5}
+						/>
 
-					<uigradient
-						key={"UIGradient"}
-						Color={
-							new ColorSequence([
-								new ColorSequenceKeypoint(0, Color3.fromRGB(255, 160, 64)),
-								new ColorSequenceKeypoint(0.515571, Color3.fromRGB(255, 211, 110)),
-								new ColorSequenceKeypoint(1, new Color3(1, 1, 1)),
-							])
-						}
-						Rotation={-90}
-					/>
-				</textlabel>
+						<uigradient
+							key={"UIGradient"}
+							Color={
+								new ColorSequence([
+									new ColorSequenceKeypoint(0, Color3.fromRGB(255, 160, 64)),
+									new ColorSequenceKeypoint(0.515571, Color3.fromRGB(255, 211, 110)),
+									new ColorSequenceKeypoint(1, new Color3(1, 1, 1)),
+								])
+							}
+							Rotation={-90}
+						/>
+					</textlabel>
+				) : (
+					<textlabel
+						BackgroundTransparency={1}
+						FontFace={new Font("rbxassetid://12187371840", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						key={"OP"}
+						Position={UDim2.fromScale(-0.243544, 0)}
+						Size={UDim2.fromScale(0.82363, 0.337662)}
+						Text={"OP!"}
+						TextColor3={new Color3(1, 1, 1)}
+						// TextScaled={true}
+						TextSize={px(30)}
+						ZIndex={2}
+						Visible={offer === NATURE}
+					>
+						<uistroke
+							key={"UIStroke"}
+							Color={Color3.fromRGB(54, 54, 54)}
+							LineJoinMode={Enum.LineJoinMode.Miter}
+							Thickness={5}
+						/>
+
+						<uigradient
+							key={"UIGradient"}
+							Color={
+								new ColorSequence([
+									new ColorSequenceKeypoint(0, Color3.fromRGB(255, 160, 64)),
+									new ColorSequenceKeypoint(0.515571, Color3.fromRGB(255, 211, 110)),
+									new ColorSequenceKeypoint(1, new Color3(1, 1, 1)),
+								])
+							}
+							Rotation={-90}
+						/>
+					</textlabel>
+				)}
 
 				<imagelabel
 					BackgroundTransparency={1}
@@ -157,6 +198,6 @@ export const PackPopup = () => {
 					Rotation={90}
 				/>
 			)}
-		</AnimatedProductButton>
+		</AnimatedButton>
 	);
 };
