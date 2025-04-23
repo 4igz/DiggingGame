@@ -37,6 +37,10 @@ export declare const gameConstants: {
 	readonly QUEST_INFO_SIDEBUTTON: string;
 	readonly FREE_REWARD_UI: string;
 	readonly PACK_FRAME_UI: string;
+	readonly UPDATE_LOG_UI: string;
+	readonly BOTTOM_RIGHT_HUD: string;
+
+	readonly STARTER_PACK_DISCOUNTED_PRICE: number;
 
 	readonly BOAT_DRIVER_SITTING: "SittingInBoatDriverSeat";
 	readonly AREA_INDICATOR_POS: "OriginalPosition";

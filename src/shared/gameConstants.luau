@@ -53,6 +53,8 @@ local gameConstants = {
 	DETECTION_MODIFIER = 0.1,
 	LUCK_MODIFIER = 0.1,
 
+	STARTER_PACK_DISCOUNTED_PRICE = 6000,
+
 	SHOP_CONFIGS = {
 		MetalDetectors = metalDetectorConfig,
 		Shovels = shovelConfig,
@@ -145,6 +147,8 @@ local gameConstants = {
 	QUEST_INFO_SIDEBUTTON = "QuestInfoSideButton",
 	FREE_REWARD_UI = "FreeRewardUI",
 	PACK_FRAME_UI = "StarterPackFrameUi",
+	UPDATE_LOG_UI = "UpdateLogUi",
+	BOTTOM_RIGHT_HUD = "BottomRightHud",
 
 	-- Attributes
 	BOAT_DRIVER_SITTING = "SittingInBoatDriverSeat",

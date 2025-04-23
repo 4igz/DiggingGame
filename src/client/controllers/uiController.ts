@@ -47,6 +47,7 @@ import { Zone } from "@rbxts/zone-plus";
 import { FreeReward } from "client/reactComponents/freeReward";
 import { PackPopup } from "client/reactComponents/packPopup";
 import { StarterPackFrame } from "client/reactComponents/starterPackFrame";
+import { BottomRightButtons } from "client/reactComponents/bottomRightButtons";
 
 const LOW_LAYER = 0;
 const MENU_LAYER = 1;
@@ -432,7 +433,7 @@ export default class UiController implements OnStart, OnInit {
 			true,
 			MENU_LAYER,
 		);
-		this.registerUi("VolumeControl", React.createElement(VolumeMuteButton), {}, false, false, LOW_LAYER);
+		// this.registerUi("VolumeControl", React.createElement(VolumeMuteButton), {}, false, false, LOW_LAYER);
 		this.registerUi(
 			gameConstants.DIALOG_PROMPT,
 			React.createElement(DialogResponseComponent),
@@ -506,6 +507,15 @@ export default class UiController implements OnStart, OnInit {
 			true,
 			true,
 			MENU_LAYER,
+		);
+
+		this.registerUi(
+			gameConstants.BOTTOM_RIGHT_HUD,
+			React.createElement(BottomRightButtons),
+			{ uiController: this },
+			true,
+			true,
+			LOW_LAYER,
 		);
 
 		// // Hide some stuff from the client that we already have cached.

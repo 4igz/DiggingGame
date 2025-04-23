@@ -87,72 +87,37 @@ export const PackPopup = (props: PackPopupProps) => {
 					</textlabel>
 				)}
 
-				{offer === NONE ? (
-					<textlabel
-						BackgroundTransparency={1}
-						FontFace={new Font("rbxassetid://12187607287", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-						key={"OP"}
-						Position={UDim2.fromScale(-0.243544, 0)}
-						Size={UDim2.fromScale(0.82363, 0.385281)}
-						Text={"OP!"}
-						TextColor3={new Color3(1, 1, 1)}
-						TextScaled={true}
-						Visible={true}
-						ZIndex={2}
-					>
-						<uistroke
-							key={"UIStroke"}
-							Color={Color3.fromRGB(54, 54, 54)}
-							LineJoinMode={Enum.LineJoinMode.Miter}
-							Thickness={5}
-						/>
+				<textlabel
+					BackgroundTransparency={1}
+					FontFace={new Font("rbxassetid://12187607287", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					key={"OP"}
+					Position={UDim2.fromScale(-0.243544, 0)}
+					Size={UDim2.fromScale(0.82363, 0.385281)}
+					Text={"OP!"}
+					TextColor3={new Color3(1, 1, 1)}
+					TextScaled={true}
+					Visible={true}
+					ZIndex={2}
+				>
+					<uistroke
+						key={"UIStroke"}
+						Color={Color3.fromRGB(54, 54, 54)}
+						LineJoinMode={Enum.LineJoinMode.Miter}
+						Thickness={5}
+					/>
 
-						<uigradient
-							key={"UIGradient"}
-							Color={
-								new ColorSequence([
-									new ColorSequenceKeypoint(0, Color3.fromRGB(255, 160, 64)),
-									new ColorSequenceKeypoint(0.515571, Color3.fromRGB(255, 211, 110)),
-									new ColorSequenceKeypoint(1, new Color3(1, 1, 1)),
-								])
-							}
-							Rotation={-90}
-						/>
-					</textlabel>
-				) : (
-					<textlabel
-						BackgroundTransparency={1}
-						FontFace={new Font("rbxassetid://12187371840", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-						key={"OP"}
-						Position={UDim2.fromScale(-0.243544, 0)}
-						Size={UDim2.fromScale(0.82363, 0.337662)}
-						Text={"OP!"}
-						TextColor3={new Color3(1, 1, 1)}
-						// TextScaled={true}
-						TextSize={px(30)}
-						ZIndex={2}
-						Visible={offer === NATURE}
-					>
-						<uistroke
-							key={"UIStroke"}
-							Color={Color3.fromRGB(54, 54, 54)}
-							LineJoinMode={Enum.LineJoinMode.Miter}
-							Thickness={5}
-						/>
-
-						<uigradient
-							key={"UIGradient"}
-							Color={
-								new ColorSequence([
-									new ColorSequenceKeypoint(0, Color3.fromRGB(255, 160, 64)),
-									new ColorSequenceKeypoint(0.515571, Color3.fromRGB(255, 211, 110)),
-									new ColorSequenceKeypoint(1, new Color3(1, 1, 1)),
-								])
-							}
-							Rotation={-90}
-						/>
-					</textlabel>
-				)}
+					<uigradient
+						key={"UIGradient"}
+						Color={
+							new ColorSequence([
+								new ColorSequenceKeypoint(0, Color3.fromRGB(255, 160, 64)),
+								new ColorSequenceKeypoint(0.515571, Color3.fromRGB(255, 211, 110)),
+								new ColorSequenceKeypoint(1, new Color3(1, 1, 1)),
+							])
+						}
+						Rotation={-90}
+					/>
+				</textlabel>
 
 				<imagelabel
 					BackgroundTransparency={1}

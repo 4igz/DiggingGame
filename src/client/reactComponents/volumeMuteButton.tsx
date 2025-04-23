@@ -19,7 +19,7 @@ export const VolumeMuteButton = () => {
 
 	return (
 		<AnimatedButton
-			size={UDim2.fromScale(0.1, 0.1)}
+			size={UDim2.fromScale(1, 1)}
 			position={UDim2.fromScale(1, 1)}
 			anchorPoint={new Vector2(1, 1)}
 			onClick={() => {

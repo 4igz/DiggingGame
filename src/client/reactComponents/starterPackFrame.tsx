@@ -461,6 +461,8 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 				id={gameConstants.DEVPRODUCT_IDS["StarterPack"]}
 				active={true}
 				anchorPoint={new Vector2(0.5, 0.5)}
+				discountedPrice={gameConstants.STARTER_PACK_DISCOUNTED_PRICE}
+				isDiscounted={true}
 			>
 				<uigradient
 					key={"UIGradient"}
