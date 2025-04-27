@@ -208,6 +208,27 @@ export const BuyButton = (props: BuyButtonProps) => {
 					ZIndex={10}
 				>
 					<uistroke key={"UIStroke"} Thickness={px(2)} />
+
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						key={"Amount"}
+						Position={UDim2.fromScale(0.5, 0.48)}
+						Size={UDim2.fromScale(1, 0.806)}
+						Text={
+							props.productType === Enum.InfoType.GamePass
+								? props.gamepassController.getOwnsGamepass(props.id)
+									? "OWNED"
+									: priceText
+								: priceText
+						}
+						RichText={true}
+						TextColor3={new Color3(1, 1, 1)}
+						TextSize={px(props.textSize ?? 27)}
+						TextXAlignment={Enum.TextXAlignment.Center}
+						ZIndex={9}
+					/>
 				</textlabel>
 			</imagelabel>
 		</AnimatedButton>

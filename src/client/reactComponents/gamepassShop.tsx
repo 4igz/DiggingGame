@@ -1798,7 +1798,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.276675, 0.137168)}
 								Text={"MOST PURCHASED!"}
 								TextColor3={Color3.fromRGB(116, 48, 13)}
-								TextSize={px(PRODUCT_NAME_PX)}
+								TextSize={px(SUBTITLE_PX)}
 								// TextScaled={true}
 								ZIndex={2}
 							>
@@ -1819,7 +1819,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 									Size={UDim2.fromScale(0.993423, 1)}
 									Text={"MOST PURCHASED!"}
 									TextColor3={new Color3(1, 1, 1)}
-									TextSize={px(PRODUCT_NAME_PX)}
+									TextSize={px(SUBTITLE_PX)}
 									// TextScaled={true}
 									ZIndex={2}
 								>

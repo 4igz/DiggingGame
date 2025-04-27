@@ -437,6 +437,7 @@ const TreasureItemComponent: React.FC<TreasureItemComponentProps> = ({
 			scales={new NumberRange(0.975, 1.025)}
 			onClick={() => {
 				Events.equipTreasure(itemName);
+				Signals.actionPopup.Fire(`Equipped ${spaceWords(itemName)}`);
 			}}
 		>
 			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
@@ -2154,7 +2155,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 							order={4}
 							selectedInventoryType={selectedInventoryType}
 							setSelectedInventoryType={setSelectedInventoryType}
-							icon={"rbxassetid://93760012973987"}
+							icon={"rbxassetid://129013287605588"}
 							position={UDim2.fromScale(0.395, 0.5)}
 						/>
 
