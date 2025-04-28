@@ -326,7 +326,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							TextSize={px(25)}
 							TextXAlignment={Enum.TextXAlignment.Right}
 						>
-							<uistroke key={"UIStroke"} Thickness={3} />
+							<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 							<textlabel
 								AnchorPoint={new Vector2(0.5, 0.5)}
@@ -348,7 +348,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 								TextSize={px(25)}
 								TextXAlignment={Enum.TextXAlignment.Right}
 							>
-								<uistroke key={"UIStroke"} Thickness={3} />
+								<uistroke key={"UIStroke"} Thickness={px(3)} />
 							</textlabel>
 						</textlabel>
 					</frame>
@@ -433,7 +433,31 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 					ZIndex={16}
 					Visible={!owned}
 				>
-					<uistroke Color={Color3.fromRGB(23, 30, 52)} key={"1"} Thickness={4.6} />
+					<uistroke Color={Color3.fromRGB(23, 30, 52)} key={"1"} Thickness={px(3)} />
+
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						FontFace={
+							new Font(
+								"rbxasset://fonts/families/BuilderSans.json",
+								Enum.FontWeight.Bold,
+								Enum.FontStyle.Normal,
+							)
+						}
+						key={"1"}
+						Position={UDim2.fromScale(0.5, 0.45)}
+						Size={UDim2.fromScale(0.9, 0.11)}
+						Text={props.obtainLocation ?? `$${separateWithCommas(props.price)}`}
+						TextColor3={Color3.fromRGB(92, 255, 133)}
+						// TextScaled={true}
+						// TextWrapped={true}
+						TextSize={px(28)}
+						ZIndex={16}
+						Visible={!owned}
+					>
+						<uistroke Color={Color3.fromRGB(23, 30, 52)} key={"1"} Thickness={px(3)} />
+					</textlabel>
 				</textlabel>
 			</AnimatedButton>
 		</frame>
@@ -459,6 +483,8 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0.5, 0.6));
 	const [radialRotation, setRadialRotation] = useState(0);
 	const menuRef = React.createRef<Frame>();
+
+	const px = usePx();
 
 	const updateShopContent = (shopName: typeof selectedShop, items: Array<Item>, setSelected: boolean = false) => {
 		if (shopName === "" || shopName === "Store") return;
@@ -675,7 +701,7 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 						TextXAlignment={Enum.TextXAlignment.Right}
 						ZIndex={10}
 					>
-						<uistroke key={"UIStroke"} Thickness={4} />
+						<uistroke key={"UIStroke"} Thickness={px(2)} />
 					</textlabel>
 				</AnimatedButton>
 
@@ -736,7 +762,7 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 						TextXAlignment={Enum.TextXAlignment.Right}
 						ZIndex={10}
 					>
-						<uistroke key={"UIStroke"} Thickness={4} />
+						<uistroke key={"UIStroke"} Thickness={px(2)} />
 					</textlabel>
 				</AnimatedButton>
 
@@ -836,7 +862,7 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 						TextXAlignment={Enum.TextXAlignment.Right}
 						ZIndex={10}
 					>
-						<uistroke key={"UIStroke"} Thickness={4} />
+						<uistroke key={"UIStroke"} Thickness={px(2)} />
 					</textlabel>
 
 					<textlabel
@@ -895,7 +921,7 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 				TextColor3={new Color3(1, 1, 1)}
 				TextScaled={true}
 			>
-				<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={8} />
+				<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(5)} />
 
 				<uipadding
 					key={"UIPadding"}

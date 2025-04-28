@@ -13,6 +13,7 @@ import { getOrderFromRarity } from "shared/util/rarityUtil";
 import { SoundService, UserInputService } from "@rbxts/services";
 import { AnimatedButton } from "./buttons";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
+import { usePx } from "client/hooks/usePx";
 
 interface SellTargetProps {
 	target: TargetItem;
@@ -99,6 +100,8 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0.5, 0.6));
 	const menuRef = React.useRef<Frame>();
 	const [platform, setPlatform] = React.useState(getPlayerPlatform());
+
+	const px = usePx();
 
 	React.useEffect(() => {
 		setVisible(props.visible);
@@ -205,7 +208,7 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 					TextScaled={true}
 					TextWrapped={true}
 				>
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={5.3} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(3)} />
 				</textlabel>
 
 				<imagelabel

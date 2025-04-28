@@ -62,6 +62,7 @@ const DialogOption = (props: DialogOptionProps) => {
 						TextScaled={true}
 						TextWrapped={true}
 						TextXAlignment={Enum.TextXAlignment.Left}
+						TextYAlignment={Enum.TextYAlignment.Center}
 					>
 						<uistroke
 							key={"UIStroke"}

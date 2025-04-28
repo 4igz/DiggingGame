@@ -228,7 +228,9 @@ export const BuyButton = (props: BuyButtonProps) => {
 						TextSize={px(props.textSize ?? 27)}
 						TextXAlignment={Enum.TextXAlignment.Center}
 						ZIndex={9}
-					/>
+					>
+						<uistroke key={"UIStroke"} Thickness={px(2)} />
+					</textlabel>
 				</textlabel>
 			</imagelabel>
 		</AnimatedButton>

@@ -277,6 +277,7 @@ export const RightSideMenu = (props: MenuProps) => {
 						// TextScaled={true}
 						TextSize={px(30)}
 						TextXAlignment={Enum.TextXAlignment.Left}
+						TextYAlignment={Enum.TextYAlignment.Center}
 					>
 						<uipadding
 							key={"UIPadding"}
