@@ -902,6 +902,7 @@ export const GamepassShopComponent = (props: GamepassShopProps) => {
 							id={gameConstants.DEVPRODUCT_IDS["StarterPack"]}
 							gamepassController={props.gamepassController}
 							productType={Enum.InfoType.Product}
+							textSize={50}
 						/>
 						<textlabel
 							BackgroundTransparency={1}

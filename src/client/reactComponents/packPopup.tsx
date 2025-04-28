@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "@rbxts/react";
-import { AnimatedProductButton } from "./gamepassShop";
 import { highestLimitedOfferPack } from "client/atoms/rewardAtoms";
 import { gameConstants } from "shared/gameConstants";
 import { usePx } from "client/hooks/usePx";
