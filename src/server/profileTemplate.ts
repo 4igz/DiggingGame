@@ -11,7 +11,7 @@ import { questConfig } from "shared/config/questConfig";
 import { PotionEffect } from "./services/gameplay/inventoryService";
 import { ReplicatedStorage } from "@rbxts/services";
 
-export const PROFILE_STORE_NAME = "pre_test33";
+export const PROFILE_STORE_NAME = "pre_test40";
 
 ReplicatedStorage.SetAttribute("CurrentStore", PROFILE_STORE_NAME);
 

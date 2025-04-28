@@ -1,6 +1,6 @@
 //!optimize 2
 import { useCamera, useDebounceState, useEventListener } from "@rbxts/pretty-react-hooks";
-import { useMemo } from "@rbxts/react";
+import { useEffect, useMemo } from "@rbxts/react";
 
 export interface ScaleFunction {
 	/**
@@ -51,6 +51,12 @@ export function usePx(): ScaleFunction {
 	useEventListener(camera.GetPropertyChangedSignal("ViewportSize"), () => {
 		setScale(calculateScale(camera.ViewportSize));
 	});
+
+	useEffect(() => {
+		task.delay(0.5, () => {
+			setScale(calculateScale(camera.ViewportSize));
+		});
+	}, []);
 
 	return useMemo(() => {
 		const api = {

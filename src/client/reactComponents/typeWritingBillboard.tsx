@@ -49,6 +49,7 @@ const TypewriterBillboard: React.FC<TypewriterBillboardProps> = (props) => {
 				TextSize={24}
 				TextScaled={false}
 				Font={Enum.Font.GothamBold}
+				RichText={true}
 			/>
 		</billboardgui>
 	);

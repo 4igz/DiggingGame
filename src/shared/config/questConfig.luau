@@ -42,9 +42,9 @@ local questConfig: { [string]: { QuestConfig } } = {
 
 			playerResponses = { [QUEST_ACCEPT] = "Got it", [QUEST_DECLINE] = "No thanks" },
 
-			initialResponse = "Bring me a bag of coins and I'll reward you with some money!",
-			subsequentResponse = "Did you forget already? I said bring me a bag of coins!",
-			completeResponse = "Thank you for the bag of coins! Here's your reward! Come back and I've got another ask of you!",
+			initialResponse = "Bring me a bag of coins and\n I'll reward you with some money!",
+			subsequentResponse = "Did you forget already? \nI said bring me a bag of coins!",
+			completeResponse = "Thank you for the bag of coins!\n Here's your reward! Come back and I've got\n another ask of you!",
 
 			target = "Bag of coins" :: Targets, -- while strict, it's necessary to cast to Targets because of the luau typesolver
 			collectAmount = 1,
@@ -73,9 +73,9 @@ local questConfig: { [string]: { QuestConfig } } = {
 				[QUEST_DECLINE] = "See you walking the plank!",
 			},
 
-			initialResponse = "Don't tell the captain, but I've lost his prized peg-leg. Can you please help me find it?",
+			initialResponse = "Don't tell the captain, but I've \nlost his prized peg-leg. \nCan you please help me find it?",
 			subsequentResponse = "Did you find the peg-leg yet?",
-			completeResponse = "Yar!! I don't know what I would do without you. Here's your reward.",
+			completeResponse = "Yar!! I don't know what I would do without you. \nHere's your reward!",
 
 			target = "Bejeweled pegleg" :: Targets, -- while strict, it's necessary to cast to Targets because of the luau typesolver
 			collectAmount = 1,
@@ -87,9 +87,9 @@ local questConfig: { [string]: { QuestConfig } } = {
 
 			playerResponses = { [QUEST_ACCEPT] = "Yar matey", [QUEST_DECLINE] = "Nay" },
 
-			initialResponse = "I've heard you can find diamonds on this island. Can you bring me one? I'll reward you well!",
+			initialResponse = "I've heard you can find diamonds on this island. \nCan you bring me one? I'll reward you well!",
 			subsequentResponse = "Bring me a diamond and I'll reward you well!",
-			completeResponse = "Yarrr!!! I can't believe you found a diamond! Everyone is going to be so jealous!",
+			completeResponse = "Yarrr!!! I can't believe you found a diamond! \nEveryone is going to be so jealous!",
 
 			target = "Diamond" :: Targets, -- while strict, it's necessary to cast to Targets because of the luau typesolver
 			collectAmount = 1,
@@ -104,9 +104,9 @@ local questConfig: { [string]: { QuestConfig } } = {
 
 			playerResponses = { [QUEST_ACCEPT] = "Of course", [QUEST_DECLINE] = "No, find them yourself" },
 
-			initialResponse = "I'm looking for 3 missing skulls. Can you find them for me?",
-			subsequentResponse = "Don't ask me why I need them, just bring them to me!",
-			completeResponse = "I appreciate it. Here's a little something for you! Can you do something else for me?",
+			initialResponse = "I'm looking for 3 missing skulls.\n Can you find them for me?",
+			subsequentResponse = "Don't ask me why I need them, \njust bring them to me!",
+			completeResponse = "I appreciate it. Here's a little something\n for you! Can you do something else for me?",
 
 			target = "Skull" :: Targets,
 			collectAmount = 3,
@@ -119,7 +119,7 @@ local questConfig: { [string]: { QuestConfig } } = {
 
 			playerResponses = { [QUEST_ACCEPT] = "Sure!", [QUEST_DECLINE] = "No, find them yourself" },
 
-			initialResponse = "I'm looking for 3 Heat rocks. Can you find them for me?",
+			initialResponse = "I'm looking for 3 Heat rocks. \nCan you find them for me?",
 			subsequentResponse = "Did you find the Heat rock yet?",
 			completeResponse = "Here, take this as a token of my gratitude!",
 
@@ -134,7 +134,7 @@ local questConfig: { [string]: { QuestConfig } } = {
 
 			playerResponses = { [QUEST_ACCEPT] = "Sure!", [QUEST_DECLINE] = "If I did I would keep it for myself" },
 
-			initialResponse = "I'm looking for 3 jade statues. Can you find them for me?",
+			initialResponse = "I'm looking for 3 jade statues. \nCan you find them for me?",
 			subsequentResponse = "Did you find the jade statues yet?",
 			completeResponse = "Thank you!!!!!",
 
@@ -149,7 +149,7 @@ local questConfig: { [string]: { QuestConfig } } = {
 
 			playerResponses = { [QUEST_ACCEPT] = "Sure!", [QUEST_DECLINE] = "No thanks" },
 
-			initialResponse = "I'm searching for the legendary Obsidian crown, Can you help me find it?",
+			initialResponse = "I'm searching for the legendary Obsidian crown, \ncan you help me find it?",
 			subsequentResponse = "Did you find the Obsidian crown yet?",
 			completeResponse = "Thank you!!!!!",
 
@@ -168,7 +168,7 @@ local questConfig: { [string]: { QuestConfig } } = {
 
 			initialResponse = "Do you mind bringing me 10 Icecicles?",
 			subsequentResponse = "Don't ask me why I need them, just find them!",
-			completeResponse = "I appreciate it. Here's a little something for you! Can you do something else for me?",
+			completeResponse = "I appreciate it. Here's a little something for you! \nCan you do something else for me?",
 
 			target = "Icecicle" :: Targets,
 			collectAmount = 10,
