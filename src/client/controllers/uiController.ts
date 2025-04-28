@@ -505,7 +505,7 @@ export default class UiController implements OnStart, OnInit {
 			React.createElement(StarterPackFrame),
 			{ visible: false, gamepassController: this.gamepassController, uiController: this },
 			true,
-			true,
+			undefined,
 			MENU_LAYER,
 		);
 

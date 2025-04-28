@@ -71,6 +71,7 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
 			ZIndex={zindex ?? 10}
 			ref={ref}
 			Visible={visible}
+			BackgroundColor3={new Color3(1, 1, 1)}
 		>
 			<imagebutton
 				BackgroundTransparency={1}
@@ -112,7 +113,10 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
 						// Check for undefined, because we only want a pressing animation if a click event is defined
 						if (onClick !== undefined) {
 							setPressed(true);
-							task.delay(0.1, () => setPressed(false));
+							task.delay(0.1, () => {
+								setPressed(false);
+								setIsHovered(false);
+							});
 							onClick();
 						}
 					},
@@ -203,7 +207,7 @@ export const BuyButton = (props: BuyButtonProps) => {
 					}
 					RichText={true}
 					TextColor3={new Color3(1, 1, 1)}
-					TextSize={px(props.textSize ?? 27)}
+					TextSize={px(props.textSize ?? px(27))}
 					TextXAlignment={Enum.TextXAlignment.Center}
 					ZIndex={10}
 				>

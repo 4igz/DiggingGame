@@ -101,7 +101,7 @@ local metalDetectorConfig: { [string]: MetalDetector } = {
 		luck = 8,
 		searchRadius = 40,
 		rarityType = "Epic",
-		itemImage = "rbxassetid://83643047532460",
+		itemImage = "rbxassetid://83905633434794",
 		price = 200,
 
 		notForSale = true,
@@ -114,7 +114,7 @@ local metalDetectorConfig: { [string]: MetalDetector } = {
 		luck = 28,
 		searchRadius = 30,
 		rarityType = "Epic",
-		itemImage = "rbxassetid://117885119555688",
+		itemImage = "rbxassetid://82188544537251",
 		price = 200,
 
 		notForSale = true,
