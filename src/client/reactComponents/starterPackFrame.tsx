@@ -218,6 +218,8 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 	const [visible, setVisible] = useState(false);
 	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0.5, 0.6));
 
+	const px = usePx();
+
 	useEffect(() => {
 		subscribe(highestLimitedOfferPack, (newValue) => {
 			setOffer(newValue);
@@ -268,7 +270,7 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 				>
 					<uicorner key={"UICorner"} CornerRadius={new UDim(0.04, 0)} />
 
-					<uistroke key={"UIStroke"} Thickness={11} />
+					<uistroke key={"UIStroke"} Thickness={px(11)} />
 				</frame>
 
 				<frame
@@ -280,7 +282,7 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 				>
 					<uicorner key={"UICorner"} CornerRadius={new UDim(0.04, 0)} />
 
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(142, 109, 57)} Thickness={5} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(142, 109, 57)} Thickness={px(5)} />
 				</frame>
 
 				<textlabel
@@ -298,7 +300,7 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 						key={"UIStroke"}
 						Color={Color3.fromRGB(65, 49, 24)}
 						LineJoinMode={Enum.LineJoinMode.Miter}
-						Thickness={4.5}
+						Thickness={px(4.5)}
 					/>
 
 					<uigradient
@@ -348,7 +350,7 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 					TextScaled={true}
 					ZIndex={2}
 				>
-					<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={3} />
+					<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={px(3)} />
 				</textlabel>
 			</frame>
 
@@ -376,7 +378,7 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 				>
 					<uicorner key={"UICorner"} CornerRadius={new UDim(0.07, 0)} />
 
-					<uistroke key={"UIStroke"} Thickness={4} />
+					<uistroke key={"UIStroke"} Thickness={px(4)} />
 
 					<imagelabel
 						Size={UDim2.fromScale(1, 1)}
@@ -415,7 +417,7 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 							key={"UIStroke"}
 							Color={Color3.fromRGB(65, 49, 24)}
 							LineJoinMode={Enum.LineJoinMode.Miter}
-							Thickness={4}
+							Thickness={px(4)}
 						/>
 
 						<uigradient
@@ -453,7 +455,7 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 						TextScaled={true}
 						ZIndex={2}
 					>
-						<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={3.5} />
+						<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={px(3.5)} />
 					</textlabel>
 				</frame>
 
@@ -469,7 +471,7 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 					TextScaled={true}
 					ZIndex={2}
 				>
-					<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={3.5} />
+					<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={px(3.5)} />
 				</textlabel>
 
 				<frame
@@ -481,7 +483,7 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 				>
 					<uicorner key={"UICorner"} CornerRadius={new UDim(0.08, 0)} />
 
-					<uistroke key={"UIStroke"} Thickness={4} />
+					<uistroke key={"UIStroke"} Thickness={px(4)} />
 
 					<imagelabel
 						Size={UDim2.fromScale(1, 1)}
@@ -520,7 +522,7 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 							key={"UIStroke"}
 							Color={Color3.fromRGB(65, 49, 24)}
 							LineJoinMode={Enum.LineJoinMode.Miter}
-							Thickness={4}
+							Thickness={px(4)}
 						/>
 
 						<uigradient
@@ -558,7 +560,7 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 						TextScaled={true}
 						ZIndex={2}
 					>
-						<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={3.5} />
+						<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={px(3.5)} />
 					</textlabel>
 				</frame>
 
@@ -574,7 +576,7 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 					TextScaled={true}
 					ZIndex={2}
 				>
-					<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={3.5} />
+					<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={px(3.5)} />
 				</textlabel>
 
 				<frame
@@ -586,7 +588,7 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 				>
 					<uicorner key={"UICorner"} CornerRadius={new UDim(0.08, 0)} />
 
-					<uistroke key={"UIStroke"} Thickness={4} />
+					<uistroke key={"UIStroke"} Thickness={px(4)} />
 
 					<imagelabel
 						Size={UDim2.fromScale(1, 1)}
@@ -625,7 +627,7 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 							key={"UIStroke"}
 							Color={Color3.fromRGB(65, 49, 24)}
 							LineJoinMode={Enum.LineJoinMode.Miter}
-							Thickness={4}
+							Thickness={px(4)}
 						/>
 
 						<uigradient
@@ -663,7 +665,7 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 						TextScaled={true}
 						ZIndex={2}
 					>
-						<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={3.5} />
+						<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={px(3.5)} />
 					</textlabel>
 				</frame>
 			</frame>

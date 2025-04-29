@@ -51,7 +51,7 @@ export const PackPopup = (props: PackPopupProps) => {
 
 			<uicorner key={"UICorner"} CornerRadius={new UDim(1, 8)} />
 
-			<uistroke key={"UIStroke"} Thickness={6} />
+			<uistroke key={"UIStroke"} Thickness={px(6)} />
 
 			<frame BackgroundTransparency={1} key={"PackInfo"} Size={UDim2.fromScale(1, 1)}>
 				{offer === NONE ? (
@@ -102,7 +102,7 @@ export const PackPopup = (props: PackPopupProps) => {
 						key={"UIStroke"}
 						Color={Color3.fromRGB(54, 54, 54)}
 						LineJoinMode={Enum.LineJoinMode.Miter}
-						Thickness={5}
+						Thickness={px(5)}
 					/>
 
 					<uigradient

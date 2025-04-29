@@ -38,5 +38,5 @@ export const Signals = {
 	actionPopup: new Signal<(text?: string) => void>(),
 	drankPotion: new Signal<(potionName: keyof typeof potionConfig) => void>(),
 
-	menuOpened: new Signal<(isOpen: boolean) => void>(),
+	menuOpened: new Signal<(isOpen: boolean, menuName: string) => void>(),
 };

@@ -35,10 +35,6 @@ const MOVEMENT_INPUTS: MovementInputsMap = {
 		[Enum.KeyCode.Down.Value]: true,
 		[Enum.KeyCode.Space.Value]: true,
 	},
-
-	[Enum.UserInputType.Gamepad1.Value]: {
-		[Enum.KeyCode.Thumbstick1.Value]: true,
-	},
 };
 
 let existingPather: Pather | undefined = undefined;
@@ -119,6 +115,17 @@ export class AutoDigging implements OnStart {
 			this.onInputBegan(input, gameProcessedEvent);
 		});
 
+		UserInputService.InputChanged.Connect((input, gameProcessedEvent) => {
+			if (gameProcessedEvent) return;
+			if (!autoDiggingEnabled) return;
+
+			if (input.KeyCode === Enum.KeyCode.Thumbstick1) {
+				if (this.isCloseToTrackedTarget()) return;
+				this.cleanupPather();
+				this.setAutoDiggingEnabled(false, false);
+			}
+		});
+
 		// Start a periodic check to see if we might be stuck
 		this.beginStuckCheck();
 	}
@@ -128,15 +135,15 @@ export class AutoDigging implements OnStart {
 	 * This is because we are still waiting for a response from the server to tell us that we are close enough to dig.
 	 * In this case, we should keep track of this and not quit our current target if we are close with an active target.
 	 */
-	private isClosedToTrackedTarget(): boolean {
+	private isCloseToTrackedTarget(): boolean {
 		const characterPosition = Players.LocalPlayer.Character?.GetPivot().Position;
 		if (!characterPosition) return false;
-		return characterPosition.sub(trackedSpawnPosition).Magnitude < gameConstants.DIG_RANGE * 1.1;
+		return characterPosition.sub(trackedSpawnPosition).Magnitude < gameConstants.DIG_RANGE * 1.5;
 	}
 
 	/**
 	 * Periodic check: If auto-digging is enabled, we have a target,
-	 * but we aren't pathing or digging, it could mean we're stuck.
+	 * but if we aren't pathing or digging, it could mean we're stuck.
 	 */
 	private beginStuckCheck() {
 		const WAIT_INTERVAL = 2; // seconds
@@ -155,7 +162,7 @@ export class AutoDigging implements OnStart {
 					tick() - targetSpawnTime > WAIT_INTERVAL * 2 && // And it's been a while since the last target spawned
 					tick() - this.shovelController.lastDiggingTime > WAIT_INTERVAL * 2 // And it's been a while since we last dug
 				) {
-					if (this.isClosedToTrackedTarget()) continue;
+					if (this.isCloseToTrackedTarget()) continue;
 
 					// If no target is active, request a new one
 					if (!this.detector.targetActive) {
@@ -198,7 +205,7 @@ export class AutoDigging implements OnStart {
 		}
 
 		if (isPathing && cancelPath) {
-			if (this.isClosedToTrackedTarget()) return;
+			if (this.isCloseToTrackedTarget()) return;
 			this.cleanupPather();
 			this.setAutoDiggingEnabled(false, false);
 		}
@@ -245,7 +252,7 @@ export class AutoDigging implements OnStart {
 			task.delay(CHECK_DELAY, () => {
 				// Also check lastDiggingTime incase they finished digging before the delay
 				const lastDiggingTime = this.shovelController.lastDiggingTime;
-				if (this.isClosedToTrackedTarget()) return;
+				if (this.isCloseToTrackedTarget()) return;
 				if (!isPathing && !this.shovelController.diggingActive && tick() - lastDiggingTime > 2) {
 					consecutiveFails++;
 					this.quitCurrentTarget();
@@ -266,7 +273,7 @@ export class AutoDigging implements OnStart {
 			task.delay(CHECK_DELAY, () => {
 				// Also check lastDiggingTime incase they finished digging before the delay
 				const lastDiggingTime = this.shovelController.lastDiggingTime;
-				if (this.isClosedToTrackedTarget()) return;
+				if (this.isCloseToTrackedTarget()) return;
 				if (!isPathing && !this.shovelController.diggingActive && tick() - lastDiggingTime > 2) {
 					consecutiveFails++;
 					this.quitCurrentTarget();
@@ -399,7 +406,7 @@ export class AutoDigging implements OnStart {
 	private quitCurrentTarget() {
 		if (
 			autoDiggingEnabled &&
-			(this.shovelController.diggingActive || (this.detector.targetActive && !this.isClosedToTrackedTarget()))
+			(this.shovelController.diggingActive || (this.detector.targetActive && !this.isCloseToTrackedTarget()))
 		) {
 			Events.endDiggingClient();
 		}

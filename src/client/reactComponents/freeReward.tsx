@@ -26,6 +26,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 	const [imageRotation, setImageRotation] = useMotion(0);
 
 	const [hasClaimed, setHasClaimed] = useState(false);
+	const px = usePx();
 
 	const [rewardImage] = useState(
 		REWARD_IMAGES[groupReward.rewardType] ??
@@ -47,8 +48,6 @@ export const FreeReward = (props: FreeRewardProps) => {
 			task.cancel(rotationThread);
 		};
 	}, []);
-
-	const px = usePx();
 
 	useEffect(() => {
 		setVisible(props.visible);
@@ -111,10 +110,11 @@ export const FreeReward = (props: FreeRewardProps) => {
 				Text={"Free Reward"}
 				TextColor3={new Color3(1, 1, 1)}
 				TextScaled={true}
+				// TextSize={px(30)}
 				TextXAlignment={Enum.TextXAlignment.Left}
 				ZIndex={4}
 			>
-				<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={7} />
+				<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(3)} />
 
 				<uigradient
 					key={"UIGradient"}
@@ -154,7 +154,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 					TextScaled={true}
 					ZIndex={2}
 				>
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={4} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px(3)} />
 
 					<textlabel
 						AnchorPoint={new Vector2(0.5, 0.5)}
@@ -168,7 +168,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 						TextScaled={true}
 						ZIndex={2}
 					>
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={4} />
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px(3)} />
 					</textlabel>
 				</textlabel>
 
@@ -183,7 +183,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 					TextScaled={true}
 					ZIndex={2}
 				>
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={4} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px(3)} />
 
 					<textlabel
 						AnchorPoint={new Vector2(0.5, 0.5)}
@@ -197,7 +197,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 						TextScaled={true}
 						ZIndex={2}
 					>
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={4} />
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px(3)} />
 
 						<uigradient
 							key={"UIGradient"}
@@ -271,7 +271,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 						TextScaled={true}
 						ZIndex={2}
 					>
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={4} />
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px(3)} />
 
 						<textlabel
 							AnchorPoint={new Vector2(0.5, 0.5)}
@@ -285,7 +285,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 							TextScaled={true}
 							ZIndex={2}
 						>
-							<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={4} />
+							<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px(3)} />
 
 							<uigradient
 								key={"UIGradient"}
@@ -368,7 +368,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 							BackgroundTransparency={1}
 							FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 							key={"Title"}
-							Position={UDim2.fromScale(0.5, 0.5)}
+							Position={UDim2.fromScale(0.5, 0.475)}
 							Size={UDim2.fromScale(0.819, 0.5)}
 							Text={
 								hasJoinedGroup
@@ -382,7 +382,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 							// TextScaled={true}
 							ZIndex={2}
 						>
-							<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={4} />
+							<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px(3)} />
 						</textlabel>
 					</imagelabel>
 				</AnimatedButton>
@@ -458,7 +458,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 						TextScaled={true}
 						ZIndex={2}
 					>
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={4} />
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px(3)} />
 
 						<textlabel
 							AnchorPoint={new Vector2(0.5, 0.5)}
@@ -472,7 +472,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 							TextScaled={true}
 							ZIndex={2}
 						>
-							<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={4} />
+							<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px(3)} />
 						</textlabel>
 					</textlabel>
 				</frame>
@@ -514,7 +514,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 						TextScaled={true}
 						ZIndex={2}
 					>
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={4} />
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px(3)} />
 
 						<textlabel
 							AnchorPoint={new Vector2(0.5, 0.5)}
@@ -528,7 +528,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 							TextScaled={true}
 							ZIndex={2}
 						>
-							<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={4} />
+							<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px(3)} />
 						</textlabel>
 					</textlabel>
 				</frame>
@@ -555,14 +555,14 @@ export const FreeReward = (props: FreeRewardProps) => {
 							FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 							key={"Title"}
 							Position={UDim2.fromScale(0.504, 0.52)}
-							RichText={true}
+							RichText={false}
 							Size={UDim2.fromScale(0.96, 0.5)}
 							Text={`${hasJoinedGroup ? "1" : "0"}/1`}
 							TextColor3={new Color3(1, 1, 1)}
 							TextScaled={true}
 							ZIndex={2}
 						>
-							<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={4} />
+							<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px(3)} />
 						</textlabel>
 					</imagelabel>
 				</frame>
@@ -589,14 +589,14 @@ export const FreeReward = (props: FreeRewardProps) => {
 							FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 							key={"Title"}
 							Position={UDim2.fromScale(0.504, 0.52)}
-							RichText={true}
+							RichText={false}
 							Size={UDim2.fromScale(0.96, 0.5)}
 							Text={`${hasJoinedGroup ? "1" : "0"}/1`}
 							TextColor3={new Color3(1, 1, 1)}
 							TextScaled={true}
 							ZIndex={2}
 						>
-							<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={4} />
+							<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px(3)} />
 						</textlabel>
 					</imagelabel>
 				</frame>

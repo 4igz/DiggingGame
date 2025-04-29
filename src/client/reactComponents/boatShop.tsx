@@ -490,7 +490,7 @@ export const BoatShopComponent: React.FC<ShopProps> = (props) => {
 				TextScaled={true}
 				TextXAlignment={Enum.TextXAlignment.Left}
 			>
-				<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(7)} />
+				<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(4)} />
 
 				<uipadding
 					key={"UIPadding"}

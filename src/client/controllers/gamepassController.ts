@@ -37,10 +37,10 @@ export class GamepassController implements OnStart {
 		// If gamepassRef is a number (ID), we need to find the corresponding name
 		if (type(gamepassRef) === "number") {
 			// If not found by ID, look for the name associated with this ID
-			for (const [_, value] of pairs(gameConstants.GAMEPASS_IDS)) {
+			for (const [name, value] of pairs(gameConstants.GAMEPASS_IDS)) {
 				if (value === gamepassRef) {
 					// Found the name, now check if it exists in clientGamepasses
-					return true;
+					return clientGamepasses.get(name) === true;
 				}
 			}
 		}

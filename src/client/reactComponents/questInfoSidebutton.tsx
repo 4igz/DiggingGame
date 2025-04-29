@@ -1,6 +1,5 @@
 import React, { useEffect } from "@rbxts/react";
 import { UserInputService } from "@rbxts/services";
-import { set } from "@rbxts/sift/out/Array";
 import { treasureInventoryAtom } from "client/atoms/inventoryAtoms";
 import { Events, Functions } from "client/network";
 import { npcCharacterRenders, questConfig } from "shared/config/questConfig";

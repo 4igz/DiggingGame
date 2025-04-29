@@ -31,15 +31,15 @@ export const DetectorHint = (props: HintProps) => {
 	return (
 		<frame Size={UDim2.fromScale(1, 1)} BackgroundTransparency={1} Visible={visible}>
 			<textlabel
-				Text={`<font color="rgb(0,60,200)"><b>Hold</b></font> ${
-					platform === "Mobile" ? "the detect button" : platform === "Console" ? "R2" : "left click"
+				Text={`<font color="rgb(200,200,200)"><b>Hold</b></font> ${
+					platform === "Mobile" ? "the detector button" : platform === "Console" ? "R2" : "left click"
 				} to search for treasures!`}
-				Position={UDim2.fromScale(0.5, 0.78)}
+				Position={UDim2.fromScale(0.5, 0)}
 				AnchorPoint={new Vector2(0.5, 0)}
 				BackgroundTransparency={1}
 				TextTransparency={transparency}
 				Font={Enum.Font.BuilderSans}
-				TextColor3={Color3.fromRGB(0, 120, 255)}
+				TextColor3={Color3.fromRGB(255, 255, 255)}
 				Size={UDim2.fromScale(0.5, 0.075)}
 				TextScaled={true}
 				RichText={true}

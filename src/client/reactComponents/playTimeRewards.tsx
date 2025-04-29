@@ -17,6 +17,7 @@ import { hasGiftAtom } from "client/atoms/rewardAtoms";
 import { Signals } from "shared/signals";
 import { SoundService } from "@rbxts/services";
 import { AnimatedButton } from "./buttons";
+import { usePx } from "client/hooks/usePx";
 
 const SEC_INTERVAL = interval(1);
 
@@ -42,10 +43,13 @@ const RewardSlot = (props: {
 	rewardType: RewardType | ItemType;
 	rewardName: string | undefined;
 	onClaimed: (index: number) => void;
+	pxProvider: (value: number) => number;
 }) => {
 	const [timeLeft, setTimeLeft] = useState(props.requiredTime - time());
 	const [serverAllowedToClaim, setServerAllowedToClaim] = useState(false);
 	const [claimed, setClaimed] = useState(props.alreadyClaimed);
+
+	const px = props.pxProvider;
 
 	const [rewardImage] = useState(
 		REWARD_IMAGES[props.rewardType] ??
@@ -165,7 +169,7 @@ const RewardSlot = (props: {
 					TextScaled={true}
 					TextWrapped={true}
 				>
-					<uistroke key={"UIStroke"} Thickness={3} />
+					<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 					<uipadding key={"UIPadding"} PaddingLeft={new UDim(0.19, 0)} PaddingRight={new UDim(0.19, 0)} />
 
@@ -230,7 +234,7 @@ const RewardSlot = (props: {
 						ZIndex={2}
 						Visible={props.cfg.rewardAmount !== undefined}
 					>
-						<uistroke key={"UIStroke"} Thickness={2} />
+						<uistroke key={"UIStroke"} Thickness={px(2)} />
 
 						<textlabel
 							AnchorPoint={new Vector2(0.5, 0.5)}
@@ -249,7 +253,7 @@ const RewardSlot = (props: {
 							TextXAlignment={Enum.TextXAlignment.Left}
 							ZIndex={2}
 						>
-							<uistroke key={"UIStroke"} Thickness={2} />
+							<uistroke key={"UIStroke"} Thickness={px(2)} />
 						</textlabel>
 					</textlabel>
 
@@ -286,6 +290,8 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 	const [startTime, setStartTime] = useState(time());
 	const [claimed, setClaimed] = useState(new Map<number, boolean>());
 	const [imageRotation, setImageRotation] = useMotion(-MAX_IMAGE_ROTATION);
+
+	const px = usePx();
 
 	const menuRef = createRef<Frame>();
 
@@ -398,7 +404,7 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 					TextScaled={true}
 					TextWrapped={true}
 				>
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={5.3} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(5.3)} />
 				</textlabel>
 
 				<imagelabel
@@ -447,6 +453,7 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 							shouldResetClaims={claimed.size() >= timePlayedRewards.size()}
 							rewardType={cfg.rewardType}
 							rewardName={cfg.itemName}
+							pxProvider={px}
 							onClaimed={(index) => {
 								hasGiftAtom(false);
 								setClaimed((prevClaimed) => {
@@ -493,7 +500,7 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 					TextColor3={new Color3()}
 					TextScaled={true}
 				>
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(100, 75, 39)} Thickness={3} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(100, 75, 39)} Thickness={px(3)} />
 
 					<textlabel
 						AnchorPoint={new Vector2(0.5, 0.5)}
@@ -506,7 +513,7 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 						TextColor3={Color3.fromRGB(253, 253, 253)}
 						TextScaled={true}
 					>
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(100, 75, 39)} Thickness={3} />
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(100, 75, 39)} Thickness={px(3)} />
 
 						<uigradient
 							key={"UIGradient"}
@@ -594,7 +601,7 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 								TextXAlignment={Enum.TextXAlignment.Left}
 								ZIndex={10}
 							>
-								<uistroke key={"UIStroke"} Color={Color3.fromRGB(8, 66, 34)} Thickness={3} />
+								<uistroke key={"UIStroke"} Color={Color3.fromRGB(8, 66, 34)} Thickness={px(3)} />
 
 								<uipadding
 									key={"UIPadding"}
@@ -650,7 +657,7 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 					TextColor3={Color3.fromRGB(253, 83, 86)}
 					TextScaled={true}
 				>
-					<uistroke key={"UIStroke"} Thickness={3} />
+					<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 					<textlabel
 						AnchorPoint={new Vector2(0.5, 0.5)}
@@ -664,7 +671,7 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 						TextColor3={Color3.fromRGB(253, 83, 86)}
 						TextScaled={true}
 					>
-						<uistroke key={"UIStroke"} Thickness={3} />
+						<uistroke key={"UIStroke"} Thickness={px(3)} />
 					</textlabel>
 				</textlabel>
 

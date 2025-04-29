@@ -5,7 +5,7 @@ import { Events, Functions } from "client/network";
 import { springs } from "client/utils/springs";
 import EternityNum, { IsInf, IsNaN } from "shared/util/eternityNum";
 import UiController from "client/controllers/uiController";
-import { RunService, UserInputService } from "@rbxts/services";
+import { GuiService, RunService, UserInputService } from "@rbxts/services";
 import { gameConstants } from "shared/gameConstants";
 import { subscribe } from "@rbxts/charm";
 import { hasDailyAtom, hasGiftAtom } from "client/atoms/rewardAtoms";
@@ -181,6 +181,7 @@ export const RightSideMenu = (props: MenuProps) => {
 
 		UserInputService.InputBegan.Connect((input) => {
 			if (props.uiController.isMenuLayerOpen()) return;
+			if (GuiService.SelectedObject !== undefined) return;
 			for (const [menu, keyCode] of pairs(GAMEPAD_KEYCODES)) {
 				if (input.KeyCode === keyCode) {
 					props.uiController.toggleUi(menu as string);
@@ -188,8 +189,11 @@ export const RightSideMenu = (props: MenuProps) => {
 			}
 		});
 
-		Signals.menuOpened.Connect((isOpen) => {
-			setMenuPos.spring(isOpen ? CLOSED_POS : DEFAULT_POS, springs.default);
+		Signals.menuOpened.Connect((isOpen, menuName) => {
+			setMenuPos.spring(
+				isOpen && menuName === gameConstants.SHOP_UI ? DEFAULT_POS : isOpen ? CLOSED_POS : DEFAULT_POS,
+				springs.default,
+			);
 		});
 
 		subscribe(hasGiftAtom, (hasGift) => {
@@ -270,22 +274,33 @@ export const RightSideMenu = (props: MenuProps) => {
 						BackgroundTransparency={1}
 						FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 						key={".$Amount"}
-						Position={UDim2.fromScale(0.1, 0.475)}
+						Position={UDim2.fromScale(0.1, 0.5)}
 						Size={UDim2.fromScale(0.597257, 0.563684)}
 						Text={moneyValue}
 						TextColor3={Color3.fromRGB(92, 255, 133)}
 						// TextScaled={true}
-						TextSize={px(30)}
+						TextSize={px.even(30)}
 						TextXAlignment={Enum.TextXAlignment.Left}
 						TextYAlignment={Enum.TextYAlignment.Center}
 					>
-						<uipadding
-							key={"UIPadding"}
-							PaddingBottom={new UDim(0.00285, 0)}
-							PaddingTop={new UDim(0.00285, 0)}
-						/>
+						<uistroke key={"UIStroke"} Thickness={px.ceil(3)} Transparency={0} />
 
-						<uistroke key={"UIStroke"} Thickness={px(4)} Transparency={0.5} />
+						<textlabel
+							AnchorPoint={new Vector2(0, 0.5)}
+							BackgroundTransparency={1}
+							FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+							key={".$Amount"}
+							Position={UDim2.fromScale(0, 0.425)}
+							Size={UDim2.fromScale(0.597257, 0.563684)}
+							Text={moneyValue}
+							TextColor3={Color3.fromRGB(92, 255, 133)}
+							// TextScaled={true}
+							TextSize={px.even(30)}
+							TextXAlignment={Enum.TextXAlignment.Left}
+							TextYAlignment={Enum.TextYAlignment.Center}
+						>
+							<uistroke key={"UIStroke"} Thickness={px.ceil(3)} Transparency={0} />
+						</textlabel>
 					</textlabel>
 
 					<imagelabel

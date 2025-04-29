@@ -4,7 +4,14 @@ import UiController from "client/controllers/uiController";
 import { gameConstants } from "shared/gameConstants";
 import { Item, type ItemType, Rarity, SkillName } from "shared/networkTypes";
 import { Events, Functions } from "client/network";
-import { MarketplaceService, Players, ReplicatedStorage, SoundService, UserInputService } from "@rbxts/services";
+import {
+	GuiService,
+	MarketplaceService,
+	Players,
+	ReplicatedStorage,
+	SoundService,
+	UserInputService,
+} from "@rbxts/services";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
 import { shortenNumber, spaceWords } from "shared/util/nameUtil";
@@ -383,7 +390,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 						Text={"EQUIPPED"}
 						TextColor3={new Color3()}
 						// TextScaled={true}
-						TextSize={px(55)}
+						TextSize={px(40)}
 					>
 						<uistroke key={"1"} Thickness={px(5)} />
 
@@ -397,7 +404,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							Text={"EQUIPPED"}
 							TextColor3={new Color3(1, 1, 1)}
 							// TextScaled={true}
-							TextSize={px(55)}
+							TextSize={px(40)}
 						>
 							<uistroke key={"1"} Thickness={px(5)} />
 						</textlabel>
@@ -749,7 +756,7 @@ const CategoryButton = (props: CategoryButtonProps) => {
 					TextColor3={Color3.fromRGB(255, 255, 255)}
 					// TextScaled={true}
 					// TextWrapped={true}
-					TextSize={px(35)}
+					TextSize={px(30)}
 					TextXAlignment={Enum.TextXAlignment.Left}
 					ZIndex={10}
 				>
@@ -769,20 +776,20 @@ const CategoryButton = (props: CategoryButtonProps) => {
 						TextColor3={Color3.fromRGB(255, 255, 255)}
 						// TextScaled={true}
 						// TextWrapped={true}
-						TextSize={px(35)}
+						TextSize={px(30)}
 						TextXAlignment={Enum.TextXAlignment.Left}
 						ZIndex={11}
 					>
 						<uistroke key={"UIStroke"} Color={Color3.fromRGB(7, 7, 7)} Thickness={px(3)} />
 					</textlabel>
 
-					<uipadding
+					{/* <uipadding
 						key={"UIPadding"}
 						PaddingBottom={new UDim(0.0107, 0)}
 						PaddingLeft={new UDim(0.0474, 0)}
 						PaddingRight={new UDim(0.0474, 0)}
 						PaddingTop={new UDim(0.0107, 0)}
-					/>
+					/> */}
 				</textlabel>
 			</frame>
 		</imagebutton>
@@ -1247,6 +1254,7 @@ export const ExitButton = (props: ExitButtonProps) => {
 		const inputBegan = UserInputService.InputBegan.Connect((input) => {
 			if (input.KeyCode === Enum.KeyCode.ButtonB && props.isMenuVisible) {
 				exit();
+				GuiService.SelectedObject = undefined;
 			}
 		});
 
@@ -2448,7 +2456,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 							CanvasSize={new UDim2()}
 							key={"Index Items Scrolling"}
 							Position={UDim2.fromScale(0.5, 0.5)}
-							Selectable={false}
+							Selectable={true}
 							ScrollBarImageColor3={Color3.fromRGB(0, 0, 0)}
 							ScrollBarThickness={0}
 							ScrollingDirection={Enum.ScrollingDirection.Y}
@@ -2666,7 +2674,8 @@ export const InventoryComponent = (props: MainUiProps) => {
 								}
 								key={"Chance"}
 								Position={UDim2.fromScale(0.5, 0.673241)}
-								Size={UDim2.fromScale(1.09, 0.36)}
+								Size={UDim2.fromScale(1.09, 0.5)}
+								TextYAlignment={"Center"}
 								Text={
 									selectedIndexItem.targetName !== "" && selectedIndexItem.mapName !== ""
 										? `1 in ${shortenNumber(
@@ -2683,9 +2692,10 @@ export const InventoryComponent = (props: MainUiProps) => {
 							>
 								<uistroke
 									key={"UIStroke"}
-									Color={Color3.fromRGB(31, 58, 154)}
-									Thickness={2}
+									Color={Color3.fromRGB(18, 38, 99)}
+									Thickness={px(3)}
 									Transparency={0.5}
+									ApplyStrokeMode={"Contextual"}
 								/>
 							</textlabel>
 

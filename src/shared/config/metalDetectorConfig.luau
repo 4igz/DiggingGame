@@ -107,7 +107,7 @@ local metalDetectorConfig: { [string]: MetalDetector } = {
 		notForSale = true,
 
 		-- This is here as an example to show that you can indicate to the player how to obtain a non-purchaseable item. If not specified then it won't show in the shop
-		obtainLocation = "Limited Offer!",
+		-- obtainLocation = "Limited Offer!",
 	},
 	RetroDetector = {
 		strength = 2,

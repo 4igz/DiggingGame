@@ -507,7 +507,7 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 	// Effect to handle animation
 	React.useEffect(() => {
 		if (visible) {
-			popInMotion.spring(UDim2.fromScale(0.5, 0.5), springs.responsive);
+			popInMotion.spring(UDim2.fromScale(0.5, 0.55), springs.responsive);
 		} else {
 			popInMotion.immediate(UDim2.fromScale(0.5, 0.6));
 		}

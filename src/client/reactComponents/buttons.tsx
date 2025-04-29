@@ -163,6 +163,13 @@ export const BuyButton = (props: BuyButtonProps) => {
 				props.price ?? tostring(marketplaceInfo?.PriceInRobux) ?? "Priceless"
 		  }`;
 
+	const displayText =
+		props.productType === Enum.InfoType.GamePass
+			? props.gamepassController.getOwnsGamepass(props.id)
+				? "OWNED"
+				: priceText
+			: priceText;
+
 	return (
 		<AnimatedButton
 			anchorPoint={props.anchorPoint ?? new Vector2(0.5, 1)}
@@ -198,42 +205,30 @@ export const BuyButton = (props: BuyButtonProps) => {
 					key={"Amount"}
 					Position={UDim2.fromScale(0.552466, 0.5)}
 					Size={UDim2.fromScale(1, 0.806)}
-					Text={
-						props.productType === Enum.InfoType.GamePass
-							? props.gamepassController.getOwnsGamepass(props.id)
-								? "OWNED"
-								: priceText
-							: priceText
-					}
-					RichText={true}
+					Text={displayText}
+					RichText={false}
 					TextColor3={new Color3(1, 1, 1)}
-					TextSize={px(props.textSize ?? px(27))}
+					TextSize={px.ceil(props.textSize ?? 27)}
 					TextXAlignment={Enum.TextXAlignment.Center}
 					ZIndex={10}
 				>
-					<uistroke key={"UIStroke"} Thickness={px(2)} />
+					<uistroke key={"UIStroke"} Thickness={px.ceil(2)} />
 
 					<textlabel
 						AnchorPoint={new Vector2(0.5, 0.5)}
 						BackgroundTransparency={1}
 						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 						key={"Amount"}
-						Position={UDim2.fromScale(0.5, 0.48)}
+						Position={UDim2.fromScale(0.5, 0.475)}
 						Size={UDim2.fromScale(1, 0.806)}
-						Text={
-							props.productType === Enum.InfoType.GamePass
-								? props.gamepassController.getOwnsGamepass(props.id)
-									? "OWNED"
-									: priceText
-								: priceText
-						}
-						RichText={true}
+						Text={displayText}
+						RichText={false}
 						TextColor3={new Color3(1, 1, 1)}
-						TextSize={px(props.textSize ?? 27)}
+						TextSize={px.ceil(props.textSize ?? 27)}
 						TextXAlignment={Enum.TextXAlignment.Center}
 						ZIndex={9}
 					>
-						<uistroke key={"UIStroke"} Thickness={px(2)} />
+						<uistroke key={"UIStroke"} Thickness={px.ceil(2)} />
 					</textlabel>
 				</textlabel>
 			</imagelabel>

@@ -14,7 +14,7 @@ import {
 } from "@rbxts/services";
 import { Events } from "client/network";
 import { DiggingBar } from "client/reactComponents/diggingBar";
-import { GamepassShopComponent } from "client/reactComponents/gamepassShop";
+import { GamepassShop } from "client/reactComponents/gamepassShop";
 import LuckBar from "client/reactComponents/luckBar";
 import { InventoryComponent } from "client/reactComponents/inventory";
 import { RightSideMenu } from "client/reactComponents/rightSideMenu";
@@ -150,7 +150,7 @@ export default class UiController implements OnStart, OnInit {
 					Size: TARGET_BLUR_SZ,
 				}).Play();
 				effectsActive = true;
-				Signals.menuOpened.Fire(true);
+				Signals.menuOpened.Fire(true, name);
 			}
 		}
 	}
@@ -175,7 +175,7 @@ export default class UiController implements OnStart, OnInit {
 
 		// Undo blur and FOV effects on close
 		if (effectsActive && menu.layer === MENU_LAYER) {
-			Signals.menuOpened.Fire(false);
+			Signals.menuOpened.Fire(false, name);
 			TweenService.Create(camera, EFFECTS_TWEEN_INFO, {
 				FieldOfView: DEFAULT_FOV,
 			}).Play();
@@ -369,7 +369,7 @@ export default class UiController implements OnStart, OnInit {
 				uiController: this,
 				autoDigController: this.autoDigging,
 			},
-			undefined,
+			true,
 			undefined,
 			LOW_LAYER,
 		);
@@ -401,7 +401,7 @@ export default class UiController implements OnStart, OnInit {
 		);
 		this.registerUi(
 			gameConstants.GAMEPASS_SHOP_UI,
-			React.createElement(GamepassShopComponent),
+			React.createElement(GamepassShop),
 			{
 				visible: false,
 				uiController: this,
@@ -440,7 +440,7 @@ export default class UiController implements OnStart, OnInit {
 			{},
 			undefined,
 			undefined,
-			LOW_LAYER,
+			OVERLAY_LAYER,
 		);
 		this.registerUi(
 			gameConstants.DAILY_REWARD_UI,

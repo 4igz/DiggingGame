@@ -238,6 +238,7 @@ export class QuestController implements OnStart {
 			questProgress = serverTrackedProgress;
 		});
 
+
 		for (const questNpc of CollectionService.GetTagged("QuestGiver")) {
 			assert(
 				questNpc.IsA("Model"),

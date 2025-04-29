@@ -136,6 +136,7 @@ export const Toolbar = () => {
 	const [platform, setPlatform] = useState(getPlayerPlatform());
 	const itemsRef = useRef<Array<ToolbarItemProps>>([]);
 	const [menuPos, menuPosMotion] = useMotion(DEFAULT_POS);
+	const equippedOrderRef = useRef<number | undefined>(undefined);
 
 	itemsRef.current = items; // Keep ref updated with latest items
 
@@ -243,6 +244,8 @@ export const Toolbar = () => {
 			humanoid.EquipTool(item.tool);
 		}
 
+		equippedOrderRef.current = order;
+
 		// Play equip sound
 		const equipSound = SoundService.FindFirstChild("Tools")?.FindFirstChild("Equip") as Sound;
 		if (equipSound) SoundService.PlayLocalSound(equipSound);
@@ -288,52 +291,53 @@ export const Toolbar = () => {
 				rarity: cfg.rarityType,
 				equipToolByOrder,
 			};
-			return [...prev, newItem];
+			return [...prev.filter((item) => item.tool.Parent === backpack || item.tool.Parent === character), newItem];
 		});
 	};
 
-	/**
-	 * Equips the next item in ascending order. Wraps if at the end.
-	 */
+	// Simplified next/previous functions using itemsRef
 	const equipNextItem = () => {
-		if (items.size() === 0) return;
+		if (itemsRef.current.size() === 0) return;
 
-		// Sort by order so we can cycle properly.
-		const sorted = [...items].sort((a, b) => a.order < b.order);
+		// Sort items by order
+		const sortedItems = [...itemsRef.current].sort((a, b) => a.order > b.order);
 
-		// Find the currently equipped item.
-		let equippedIndex = sorted.findIndex((item) => item.isEquipped);
+		// Find the currently equipped item
+		const currentIndex = sortedItems.findIndex((item) => item.isEquipped);
 
-		// If none is equipped, we’ll just pick the first.
-		if (equippedIndex === -1) {
-			equippedIndex = 0;
-		} else {
-			equippedIndex = (equippedIndex + 1) % sorted.size();
+		// If nothing is equipped, equip the first item
+		if (currentIndex === -1) {
+			equipToolByOrder(sortedItems[0].order);
+			return;
 		}
 
-		// Equip the item at that index
-		equipToolByOrder(sorted[equippedIndex].order);
+		// Calculate the next index, wrapping around if needed
+		const nextIndex = (currentIndex + 1) % sortedItems.size();
+
+		// Equip the tool at the next index
+		equipToolByOrder(sortedItems[nextIndex].order);
 	};
 
-	/**
-	 * Equips the previous item in ascending order. Wraps if at the start.
-	 */
 	const equipPreviousItem = () => {
-		if (items.size() === 0) return;
+		if (itemsRef.current.size() === 0) return;
 
-		const sorted = [...items].sort((a, b) => a.order < b.order);
+		// Sort items by order
+		const sortedItems = [...itemsRef.current].sort((a, b) => a.order > b.order);
 
-		let equippedIndex = sorted.findIndex((item) => item.isEquipped);
+		// Find the currently equipped item
+		const currentIndex = sortedItems.findIndex((item) => item.isEquipped);
 
-		// If none is equipped, pick last
-		if (equippedIndex === -1) {
-			equippedIndex = sorted.size() - 1;
-		} else {
-			// Move backwards, wrapping to the end if needed
-			equippedIndex = (equippedIndex - 1 + sorted.size()) % sorted.size();
+		// If nothing is equipped, equip the last item
+		if (currentIndex === -1) {
+			equipToolByOrder(sortedItems[sortedItems.size() - 1].order);
+			return;
 		}
 
-		equipToolByOrder(sorted[equippedIndex].order);
+		// Calculate the previous index, wrapping around if needed
+		const prevIndex = (currentIndex - 1 + sortedItems.size()) % sortedItems.size();
+
+		// Equip the tool at the previous index
+		equipToolByOrder(sortedItems[prevIndex].order);
 	};
 
 	useEffect(() => {
@@ -359,28 +363,26 @@ export const Toolbar = () => {
 			for (const child of backpack.GetChildren()) handleChildAdded(child);
 		};
 
-		trove.add(
-			UserInputService.InputBegan.Connect((input, gameProcessed) => {
-				if (gameProcessed) return;
+		const handleInput = (input: InputObject, gameProcessed: boolean) => {
+			if (gameProcessed) return;
 
-				// Keyboard 1..9
-				if (input.UserInputType === Enum.UserInputType.Keyboard) {
-					const keyOrder = input.KeyCode.Value - 48; // '1' is 49 in KeyCode
-					if (keyOrder >= 1 && keyOrder <= 9) {
-						equipToolByOrder(keyOrder);
-					}
-				}
+			// Gamepad R1 -> next, L1 -> previous
+			if (input.KeyCode === Enum.KeyCode.ButtonR1) {
+				equipNextItem();
+			} else if (input.KeyCode === Enum.KeyCode.ButtonL1) {
+				equipPreviousItem();
+			}
 
-				// Gamepad R1 -> next, L1 -> previous
-				if (input.UserInputType === Enum.UserInputType.Gamepad1) {
-					if (input.KeyCode === Enum.KeyCode.ButtonR1) {
-						equipNextItem();
-					} else if (input.KeyCode === Enum.KeyCode.ButtonL1) {
-						equipPreviousItem();
-					}
+			// Keyboard 1..9
+			if (input.UserInputType === Enum.UserInputType.Keyboard) {
+				const keyOrder = input.KeyCode.Value - 48; // '1' is 49 in KeyCode
+				if (keyOrder >= 1 && keyOrder <= 9) {
+					equipToolByOrder(keyOrder);
 				}
-			}),
-		);
+			}
+		};
+
+		trove.add(UserInputService.InputBegan.Connect(handleInput), "Disconnect");
 
 		// Setup event listeners for tool tracking
 		trove.add(localPlayer.CharacterAdded.Connect(onCharacterAdded), "Disconnect");

@@ -50,7 +50,9 @@ const TypewriterBillboard: React.FC<TypewriterBillboardProps> = (props) => {
 				TextScaled={false}
 				Font={Enum.Font.GothamBold}
 				RichText={true}
-			/>
+			>
+				<uistroke Thickness={2} Color={Color3.fromRGB(0, 0, 0)} />
+			</textlabel>
 		</billboardgui>
 	);
 };

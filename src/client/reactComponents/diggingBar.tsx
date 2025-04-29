@@ -1,6 +1,6 @@
 //!optimize 2
 import React, { ReactNode, useEffect, useRef, useState } from "@rbxts/react";
-import { RunService, Lighting, Workspace, UserInputService } from "@rbxts/services";
+import { RunService, Lighting, Workspace, UserInputService, HapticService } from "@rbxts/services";
 import { useMotion } from "client/hooks/useMotion";
 import { Events } from "client/network";
 import { springs } from "client/utils/springs";
@@ -15,9 +15,8 @@ import { interval } from "shared/util/interval";
 import { numberSerializer } from "shared/network";
 import UiController from "client/controllers/uiController";
 import { GamepassController } from "client/controllers/gamepassController";
-import { greenToRed, redToGreen } from "shared/util/colorUtil";
+import { redToGreen } from "shared/util/colorUtil";
 import { usePx } from "client/hooks/usePx";
-import { iota } from "shared/util/nameUtil";
 
 export interface DiggingBarProps {
 	target?: Target;
@@ -162,6 +161,17 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				setShowReminder(false);
 				setHasDugYet(true);
 				setClicks((prev) => [...prev, { time: tick(), id: clickId++ }]);
+				const activeGamepad =
+					UserInputService.GetLastInputType() === Enum.UserInputType.Gamepad1
+						? Enum.UserInputType.Gamepad1
+						: Enum.UserInputType.Gamepad2;
+
+				if (HapticService.IsVibrationSupported(activeGamepad)) {
+					HapticService.SetMotor(activeGamepad, Enum.VibrationMotor.Small, 1);
+					task.delay(0.1, () => {
+						HapticService.SetMotor(activeGamepad, Enum.VibrationMotor.Small, 0);
+					});
+				}
 
 				// Since the server is rate limited by this same timer, we should
 				// ratelimit on the client too incase they are autoclicking

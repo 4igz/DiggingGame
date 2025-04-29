@@ -13,6 +13,7 @@ import { NetworkingFunctionError } from "@flamework/networking";
 import { usePx } from "client/hooks/usePx";
 import { RunService } from "@rbxts/services";
 import { AnimatedButton } from "./buttons";
+import { Signals } from "shared/signals";
 
 const SHOP_MENUS = {
 	MetalDetectors: "Detectors",
@@ -147,10 +148,12 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 				size={UDim2.fromScale(1, 0.95)}
 				scales={new NumberRange(0.98, 1.02)}
 				onClick={() => {
-					if (owned) return;
+					if (owned) {
+						Signals.invalidAction.Fire("You already own this!");
+						return;
+					}
 					Events.buyItem(itemType, itemName);
 				}}
-				clickable={!owned}
 			>
 				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.748} />
 				<imagelabel
@@ -379,28 +382,28 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 						BackgroundTransparency={1}
 						FontFace={Font.fromEnum(Enum.Font.BuilderSansBold)}
 						key={"1"}
-						Position={UDim2.fromScale(0.508, 0.538)}
+						Position={UDim2.fromScale(0.53, 0.538)}
 						Size={UDim2.fromScale(0.9, 0.9)}
 						Text={"OWNED"}
 						TextColor3={new Color3()}
 						// TextScaled={true}
-						TextSize={px(60)}
+						TextSize={px(55)}
 					>
-						<uistroke key={"1"} Thickness={5} />
+						<uistroke key={"1"} Thickness={px(5)} />
 
 						<textlabel
 							AnchorPoint={new Vector2(0.5, 0.5)}
 							BackgroundTransparency={1}
 							FontFace={Font.fromEnum(Enum.Font.BuilderSansBold)}
 							key={"1"}
-							Position={UDim2.fromScale(0.5, 0.49)}
+							Position={UDim2.fromScale(0.5, 0.48)}
 							Size={UDim2.fromScale(1, 1)}
 							Text={"OWNED"}
 							TextColor3={new Color3(1, 1, 1)}
 							// TextScaled={true}
-							TextSize={px(60)}
+							TextSize={px(55)}
 						>
-							<uistroke key={"1"} Thickness={5} />
+							<uistroke key={"1"} Thickness={px(5)} />
 						</textlabel>
 					</textlabel>
 				</frame>
@@ -577,18 +580,6 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 	}, [visible]);
 
 	React.useEffect(() => {
-		// Events.profileReady.connect(() => {
-		// 	for (const shopType of Object.keys(SHOP_MENUS)) {
-		// 		if (shopType === "Store") continue;
-		// 		Functions.getInventory(shopType)
-		// 			.then(([_, items]) => {
-		// 				updateShopContent(shopType, items);
-		// 			})
-		// 			.catch((e) => {
-		// 				warn(e);
-		// 			});
-		// 	}
-		// });
 		for (const shopType of Object.keys(SHOP_MENUS)) {
 			if (shopType === "Store") continue;
 			Functions.getInventory(shopType)
@@ -684,7 +675,7 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 						TextXAlignment={Enum.TextXAlignment.Left}
 						ZIndex={10}
 					>
-						<uistroke key={"UIStroke"} Thickness={3} />
+						<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 						<uipadding key={"UIPadding"} />
 					</textlabel>
@@ -694,14 +685,14 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 						FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 						key={"Label"}
 						Position={UDim2.fromScale(0.108, 0.132)}
-						Size={UDim2.fromScale(0.773566, 0.193)}
+						Size={UDim2.fromScale(0.75, 0.225)}
 						Text={"NEW"}
 						TextColor3={Color3.fromRGB(255, 234, 0)}
 						TextScaled={true}
 						TextXAlignment={Enum.TextXAlignment.Right}
 						ZIndex={10}
 					>
-						<uistroke key={"UIStroke"} Thickness={px(2)} />
+						<uistroke key={"UIStroke"} Thickness={px.ceil(4)} />
 					</textlabel>
 				</AnimatedButton>
 
@@ -736,7 +727,7 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 						TextXAlignment={Enum.TextXAlignment.Left}
 						ZIndex={10}
 					>
-						<uistroke key={"UIStroke"} Thickness={3} />
+						<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 						<uipadding key={"UIPadding"} />
 					</textlabel>
@@ -755,14 +746,14 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 						FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 						key={"Label"}
 						Position={UDim2.fromScale(0.108, 0.132)}
-						Size={UDim2.fromScale(0.773566, 0.193)}
+						Size={UDim2.fromScale(0.75, 0.225)}
 						Text={"NEW"}
 						TextColor3={Color3.fromRGB(255, 234, 0)}
 						TextScaled={true}
 						TextXAlignment={Enum.TextXAlignment.Right}
 						ZIndex={10}
 					>
-						<uistroke key={"UIStroke"} Thickness={px(2)} />
+						<uistroke key={"UIStroke"} Thickness={px.ceil(4)} />
 					</textlabel>
 				</AnimatedButton>
 
@@ -855,14 +846,14 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 						FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 						key={"Label"}
 						Position={UDim2.fromScale(0.108, 0.132)}
-						Size={UDim2.fromScale(0.855437, 0.193)}
+						Size={UDim2.fromScale(0.75, 0.225)}
 						Text={"NEW"}
 						TextColor3={Color3.fromRGB(255, 234, 0)}
 						TextScaled={true}
 						TextXAlignment={Enum.TextXAlignment.Right}
 						ZIndex={10}
 					>
-						<uistroke key={"UIStroke"} Thickness={px(2)} />
+						<uistroke key={"UIStroke"} Thickness={px.ceil(4)} />
 					</textlabel>
 
 					<textlabel
@@ -878,7 +869,7 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 						TextXAlignment={Enum.TextXAlignment.Left}
 						ZIndex={10}
 					>
-						<uistroke key={"UIStroke"} Thickness={3} />
+						<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 						<uipadding key={"UIPadding"} />
 					</textlabel>
@@ -949,6 +940,7 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 				ScrollingDirection={Enum.ScrollingDirection.X}
 				Size={UDim2.fromScale(0.925, 0.739)}
 				Visible={selectedShop !== ""}
+				Selectable={selectedShop !== ""}
 			>
 				<uilistlayout
 					key={"UIListLayout"}

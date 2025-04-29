@@ -31,8 +31,7 @@ const SidebarButton = (props: SidebarButtonProps) => {
 	const [isHovered, setIsHovered] = React.useState(false);
 	const [isPressed, setPressed] = React.useState(false);
 	const [size, sizeMotion] = useMotion(START_SZ);
-
-	const platform = getPlayerPlatform();
+	const [platform, setPlatform] = React.useState(getPlayerPlatform());
 
 	const px = props.pxProvider;
 
@@ -46,6 +45,12 @@ const SidebarButton = (props: SidebarButtonProps) => {
 			springs.responsive,
 		);
 	}, [isPressed]);
+
+	useEffect(() => {
+		UserInputService.InputBegan.Connect((inputType) => {
+			setPlatform(getPlayerPlatform());
+		});
+	}, []);
 
 	useEffect(() => {
 		const con = UserInputService.InputBegan.Connect((input, gpe) => {
@@ -73,7 +78,7 @@ const SidebarButton = (props: SidebarButtonProps) => {
 			Size={size}
 		>
 			<imagebutton
-				key={"ImageButton"}
+				key={platform === "Mobile" ? "NoSoundOnHover" : "Side button"}
 				AnchorPoint={new Vector2(0, 0.5)}
 				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 				BackgroundTransparency={1}
@@ -189,7 +194,7 @@ interface SidebarProps {
 	uiController: UiController;
 }
 
-const DEFAULT_POS = UDim2.fromScale(0.01, 0.4);
+const DEFAULT_POS = UDim2.fromScale(0.025, 0.5);
 const CLOSED_POS = UDim2.fromScale(-0.6, 0.4);
 
 export const Sidebar: React.FC<SidebarProps> = (props) => {

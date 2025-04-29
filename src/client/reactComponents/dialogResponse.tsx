@@ -4,6 +4,7 @@ import React from "@rbxts/react";
 import { DialogResponse, QUEST_ACCEPT, QUEST_DECLINE } from "shared/config/questConfig";
 import { AnimatedButton } from "./buttons";
 import { usePx } from "client/hooks/usePx";
+import { Signals } from "shared/signals";
 
 interface DialogOptionProps {
 	description: string;
@@ -55,18 +56,19 @@ const DialogOption = (props: DialogOptionProps) => {
 						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 						LayoutOrder={2}
 						key={"Description"}
-						Position={UDim2.fromScale(0.182, 0.463)}
+						Position={UDim2.fromScale(0.182, 0.49)}
 						Size={UDim2.fromScale(0.785, 0.7)}
 						Text={props.description}
 						TextColor3={Color3.fromRGB(255, 255, 255)}
-						TextScaled={true}
-						TextWrapped={true}
+						// TextScaled={true}
+						// TextWrapped={true}
+						TextSize={px(35)}
 						TextXAlignment={Enum.TextXAlignment.Left}
 						TextYAlignment={Enum.TextYAlignment.Center}
 					>
 						<uistroke
 							key={"UIStroke"}
-							Enabled={false}
+							Enabled={true}
 							LineJoinMode={Enum.LineJoinMode.Bevel}
 							Thickness={px(2)}
 							Transparency={0.4}
@@ -85,12 +87,13 @@ const DialogOption = (props: DialogOptionProps) => {
 						Size={UDim2.fromScale(0.0519, 0.8)}
 						Text={tostring(props.order)}
 						TextColor3={Color3.fromRGB(255, 255, 255)}
-						TextScaled={true}
-						TextWrapped={true}
+						// TextScaled={true}
+						// TextWrapped={true}
+						TextSize={px(35)}
 					>
 						<uistroke
 							key={"UIStroke"}
-							Enabled={false}
+							Enabled={true}
 							LineJoinMode={Enum.LineJoinMode.Bevel}
 							Thickness={px(2)}
 							Transparency={0.4}
@@ -110,10 +113,11 @@ const DialogOption = (props: DialogOptionProps) => {
 						BackgroundColor3={Color3.fromRGB(37, 52, 99)}
 						BorderColor3={Color3.fromRGB(0, 0, 0)}
 						BorderSizePixel={0}
+						AnchorPoint={new Vector2(0, 0.5)}
 						LayoutOrder={1}
 						key={"Divider"}
-						Position={UDim2.fromScale(0.135, 0.15)}
-						Size={new UDim2(0, 4, 0.7, 0)}
+						Position={UDim2.fromScale(0.5, 0.15)}
+						Size={new UDim2(0, 6, 0.7, 0)}
 					/>
 				</folder>
 
@@ -139,6 +143,15 @@ export const DialogResponseComponent = (props: DialogResponseProps) => {
 		if (props.options) {
 			setOptions(props.options);
 			setSelectedOption(undefined);
+
+			const con = Signals.menuOpened.Once(() => {
+				props.onOptionSelected?.(QUEST_DECLINE);
+				setSelectedOption(QUEST_DECLINE);
+			});
+
+			return () => {
+				con.Disconnect();
+			};
 		} else {
 			props.onOptionSelected?.(undefined);
 		}

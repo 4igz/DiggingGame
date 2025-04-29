@@ -110,6 +110,17 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 	React.useEffect(() => {
 		if (visible) {
 			popInMotion.spring(UDim2.fromScale(0.5, 0.5), springs.responsive);
+
+			const sellInput = UserInputService.InputBegan.Connect((input) => {
+				if (input.KeyCode === Enum.KeyCode.ButtonY) {
+					Events.sellAll();
+					SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("Sell") as Sound);
+				}
+			});
+
+			return () => {
+				sellInput.Disconnect();
+			};
 		} else {
 			popInMotion.immediate(UDim2.fromScale(0.5, 0.6));
 		}
@@ -139,13 +150,6 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 
 		UserInputService.InputChanged.Connect((input) => {
 			setPlatform(getPlayerPlatform());
-		});
-
-		UserInputService.InputBegan.Connect((input) => {
-			if (input.KeyCode === Enum.KeyCode.ButtonY) {
-				Events.sellAll();
-				SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("Sell") as Sound);
-			}
 		});
 	}, []);
 
@@ -208,7 +212,7 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 					TextScaled={true}
 					TextWrapped={true}
 				>
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(3)} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(5)} />
 				</textlabel>
 
 				<imagelabel
