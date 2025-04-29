@@ -116,8 +116,8 @@ const DialogOption = (props: DialogOptionProps) => {
 						AnchorPoint={new Vector2(0, 0.5)}
 						LayoutOrder={1}
 						key={"Divider"}
-						Position={UDim2.fromScale(0.5, 0.15)}
-						Size={new UDim2(0, 6, 0.7, 0)}
+						Position={UDim2.fromScale(0.45, 0.125)}
+						Size={new UDim2(0, 4, 0.6, 0)}
 					/>
 				</folder>
 
