@@ -82,6 +82,14 @@ export const QuestInfoSideButton = () => {
 	const quest = questline && questline[activeQuest?.info.stage ?? -1];
 	const MOBILE_SCALE = 1.5;
 
+	const hasEnough =
+		treasureInventoryAtom().reduce((acc, target) => {
+			if (target.itemName === (quest?.target ?? "")) {
+				return ++acc;
+			}
+			return acc;
+		}, 0) >= (quest?.collectAmount ?? 1);
+
 	return (
 		<frame
 			AnchorPoint={new Vector2(1, 1)}
@@ -102,9 +110,9 @@ export const QuestInfoSideButton = () => {
 				Image={npcCharacterRenders[activeQuest?.name ?? ""] ?? ""}
 				key={"Character"}
 				AnchorPoint={new Vector2(0.5, 0.5)}
-				Position={UDim2.fromScale(0.75, 0.3)}
+				Position={UDim2.fromScale(0.8, 0.3)}
 				ScaleType={Enum.ScaleType.Fit}
-				Size={UDim2.fromScale(0.4, 1.5)}
+				Size={UDim2.fromScale(0.35, 1.5)}
 				ZIndex={2}
 			/>
 
@@ -133,11 +141,7 @@ export const QuestInfoSideButton = () => {
 				Position={UDim2.fromScale(0.0693, 0.116)}
 				Size={UDim2.fromScale(0.5, 0.328)}
 				Text={quest && `Bring ${quest.collectAmount} ${makePlural(quest.target, quest.collectAmount!)}`}
-				TextColor3={
-					treasureInventoryAtom().find((v, i) => v.itemName === quest?.target) !== undefined
-						? Color3.fromRGB(0, 255, 0)
-						: Color3.fromRGB(255, 255, 255)
-				}
+				TextColor3={hasEnough ? Color3.fromRGB(0, 255, 0) : Color3.fromRGB(255, 255, 255)}
 				TextScaled={true}
 				TextWrapped={true}
 				TextXAlignment={Enum.TextXAlignment.Left}
@@ -154,13 +158,7 @@ export const QuestInfoSideButton = () => {
 				key={"Label"}
 				Position={UDim2.fromScale(0.0693, 0.356)}
 				Size={UDim2.fromScale(0.5, 0.48)}
-				Text={
-					activeQuest
-						? treasureInventoryAtom().find((item) => item.itemName === quest?.target) !== undefined
-							? "Completed"
-							: activeQuest.name
-						: "No Quest Active"
-				}
+				Text={activeQuest ? (hasEnough ? "Completed" : activeQuest.name) : "No Quest Active"}
 				TextColor3={Color3.fromRGB(255, 213, 62)}
 				TextScaled={true}
 				TextWrapped={true}

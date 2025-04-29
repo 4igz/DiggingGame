@@ -30,7 +30,7 @@ import { NetworkingFunctionError } from "@flamework/networking";
 import { whiteToRed } from "shared/util/colorUtil";
 import { usePx } from "client/hooks/usePx";
 import { AnimatedButton, BuyButton } from "./buttons";
-import { useSliceCenter, useSliceScale } from "client/hooks/useSlice";
+import { useSliceScale } from "client/hooks/useSlice";
 
 export function capitalizeWords(str: string): string {
 	return str
@@ -365,7 +365,9 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 					BackgroundColor3={new Color3()}
 					BackgroundTransparency={0.45}
 					key={".$Owned Overlay"}
-					Size={UDim2.fromScale(1, 1)}
+					Size={UDim2.fromScale(0.975, 0.975)}
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					Position={UDim2.fromScale(0.5, 0.5)}
 					Visible={isEquipped}
 					ZIndex={15}
 				>
@@ -650,6 +652,8 @@ const CategoryButton = (props: CategoryButtonProps) => {
 		);
 	}, [isHovered, isPressed, currentCategory]);
 
+	const sliceScale = useSliceScale();
+
 	return (
 		<imagebutton
 			key={"CategoryBtn"}
@@ -665,7 +669,7 @@ const CategoryButton = (props: CategoryButtonProps) => {
 				return UDim2.fromScale(size.X.Scale * s, size.Y.Scale * s);
 			})}
 			SliceCenter={new Rect(98, 73, 643, 212)}
-			SliceScale={0.5}
+			SliceScale={sliceScale(0.5)}
 			Selectable={false}
 			ZIndex={-10}
 			Event={{
@@ -692,7 +696,7 @@ const CategoryButton = (props: CategoryButtonProps) => {
 				ScaleType={Enum.ScaleType.Slice}
 				Size={UDim2.fromScale(1, 1.02)}
 				SliceCenter={new Rect(98, 73, 643, 212)}
-				SliceScale={0.25}
+				SliceScale={sliceScale(0.5)}
 				ZIndex={-10}
 			/>
 
@@ -709,7 +713,7 @@ const CategoryButton = (props: CategoryButtonProps) => {
 				ScaleType={Enum.ScaleType.Slice}
 				Size={UDim2.fromScale(1, 1.02)}
 				SliceCenter={new Rect(98, 73, 643, 212)}
-				SliceScale={0.25}
+				SliceScale={sliceScale(0.5)}
 				ZIndex={-10}
 			/>
 
@@ -771,7 +775,7 @@ const CategoryButton = (props: CategoryButtonProps) => {
 						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 						LayoutOrder={1}
 						key={"Title"}
-						Position={UDim2.fromScale(0.5, 0.46)}
+						Position={UDim2.fromScale(0.5, 0.44)}
 						Size={UDim2.fromScale(1, 1)}
 						Text={title}
 						TextColor3={Color3.fromRGB(255, 255, 255)}

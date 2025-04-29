@@ -21,9 +21,9 @@ export class ShopController implements OnStart, OnRender {
 
 	onStart() {
 		const PROMPT_DIALOGS = {
-			[gameConstants.SELL_UI]: "hey there! you can sell your treasures here",
-			[gameConstants.SHOP_UI]: "what would you like to buy?",
-			[gameConstants.BOAT_SHOP_UI]: "yar matey!",
+			[gameConstants.SELL_UI]: "Hey! Sell your treasures here.",
+			[gameConstants.SHOP_UI]: "What would you like to buy?",
+			[gameConstants.BOAT_SHOP_UI]: "Get yourself a boat!",
 		} as Record<string, string>;
 
 		const npcChatter = SoundService.WaitForChild("UI").WaitForChild("NpcChatter");

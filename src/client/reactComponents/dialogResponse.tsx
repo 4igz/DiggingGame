@@ -5,7 +5,7 @@ import { DialogResponse, QUEST_ACCEPT, QUEST_DECLINE } from "shared/config/quest
 import { AnimatedButton } from "./buttons";
 import { usePx } from "client/hooks/usePx";
 import { Signals } from "shared/signals";
-import { useSliceCenter, useSliceScale } from "client/hooks/useSlice";
+import { useSliceScale } from "client/hooks/useSlice";
 
 interface DialogOptionProps {
 	description: string;
@@ -15,7 +15,6 @@ interface DialogOptionProps {
 
 const DialogOption = (props: DialogOptionProps) => {
 	const px = usePx();
-	const sliceCenter = useSliceCenter();
 	const sliceScale = useSliceScale();
 
 	return (
@@ -33,7 +32,7 @@ const DialogOption = (props: DialogOptionProps) => {
 				Size={UDim2.fromScale(1, 1)}
 				BackgroundTransparency={1}
 				ScaleType={Enum.ScaleType.Slice}
-				SliceCenter={sliceCenter.original(new Rect(14, 13, 471, 74))}
+				SliceCenter={new Rect(14, 13, 471, 74)}
 				SliceScale={sliceScale(0.8)}
 			>
 				<imagelabel

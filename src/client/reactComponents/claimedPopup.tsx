@@ -121,6 +121,7 @@ export const ClaimedPopup = (props: ClaimedPopupProps) => {
 									?.itemImage
 							: "rbxassetid://96446480715038")
 					}
+					ScaleType={Enum.ScaleType.Fit}
 					Rotation={imageRotation}
 				>
 					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1} />

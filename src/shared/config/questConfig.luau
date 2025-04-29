@@ -95,7 +95,7 @@ local questConfig: { [string]: { QuestConfig } } = {
 			collectAmount = 1,
 		},
 	},
-	["Baitin’ Bob"] = {
+	["Heated Herald"] = {
 		-- These are intended to be placeholders to show you how to create quests
 		{
 			questType = "Collect",
@@ -197,7 +197,7 @@ local npcAnimationConfig = {
 		[TALK] = "NpcTalkBoat",
 		[IDLE] = "NpcIdleBoat",
 	},
-	["Baitin’ Bob"] = {
+	["Heated Herald"] = {
 		[IDLE] = "NpcFish",
 	},
 	["Abominable Joe-man"] = {
@@ -209,7 +209,7 @@ local npcAnimationConfig = {
 
 local npcCharacterRenders = {
 	["Plankwalker Paul"] = "rbxassetid://77880591512469",
-	["Baitin’ Bob"] = "rbxassetid://108020026923113",
+	["Heated Herald"] = "rbxassetid://108020026923113",
 	["Abominable Joe-man"] = "rbxassetid://81062336181962",
 }
 

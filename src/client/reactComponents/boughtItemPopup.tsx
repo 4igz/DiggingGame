@@ -119,6 +119,7 @@ export const BoughtItemPopup = (props: BoughtItemPopupProps) => {
 					ZIndex={5}
 					Image={props.itemImage}
 					Rotation={imageRotation}
+					ScaleType={Enum.ScaleType.Fit}
 				>
 					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1} />
 				</imagelabel>
