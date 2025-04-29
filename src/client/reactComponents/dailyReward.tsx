@@ -643,29 +643,12 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 					Position={UDim2.fromScale(0.9, 0.5)}
 					Size={UDim2.fromScale(1.04396, 1.1697)}
 					Text={`Daily Rewards ${timeLeft > 0 ? `- Come back later!` : ""}`}
-					TextColor3={Color3.fromRGB(23, 30, 52)}
+					TextColor3={Color3.fromRGB(255, 255, 255)}
 					TextScaled={false}
 					TextSize={px(50)}
 					TextXAlignment={"Left"}
 				>
 					<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(5.3)} />
-
-					<textlabel
-						AnchorPoint={new Vector2(0.5, 0.5)}
-						BackgroundTransparency={1}
-						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-						LayoutOrder={1}
-						key={"Title"}
-						Position={UDim2.fromScale(0.5, 0.45)}
-						Size={UDim2.fromScale(1, 1)}
-						Text={`Daily Rewards - Come back later!`}
-						TextColor3={new Color3(1, 1, 1)}
-						TextScaled={false}
-						TextXAlignment={"Left"}
-						TextSize={px(50)}
-					>
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(5.3)} />
-					</textlabel>
 				</textlabel>
 
 				<imagelabel

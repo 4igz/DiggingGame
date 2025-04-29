@@ -30,6 +30,7 @@ import { NetworkingFunctionError } from "@flamework/networking";
 import { whiteToRed } from "shared/util/colorUtil";
 import { usePx } from "client/hooks/usePx";
 import { AnimatedButton, BuyButton } from "./buttons";
+import { useSliceCenter, useSliceScale } from "client/hooks/useSlice";
 
 export function capitalizeWords(str: string): string {
 	return str
@@ -664,7 +665,7 @@ const CategoryButton = (props: CategoryButtonProps) => {
 				return UDim2.fromScale(size.X.Scale * s, size.Y.Scale * s);
 			})}
 			SliceCenter={new Rect(98, 73, 643, 212)}
-			SliceScale={0.25}
+			SliceScale={0.5}
 			Selectable={false}
 			ZIndex={-10}
 			Event={{
@@ -1525,6 +1526,7 @@ const INVENTORY_MENU_INDICIES = {
 interface MainUiProps {
 	visible: boolean;
 	menu?: keyof typeof MENUS;
+	resetTrigger?: number;
 	displayInventoryType?: ItemType;
 	uiController: UiController;
 	gamepassController: GamepassController;
@@ -1643,7 +1645,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 				warn("Invalid menu type:", props.menu);
 			}
 		}
-	}, [props.menu]);
+	}, [props.menu, props.resetTrigger]);
 
 	React.useEffect(() => {
 		if (enabledMenu === MENUS.Inventory) {
@@ -2841,7 +2843,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 					position={UDim2.fromScale(0.617, 0.52)}
 					size={UDim2.fromScale(0.766, 0.212)}
 					paddingSz={-0.19}
-					leftPad={-0.3}
+					leftPad={-0.45}
 					currentCategory={enabledMenu}
 					setCategory={setEnabledMenu}
 				/>

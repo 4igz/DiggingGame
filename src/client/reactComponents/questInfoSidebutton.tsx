@@ -1,9 +1,12 @@
+import { useMotion } from "@rbxts/pretty-react-hooks";
 import React, { useEffect } from "@rbxts/react";
 import { UserInputService } from "@rbxts/services";
 import { treasureInventoryAtom } from "client/atoms/inventoryAtoms";
 import { Events, Functions } from "client/network";
+import { springs } from "client/utils/springs";
 import { npcCharacterRenders, questConfig } from "shared/config/questConfig";
 import { QuestProgress } from "shared/networkTypes";
+import { Signals } from "shared/signals";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 import { makePlural } from "shared/util/nameUtil";
 
@@ -18,7 +21,11 @@ const getActiveQuest = (
 	return undefined;
 };
 
+const DEFAULT_POS = UDim2.fromScale(1.013, 0.63);
+const CLOSED_POS = UDim2.fromScale(1.275, 0.63);
+
 export const QuestInfoSideButton = () => {
+	const [pos, setPos] = useMotion(DEFAULT_POS);
 	const [questInfo, setQuestInfo] = React.useState<Map<keyof typeof questConfig, QuestProgress>>();
 	const [activeQuest, setActiveQuest] = React.useState<
 		{ name: keyof typeof questConfig; info: QuestProgress } | undefined
@@ -44,6 +51,14 @@ export const QuestInfoSideButton = () => {
 	useEffect(() => {
 		Events.updateInventory.connect(() => {
 			render((v) => v + 1);
+		});
+
+		Signals.menuOpened.Connect((isOpen) => {
+			if (isOpen) {
+				setPos.spring(CLOSED_POS, springs.default);
+			} else {
+				setPos.spring(DEFAULT_POS, springs.default);
+			}
 		});
 	}, []);
 
@@ -75,7 +90,7 @@ export const QuestInfoSideButton = () => {
 			BorderColor3={Color3.fromRGB(0, 0, 0)}
 			BorderSizePixel={0}
 			key={"Sidebar"}
-			Position={UDim2.fromScale(1.013, 0.63)}
+			Position={pos}
 			Size={UDim2.fromScale(0.275, 0.11 * (platform === "Mobile" ? MOBILE_SCALE : 1))}
 			Visible={activeQuest !== undefined}
 		>

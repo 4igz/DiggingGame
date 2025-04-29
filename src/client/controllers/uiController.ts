@@ -117,7 +117,7 @@ export default class UiController implements OnStart, OnInit {
 				}
 				// Now open the dig bar without overriding `currentOpenUi`
 				diggingBarActive = true;
-				this.updateUiProps(name, { visible: true, ...newProps });
+				this.updateUiProps(name, { resetTrigger: tick(), visible: true, ...newProps });
 				return;
 			}
 		}
@@ -139,7 +139,7 @@ export default class UiController implements OnStart, OnInit {
 
 			menu.gui.Enabled = true;
 			currentOpenUi = name;
-			this.updateUiProps(name, { visible: true, ...newProps });
+			this.updateUiProps(name, { resetTrigger: tick(), visible: true, ...newProps });
 
 			// MenuBlur and FOV effects on MENU_LAYER UIs
 			if (menu.layer === MENU_LAYER) {

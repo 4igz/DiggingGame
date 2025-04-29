@@ -279,28 +279,11 @@ export const RightSideMenu = (props: MenuProps) => {
 						Text={moneyValue}
 						TextColor3={Color3.fromRGB(92, 255, 133)}
 						// TextScaled={true}
-						TextSize={px.even(30)}
+						TextSize={px.ceil(30)}
 						TextXAlignment={Enum.TextXAlignment.Left}
 						TextYAlignment={Enum.TextYAlignment.Center}
 					>
 						<uistroke key={"UIStroke"} Thickness={px.ceil(3)} Transparency={0} />
-
-						<textlabel
-							AnchorPoint={new Vector2(0, 0.5)}
-							BackgroundTransparency={1}
-							FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-							key={".$Amount"}
-							Position={UDim2.fromScale(0, 0.425)}
-							Size={UDim2.fromScale(0.597257, 0.563684)}
-							Text={moneyValue}
-							TextColor3={Color3.fromRGB(92, 255, 133)}
-							// TextScaled={true}
-							TextSize={px.even(30)}
-							TextXAlignment={Enum.TextXAlignment.Left}
-							TextYAlignment={Enum.TextYAlignment.Center}
-						>
-							<uistroke key={"UIStroke"} Thickness={px.ceil(3)} Transparency={0} />
-						</textlabel>
 					</textlabel>
 
 					<imagelabel

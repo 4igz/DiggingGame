@@ -20,6 +20,8 @@ interface PotionProps {
 const PotionTimer = (props: PotionProps) => {
 	const [timeLeft, setTimeLeft] = useState(props.timeLeft ?? props.cfg.duration);
 
+	const px = usePx();
+
 	useEffect(() => {
 		setTimeLeft(props.timeLeft ?? props.cfg.duration);
 
@@ -59,19 +61,6 @@ const PotionTimer = (props: PotionProps) => {
 		>
 			<uiaspectratioconstraint AspectRatio={1} />
 
-			<imagelabel
-				Image={props.cfg.itemImage}
-				BackgroundTransparency={1}
-				Size={UDim2.fromScale(1.2, 1.2)}
-				Position={UDim2.fromScale(0.5, 0.525)}
-				AnchorPoint={new Vector2(0.5, 0.5)}
-				key={props.potionName}
-				ScaleType={"Fit"}
-				ZIndex={0}
-			>
-				{/* <uigradient Color={new ColorSequence(new Color3())} /> */}
-			</imagelabel>
-
 			<textlabel
 				Text={formatShortTime(timeLeft)}
 				FontFace={Font.fromEnum(Enum.Font.BuilderSansBold)}
@@ -83,7 +72,7 @@ const PotionTimer = (props: PotionProps) => {
 				TextXAlignment={Enum.TextXAlignment.Center}
 				TextColor3={new Color3(1, 1, 1)}
 			>
-				<uistroke Thickness={3} />
+				<uistroke Thickness={px(3)} />
 			</textlabel>
 		</imagelabel>
 	);

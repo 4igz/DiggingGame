@@ -558,6 +558,16 @@ export const GamepassShop = (props: GamepassShopProps) => {
 							>
 								<uistroke key={"UIStroke"} Color={Color3.fromRGB(116, 48, 13)} Thickness={px(2)} />
 
+								<uigradient
+									key={"UIGradient"}
+									Color={
+										new ColorSequence([
+											new ColorSequenceKeypoint(0, Color3.fromRGB(246, 231, 133)),
+											new ColorSequenceKeypoint(1, Color3.fromRGB(253, 174, 62)),
+										])
+									}
+								/>
+
 								<textlabel
 									AnchorPoint={new Vector2(0.5, 0.5)}
 									BackgroundTransparency={1}
@@ -589,25 +599,6 @@ export const GamepassShop = (props: GamepassShopProps) => {
 										}
 									/>
 								</textlabel>
-
-								<textlabel
-									AnchorPoint={new Vector2(0.5, 0.5)}
-									BackgroundTransparency={1}
-									FontFace={
-										new Font(
-											"rbxassetid://11702779409",
-											Enum.FontWeight.ExtraBold,
-											Enum.FontStyle.Normal,
-										)
-									}
-									key={"OP"}
-									Position={UDim2.fromScale(0.5, 0.65)}
-									Size={UDim2.fromScale(1, 1)}
-									Text={"OP"}
-									TextColor3={Color3.fromRGB(116, 48, 13)}
-									// TextScaled={true}
-									TextSize={px(TAB_PX)}
-								/>
 							</textlabel>
 
 							<textlabel
