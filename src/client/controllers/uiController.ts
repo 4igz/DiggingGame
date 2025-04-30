@@ -312,6 +312,7 @@ export default class UiController implements OnStart, OnInit {
 		});
 
 		StarterGui.SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false);
+		StarterGui.ScreenOrientation = Enum.ScreenOrientation.LandscapeSensor;
 
 		// @param setProp: Use false if the element sets itself visible
 		Signals.setUiToggled.Connect((name: string, uiVisible: boolean, setProp: boolean = true) => {

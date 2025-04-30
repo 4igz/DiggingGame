@@ -723,7 +723,7 @@ const CategoryButton = (props: CategoryButtonProps) => {
 				AnchorPoint={new Vector2(0.5, 0.5)}
 				BackgroundTransparency={1}
 				BorderSizePixel={0}
-				Position={UDim2.fromScale(0.5, 0.5)}
+				Position={UDim2.fromScale(0.5, 0.485)}
 				Size={UDim2.fromScale(1, 1)}
 			>
 				<uilistlayout
@@ -1273,11 +1273,13 @@ export const ExitButton = (props: ExitButtonProps) => {
 			active={true}
 			anchorPoint={new Vector2(0.5, 0.5)}
 			position={UDim2.fromScale(0.978, 0.0365)}
-			size={props.size ?? UDim2.fromScale(0.123, 0.194)}
+			size={props.size ?? UDim2.fromScale(0.2, 0.2)}
 			zindex={100}
 			onClick={exit}
 			selectable={false}
 		>
+			<uiaspectratioconstraint AspectRatio={1} />
+
 			<imagelabel
 				AnchorPoint={new Vector2(0.5, 0.5)}
 				BackgroundTransparency={1}
@@ -1286,7 +1288,7 @@ export const ExitButton = (props: ExitButtonProps) => {
 				Position={UDim2.fromScale(0.5, 0.5)}
 				ScaleType={Enum.ScaleType.Fit}
 				Selectable={false}
-				Size={UDim2.fromScale(0.824, 0.87)}
+				Size={UDim2.fromScale(1, 1)}
 				SliceScale={0.4}
 				ZIndex={100}
 			>

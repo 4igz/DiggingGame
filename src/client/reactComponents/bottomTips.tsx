@@ -35,8 +35,7 @@ const PotionTimer = (props: PotionProps) => {
 						return math.max(prev - 1, 0);
 					} else {
 						props.onComplete();
-						running = false;
-						return prev;
+						return 0;
 					}
 				});
 			}
@@ -92,7 +91,7 @@ export const BottomTips = (props: BottomTipsProps) => {
 
 	const px = usePx();
 
-	const removePotion = (potionName: string) => {
+	const removePotion = (potionName: keyof typeof potionConfig) => {
 		setCurrentPotions((prev) => prev.filter((v) => v.potionName !== potionName));
 	};
 
@@ -124,6 +123,7 @@ export const BottomTips = (props: BottomTipsProps) => {
 						potionName,
 						updateId: math.random(),
 						onComplete: () => {
+							print("Called oncomplete for potion: " + potionName);
 							removePotion(potionName);
 						},
 					},

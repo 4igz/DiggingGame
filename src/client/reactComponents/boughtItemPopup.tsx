@@ -154,7 +154,7 @@ export const BoughtItemPopup = (props: BoughtItemPopupProps) => {
 				TextScaled={true}
 				TextWrapped={false}
 			>
-				<uistroke key={"UIStroke"} Thickness={px(1)} />
+				<uistroke key={"UIStroke"} Thickness={px(2)} />
 			</textlabel>
 		</frame>
 	);
