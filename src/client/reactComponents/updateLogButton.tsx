@@ -71,7 +71,7 @@ export const UpdateLogButton = (props: UpdateLogButtonProps) => {
 				if (!visible) {
 					updateLog.Enabled = true;
 
-					TweenService.Create(containerFrame, tinfo, { Position: UDim2.fromScale(0.5, 0.5) }).Play();
+					TweenService.Create(containerFrame, tinfo, { Position: UDim2.fromScale(0.5, 0.45) }).Play();
 				} else {
 					updateLog.Enabled = false;
 
