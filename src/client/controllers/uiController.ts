@@ -277,6 +277,7 @@ export default class UiController implements OnStart, OnInit {
 		const createGiftUIZone = (inst: PVInstance) => {
 			const zone = new Zone(inst);
 			zone.localPlayerEntered.Connect(() => {
+				if (this.autoDigging.autoDiggingEnabled) return;
 				this.toggleUi(gameConstants.FREE_REWARD_UI, {}, false);
 			});
 		};

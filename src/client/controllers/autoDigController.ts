@@ -38,7 +38,6 @@ const MOVEMENT_INPUTS: MovementInputsMap = {
 };
 
 let existingPather: Pather | undefined = undefined;
-let autoDiggingEnabled: boolean = false;
 let isPathing: boolean = false;
 
 let consecutiveFails: number = 0;
@@ -61,6 +60,8 @@ const logWarn = (message: string) => {
 
 @Controller({})
 export class AutoDigging implements OnStart {
+	public autoDiggingEnabled: boolean = false;
+
 	constructor(private readonly shovelController: ShovelController, private readonly detector: DetectorController) {}
 
 	onStart(): void {
@@ -85,7 +86,7 @@ export class AutoDigging implements OnStart {
 		// 		this.setAutoDiggingEnabled(false);
 		// 		return;
 		// 	}
-		// 	if (autoDiggingEnabled) {
+		// 	if (this.autoDiggingEnabled) {
 		// 		this.cleanupPather();
 		// 		this.requestAndPathToNextTarget();
 		// 	}
@@ -93,7 +94,7 @@ export class AutoDigging implements OnStart {
 
 		this.shovelController.onDiggingComplete.Connect(() => {
 			this.cleanupPather();
-			if (autoDiggingEnabled) {
+			if (this.autoDiggingEnabled) {
 				this.requestAndPathToNextTarget();
 			}
 		});
@@ -117,7 +118,7 @@ export class AutoDigging implements OnStart {
 
 		UserInputService.InputChanged.Connect((input, gameProcessedEvent) => {
 			if (gameProcessedEvent) return;
-			if (!autoDiggingEnabled) return;
+			if (!this.autoDiggingEnabled) return;
 
 			if (input.KeyCode === Enum.KeyCode.Thumbstick1) {
 				if (this.isCloseToTrackedTarget()) return;
@@ -138,7 +139,7 @@ export class AutoDigging implements OnStart {
 	private isCloseToTrackedTarget(): boolean {
 		const characterPosition = Players.LocalPlayer.Character?.GetPivot().Position;
 		if (!characterPosition) return false;
-		return characterPosition.sub(trackedSpawnPosition).Magnitude < gameConstants.DIG_RANGE * 1.5;
+		return characterPosition.sub(trackedSpawnPosition).Magnitude < gameConstants.DIG_RANGE * 1.25;
 	}
 
 	/**
@@ -155,7 +156,7 @@ export class AutoDigging implements OnStart {
 				task.wait(WAIT_INTERVAL);
 
 				if (
-					autoDiggingEnabled &&
+					this.autoDiggingEnabled &&
 					// this.detector.targetActive && // We have a target
 					!isPathing && // But we're not pathfinding
 					!this.shovelController.diggingActive && // And not digging
@@ -178,7 +179,7 @@ export class AutoDigging implements OnStart {
 					consecutiveFails++;
 					this.tryResetIfStuck();
 
-					if (autoDiggingEnabled) {
+					if (this.autoDiggingEnabled) {
 						targetRequestInProgress = false;
 						this.requestAndPathToNextTarget();
 					}
@@ -302,7 +303,7 @@ export class AutoDigging implements OnStart {
 	 */
 	private retryResetTargetRequest() {
 		// If we're not auto-digging or there's already a queue worker, skip.
-		if (!autoDiggingEnabled || queueActive) {
+		if (!this.autoDiggingEnabled || queueActive) {
 			return;
 		}
 
@@ -311,7 +312,7 @@ export class AutoDigging implements OnStart {
 		task.spawn(() => {
 			// Wait until we are free (not pathing/digging/etc.)
 			while (
-				autoDiggingEnabled &&
+				this.autoDiggingEnabled &&
 				queueActive &&
 				(isPathing || this.shovelController.diggingActive || this.detector.targetActive)
 			) {
@@ -331,7 +332,7 @@ export class AutoDigging implements OnStart {
 			// Release the queue so future calls can queue again
 			queueActive = false;
 			// If we're still enabled, request the next target
-			if (autoDiggingEnabled && wasActive) {
+			if (this.autoDiggingEnabled && wasActive) {
 				targetRequestInProgress = false;
 				this.requestAndPathToNextTarget();
 			}
@@ -339,7 +340,13 @@ export class AutoDigging implements OnStart {
 	}
 
 	requestAndPathToNextTarget() {
-		if (!autoDiggingEnabled || targetRequestInProgress) return;
+		if (
+			!this.autoDiggingEnabled ||
+			targetRequestInProgress ||
+			this.shovelController.diggingActive ||
+			(this.detector.targetActive && this.isCloseToTrackedTarget())
+		)
+			return;
 
 		if (treasureCountAtom() >= inventorySizeAtom()) {
 			Signals.inventoryFull.Fire();
@@ -356,7 +363,7 @@ export class AutoDigging implements OnStart {
 				const character = Players.LocalPlayer.Character;
 				const humanoid = character?.FindFirstChildOfClass("Humanoid");
 				if (!character || !humanoid) return;
-				if (!autoDiggingEnabled) return;
+				if (!this.autoDiggingEnabled) return;
 				if (!target) {
 					logWarn("Target request failed. Retrying...");
 					task.delay(0.1, () => this.requestAndPathToNextTarget());
@@ -385,7 +392,7 @@ export class AutoDigging implements OnStart {
 				this.startPathTo(target.position);
 			})
 			.catch((err) => {
-				if (!autoDiggingEnabled) return;
+				if (!this.autoDiggingEnabled) return;
 				logWarn(`Failed to get next target: ${err}`);
 				this.retryResetTargetRequest(); // Maybe retry or do fallback
 			})
@@ -405,15 +412,16 @@ export class AutoDigging implements OnStart {
 
 	private quitCurrentTarget() {
 		if (
-			autoDiggingEnabled &&
-			(this.shovelController.diggingActive || (this.detector.targetActive && !this.isCloseToTrackedTarget()))
+			this.autoDiggingEnabled &&
+			(!this.shovelController.diggingActive ||
+				(this.detector.targetActive && !this.isCloseToTrackedTarget() && !targetRequestInProgress))
 		) {
 			Events.endDiggingClient();
 		}
 	}
 
 	public setAutoDiggingEnabled(enabled: boolean, quitTarget: boolean = true) {
-		autoDiggingEnabled = enabled;
+		this.autoDiggingEnabled = enabled;
 
 		if (enabled) {
 			if (treasureCountAtom() >= inventorySizeAtom()) {

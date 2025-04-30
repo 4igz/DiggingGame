@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "@rbxts/react";
 import { springs } from "client/utils/springs";
 import { AnimatedButton } from "./buttons";
 import { Events, Functions } from "client/network";
-import { Players } from "@rbxts/services";
+import { AvatarEditorService, Players } from "@rbxts/services";
 import { ExitButton } from "./inventory";
 import UiController from "client/controllers/uiController";
 import { gameConstants, REWARD_IMAGES } from "shared/gameConstants";
@@ -62,6 +62,8 @@ export const FreeReward = (props: FreeRewardProps) => {
 			Functions.getHasClaimedFreeReward().then((status) => {
 				setHasClaimed(status);
 			});
+
+			AvatarEditorService.PromptSetFavorite(game.PlaceId, 1, true);
 		} else {
 			setMenuPos.immediate(UDim2.fromScale(0.5, 0.6));
 		}

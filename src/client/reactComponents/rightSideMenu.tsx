@@ -274,12 +274,12 @@ export const RightSideMenu = (props: MenuProps) => {
 						BackgroundTransparency={1}
 						FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 						key={".$Amount"}
-						Position={UDim2.fromScale(0.1, 0.5)}
+						Position={UDim2.fromScale(0.08, 0.46)}
 						Size={UDim2.fromScale(0.597257, 0.563684)}
 						Text={moneyValue}
 						TextColor3={Color3.fromRGB(92, 255, 133)}
 						// TextScaled={true}
-						TextSize={px.ceil(30)}
+						TextSize={px.ceil(27)}
 						TextXAlignment={Enum.TextXAlignment.Left}
 						TextYAlignment={Enum.TextYAlignment.Center}
 					>
