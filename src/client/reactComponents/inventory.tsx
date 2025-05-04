@@ -2919,7 +2919,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 					TextXAlignment={Enum.TextXAlignment.Right}
 					TextYAlignment={Enum.TextYAlignment.Top}
 				>
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(20, 38, 80)} Thickness={3.5} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(20, 38, 80)} Thickness={px(3.5)} />
 
 					<uipadding
 						key={"UIPadding"}

@@ -6,6 +6,7 @@ import React, { useEffect } from "@rbxts/react";
 import { fullTargetConfig, trashConfig } from "shared/config/targetConfig";
 import { shortenNumber } from "shared/util/nameUtil";
 import { getMapFromTarget, getOneInXChance } from "shared/util/targetUtil";
+import { gameConstants } from "shared/gameConstants";
 
 interface Attributes {}
 
@@ -62,6 +63,7 @@ export class Treasure extends BaseComponent<Attributes, TreasureComponent> {
 					font={Enum.Font.GothamMedium}
 					bbgSize={new UDim2(4, 0, 1, 0)}
 					enabled={(this.instance.IsA("Tool") && true) || (enabled && chance > 0)}
+					strokeColor={gameConstants.RARITY_COLORS[cfg.rarityType]}
 				/>
 			);
 		};

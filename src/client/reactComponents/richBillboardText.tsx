@@ -12,6 +12,7 @@ interface BillboardGuiProps {
 	font?: Enum.Font;
 	offsetWorldSpace?: Vector3;
 	enabled: boolean;
+	strokeColor?: Color3;
 }
 
 export const RichBillboardText = (props: BillboardGuiProps) => {
@@ -41,7 +42,9 @@ export const RichBillboardText = (props: BillboardGuiProps) => {
 				TextStrokeTransparency={0.5}
 				TextStrokeColor3={new Color3(0, 0, 0)}
 				Font={props.font ?? Enum.Font.BuilderSans}
-			/>
+			>
+				<uistroke Thickness={2} Color={props.strokeColor} />
+			</textlabel>
 		</billboardgui>
 	);
 };
