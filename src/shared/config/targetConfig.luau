@@ -18,7 +18,7 @@ type TargetConfig = {
 
 local targetConfig: { [string]: TargetConfig } = {
 	-- Grasslands
-	["Bag of coins"] = {
+	["Bag Of Coins"] = {
 		rarity = 3, -- 1 in 3
 		rarityType = "Common",
 		baseWeight = NumberRange.new(1, 3),
@@ -30,7 +30,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		indexRarity = 3,
 	},
 
-	["Cool shell"] = {
+	["Cool Shell"] = {
 		rarity = 5, -- 1 in 5
 		rarityType = "Common",
 		baseWeight = NumberRange.new(1, 3),
@@ -41,7 +41,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		indexRarity = 5,
 	},
 
-	["Jade fish"] = {
+	["Jade Fish"] = {
 		rarity = 10, -- 1 in 10
 		rarityType = "Common",
 		baseWeight = NumberRange.new(1, 3),
@@ -75,7 +75,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		indexRarity = 20,
 	},
 
-	["Golden eyepatch"] = {
+	["Golden Eyepatch"] = {
 		rarity = 32, -- 1 in 32
 		rarityType = "Rare",
 		baseWeight = NumberRange.new(5, 10),
@@ -86,7 +86,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		indexRarity = 32,
 	},
 
-	["Gold chalice"] = {
+	["Gold Chalice"] = {
 		rarity = 48, -- 1 in 48
 		rarityType = "Rare",
 		baseWeight = NumberRange.new(5, 10),
@@ -96,7 +96,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		indexRarity = 48,
 	},
 
-	["Bejeweled pegleg"] = {
+	["Bejeweled Pegleg"] = {
 		rarity = 64, -- 1 in 64
 		rarityType = "Uncommon",
 		baseWeight = NumberRange.new(7, 10),
@@ -106,7 +106,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		indexRarity = 64,
 	},
 
-	["Treasure chest"] = {
+	["Treasure Chest"] = {
 		rarity = 128, -- 1 in 128
 		rarityType = "Rare",
 		baseWeight = NumberRange.new(10, 50),
@@ -118,7 +118,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		indexRarity = 128,
 	},
 
-	["Ruby"] = {
+	Ruby = {
 		rarity = 256, -- 1 in 256
 		rarityType = "Epic",
 		baseWeight = NumberRange.new(8, 10),
@@ -141,7 +141,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		indexRarity = 512,
 	},
 
-	["Ancient artifact"] = {
+	["Ancient Artifact"] = {
 		rarity = 2048, -- 1 in 2048
 		rarityType = "Legendary",
 		baseWeight = NumberRange.new(20, 22.5),
@@ -153,7 +153,7 @@ local targetConfig: { [string]: TargetConfig } = {
 	},
 
 	-- Volcano
-	["Volcano rock"] = {
+	["Volcano Rock"] = {
 		rarity = 320,
 		rarityType = "Common",
 		baseWeight = NumberRange.new(20, 22.5),
@@ -163,7 +163,8 @@ local targetConfig: { [string]: TargetConfig } = {
 
 		indexRarity = 320,
 	},
-	["Skull"] = {
+
+	Skull = {
 		rarity = 500,
 		rarityType = "Common",
 		baseWeight = NumberRange.new(20, 22.5),
@@ -173,7 +174,8 @@ local targetConfig: { [string]: TargetConfig } = {
 
 		indexRarity = 500,
 	},
-	["Volcano's tear"] = {
+
+	["Volcano's Tear"] = {
 		rarity = 620,
 		rarityType = "Common",
 		baseWeight = NumberRange.new(20, 22.5),
@@ -191,7 +193,8 @@ local targetConfig: { [string]: TargetConfig } = {
 		description = "A fossil of an ancient creature. Probably a creepy one.",
 		indexRarity = 700,
 	},
-	["Heat rock"] = {
+	
+	["Heat Rock"] = {
 		rarity = 1_000,
 		rarityType = "Common",
 		baseWeight = NumberRange.new(40, 50),
@@ -200,7 +203,8 @@ local targetConfig: { [string]: TargetConfig } = {
 		description = "A rock that's warm to the touch.",
 		indexRarity = 1000,
 	},
-	["Lava bucket"] = {
+
+	["Lava Bucket"] = {
 		rarity = 2_000,
 		rarityType = "Common",
 		baseWeight = NumberRange.new(50, 60),
@@ -209,7 +213,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		description = "I wonder how a bucket can hold lava.",
 		indexRarity = 2000,
 	},
-	["Obsidian shard"] = {
+	["Obsidian Shard"] = {
 		rarity = 3500,
 		indexRarity = 3500,
 		rarityType = "Common",
@@ -218,7 +222,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://115688166680356",
 		description = "A shard of obsidian. What, were you expecting more?",
 	},
-	["Coal artifact"] = {
+	["Coal Artifact"] = {
 		rarity = 5000,
 		indexRarity = 5000,
 		rarityType = "Uncommon",
@@ -227,7 +231,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://129994688332470",
 		description = "An artifact. Made out of coal. For some reason.",
 	},
-	["Jade statue"] = {
+	["Jade Statue"] = {
 		rarity = 7500,
 		indexRarity = 7500,
 		rarityType = "Uncommon",
@@ -236,7 +240,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://138452528957421",
 		description = "A good centerpiece.",
 	},
-	["T-Rex skull"] = {
+	["T-Rex Skull"] = {
 		rarity = 15000,
 		indexRarity = 15000,
 		rarityType = "Rare",
@@ -245,7 +249,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://122748003577046",
 		description = "I wonder if they are missing this.",
 	},
-	["T-Rex tooth"] = {
+	["T-Rex Tooth"] = {
 		rarity = 50000,
 		indexRarity = 50000,
 		rarityType = "Epic",
@@ -254,7 +258,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://98431662126693",
 		description = "How does the dentist put braces on this?",
 	},
-	["Obsidian crown"] = {
+	["Obsidian Crown"] = {
 		rarity = 100000,
 		indexRarity = 100000,
 		rarityType = "Legendary",
@@ -265,7 +269,7 @@ local targetConfig: { [string]: TargetConfig } = {
 	},
 
 	-- Frozen
-	["Icecicle"] = {
+	["Icicle"] = {
 		rarity = 1,
 		indexRarity = 900,
 		rarityType = "Common",
@@ -275,7 +279,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		description = "Don't chew on it.",
 	},
 
-	["Sapphire gem"] = {
+	["Sapphire Gem"] = {
 		rarity = 5,
 		indexRarity = 1000,
 		rarityType = "Common",
@@ -284,7 +288,8 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://84253809232755",
 		description = "Basically ruby, but blue.",
 	},
-	["Viking dagger"] = {
+	
+	["Viking Dagger"] = {
 		rarity = 25,
 		indexRarity = 2000,
 		rarityType = "Common",
@@ -293,7 +298,8 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://136607393225332",
 		description = "I wouldn't get your fingerprints on it.",
 	},
-	["Viking sword"] = {
+
+	["Viking Sword"] = {
 		rarity = 50,
 		indexRarity = 3000,
 		rarityType = "Common",
@@ -302,7 +308,8 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://107882679708293",
 		description = "Pretty dull.",
 	},
-	["Viking helmet"] = {
+
+	["Viking Helmet"] = {
 		rarity = 100,
 		indexRarity = 4000,
 		rarityType = "Common",
@@ -311,7 +318,8 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://88040817247637",
 		description = "Encrusted with a small ruby.",
 	},
-	["Frozen teddy"] = {
+	
+	["Frozen Teddy"] = {
 		rarity = 250,
 		indexRarity = 5000,
 		rarityType = "Uncommon",
@@ -320,7 +328,8 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://110019113674699",
 		description = "How did it end up in this predicament?",
 	},
-	["Frozen ring"] = {
+
+	["Frozen Ring"] = {
 		rarity = 256,
 		indexRarity = 10000,
 		rarityType = "Uncommon",
@@ -329,7 +338,8 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://118242108570774",
 		description = "It will probably melt out on its own.",
 	},
-	["Topaz amulet"] = {
+
+	["Topaz Amulet"] = {
 		rarity = 512,
 		indexRarity = 25000,
 		rarityType = "Rare",
@@ -338,7 +348,8 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://112949825522969",
 		description = "Some say topaz is a symbol of love.",
 	},
-	["Small gift"] = {
+	
+	["Small Gift"] = {
 		rarity = 700,
 		indexRarity = 50000,
 		rarityType = "Rare",
@@ -347,6 +358,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://85734447473447",
 		description = "I wonder who this belonged to.",
 	},
+
 	["Gift"] = {
 		rarity = 1024,
 		indexRarity = 100000,
@@ -356,7 +368,8 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://85734447473447",
 		description = "I wonder who this belonged to.",
 	},
-	["Mammoth tusk"] = {
+
+	["Mammoth Tusk"] = {
 		rarity = 5024,
 		indexRarity = 250000,
 		rarityType = "Legendary",
@@ -365,7 +378,8 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://81388213251759",
 		description = "Contains valuable ivory.",
 	},
-	["Diamond yeti"] = {
+
+	["Diamond Yeti"] = {
 		rarity = 200000,
 		indexRarity = 1000000,
 		rarityType = "Mythical",
@@ -377,7 +391,7 @@ local targetConfig: { [string]: TargetConfig } = {
 }
 
 local trashConfig = {
-	["Rusty nail"] = {
+	["Rusty Nail"] = {
 		rarity = 1,
 		rarityType = "Common",
 		baseWeight = NumberRange.new(1, 5),
@@ -401,7 +415,7 @@ local trashConfig = {
 		itemImage = "rbxassetid://134314922415893",
 		indexRarity = 2,
 	},
-	["Old boot"] = {
+	["Old Boot"] = {
 		rarity = 1,
 		rarityType = "Common",
 		baseWeight = NumberRange.new(1, 5),
@@ -409,7 +423,7 @@ local trashConfig = {
 		itemImage = "rbxassetid://91884190576086",
 		indexRarity = 2,
 	},
-	["Old ring"] = {
+	["Old Ring"] = {
 		rarity = 1,
 		rarityType = "Common",
 		baseWeight = NumberRange.new(1, 5),
@@ -417,7 +431,7 @@ local trashConfig = {
 		itemImage = "rbxassetid://87736149466419",
 		indexRarity = 2,
 	},
-	["Old coin"] = {
+	["Old Coin"] = {
 		rarity = 1,
 		rarityType = "Common",
 		baseWeight = NumberRange.new(1, 5),
@@ -425,7 +439,7 @@ local trashConfig = {
 		itemImage = "rbxassetid://111334825894769",
 		indexRarity = 2,
 	},
-	["Old mitten"] = {
+	["Old Mitten"] = {
 		rarity = 1,
 		rarityType = "Common",
 		baseWeight = NumberRange.new(1, 5),

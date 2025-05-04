@@ -344,7 +344,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 								}
 								LayoutOrder={1}
 								key={"Name"}
-								Position={UDim2.fromScale(0.5, 0.45)}
+								Position={UDim2.fromScale(0.5, 0.475)}
 								Size={UDim2.fromScale(1, 1)}
 								Text={spaceWords(props.itemName)}
 								TextColor3={Color3.fromRGB(255, 255, 255)}
