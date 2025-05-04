@@ -1,7 +1,7 @@
 type Rarity = "Common" | "Uncommon" | "Rare" | "Epic" | "Legendary" | "Mythical" | "Secret"
 
 type MetalDetector = {
-	strength: number,
+	strength: number,	
 	rarityType: Rarity,
 	luck: number,
 	searchRadius: number,
