@@ -43,7 +43,7 @@ export const RichBillboardText = (props: BillboardGuiProps) => {
 				TextStrokeColor3={new Color3(0, 0, 0)}
 				Font={props.font ?? Enum.Font.BuilderSans}
 			>
-				<uistroke Thickness={2} Color={props.strokeColor} />
+				<uistroke Thickness={2} />
 			</textlabel>
 		</billboardgui>
 	);
