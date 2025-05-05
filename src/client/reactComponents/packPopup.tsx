@@ -67,7 +67,7 @@ export const PackPopup = (props: PackPopupProps) => {
 						TextSize={px(25)}
 						ZIndex={2}
 					>
-						<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={px(4)} />
+						<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={px(3)} />
 					</textlabel>
 				) : (
 					<textlabel
@@ -82,7 +82,7 @@ export const PackPopup = (props: PackPopupProps) => {
 						TextSize={px(25)}
 						ZIndex={5}
 					>
-						<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={px(4)} />
+						<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={px(3)} />
 					</textlabel>
 				)}
 
@@ -102,7 +102,7 @@ export const PackPopup = (props: PackPopupProps) => {
 						key={"UIStroke"}
 						Color={Color3.fromRGB(54, 54, 54)}
 						LineJoinMode={Enum.LineJoinMode.Miter}
-						Thickness={px(5)}
+						Thickness={px(3)}
 					/>
 
 					<uigradient
