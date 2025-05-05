@@ -3,6 +3,7 @@ import React, { useEffect, useState, useMemo, useRef } from "@rbxts/react";
 import { Players, UserInputService, SoundService } from "@rbxts/services";
 import { Trove } from "@rbxts/trove";
 import { useMotion } from "client/hooks/useMotion";
+import { usePx } from "client/hooks/usePx";
 import { springs } from "client/utils/springs";
 import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
 import { shovelConfig } from "shared/config/shovelConfig";
@@ -27,6 +28,8 @@ interface ToolbarItemProps {
 const MOBILE_TOOLBAR_SCALE = 1.25;
 
 const ToolbarItemComponent: React.FC<ToolbarItemProps> = (props) => {
+	const px = usePx();
+
 	return (
 		<imagebutton
 			BackgroundColor3={
@@ -107,7 +110,7 @@ const ToolbarItemComponent: React.FC<ToolbarItemProps> = (props) => {
 				TextWrapped={true}
 				ZIndex={100}
 			>
-				<uistroke key={"UIStroke"} Thickness={3} />
+				<uistroke key={"UIStroke"} Thickness={px(3)} />
 			</textlabel>
 
 			<imagelabel
