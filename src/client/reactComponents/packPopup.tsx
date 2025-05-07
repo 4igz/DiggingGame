@@ -51,7 +51,7 @@ export const PackPopup = (props: PackPopupProps) => {
 
 			<uicorner key={"UICorner"} CornerRadius={new UDim(1, 8)} />
 
-			<uistroke key={"UIStroke"} Thickness={px(6)} />
+			<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 			<frame BackgroundTransparency={1} key={"PackInfo"} Size={UDim2.fromScale(1, 1)}>
 				{offer === NONE ? (
@@ -76,7 +76,7 @@ export const PackPopup = (props: PackPopupProps) => {
 						key={"PackName"}
 						Position={UDim2.fromScale(-0.142857, 0.805736)}
 						Size={UDim2.fromScale(1.27976, 0.282467)}
-						Text={"GAMING PACK"}
+						Text={"RETRO PACK"}
 						TextColor3={Color3.fromRGB(140, 207, 255)}
 						// TextScaled={true}
 						TextSize={px(25)}

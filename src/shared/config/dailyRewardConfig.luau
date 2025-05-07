@@ -29,11 +29,11 @@ local dailyRewards: { Reward } = {
 	},
 	{
 		rewardType = "Potions",
-		itemName = "Medium Luck Potion",
+		itemName = "M.Luck Potion",
 	},
 	{
 		rewardType = "Potions",
-		itemName = "Medium Strength Potion",
+		itemName = "M.Strength Potion",
 	},
 	{
 		rewardType = "Money",
@@ -41,7 +41,7 @@ local dailyRewards: { Reward } = {
 	},
 	{
 		rewardType = "Potions",
-		itemName = "Large Luck Potion",
+		itemName = "L.Luck Potion",
 	},
 	{
 		rewardType = "Boats",

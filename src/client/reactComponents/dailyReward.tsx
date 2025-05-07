@@ -12,6 +12,8 @@ import { springs } from "client/utils/springs";
 import { usePx } from "client/hooks/usePx";
 import { SoundService } from "@rbxts/services";
 import { AnimatedButton } from "./buttons";
+import { Signals } from "shared/signals";
+import { hasDailyAtom } from "client/atoms/rewardAtoms";
 
 interface DailyRewardsProps {
 	visible: boolean;
@@ -449,8 +451,8 @@ const DailyRewardTile = ({
 const MAX_IMAGE_ROTATION = 25;
 
 export const DailyRewards = (props: DailyRewardsProps) => {
-	const [lastClaimed, setLastClaimed] = React.useState(0);
-	const [timeLeft, setTimeLeft] = React.useState(0);
+	const [lastClaimed, setLastClaimed] = React.useState(tick());
+	const [timeLeft, setTimeLeft] = React.useState(DAILY_REWARD_COOLDOWN);
 	const [streak, setStreak] = React.useState(0);
 	const [visible, setVisible] = React.useState(false);
 	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0.5, 0.6));
@@ -483,7 +485,10 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 
 	// Effect to update timer
 	useEffect(() => {
-		if (lastClaimed === 0) return;
+		if (lastClaimed === 0) {
+			setTimeLeft(0);
+			return;
+		}
 
 		const thread = task.spawn(() => {
 			while (true) {
@@ -512,6 +517,14 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 			popInMotion.immediate(UDim2.fromScale(0.5, 0.6));
 		}
 	}, [visible]);
+
+	React.useEffect(() => {
+		const isRewardClaimable = timeLeft <= 0;
+
+		if (hasDailyAtom() !== isRewardClaimable) {
+			hasDailyAtom(isRewardClaimable);
+		}
+	}, [timeLeft]);
 
 	useEffect(() => {
 		let currentRotation = imageRotation.getValue();

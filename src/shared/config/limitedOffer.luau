@@ -26,7 +26,7 @@ local limitedOffer: { { Reward } } = {
 		},
 		{
 			rewardType = "Potions",
-			itemName = "Medium Strength Potion",
+			itemName = "M.Strength Potion",
 			rewardAmount = 2,
 		},
 	},

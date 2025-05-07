@@ -17,21 +17,21 @@ export interface PotionConfig {
 }
 
 export const potionConfig: Record<string, PotionConfig> = {
-	["Small Luck Potion"]: {
+	["S.Luck Potion"]: {
 		kind: PotionKind.LUCK,
 		multiplier: 1.2,
 		duration: minute * 5,
 		itemImage: "rbxassetid://129013287605588",
 		rarityType: "Common",
 	},
-	["Medium Luck Potion"]: {
+	["M.Luck Potion"]: {
 		kind: PotionKind.LUCK,
 		multiplier: 1.5,
 		duration: minute * 10,
 		itemImage: "rbxassetid://84624488885351",
 		rarityType: "Uncommon",
 	},
-	["Large Luck Potion"]: {
+	["L.Luck Potion"]: {
 		kind: PotionKind.LUCK,
 		multiplier: 2,
 		duration: minute * 15,
@@ -39,21 +39,21 @@ export const potionConfig: Record<string, PotionConfig> = {
 		rarityType: "Rare",
 	},
 
-	["Small Strength Potion"]: {
+	["S.Strength Potion"]: {
 		kind: PotionKind.STRENGTH,
 		multiplier: 1.2,
 		duration: minute * 5,
 		itemImage: "rbxassetid://129013287605588",
 		rarityType: "Common",
 	},
-	["Medium Strength Potion"]: {
+	["M.Strength Potion"]: {
 		kind: PotionKind.STRENGTH,
 		multiplier: 1.5,
 		duration: minute * 10,
 		itemImage: "rbxassetid://84624488885351",
 		rarityType: "Uncommon",
 	},
-	["Large Strength Potion"]: {
+	["L.Strength Potion"]: {
 		kind: PotionKind.STRENGTH,
 		multiplier: 2,
 		duration: minute * 15,

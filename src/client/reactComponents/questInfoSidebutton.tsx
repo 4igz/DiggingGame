@@ -1,7 +1,9 @@
+import { subscribe } from "@rbxts/charm";
 import { useMotion } from "@rbxts/pretty-react-hooks";
 import React, { useEffect } from "@rbxts/react";
 import { UserInputService } from "@rbxts/services";
 import { treasureInventoryAtom } from "client/atoms/inventoryAtoms";
+import { usePx } from "client/hooks/usePx";
 import { Events, Functions } from "client/network";
 import { springs } from "client/utils/springs";
 import { npcCharacterRenders, questConfig } from "shared/config/questConfig";
@@ -33,6 +35,8 @@ export const QuestInfoSideButton = () => {
 	const [, render] = React.useState(0);
 	const [platform, setPlatform] = React.useState(getPlayerPlatform());
 
+	const px = usePx();
+
 	useEffect(() => {
 		if (questInfo === undefined) return;
 		const result = getActiveQuest(questInfo);
@@ -52,6 +56,8 @@ export const QuestInfoSideButton = () => {
 		Events.updateInventory.connect(() => {
 			render((v) => v + 1);
 		});
+
+		subscribe(treasureInventoryAtom, () => {});
 
 		Signals.menuOpened.Connect((isOpen) => {
 			if (isOpen) {
@@ -82,13 +88,14 @@ export const QuestInfoSideButton = () => {
 	const quest = questline && questline[activeQuest?.info.stage ?? -1];
 	const MOBILE_SCALE = 1.5;
 
-	const hasEnough =
-		treasureInventoryAtom().reduce((acc, target) => {
-			if (target.itemName === (quest?.target ?? "")) {
-				return ++acc;
-			}
-			return acc;
-		}, 0) >= (quest?.collectAmount ?? 1);
+	const collectedAmount = treasureInventoryAtom().reduce((acc, target) => {
+		if (target.itemName === (quest?.target ?? "")) {
+			return ++acc;
+		}
+		return acc;
+	}, 0);
+
+	const hasEnough = collectedAmount >= (quest?.collectAmount ?? 1);
 
 	return (
 		<frame
@@ -140,13 +147,23 @@ export const QuestInfoSideButton = () => {
 				key={"Description"}
 				Position={UDim2.fromScale(0.0693, 0.116)}
 				Size={UDim2.fromScale(0.5, 0.328)}
-				Text={quest && `Bring ${quest.collectAmount} ${makePlural(quest.target, quest.collectAmount!)}`}
+				Text={
+					quest &&
+					`Bring ${quest.collectAmount} ${makePlural(quest.target, quest.collectAmount!)} ${
+						collectedAmount > 0 ? `${collectedAmount}/${quest.collectAmount}` : ""
+					}`
+				}
 				TextColor3={hasEnough ? Color3.fromRGB(0, 255, 0) : Color3.fromRGB(255, 255, 255)}
 				TextScaled={true}
 				TextWrapped={true}
 				TextXAlignment={Enum.TextXAlignment.Left}
 			>
-				<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Bevel} Thickness={2} Transparency={0.2} />
+				<uistroke
+					key={"UIStroke"}
+					LineJoinMode={Enum.LineJoinMode.Bevel}
+					Thickness={px(2)}
+					Transparency={0.2}
+				/>
 			</textlabel>
 
 			<textlabel
@@ -164,7 +181,12 @@ export const QuestInfoSideButton = () => {
 				TextWrapped={true}
 				TextXAlignment={Enum.TextXAlignment.Left}
 			>
-				<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Bevel} Thickness={2} Transparency={0.2} />
+				<uistroke
+					key={"UIStroke"}
+					LineJoinMode={Enum.LineJoinMode.Bevel}
+					Thickness={px(2)}
+					Transparency={0.2}
+				/>
 			</textlabel>
 			<uiscale key={"UIScale"} Scale={0.9} />
 		</frame>

@@ -88,6 +88,8 @@ export class QuestService implements OnStart {
 
 			const isComplete = this.isQuestComplete(player, questName, questProgress.stage);
 
+			print(isComplete);
+
 			if (isComplete) {
 				this.completeQuest(player, questName, questProgress.stage);
 				questProgress.active = false;

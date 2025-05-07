@@ -2,10 +2,11 @@
 import React, { useEffect } from "@rbxts/react";
 import { RunService } from "@rbxts/services";
 import { useMotion } from "client/hooks/useMotion";
+import { usePx } from "client/hooks/usePx";
 import { springs } from "client/utils/springs";
 import { gameConstants, REWARD_IMAGES } from "shared/gameConstants";
 import { ItemName, ItemType, Rarity, RewardType } from "shared/networkTypes";
-import { shortenNumber, spaceWords } from "shared/util/nameUtil";
+import { formatItemName, shortenNumber, spaceWords } from "shared/util/nameUtil";
 
 const RC = gameConstants.RARITY_COLORS;
 
@@ -26,6 +27,8 @@ export const ClaimedPopup = (props: ClaimedPopupProps) => {
 	const [imageRotation, setImageRotation] = useMotion(0);
 
 	const POPUP_TIME = 5;
+
+	const px = usePx();
 
 	useEffect(() => {
 		setSizeMotion.spring(UDim2.fromScale(0.3, 0.1), springs.responsive);
@@ -159,14 +162,14 @@ export const ClaimedPopup = (props: ClaimedPopupProps) => {
 							: props.reward === "SkillPoints"
 							? shortenNumber(props.itemName as unknown as number, false) + "SP"
 							: shortenNumber(props.itemName as unknown as number, false)
-						: spaceWords(props.itemName) ?? "Unknown"
+						: formatItemName(props.reward, props.itemName) ?? "Unknown"
 				}`}
 				TextColor3={type(props.itemName) === "number" ? DEFAULT_COLOR : RC[props.itemRarity ?? "Common"]}
 				TextScaled={true}
 				TextWrapped={false}
 				AutomaticSize={Enum.AutomaticSize.X}
 			>
-				<uistroke key={"UIStroke"} Color={new Color3(0, 0, 0)} Thickness={1} />
+				<uistroke key={"UIStroke"} Color={new Color3(0, 0, 0)} Thickness={px(2)} />
 			</textlabel>
 		</frame>
 	);

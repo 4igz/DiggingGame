@@ -27,3 +27,7 @@ export const getOrderFromRarity = (rarity: Rarity, statValue: number = 0): numbe
 	// Return combined integer value (still ensuring higher stats are shown first)
 	return rarityBase + statOffset;
 };
+
+export const potionSizeFromRarity = (rarity: Rarity): "Small" | "Medium" | "Large" | "Unknown" => {
+	return rarity === "Common" ? "Small" : rarity === "Uncommon" ? "Medium" : rarity === "Rare" ? "Large" : "Unknown";
+};

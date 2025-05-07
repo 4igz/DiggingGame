@@ -1,8 +1,15 @@
 //!optimize 2
+
+import { ItemType, RewardType } from "shared/networkTypes";
+
 //!native
 export const spaceWords = (str: string) => {
 	const [spaced] = str.gsub("(%l)(%u)", "%1 %2");
 	return spaced;
+};
+
+export const formatItemName = (itemType: ItemType | number | RewardType, itemName: string) => {
+	return itemType !== "Potions" ? spaceWords(itemName) : spaceWords(string.sub(itemName, 3, itemName.size()));
 };
 
 export function separateWithCommas(num: number | string): string {

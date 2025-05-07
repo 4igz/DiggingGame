@@ -146,18 +146,18 @@ export class DailyRewardsService implements OnStart {
 			return profile.Data.claimedFreeReward;
 		});
 
-		Signals.giveLimitedOffer.Connect((player) => {
+		Signals.giveLimitedOffer.Connect((player, num: 0 | 1 | 2) => {
 			const profile = this.profileService.getProfileLoaded(player).expect();
-			const offer = limitedOffer[profile.Data.claimedLimitedOffer];
+			const offer = limitedOffer[num];
 			if (!offer) {
-				return; // Player already has claimed the best pack.
+				error(`Pack num ${num} doesn't exist`);
 			}
 			for (const reward of offer) {
 				this.claimReward(player, reward);
 			}
-			profile.Data.claimedLimitedOffer++;
+			profile.Data.claimedLimitedOffer = num + 1;
 			this.profileService.setProfile(player, profile);
-			Events.updateClaimedLimitedOfferPack(player, profile.Data.claimedLimitedOffer as 0 | 1 | 2);
+			Events.updateClaimedLimitedOfferPack(player, (num + 1) as 0 | 1 | 2);
 		});
 
 		Functions.claimPlaytimeReward.setCallback((player: Player, rewardIndex: number) => {

@@ -27,9 +27,9 @@ end
 
 local timePlayedRewards: { PlaytimeReward } = {
 	{ -- Can have up to 12, these should be in order in terms of how much time they take
-		rewardType = "Experience",
-		rewardAmount = 100,
-		unlockTime = 15,
+		rewardType = "Potions",
+		itemName = "S.Strength Potion",
+		unlockTime = 5,
 	},
 	{
 		rewardType = "Experience",
@@ -43,7 +43,7 @@ local timePlayedRewards: { PlaytimeReward } = {
 	},
 	{
 		rewardType = "Potions",
-		itemName = "Small Strength Potion",
+		itemName = "S.Strength Potion",
 		unlockTime = minutes(7),
 	},
 	{
@@ -58,7 +58,7 @@ local timePlayedRewards: { PlaytimeReward } = {
 	},
 	{
 		rewardType = "Potions",
-		itemName = "Small Luck Potion",
+		itemName = "S.Luck Potion",
 		unlockTime = minutes(20),
 	},
 	{
@@ -68,12 +68,12 @@ local timePlayedRewards: { PlaytimeReward } = {
 	},
 	{
 		rewardType = "Potions",
-		itemName = "Medium Strength Potion",
+		itemName = "M.Strength Potion",
 		unlockTime = minutes(45),
 	},
 	{
 		rewardType = "Potions",
-		itemName = "Medium Luck Potion",
+		itemName = "M.Luck Potion",
 		unlockTime = minutes(60),
 	},
 	{
@@ -83,7 +83,7 @@ local timePlayedRewards: { PlaytimeReward } = {
 	},
 	{
 		rewardType = "Potions",
-		itemName = "Large Luck Potion",
+		itemName = "L.Luck Potion",
 		unlockTime = hours(2),
 	},
 }

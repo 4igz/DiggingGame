@@ -116,7 +116,14 @@ export const developerProducts: DeveloperProduct[] = [
 		id: IDS.StarterPack,
 		name: "Starter Pack",
 		grantReward: (player) => {
-			Signals.giveLimitedOffer.Fire(player);
+			Signals.giveLimitedOffer.Fire(player, 0);
+		},
+	},
+	{
+		id: IDS.MediumPack,
+		name: "Medium Pack",
+		grantReward: (player) => {
+			Signals.giveLimitedOffer.Fire(player, 1);
 		},
 	},
 	// {

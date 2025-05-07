@@ -14,7 +14,7 @@ import {
 } from "@rbxts/services";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
-import { shortenNumber, spaceWords } from "shared/util/nameUtil";
+import { formatItemName, shortenNumber, spaceWords } from "shared/util/nameUtil";
 import { shovelConfig } from "shared/config/shovelConfig";
 import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
 import { fullTargetConfig, targetConfig, trashConfig } from "shared/config/targetConfig";
@@ -25,7 +25,7 @@ import { potionConfig } from "shared/config/potionConfig";
 import { inventorySizeAtom, treasureCountAtom, treasureInventoryAtom } from "client/atoms/inventoryAtoms";
 import { Signals } from "shared/signals";
 import { GamepassController } from "client/controllers/gamepassController";
-import { getOrderFromRarity } from "shared/util/rarityUtil";
+import { getOrderFromRarity, potionSizeFromRarity } from "shared/util/rarityUtil";
 import { NetworkingFunctionError } from "@flamework/networking";
 import { whiteToRed } from "shared/util/colorUtil";
 import { usePx } from "client/hooks/usePx";
@@ -42,7 +42,7 @@ export function capitalizeWords(str: string): string {
 		.join(" ");
 }
 
-interface ItemStat {
+export interface ItemStat {
 	key: string;
 	value: string | number;
 	icon: string; // Asset ID
@@ -117,10 +117,10 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 						// Equip the item
 						if (itemType === "Shovels" || itemType === "MetalDetectors") {
 							Events.equipItem(itemType as Exclude<ItemType, "Target" | "Boats">, itemName);
-							Signals.actionPopup.Fire(`Equipped ${spaceWords(itemName)}`);
+							Signals.actionPopup.Fire(`Equipped ${formatItemName(itemType, itemName)}`);
 						} else if (itemType === "Potions") {
 							Events.drinkPotion(itemName);
-							Signals.actionPopup.Fire(`Drank potion ${spaceWords(itemName)}`);
+							Signals.actionPopup.Fire(`Drank potion ${formatItemName(itemType, itemName)}`);
 							Signals.drankPotion.Fire(props.itemName);
 						}
 						setPressed(true);
@@ -143,7 +143,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 						Text={`x${tostring(props.count)}`}
 						Visible={props.count !== undefined && props.count > 1}
 						BackgroundTransparency={1}
-						TextSize={px(20)}
+						TextSize={px(25)}
 						Size={UDim2.fromScale(1, 0.2)}
 						TextColor3={new Color3(1, 1, 1)}
 						ZIndex={10}
@@ -280,7 +280,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							key={"Rarity"}
 							Position={UDim2.fromScale(0.508, 0.26)}
 							Size={UDim2.fromScale(1.02, 0.438)}
-							Text={props.rarity}
+							Text={props.itemType !== "Potions" ? props.rarity : potionSizeFromRarity(props.rarity)}
 							TextColor3={Color3.fromRGB(0, 0, 0)}
 							// TextScaled={true}
 							// TextWrapped={true}
@@ -301,7 +301,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 								key={"Rarity"}
 								Position={UDim2.fromScale(0.5, 0.43)}
 								Size={UDim2.fromScale(1, 1)}
-								Text={props.rarity}
+								Text={props.itemType !== "Potions" ? props.rarity : potionSizeFromRarity(props.rarity)}
 								TextColor3={gameConstants.RARITY_COLORS[props.rarity]}
 								// TextScaled={true}
 								// TextWrapped={true}
@@ -323,7 +323,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							key={"Name"}
 							Position={UDim2.fromScale(0.499, 0.709)}
 							Size={UDim2.fromScale(1.02, 0.521)}
-							Text={spaceWords(props.itemName)}
+							Text={formatItemName(props.itemType, props.itemName)}
 							TextColor3={Color3.fromRGB(255, 255, 255)}
 							TextTruncate={Enum.TextTruncate.SplitWord}
 							// TextScaled={true}
@@ -346,7 +346,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 								key={"Name"}
 								Position={UDim2.fromScale(0.5, 0.475)}
 								Size={UDim2.fromScale(1, 1)}
-								Text={spaceWords(props.itemName)}
+								Text={formatItemName(props.itemType, props.itemName)}
 								TextColor3={Color3.fromRGB(255, 255, 255)}
 								TextTruncate={Enum.TextTruncate.SplitWord}
 								// TextScaled={true}

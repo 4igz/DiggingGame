@@ -202,6 +202,9 @@ export const RightSideMenu = (props: MenuProps) => {
 
 		subscribe(hasDailyAtom, (hasDaily) => {
 			setHasDaily(hasDaily);
+			if (hasDaily === true) {
+				props.uiController.toggleUi(gameConstants.DAILY_REWARD_UI);
+			}
 		});
 	}, []);
 
@@ -446,7 +449,6 @@ export const RightSideMenu = (props: MenuProps) => {
 							selectable={false}
 							onClick={() => {
 								props.uiController.toggleUi(gameConstants.DAILY_REWARD_UI);
-								hasDailyAtom(false);
 							}}
 						>
 							<frame
