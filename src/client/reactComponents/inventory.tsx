@@ -143,11 +143,14 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 						Text={`x${tostring(props.count)}`}
 						Visible={props.count !== undefined && props.count > 1}
 						BackgroundTransparency={1}
-						TextSize={px(25)}
-						Size={UDim2.fromScale(1, 0.2)}
+						TextSize={px(30)}
+						TextXAlignment={"Left"}
+						Size={UDim2.fromScale(0.8, 0.2)}
 						TextColor3={new Color3(1, 1, 1)}
 						ZIndex={10}
 						FontFace={Font.fromEnum(Enum.Font.BuilderSansExtraBold)}
+						AnchorPoint={new Vector2(0.5, 0)}
+						Position={UDim2.fromScale(0.5, 0)}
 					>
 						<uistroke Thickness={px(3)} />
 					</textlabel>

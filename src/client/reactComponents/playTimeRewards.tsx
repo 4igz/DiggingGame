@@ -301,7 +301,7 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 
 	useEffect(() => {
 		if (visible) {
-			popInMotion.spring(UDim2.fromScale(0.5, 0.5), springs.responsive);
+			popInMotion.spring(UDim2.fromScale(0.5, 0.45), springs.responsive);
 		} else {
 			popInMotion.immediate(UDim2.fromScale(0.5, 0.6));
 		}

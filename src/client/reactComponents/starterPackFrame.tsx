@@ -199,6 +199,7 @@ const BuyButton = () => {
 
 interface StatsFrameProps {
 	reward: Reward;
+	visible: boolean;
 }
 
 const StatsFrame = (props: StatsFrameProps) => {
@@ -211,6 +212,7 @@ const StatsFrame = (props: StatsFrameProps) => {
 			BorderColor3={Color3.fromRGB(0, 0, 0)}
 			BorderSizePixel={0}
 			key={"Stats"}
+			Visible={props.visible}
 			Position={UDim2.fromScale(0.025, 0.2)}
 			Size={UDim2.fromScale(0.446, 0.353)}
 			ZIndex={500000}
@@ -384,6 +386,7 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 	const [offer, setOffer] = useState(highestLimitedOfferPack());
 	const [visible, setVisible] = useState(false);
 	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0.5, 0.6));
+	const [hoverState, setHoverState] = useState(0);
 
 	const px = usePx();
 
@@ -541,97 +544,105 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 					Wraps={true}
 				/>
 
-				<frame
-					BackgroundColor3={new Color3(1, 1, 1)}
-					LayoutOrder={1}
+				<AnimatedButton
+					layoutOrder={1}
 					key={"Item1"}
-					Position={UDim2.fromScale(0.120244, -8.75313e-8)}
-					Size={UDim2.fromScale(0.167837, 0.366181)}
+					position={UDim2.fromScale(0.120244, -8.75313e-8)}
+					size={UDim2.fromScale(0.167837, 0.366181)}
+					onHover={() => {
+						setHoverState(1);
+					}}
+					onLeave={() => {
+						setHoverState(0);
+					}}
+					clickable={false}
 				>
-					<uicorner key={"UICorner"} CornerRadius={new UDim(0.07, 0)} />
+					<frame Size={UDim2.fromScale(1, 1)} BackgroundColor3={new Color3(1, 1, 1)}>
+						<uicorner key={"UICorner"} CornerRadius={new UDim(0.07, 0)} />
 
-					<uistroke key={"UIStroke"} Thickness={px(4)} />
+						<uistroke key={"UIStroke"} Thickness={px(4)} />
 
-					<StatsFrame reward={getReward(0)} />
+						<StatsFrame reward={getReward(0)} visible={hoverState === 1} />
 
-					<imagelabel
-						Size={UDim2.fromScale(1, 1)}
-						Image={rewardImage(0)}
-						BackgroundTransparency={1}
-						ScaleType={Enum.ScaleType.Fit}
-						key={"RewardImage"}
-						ZIndex={2}
-					/>
-
-					<imagelabel
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						AnchorPoint={new Vector2(0.5, 0.5)}
-						Position={UDim2.fromScale(0.5, 0.5)}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						Image={"rbxassetid://104992023858077"}
-						key={"Radial"}
-						Size={UDim2.fromScale(1, 1)}
-						ZIndex={1}
-					/>
-
-					<textlabel
-						key={"TextLabel"}
-						BackgroundTransparency={1}
-						FontFace={new Font("rbxassetid://12187373592", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-						Position={UDim2.fromScale(-0.328813, -0.198093)}
-						Size={UDim2.fromScale(0.900974, 0.450216)}
-						Text={"OP!"}
-						TextColor3={new Color3(1, 1, 1)}
-						TextScaled={true}
-						ZIndex={2}
-					>
-						<uistroke
-							key={"UIStroke"}
-							Color={Color3.fromRGB(65, 49, 24)}
-							LineJoinMode={Enum.LineJoinMode.Miter}
-							Thickness={px(4)}
+						<imagelabel
+							Size={UDim2.fromScale(1, 1)}
+							Image={rewardImage(0)}
+							BackgroundTransparency={1}
+							ScaleType={Enum.ScaleType.Fit}
+							key={"RewardImage"}
+							ZIndex={2}
 						/>
+
+						<imagelabel
+							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+							BackgroundTransparency={1}
+							AnchorPoint={new Vector2(0.5, 0.5)}
+							Position={UDim2.fromScale(0.5, 0.5)}
+							BorderColor3={Color3.fromRGB(0, 0, 0)}
+							BorderSizePixel={0}
+							Image={"rbxassetid://104992023858077"}
+							key={"Radial"}
+							Size={UDim2.fromScale(1, 1)}
+							ZIndex={1}
+						/>
+
+						<textlabel
+							key={"TextLabel"}
+							BackgroundTransparency={1}
+							FontFace={new Font("rbxassetid://12187373592", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+							Position={UDim2.fromScale(-0.328813, -0.198093)}
+							Size={UDim2.fromScale(0.900974, 0.450216)}
+							Text={"OP!"}
+							TextColor3={new Color3(1, 1, 1)}
+							TextScaled={true}
+							ZIndex={2}
+						>
+							<uistroke
+								key={"UIStroke"}
+								Color={Color3.fromRGB(65, 49, 24)}
+								LineJoinMode={Enum.LineJoinMode.Miter}
+								Thickness={px(4)}
+							/>
+
+							<uigradient
+								key={"UIGradient"}
+								Color={
+									new ColorSequence([
+										new ColorSequenceKeypoint(0, Color3.fromRGB(255, 160, 64)),
+										new ColorSequenceKeypoint(0.515571, Color3.fromRGB(255, 211, 110)),
+										new ColorSequenceKeypoint(1, new Color3(1, 1, 1)),
+									])
+								}
+								Rotation={-90}
+							/>
+						</textlabel>
 
 						<uigradient
 							key={"UIGradient"}
 							Color={
 								new ColorSequence([
-									new ColorSequenceKeypoint(0, Color3.fromRGB(255, 160, 64)),
-									new ColorSequenceKeypoint(0.515571, Color3.fromRGB(255, 211, 110)),
-									new ColorSequenceKeypoint(1, new Color3(1, 1, 1)),
+									new ColorSequenceKeypoint(0, Color3.fromRGB(96, 14, 98)),
+									new ColorSequenceKeypoint(1, Color3.fromRGB(204, 55, 253)),
 								])
 							}
 							Rotation={-90}
 						/>
-					</textlabel>
 
-					<uigradient
-						key={"UIGradient"}
-						Color={
-							new ColorSequence([
-								new ColorSequenceKeypoint(0, Color3.fromRGB(96, 14, 98)),
-								new ColorSequenceKeypoint(1, Color3.fromRGB(204, 55, 253)),
-							])
-						}
-						Rotation={-90}
-					/>
-
-					<textlabel
-						BackgroundTransparency={1}
-						FontFace={new Font("rbxassetid://12187607287", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-						key={"Reward"}
-						Position={UDim2.fromScale(0.00732248, 0.889156)}
-						Size={UDim2.fromScale(1, 0.15)}
-						Text={rewardName(0)}
-						TextColor3={new Color3(1, 1, 1)}
-						TextSize={px(30)}
-						ZIndex={2}
-					>
-						<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={px(3.5)} />
-					</textlabel>
-				</frame>
+						<textlabel
+							BackgroundTransparency={1}
+							FontFace={new Font("rbxassetid://12187607287", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+							key={"Reward"}
+							Position={UDim2.fromScale(0.00732248, 0.889156)}
+							Size={UDim2.fromScale(1, 0.15)}
+							Text={rewardName(0)}
+							TextColor3={new Color3(1, 1, 1)}
+							TextSize={px(30)}
+							ZIndex={2}
+						>
+							<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={px(3.5)} />
+						</textlabel>
+					</frame>
+				</AnimatedButton>
 
 				<textlabel
 					BackgroundTransparency={1}
@@ -648,97 +659,105 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 					<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={px(3.5)} />
 				</textlabel>
 
-				<frame
-					BackgroundColor3={new Color3(1, 1, 1)}
-					LayoutOrder={3}
+				<AnimatedButton
+					layoutOrder={3}
 					key={"Item2"}
-					Position={UDim2.fromScale(0.416081, -8.75313e-8)}
-					Size={UDim2.fromScale(0.167837, 0.366181)}
+					position={UDim2.fromScale(0.416081, -8.75313e-8)}
+					size={UDim2.fromScale(0.167837, 0.366181)}
+					onHover={() => {
+						setHoverState(2);
+					}}
+					onLeave={() => {
+						setHoverState(0);
+					}}
+					clickable={false}
 				>
-					<uicorner key={"UICorner"} CornerRadius={new UDim(0.08, 0)} />
+					<frame Size={UDim2.fromScale(1, 1)} BackgroundColor3={new Color3(1, 1, 1)}>
+						<uicorner key={"UICorner"} CornerRadius={new UDim(0.08, 0)} />
 
-					<uistroke key={"UIStroke"} Thickness={px(4)} />
+						<uistroke key={"UIStroke"} Thickness={px(4)} />
 
-					<StatsFrame reward={getReward(1)} />
+						<StatsFrame reward={getReward(1)} visible={hoverState === 2} />
 
-					<imagelabel
-						Size={UDim2.fromScale(1, 1)}
-						Image={rewardImage(1)}
-						BackgroundTransparency={1}
-						ScaleType={Enum.ScaleType.Fit}
-						key={"RewardImage"}
-						ZIndex={2}
-					/>
-
-					<imagelabel
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						AnchorPoint={new Vector2(0.5, 0.5)}
-						Position={UDim2.fromScale(0.5, 0.5)}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						Image={"rbxassetid://104992023858077"}
-						key={"Radial"}
-						Size={UDim2.fromScale(1, 1)}
-						ZIndex={1}
-					/>
-
-					<textlabel
-						key={"TextLabel"}
-						BackgroundTransparency={1}
-						FontFace={new Font("rbxassetid://12187373592", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-						Position={UDim2.fromScale(-0.328813, -0.198093)}
-						Size={UDim2.fromScale(0.900974, 0.450216)}
-						Text={"OP!"}
-						TextColor3={new Color3(1, 1, 1)}
-						TextScaled={true}
-						ZIndex={2}
-					>
-						<uistroke
-							key={"UIStroke"}
-							Color={Color3.fromRGB(65, 49, 24)}
-							LineJoinMode={Enum.LineJoinMode.Miter}
-							Thickness={px(4)}
+						<imagelabel
+							Size={UDim2.fromScale(1, 1)}
+							Image={rewardImage(1)}
+							BackgroundTransparency={1}
+							ScaleType={Enum.ScaleType.Fit}
+							key={"RewardImage"}
+							ZIndex={2}
 						/>
+
+						<imagelabel
+							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+							BackgroundTransparency={1}
+							AnchorPoint={new Vector2(0.5, 0.5)}
+							Position={UDim2.fromScale(0.5, 0.5)}
+							BorderColor3={Color3.fromRGB(0, 0, 0)}
+							BorderSizePixel={0}
+							Image={"rbxassetid://104992023858077"}
+							key={"Radial"}
+							Size={UDim2.fromScale(1, 1)}
+							ZIndex={1}
+						/>
+
+						<textlabel
+							key={"TextLabel"}
+							BackgroundTransparency={1}
+							FontFace={new Font("rbxassetid://12187373592", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+							Position={UDim2.fromScale(-0.328813, -0.198093)}
+							Size={UDim2.fromScale(0.900974, 0.450216)}
+							Text={"OP!"}
+							TextColor3={new Color3(1, 1, 1)}
+							TextScaled={true}
+							ZIndex={2}
+						>
+							<uistroke
+								key={"UIStroke"}
+								Color={Color3.fromRGB(65, 49, 24)}
+								LineJoinMode={Enum.LineJoinMode.Miter}
+								Thickness={px(4)}
+							/>
+
+							<uigradient
+								key={"UIGradient"}
+								Color={
+									new ColorSequence([
+										new ColorSequenceKeypoint(0, Color3.fromRGB(255, 160, 64)),
+										new ColorSequenceKeypoint(0.515571, Color3.fromRGB(255, 211, 110)),
+										new ColorSequenceKeypoint(1, new Color3(1, 1, 1)),
+									])
+								}
+								Rotation={-90}
+							/>
+						</textlabel>
 
 						<uigradient
 							key={"UIGradient"}
 							Color={
 								new ColorSequence([
-									new ColorSequenceKeypoint(0, Color3.fromRGB(255, 160, 64)),
-									new ColorSequenceKeypoint(0.515571, Color3.fromRGB(255, 211, 110)),
-									new ColorSequenceKeypoint(1, new Color3(1, 1, 1)),
+									new ColorSequenceKeypoint(0, Color3.fromRGB(207, 181, 0)),
+									new ColorSequenceKeypoint(1, Color3.fromRGB(255, 227, 71)),
 								])
 							}
 							Rotation={-90}
 						/>
-					</textlabel>
 
-					<uigradient
-						key={"UIGradient"}
-						Color={
-							new ColorSequence([
-								new ColorSequenceKeypoint(0, Color3.fromRGB(207, 181, 0)),
-								new ColorSequenceKeypoint(1, Color3.fromRGB(255, 227, 71)),
-							])
-						}
-						Rotation={-90}
-					/>
-
-					<textlabel
-						BackgroundTransparency={1}
-						FontFace={new Font("rbxassetid://12187607287", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-						key={"Reward"}
-						Position={UDim2.fromScale(0.00732248, 0.889156)}
-						Size={UDim2.fromScale(0.990199, 0.192045)}
-						Text={rewardName(1)}
-						TextColor3={new Color3(1, 1, 1)}
-						TextSize={px(30)}
-						ZIndex={2}
-					>
-						<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={px(3.5)} />
-					</textlabel>
-				</frame>
+						<textlabel
+							BackgroundTransparency={1}
+							FontFace={new Font("rbxassetid://12187607287", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+							key={"Reward"}
+							Position={UDim2.fromScale(0.00732248, 0.889156)}
+							Size={UDim2.fromScale(0.990199, 0.192045)}
+							Text={rewardName(1)}
+							TextColor3={new Color3(1, 1, 1)}
+							TextSize={px(30)}
+							ZIndex={2}
+						>
+							<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={px(3.5)} />
+						</textlabel>
+					</frame>
+				</AnimatedButton>
 
 				<textlabel
 					BackgroundTransparency={1}
@@ -755,95 +774,96 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 					<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={px(3.5)} />
 				</textlabel>
 
-				<frame
-					BackgroundColor3={new Color3(1, 1, 1)}
-					LayoutOrder={5}
+				<AnimatedButton
+					layoutOrder={5}
 					key={"Item3"}
-					Position={UDim2.fromScale(0.711919, -8.75313e-8)}
-					Size={UDim2.fromScale(0.167837, 0.366181)}
+					position={UDim2.fromScale(0.711919, -8.75313e-8)}
+					size={UDim2.fromScale(0.167837, 0.366181)}
 				>
-					<uicorner key={"UICorner"} CornerRadius={new UDim(0.08, 0)} />
+					<frame Size={UDim2.fromScale(1, 1)} BackgroundColor3={new Color3(1, 1, 1)}>
+						<uicorner key={"UICorner"} CornerRadius={new UDim(0.08, 0)} />
 
-					<uistroke key={"UIStroke"} Thickness={px(4)} />
+						<uistroke key={"UIStroke"} Thickness={px(4)} />
 
-					<imagelabel
-						Size={UDim2.fromScale(1, 1)}
-						Image={rewardImage(2)}
-						BackgroundTransparency={1}
-						ScaleType={Enum.ScaleType.Fit}
-						key={"RewardImage"}
-						ZIndex={2}
-					/>
-
-					<imagelabel
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						AnchorPoint={new Vector2(0.5, 0.5)}
-						Position={UDim2.fromScale(0.5, 0.5)}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						Image={"rbxassetid://104992023858077"}
-						key={"Radial"}
-						Size={UDim2.fromScale(1, 1)}
-						ZIndex={1}
-					/>
-
-					<textlabel
-						key={"TextLabel"}
-						BackgroundTransparency={1}
-						FontFace={new Font("rbxassetid://12187373592", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-						Position={UDim2.fromScale(-0.328813, -0.198093)}
-						Size={UDim2.fromScale(0.900974, 0.450216)}
-						Text={"OP!"}
-						TextColor3={new Color3(1, 1, 1)}
-						TextScaled={true}
-						ZIndex={2}
-					>
-						<uistroke
-							key={"UIStroke"}
-							Color={Color3.fromRGB(65, 49, 24)}
-							LineJoinMode={Enum.LineJoinMode.Miter}
-							Thickness={px(4)}
+						<imagelabel
+							Size={UDim2.fromScale(1, 1)}
+							Image={rewardImage(2)}
+							BackgroundTransparency={1}
+							ScaleType={Enum.ScaleType.Fit}
+							key={"RewardImage"}
+							ZIndex={2}
 						/>
+
+						<imagelabel
+							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+							BackgroundTransparency={1}
+							AnchorPoint={new Vector2(0.5, 0.5)}
+							Position={UDim2.fromScale(0.5, 0.5)}
+							BorderColor3={Color3.fromRGB(0, 0, 0)}
+							BorderSizePixel={0}
+							Image={"rbxassetid://104992023858077"}
+							key={"Radial"}
+							Size={UDim2.fromScale(1, 1)}
+							ZIndex={1}
+						/>
+
+						<textlabel
+							key={"TextLabel"}
+							BackgroundTransparency={1}
+							FontFace={new Font("rbxassetid://12187373592", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+							Position={UDim2.fromScale(-0.328813, -0.198093)}
+							Size={UDim2.fromScale(0.900974, 0.450216)}
+							Text={"OP!"}
+							TextColor3={new Color3(1, 1, 1)}
+							TextScaled={true}
+							ZIndex={2}
+						>
+							<uistroke
+								key={"UIStroke"}
+								Color={Color3.fromRGB(65, 49, 24)}
+								LineJoinMode={Enum.LineJoinMode.Miter}
+								Thickness={px(4)}
+							/>
+
+							<uigradient
+								key={"UIGradient"}
+								Color={
+									new ColorSequence([
+										new ColorSequenceKeypoint(0, Color3.fromRGB(255, 160, 64)),
+										new ColorSequenceKeypoint(0.515571, Color3.fromRGB(255, 211, 110)),
+										new ColorSequenceKeypoint(1, new Color3(1, 1, 1)),
+									])
+								}
+								Rotation={-90}
+							/>
+						</textlabel>
 
 						<uigradient
 							key={"UIGradient"}
 							Color={
 								new ColorSequence([
-									new ColorSequenceKeypoint(0, Color3.fromRGB(255, 160, 64)),
-									new ColorSequenceKeypoint(0.515571, Color3.fromRGB(255, 211, 110)),
-									new ColorSequenceKeypoint(1, new Color3(1, 1, 1)),
+									new ColorSequenceKeypoint(0, Color3.fromRGB(207, 181, 0)),
+									new ColorSequenceKeypoint(1, Color3.fromRGB(255, 227, 71)),
 								])
 							}
 							Rotation={-90}
 						/>
-					</textlabel>
 
-					<uigradient
-						key={"UIGradient"}
-						Color={
-							new ColorSequence([
-								new ColorSequenceKeypoint(0, Color3.fromRGB(207, 181, 0)),
-								new ColorSequenceKeypoint(1, Color3.fromRGB(255, 227, 71)),
-							])
-						}
-						Rotation={-90}
-					/>
-
-					<textlabel
-						BackgroundTransparency={1}
-						FontFace={new Font("rbxassetid://12187607287", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-						key={"Reward"}
-						Position={UDim2.fromScale(0.00732248, 0.889156)}
-						Size={UDim2.fromScale(0.990199, 0.192045)}
-						Text={rewardName(2)}
-						TextColor3={new Color3(1, 1, 1)}
-						TextSize={px(30)}
-						ZIndex={2}
-					>
-						<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={px(3.5)} />
-					</textlabel>
-				</frame>
+						<textlabel
+							BackgroundTransparency={1}
+							FontFace={new Font("rbxassetid://12187607287", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+							key={"Reward"}
+							Position={UDim2.fromScale(0.00732248, 0.889156)}
+							Size={UDim2.fromScale(0.990199, 0.192045)}
+							Text={rewardName(2)}
+							TextColor3={new Color3(1, 1, 1)}
+							TextSize={px(30)}
+							ZIndex={2}
+						>
+							<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={px(3.5)} />
+						</textlabel>
+					</frame>
+				</AnimatedButton>
 			</frame>
 
 			<ExitButton

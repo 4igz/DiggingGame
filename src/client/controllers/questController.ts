@@ -109,6 +109,16 @@ export class QuestController implements OnStart {
 						otherTrack.Stop();
 					}
 					track.Play();
+
+					if (key !== IDLE) {
+						track.Ended.Connect(() => {
+							playAnimation(IDLE);
+						});
+						track.DidLoop.Connect(() => {
+							playAnimation(IDLE);
+						});
+					}
+
 					return Promise.fromEvent(track.Stopped);
 				}
 				return Promise.resolve(false);
@@ -237,7 +247,6 @@ export class QuestController implements OnStart {
 		Events.updateQuestProgress.connect((serverTrackedProgress) => {
 			questProgress = serverTrackedProgress;
 		});
-
 
 		for (const questNpc of CollectionService.GetTagged("QuestGiver")) {
 			assert(

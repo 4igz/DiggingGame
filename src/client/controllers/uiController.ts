@@ -274,6 +274,8 @@ export default class UiController implements OnStart, OnInit {
 			"Client module onStart lifecycle began.\n------------------------------------------------------------------------------------------------------",
 		);
 
+		this.toggleUi(gameConstants.DAILY_REWARD_UI);
+
 		const createGiftUIZone = (inst: PVInstance) => {
 			const zone = new Zone(inst);
 			zone.localPlayerEntered.Connect(() => {
@@ -356,6 +358,7 @@ export default class UiController implements OnStart, OnInit {
 			true,
 			LOW_LAYER,
 		);
+
 		this.registerUi(
 			gameConstants.LUCKBAR_UI,
 			React.createElement(LuckBar),
@@ -364,6 +367,7 @@ export default class UiController implements OnStart, OnInit {
 			undefined,
 			LOW_LAYER,
 		);
+
 		this.registerUi(
 			gameConstants.SIDEBAR_UI,
 			React.createElement(Sidebar),
@@ -375,6 +379,7 @@ export default class UiController implements OnStart, OnInit {
 			undefined,
 			LOW_LAYER,
 		);
+
 		this.registerUi(
 			gameConstants.MAIN_UI,
 			React.createElement(InventoryComponent),
@@ -383,7 +388,9 @@ export default class UiController implements OnStart, OnInit {
 			true,
 			MENU_LAYER,
 		);
+
 		this.registerUi(gameConstants.TOOLBAR_UI, React.createElement(Toolbar), {});
+
 		this.registerUi(
 			gameConstants.SELL_UI,
 			React.createElement(Sell),
@@ -392,7 +399,9 @@ export default class UiController implements OnStart, OnInit {
 			true,
 			MENU_LAYER,
 		);
+
 		this.registerUi(gameConstants.COMPASS_UI, React.createElement(DistanceLabel), {}, true, false, LOW_LAYER);
+
 		this.registerUi(
 			gameConstants.SHOP_UI,
 			React.createElement(ShopComponent),
@@ -401,6 +410,7 @@ export default class UiController implements OnStart, OnInit {
 			true,
 			MENU_LAYER,
 		);
+
 		this.registerUi(
 			gameConstants.GAMEPASS_SHOP_UI,
 			React.createElement(GamepassShop),
@@ -413,7 +423,9 @@ export default class UiController implements OnStart, OnInit {
 			true,
 			MENU_LAYER,
 		);
+
 		this.registerUi(gameConstants.POPUP_UI, React.createElement(Popups), {}, undefined, false, OVERLAY_LAYER);
+
 		this.registerUi(
 			gameConstants.ISLE_POPUP_UI,
 			React.createElement(IsleEnterPopup),
@@ -424,6 +436,7 @@ export default class UiController implements OnStart, OnInit {
 			undefined,
 			OVERLAY_LAYER,
 		);
+
 		this.registerUi(
 			gameConstants.BOAT_SHOP_UI,
 			React.createElement(BoatShopComponent),
