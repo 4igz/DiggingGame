@@ -76,14 +76,6 @@ export const CursorTooltip = (props: CursorTooltipProps) => {
 					Transparency={0.3}
 					Color={new Color3()}
 				/>
-				<uicorner key={"UICorner"} CornerRadius={new UDim(0.1, 0)} />
-				<uipadding
-					key={"UIPadding"}
-					PaddingTop={new UDim(0.05, 0)}
-					PaddingBottom={new UDim(0.05, 0)}
-					PaddingLeft={new UDim(0.05, 0)}
-					PaddingRight={new UDim(0.05, 0)}
-				/>
 			</frame>
 		</screengui>
 	);
@@ -240,7 +232,7 @@ export const TooltipStats = (props: TooltipStatsProps) => {
 								AutomaticSize={Enum.AutomaticSize.X}
 								TextXAlignment={Enum.TextXAlignment.Left}
 							>
-								<uistroke key={"UIStroke"} Thickness={px(1.5)} />
+								<uistroke key={"UIStroke"} Thickness={px(2)} />
 							</textlabel>
 						</frame>
 					))}

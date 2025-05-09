@@ -53,6 +53,7 @@ const PotionTimer = (props: PotionProps) => {
 			Image={props.cfg.itemImage}
 			BackgroundTransparency={1}
 			Size={UDim2.fromScale(0.1, 1)}
+			AnchorPoint={new Vector2(0, 1)}
 			LayoutOrder={props.timeLeft}
 			key={props.potionName}
 			ScaleType={"Fit"}
@@ -81,8 +82,8 @@ interface BottomTipsProps {
 	uiController: UiController;
 }
 
-const DEFAULT_POS = UDim2.fromScale(0.025, 0.99);
-const CLOSED_POS = UDim2.fromScale(0.025, 1.15);
+const DEFAULT_POS = UDim2.fromScale(0.01, 0.99);
+const CLOSED_POS = UDim2.fromScale(0.01, 1.15);
 
 export const BottomTips = (props: BottomTipsProps) => {
 	const [hoveringPremium, setHoveringPremium] = useState(false);
@@ -155,11 +156,11 @@ export const BottomTips = (props: BottomTipsProps) => {
 			ZIndex={100}
 			Visible={true}
 		>
-			<uilistlayout FillDirection={"Horizontal"} Padding={new UDim(0, 15)} />
+			<uilistlayout FillDirection={"Horizontal"} Padding={new UDim(px(10), 0)} VerticalAlignment={"Bottom"} />
 
 			<AnimatedButton
 				layoutOrder={0}
-				position={UDim2.fromScale(-0.000172565, 1)}
+				position={UDim2.fromScale(0, 1)}
 				size={UDim2.fromScale(0.033, 1)}
 				anchorPoint={new Vector2(0, 1)}
 				onClick={() => {
@@ -172,6 +173,7 @@ export const BottomTips = (props: BottomTipsProps) => {
 					setHoveringPremium(false);
 				}}
 			>
+				<uiaspectratioconstraint AspectRatio={1} />
 				<textlabel
 					FontFace={Font.fromEnum(Enum.Font.Bangers)}
 					key={"Premium"}
@@ -180,9 +182,7 @@ export const BottomTips = (props: BottomTipsProps) => {
 					TextScaled={true}
 					Size={UDim2.fromScale(1, 1)}
 					BackgroundTransparency={1}
-					Position={UDim2.fromScale(0, 0.05)}
 				>
-					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 					<uistroke key={"UIStroke"} Thickness={px(4)} />
 
 					<textlabel

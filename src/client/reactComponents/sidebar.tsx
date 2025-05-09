@@ -23,6 +23,7 @@ interface SidebarButtonProps {
 	uiController: UiController;
 	onClick?: () => void;
 	pxProvider: ScaleFunction;
+	textOffset?: number;
 }
 
 const SidebarButton = (props: SidebarButtonProps) => {
@@ -77,6 +78,8 @@ const SidebarButton = (props: SidebarButtonProps) => {
 			Position={UDim2.fromScale(0, 3.12e-8)}
 			Size={size}
 		>
+			<uiaspectratioconstraint AspectRatio={1} />
+
 			<imagebutton
 				key={platform === "Mobile" ? "NoSoundOnHover" : "Side button"}
 				AnchorPoint={new Vector2(0, 0.5)}
@@ -104,87 +107,89 @@ const SidebarButton = (props: SidebarButtonProps) => {
 						task.delay(0.1, () => setPressed(false));
 					},
 				}}
-			/>
-			<textlabel
-				AnchorPoint={new Vector2(0, 0.5)}
-				BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-				BackgroundTransparency={1}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				FontFace={
-					new Font(
-						"rbxasset://fonts/families/ComicNeueAngular.json",
-						Enum.FontWeight.Bold,
-						Enum.FontStyle.Normal,
-					)
-				}
-				key={"Title"}
-				Position={UDim2.fromScale(-0.194, 0.869)}
-				Size={UDim2.fromScale(1.38, 0.261)}
-				Text={props.text}
-				TextColor3={Color3.fromRGB(255, 255, 255)}
-				// TextScaled={true}
-				// TextWrapped={true}
-				TextSize={px(25)}
 			>
-				<uistroke key={"UIStroke"} Thickness={px(3)} />
-			</textlabel>
-
-			<frame
-				BackgroundColor3={props.notificationColor ?? Color3.fromRGB(255, 0, 0)}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				key={"Notification"}
-				Position={UDim2.fromScale(0.6, 0.0908)}
-				Size={UDim2.fromScale(0.307, 0.307)}
-				Visible={props.notificationVisible ?? false}
-			>
-				<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
-
 				<textlabel
-					AnchorPoint={new Vector2(0.5, 0.5)}
+					AnchorPoint={new Vector2(0, 0.5)}
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
 					BorderColor3={Color3.fromRGB(0, 0, 0)}
 					BorderSizePixel={0}
-					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					FontFace={
+						new Font(
+							"rbxasset://fonts/families/ComicNeueAngular.json",
+							Enum.FontWeight.Bold,
+							Enum.FontStyle.Normal,
+						)
+					}
 					key={"Title"}
-					Position={UDim2.fromScale(0.5, 0.5)}
-					Size={UDim2.fromScale(1, 1)}
-					Text={props.notificationText ?? ""}
+					Position={UDim2.fromScale(0, 0.8 + (props.textOffset ?? 0))}
+					Size={UDim2.fromScale(1, 0.261)}
+					TextXAlignment={"Center"}
+					Text={props.text}
 					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextScaled={true}
-					TextWrapped={true}
-					ZIndex={10}
+					// TextScaled={true}
+					// TextWrapped={true}
+					TextSize={px(25)}
 				>
-					<uistroke key={"UIStroke"} Thickness={px(2)} />
-
-					<uipadding
-						key={"UIPadding"}
-						PaddingBottom={new UDim(0.025, 0)}
-						PaddingLeft={new UDim(0.05, 0)}
-						PaddingRight={new UDim(0.05, 0)}
-						PaddingTop={new UDim(0.025, 0)}
-					/>
+					<uistroke key={"UIStroke"} Thickness={px(3)} />
 				</textlabel>
 
-				<uistroke key={"UIStroke"} Thickness={px(2)} />
+				<frame
+					BackgroundColor3={props.notificationColor ?? Color3.fromRGB(255, 0, 0)}
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					key={"Notification"}
+					Position={UDim2.fromScale(0.6, 0.0908)}
+					Size={UDim2.fromScale(0.307, 0.307)}
+					Visible={props.notificationVisible ?? false}
+				>
+					<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
 
-				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-			</frame>
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+						BackgroundTransparency={1}
+						BorderColor3={Color3.fromRGB(0, 0, 0)}
+						BorderSizePixel={0}
+						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						key={"Title"}
+						Position={UDim2.fromScale(0.5, 0.5)}
+						Size={UDim2.fromScale(1, 1)}
+						Text={props.notificationText ?? ""}
+						TextColor3={Color3.fromRGB(255, 255, 255)}
+						TextScaled={true}
+						TextWrapped={true}
+						ZIndex={10}
+					>
+						<uistroke key={"UIStroke"} Thickness={px(2)} />
 
-			<imagelabel
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				key={"GamepadButton"}
-				Position={UDim2.fromScale(0.8, 0.5)}
-				Size={UDim2.fromScale(0.4, 0.4)}
-				Image={UserInputService.GetImageForKeyCode(props.gamepadCode)}
-				BackgroundTransparency={1}
-				Visible={props.gamepadEnabled ?? false}
-			>
-				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1} />
-			</imagelabel>
+						<uipadding
+							key={"UIPadding"}
+							PaddingBottom={new UDim(0.025, 0)}
+							PaddingLeft={new UDim(0.05, 0)}
+							PaddingRight={new UDim(0.05, 0)}
+							PaddingTop={new UDim(0.025, 0)}
+						/>
+					</textlabel>
+
+					<uistroke key={"UIStroke"} Thickness={px(2)} />
+
+					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
+				</frame>
+
+				<imagelabel
+					BorderColor3={Color3.fromRGB(0, 0, 0)}
+					BorderSizePixel={0}
+					key={"GamepadButton"}
+					Position={UDim2.fromScale(0.8, 0.5)}
+					Size={UDim2.fromScale(0.4, 0.4)}
+					Image={UserInputService.GetImageForKeyCode(props.gamepadCode)}
+					BackgroundTransparency={1}
+					Visible={props.gamepadEnabled ?? false}
+				>
+					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1} />
+				</imagelabel>
+			</imagebutton>
 		</frame>
 	);
 };
@@ -250,7 +255,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 				SortOrder={Enum.SortOrder.LayoutOrder}
 				VerticalAlignment={Enum.VerticalAlignment.Center}
 				HorizontalAlignment={Enum.HorizontalAlignment.Left}
-				Padding={new UDim(0.001, 0)}
+				Padding={new UDim(0, px(5))}
 			/>
 
 			<SidebarButton
@@ -263,6 +268,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 					props.uiController.toggleUi(gameConstants.GAMEPASS_SHOP_UI);
 				}}
 				pxProvider={px}
+				textOffset={0.05}
 			/>
 
 			<SidebarButton
@@ -275,6 +281,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 					props.uiController.toggleUi(gameConstants.MAIN_UI, { menu: MENUS.Inventory });
 				}}
 				pxProvider={px}
+				textOffset={0.075}
 			/>
 
 			<SidebarButton
@@ -306,6 +313,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 					setAutoDiggingEnabled(enabled);
 				}}
 				pxProvider={px}
+				textOffset={0.05}
 			/>
 		</frame>
 	);
