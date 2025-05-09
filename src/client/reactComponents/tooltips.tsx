@@ -175,7 +175,7 @@ export const TooltipStats = (props: TooltipStatsProps) => {
 			<frame BackgroundTransparency={1} Size={UDim2.fromOffset(px(120), px(50))}>
 				<uilistlayout
 					key={"UIListLayout"}
-					Padding={new UDim(0.05, 5)}
+					Padding={new UDim(0, 5)}
 					SortOrder={Enum.SortOrder.LayoutOrder}
 					FillDirection={Enum.FillDirection.Vertical}
 				/>
@@ -200,7 +200,11 @@ export const TooltipStats = (props: TooltipStatsProps) => {
 					AutomaticSize={Enum.AutomaticSize.Y}
 					LayoutOrder={2}
 				>
-					<uilistlayout key={"StatsLayout"} Padding={new UDim(0, 8)} SortOrder={Enum.SortOrder.LayoutOrder} />
+					<uilistlayout
+						key={"StatsLayout"}
+						Padding={new UDim(0.05, 0)}
+						SortOrder={Enum.SortOrder.LayoutOrder}
+					/>
 
 					{getRewardStats(props.reward).map((stat, index) => (
 						<frame
@@ -213,7 +217,7 @@ export const TooltipStats = (props: TooltipStatsProps) => {
 							<uilistlayout
 								key={"RowLayout"}
 								FillDirection={Enum.FillDirection.Horizontal}
-								Padding={new UDim(0.05, 10)}
+								Padding={new UDim(0.05, 0.05)}
 								VerticalAlignment={Enum.VerticalAlignment.Center}
 							/>
 

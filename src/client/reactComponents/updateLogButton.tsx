@@ -3,6 +3,8 @@ import { AnimatedButton } from "./buttons";
 import UiController from "client/controllers/uiController";
 import { gameConstants } from "shared/gameConstants";
 import { Players, TweenService, UserInputService } from "@rbxts/services";
+import Signal from "@rbxts/goodsignal";
+import { Signals } from "shared/signals";
 
 const player = Players.LocalPlayer;
 const playerGui = player.WaitForChild("PlayerGui") as PlayerGui;
@@ -37,6 +39,7 @@ export const UpdateLogButton = (props: UpdateLogButtonProps) => {
 			}).Play();
 			TweenService.Create(closeFrame, tinfo, { Size: UDim2.fromScale(0.123, 0.194) }).Play();
 			setVisible(false);
+			Signals.menuOpened.Fire(false, "UpdateLog");
 		});
 
 		let inputCon: RBXScriptConnection;
@@ -51,6 +54,7 @@ export const UpdateLogButton = (props: UpdateLogButtonProps) => {
 					}).Play();
 					TweenService.Create(closeFrame, tinfo, { Size: UDim2.fromScale(0.123, 0.194) }).Play();
 					setVisible(false);
+					Signals.menuOpened.Fire(false, "UpdateLog");
 				}
 			});
 		}
@@ -72,12 +76,14 @@ export const UpdateLogButton = (props: UpdateLogButtonProps) => {
 					updateLog.Enabled = true;
 
 					TweenService.Create(containerFrame, tinfo, { Position: UDim2.fromScale(0.5, 0.45) }).Play();
+					Signals.menuOpened.Fire(true, "UpdateLog");
 				} else {
 					updateLog.Enabled = false;
 
 					TweenService.Create(containerFrame, new TweenInfo(0), {
 						Position: UDim2.fromScale(0.5, 0.6),
 					}).Play();
+					Signals.menuOpened.Fire(false, "UpdateLog");
 				}
 
 				setVisible(!visible);

@@ -143,13 +143,6 @@ export default class UiController implements OnStart, OnInit {
 
 			// MenuBlur and FOV effects on MENU_LAYER UIs
 			if (menu.layer === MENU_LAYER) {
-				TweenService.Create(camera, EFFECTS_TWEEN_INFO, {
-					FieldOfView: MENU_TARGET_FOV,
-				}).Play();
-				TweenService.Create(blurEffect, EFFECTS_TWEEN_INFO, {
-					Size: TARGET_BLUR_SZ,
-				}).Play();
-				effectsActive = true;
 				Signals.menuOpened.Fire(true, name);
 			}
 		}
@@ -176,12 +169,6 @@ export default class UiController implements OnStart, OnInit {
 		// Undo blur and FOV effects on close
 		if (effectsActive && menu.layer === MENU_LAYER) {
 			Signals.menuOpened.Fire(false, name);
-			TweenService.Create(camera, EFFECTS_TWEEN_INFO, {
-				FieldOfView: DEFAULT_FOV,
-			}).Play();
-			TweenService.Create(blurEffect, EFFECTS_TWEEN_INFO, {
-				Size: 0,
-			}).Play();
 		}
 
 		// If we're closing the dig bar, update `digBarOpen`
@@ -274,8 +261,6 @@ export default class UiController implements OnStart, OnInit {
 			"Client module onStart lifecycle began.\n------------------------------------------------------------------------------------------------------",
 		);
 
-		
-
 		const createGiftUIZone = (inst: PVInstance) => {
 			const zone = new Zone(inst);
 			zone.localPlayerEntered.Connect(() => {
@@ -292,6 +277,16 @@ export default class UiController implements OnStart, OnInit {
 		CollectionService.GetInstanceAddedSignal("FreeGiftZone").Connect((i) => {
 			assert(i.IsA("PVInstance"));
 			createGiftUIZone(i);
+		});
+
+		Signals.menuOpened.Connect((isOpen, _) => {
+			TweenService.Create(camera, EFFECTS_TWEEN_INFO, {
+				FieldOfView: isOpen ? MENU_TARGET_FOV : DEFAULT_FOV,
+			}).Play();
+			TweenService.Create(blurEffect, EFFECTS_TWEEN_INFO, {
+				Size: isOpen ? TARGET_BLUR_SZ : 0,
+			}).Play();
+			effectsActive = isOpen;
 		});
 	}
 

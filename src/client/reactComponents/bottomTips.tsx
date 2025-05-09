@@ -81,7 +81,7 @@ interface BottomTipsProps {
 	uiController: UiController;
 }
 
-const DEFAULT_POS = UDim2.fromScale(0.025, 0.975);
+const DEFAULT_POS = UDim2.fromScale(0.025, 0.99);
 const CLOSED_POS = UDim2.fromScale(0.025, 1.15);
 
 export const BottomTips = (props: BottomTipsProps) => {

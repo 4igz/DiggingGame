@@ -3,6 +3,7 @@ import React, { Binding, useEffect, useState } from "@rbxts/react";
 import { MarketplaceService, Players } from "@rbxts/services";
 import { GamepassController } from "client/controllers/gamepassController";
 import { usePx } from "client/hooks/usePx";
+import { useSliceScale } from "client/hooks/useSlice";
 import { gameConstants } from "shared/gameConstants";
 import { Signals } from "shared/signals";
 import { getDeveloperProductInfo } from "shared/util/monetizationUtil";
@@ -148,6 +149,7 @@ interface BuyButtonProps {
 
 export const BuyButton = (props: BuyButtonProps) => {
 	const px = usePx();
+	const sliceScale = useSliceScale();
 
 	const [marketplaceInfo, setMarketplaceInfo] = React.useState<
 		DeveloperProductInfo | GamePassProductInfo | undefined
@@ -188,8 +190,11 @@ export const BuyButton = (props: BuyButtonProps) => {
 			<imagelabel
 				key={"ImageButton"}
 				BackgroundTransparency={1}
-				Image={"rbxassetid://140291815990566"}
+				Image={"rbxassetid://92239062767450"}
 				Size={UDim2.fromScale(1, 1)}
+				ScaleType={"Slice"}
+				SliceCenter={new Rect(47, 109, 541, 130)}
+				SliceScale={sliceScale(1)}
 			>
 				<uilistlayout
 					key={"UIListLayout"}
@@ -210,7 +215,7 @@ export const BuyButton = (props: BuyButtonProps) => {
 					Text={displayText}
 					RichText={false}
 					TextColor3={new Color3(1, 1, 1)}
-					TextSize={px.ceil(props.textSize ?? 27)}
+					TextSize={px.ceil(props.textSize ?? 25)}
 					TextXAlignment={Enum.TextXAlignment.Center}
 					ZIndex={10}
 				>
@@ -226,7 +231,7 @@ export const BuyButton = (props: BuyButtonProps) => {
 						Text={displayText}
 						RichText={false}
 						TextColor3={new Color3(1, 1, 1)}
-						TextSize={px.ceil(props.textSize ?? 27)}
+						TextSize={px.ceil(props.textSize ?? 25)}
 						TextXAlignment={Enum.TextXAlignment.Center}
 						ZIndex={9}
 					>

@@ -282,7 +282,7 @@ export const RightSideMenu = (props: MenuProps) => {
 						Text={moneyValue}
 						TextColor3={Color3.fromRGB(92, 255, 133)}
 						// TextScaled={true}
-						TextSize={px.ceil(27)}
+						TextSize={px.ceil(30)}
 						TextXAlignment={Enum.TextXAlignment.Left}
 						TextYAlignment={Enum.TextYAlignment.Center}
 					>

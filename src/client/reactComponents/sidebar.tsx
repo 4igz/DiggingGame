@@ -250,7 +250,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 				SortOrder={Enum.SortOrder.LayoutOrder}
 				VerticalAlignment={Enum.VerticalAlignment.Center}
 				HorizontalAlignment={Enum.HorizontalAlignment.Left}
-				Padding={new UDim(0, 5)}
+				Padding={new UDim(0.001, 0)}
 			/>
 
 			<SidebarButton

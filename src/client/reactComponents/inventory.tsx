@@ -665,7 +665,7 @@ const CategoryButton = (props: CategoryButtonProps) => {
 				return UDim2.fromScale(size.X.Scale * s, size.Y.Scale * s);
 			})}
 			SliceCenter={new Rect(98, 73, 643, 212)}
-			SliceScale={sliceScale(0.5)}
+			SliceScale={sliceScale(0.45)}
 			Selectable={false}
 			ZIndex={-10}
 			Event={{
