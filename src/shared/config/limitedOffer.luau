@@ -42,7 +42,7 @@ local limitedOffer: { { Reward } } = {
 		},
 		{
 			rewardType = "Potions",
-			itemName = "Large Luck Potion",
+			itemName = "L.Luck Potion",
 			rewardAmount = 2,
 		},
 	},

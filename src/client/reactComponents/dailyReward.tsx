@@ -481,6 +481,10 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 			setStreak(streak);
 			setLastClaimed(lastClaimTime);
 		});
+
+		task.delay(1, () => {
+			props.uiController.toggleUi(gameConstants.DAILY_REWARD_UI);
+		});
 	}, []);
 
 	// Effect to update timer
@@ -658,7 +662,7 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 					Text={`Daily Rewards ${timeLeft > 0 ? `- Come back later!` : ""}`}
 					TextColor3={Color3.fromRGB(255, 255, 255)}
 					TextScaled={false}
-					TextSize={px(50)}
+					TextSize={px(45)}
 					TextXAlignment={"Left"}
 				>
 					<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(5.3)} />

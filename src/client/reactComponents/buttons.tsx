@@ -26,6 +26,7 @@ interface AnimatedButtonProps {
 	errorText?: string;
 	modal?: boolean;
 	backgroundTransparency?: number;
+	backgroundColor?: Color3;
 }
 
 export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
@@ -47,6 +48,7 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
 	active = true,
 	modal,
 	backgroundTransparency = 1,
+	backgroundColor = new Color3(1, 1, 1),
 }) => {
 	const [isHovered, setIsHovered] = useState(false);
 	const [isPressed, setPressed] = useState(false);
@@ -71,7 +73,7 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
 			ZIndex={zindex ?? 10}
 			ref={ref}
 			Visible={visible}
-			BackgroundColor3={new Color3(1, 1, 1)}
+			BackgroundColor3={backgroundColor}
 		>
 			<imagebutton
 				BackgroundTransparency={1}

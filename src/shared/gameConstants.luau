@@ -77,6 +77,9 @@ local gameConstants = {
 		["1M Massive Money Pack"] = 3236553972,
 		["2.5M Pirate's Treasure"] = 3250931243,
 		["Unlock All Playtime Rewards"] = 3236554940,
+
+		StrengthPot = 3282059158,
+		LuckPot = 3282059102,
 	},
 
 	GAMEPASS_IDS = {

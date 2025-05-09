@@ -31,6 +31,7 @@ import { whiteToRed } from "shared/util/colorUtil";
 import { usePx } from "client/hooks/usePx";
 import { AnimatedButton, BuyButton } from "./buttons";
 import { useSliceScale } from "client/hooks/useSlice";
+import { ItemStat } from "shared/util/rewardUtil";
 
 export function capitalizeWords(str: string): string {
 	return str
@@ -40,12 +41,6 @@ export function capitalizeWords(str: string): string {
 			return word.sub(0, 1).upper() + word.sub(2);
 		})
 		.join(" ");
-}
-
-export interface ItemStat {
-	key: string;
-	value: string | number;
-	icon: string; // Asset ID
 }
 
 interface GenericItemProps {
@@ -120,8 +115,6 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							Signals.actionPopup.Fire(`Equipped ${formatItemName(itemType, itemName)}`);
 						} else if (itemType === "Potions") {
 							Events.drinkPotion(itemName);
-							Signals.actionPopup.Fire(`Drank potion ${formatItemName(itemType, itemName)}`);
-							Signals.drankPotion.Fire(props.itemName);
 						}
 						setPressed(true);
 						task.delay(0.1, () => setPressed(false));
@@ -1816,6 +1809,11 @@ export const InventoryComponent = (props: MainUiProps) => {
 
 		UserInputService.GamepadDisconnected.Connect(() => {
 			setGamepadEnabled(false);
+		});
+
+		Events.drankPotion.connect((potionName) => {
+			Signals.actionPopup.Fire(`Drank potion ${formatItemName("Potions", potionName)}`);
+			Signals.drankPotion.Fire(potionName);
 		});
 
 		UserInputService.InputBegan.Connect((input, gpe) => {

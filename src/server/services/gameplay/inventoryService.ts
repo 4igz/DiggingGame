@@ -273,6 +273,8 @@ export class InventoryService implements OnStart, OnTick {
 				// Store the updated effect
 				profile.Data.activePotions.set(effectType, updatedEffect);
 
+				Events.drankPotion(player, potionName);
+
 				// Update the appropriate multiplier based on effect type
 				this.updatePotionMultipliers(profile);
 
@@ -331,6 +333,17 @@ export class InventoryService implements OnStart, OnTick {
 		Functions.getOwnedBoats.setCallback((player) => {
 			const profile = this.profileService.getProfileLoaded(player).expect();
 			return profile.Data.ownedBoats;
+		});
+
+		Signals.giveLuckPot.Connect((player, amt) => {
+			for (let i = 0; i < amt; i++) {
+				this.givePotion(player, "M.Luck Potion");
+			}
+		});
+		Signals.giveStrengthPot.Connect((player, amt) => {
+			for (let i = 0; i < amt; i++) {
+				this.givePotion(player, "M.Strength Potion");
+			}
 		});
 	}
 

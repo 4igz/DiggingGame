@@ -6,18 +6,17 @@ import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
 import { gameConstants } from "shared/gameConstants";
 import { GamepassController } from "client/controllers/gamepassController";
-import { ExitButton, ItemStat } from "./inventory";
+import { ExitButton } from "./inventory";
 import UiController from "client/controllers/uiController";
 import { NATURE, NONE, RETRO } from "./packPopup";
-import { getRewardImage } from "shared/util/rewardUtil";
+import { getRewardImage, getRewardStats } from "shared/util/rewardUtil";
 import { limitedOffer } from "shared/config/limitedOffer";
 import { formatItemName, separateWithCommas, shortenNumber, spaceWords } from "shared/util/nameUtil";
 import { getDeveloperProductInfo } from "shared/util/monetizationUtil";
 import { AnimatedButton } from "./buttons";
 import { usePx } from "client/hooks/usePx";
 import { Reward } from "shared/networkTypes";
-import { shovelConfig } from "shared/config/shovelConfig";
-import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
+import { TooltipStats } from "./tooltips";
 
 const BuyButton = () => {
 	const packPrice = getDeveloperProductInfo(
@@ -200,9 +199,11 @@ const BuyButton = () => {
 interface StatsFrameProps {
 	reward: Reward;
 	visible: boolean;
+	position?: UDim2;
+	xAlignment?: Enum.HorizontalAlignment;
 }
 
-const StatsFrame = (props: StatsFrameProps) => {
+export const StatsFrame = (props: StatsFrameProps) => {
 	const px = usePx();
 
 	return (
@@ -213,7 +214,7 @@ const StatsFrame = (props: StatsFrameProps) => {
 			BorderSizePixel={0}
 			key={"Stats"}
 			Visible={props.visible}
-			Position={UDim2.fromScale(0.025, 0.2)}
+			Position={props.position ?? UDim2.fromScale(0.025, 0.2)}
 			Size={UDim2.fromScale(0.446, 0.353)}
 			ZIndex={500000}
 		>
@@ -236,6 +237,7 @@ const StatsFrame = (props: StatsFrameProps) => {
 							Padding={new UDim(0.05, 0)}
 							SortOrder={Enum.SortOrder.LayoutOrder}
 							VerticalAlignment={Enum.VerticalAlignment.Center}
+							HorizontalAlignment={props.xAlignment ?? Enum.HorizontalAlignment.Left}
 						/>
 
 						<imagelabel
@@ -295,73 +297,6 @@ const StatsFrame = (props: StatsFrameProps) => {
 		</frame>
 	);
 };
-
-function getRewardStats(reward: Reward): ItemStat[] {
-	const stats: ItemStat[] = [];
-
-	if (!reward.itemName) {
-		return stats;
-	}
-
-	switch (reward.rewardType) {
-		case "Shovels": {
-			const shovel = shovelConfig[reward.itemName];
-			if (shovel) {
-				// Add strength stat
-				stats.push({
-					key: "strength",
-					value: shovel.strengthMult || 1,
-					icon: "rbxassetid://100052274681629",
-				});
-
-				// Add quantity if more than 1
-				if (reward.rewardAmount && reward.rewardAmount > 1) {
-					stats.push({
-						key: "quantity",
-						value: reward.rewardAmount,
-						icon: "rbxassetid://115275171647711",
-					});
-				}
-			}
-			break;
-		}
-
-		case "MetalDetectors": {
-			const detector = metalDetectorConfig[reward.itemName];
-			if (detector) {
-				// Add detection distance stat
-				stats.push({
-					key: "detectionDistance",
-					value: detector.strength || 1,
-					icon: "rbxassetid://136640572681412",
-				});
-
-				// Add luck stat
-				stats.push({
-					key: "luck",
-					value: detector.luck || 1,
-					icon: "rbxassetid://85733831609212",
-				});
-
-				// Add quantity if more than 1
-				if (reward.rewardAmount && reward.rewardAmount > 1) {
-					stats.push({
-						key: "quantity",
-						value: reward.rewardAmount,
-						icon: "rbxassetid://115275171647711",
-					});
-				}
-			}
-			break;
-		}
-
-		default:
-			// Handle other reward types if needed
-			break;
-	}
-
-	return stats;
-}
 
 interface StarterPackFrameProps {
 	visible: boolean;
@@ -562,7 +497,9 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 
 						<uistroke key={"UIStroke"} Thickness={px(4)} />
 
-						<StatsFrame reward={getReward(0)} visible={hoverState === 1} />
+						{/* <StatsFrame reward={getReward(0)} visible={hoverState === 1} /> */}
+
+						<TooltipStats reward={getReward(0)} visible={hoverState === 1} />
 
 						<imagelabel
 							Size={UDim2.fromScale(1, 1)}
@@ -677,7 +614,9 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 
 						<uistroke key={"UIStroke"} Thickness={px(4)} />
 
-						<StatsFrame reward={getReward(1)} visible={hoverState === 2} />
+						{/* <StatsFrame reward={getReward(1)} visible={hoverState === 2} /> */}
+
+						<TooltipStats reward={getReward(1)} visible={hoverState === 2} />
 
 						<imagelabel
 							Size={UDim2.fromScale(1, 1)}

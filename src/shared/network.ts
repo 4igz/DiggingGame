@@ -48,6 +48,7 @@ interface ClientToServerEvents {
 	claimDailyReward: () => void;
 	startNextQuest: (questName: keyof typeof questConfig) => void;
 	claimFreeReward: () => void;
+	verifyCode: (code: string) => void;
 
 	// Anti exploit event
 	selfReport: (flag: string) => void;
@@ -105,12 +106,14 @@ interface ServerToClientEvents {
 	endDigReplication: (target: NetworkedTarget) => void;
 	sendClaimedPopup: (kind: ItemType | "Money" | "SkillPoints" | "Experience", recieved?: ItemName | number) => void;
 	sendInvalidActionPopup: (message: string) => void;
+	sendActionPopup: (message: string) => void;
 	boatSpawnResponse: (success: boolean, response: string) => void;
 	notifyBought: (productName: string, productType: Enum.InfoType) => void;
 	updateActivePotions: (
 		potions: (PotionConfig & { potionName: keyof typeof potionConfig; timeLeft: number })[],
 	) => void;
 	updateClaimedLimitedOfferPack: (packNum: 0 | 1 | 2) => void;
+	drankPotion: (potionName: keyof typeof potionConfig) => void;
 }
 
 interface ClientToServerFunctions {

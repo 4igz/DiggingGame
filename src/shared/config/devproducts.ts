@@ -126,6 +126,20 @@ export const developerProducts: DeveloperProduct[] = [
 			Signals.giveLimitedOffer.Fire(player, 1);
 		},
 	},
+	{
+		id: IDS.StrengthPot,
+		name: "Buy Strength Potion",
+		grantReward: (player) => {
+			Signals.giveStrengthPot.Fire(player, 1);
+		},
+	},
+	{
+		id: IDS.LuckPot,
+		name: "Buy Luck Potion",
+		grantReward: (player) => {
+			Signals.giveLuckPot.Fire(player, 1);
+		},
+	},
 	// {
 	// 	id: IDS.MediumPack,
 	// 	name: "Medium Pack",

@@ -1,6 +1,6 @@
 import { subscribe } from "@rbxts/charm";
 import { useMotion } from "@rbxts/pretty-react-hooks";
-import React, { useEffect } from "@rbxts/react";
+import React, { useEffect, useState } from "@rbxts/react";
 import { UserInputService } from "@rbxts/services";
 import { treasureInventoryAtom } from "client/atoms/inventoryAtoms";
 import { usePx } from "client/hooks/usePx";
@@ -23,8 +23,8 @@ const getActiveQuest = (
 	return undefined;
 };
 
-const DEFAULT_POS = UDim2.fromScale(1.013, 0.55);
-const CLOSED_POS = UDim2.fromScale(1.275, 0.55);
+const DEFAULT_POS = UDim2.fromScale(1.013, 0.6);
+const CLOSED_POS = UDim2.fromScale(1.275, 0.6);
 
 export const QuestInfoSideButton = () => {
 	const [pos, setPos] = useMotion(DEFAULT_POS);
@@ -32,10 +32,14 @@ export const QuestInfoSideButton = () => {
 	const [activeQuest, setActiveQuest] = React.useState<
 		{ name: keyof typeof questConfig; info: QuestProgress } | undefined
 	>(undefined);
-	const [, render] = React.useState(0);
+	const [hasEnough, setHasEnough] = useState(false);
+	const [collectedAmount, setCollectedAmount] = useState(0);
 	const [platform, setPlatform] = React.useState(getPlayerPlatform());
 
 	const px = usePx();
+
+	const questline = questConfig[activeQuest?.name ?? ""];
+	const quest = questline && questline[activeQuest?.info.stage ?? -1];
 
 	useEffect(() => {
 		if (questInfo === undefined) return;
@@ -53,20 +57,47 @@ export const QuestInfoSideButton = () => {
 	}, [questInfo]);
 
 	useEffect(() => {
-		Events.updateInventory.connect(() => {
-			render((v) => v + 1);
+		const collectedAmount = treasureInventoryAtom().reduce((acc, target) => {
+			if (target.itemName === (quest?.target ?? "")) {
+				return ++acc;
+			}
+			return acc;
+		}, 0);
+
+		setCollectedAmount(collectedAmount);
+
+		const hasEnough = collectedAmount >= (quest?.collectAmount ?? 1);
+
+		setHasEnough(hasEnough);
+
+		const clean = subscribe(treasureInventoryAtom, (inventory) => {
+			const collectedAmount = inventory.reduce((acc, target) => {
+				if (target.itemName === (quest?.target ?? "")) {
+					return ++acc;
+				}
+				return acc;
+			}, 0);
+
+			setCollectedAmount(collectedAmount);
+
+			const hasEnough = collectedAmount >= (quest?.collectAmount ?? 1);
+
+			setHasEnough(hasEnough);
 		});
 
-		subscribe(treasureInventoryAtom, () => {});
-
-		Signals.menuOpened.Connect((isOpen) => {
+		const con = Signals.menuOpened.Connect((isOpen) => {
 			if (isOpen) {
 				setPos.spring(CLOSED_POS, springs.default);
 			} else {
 				setPos.spring(DEFAULT_POS, springs.default);
 			}
 		});
-	}, []);
+
+		return () => {
+			con.Disconnect();
+			clean();
+		};
+	}, [activeQuest]);
 
 	useEffect(() => {
 		Events.updateQuestProgress.connect((questProgress) => {
@@ -82,20 +113,22 @@ export const QuestInfoSideButton = () => {
 		UserInputService.InputChanged.Connect((input) => {
 			setPlatform(getPlayerPlatform());
 		});
+
+		const collectedAmount = treasureInventoryAtom().reduce((acc, target) => {
+			if (target.itemName === (quest?.target ?? "")) {
+				return ++acc;
+			}
+			return acc;
+		}, 0);
+
+		setCollectedAmount(collectedAmount);
+
+		const hasEnough = collectedAmount >= (quest?.collectAmount ?? 1);
+
+		setHasEnough(hasEnough);
 	}, []);
 
-	const questline = questConfig[activeQuest?.name ?? ""];
-	const quest = questline && questline[activeQuest?.info.stage ?? -1];
 	const MOBILE_SCALE = 1.5;
-
-	const collectedAmount = treasureInventoryAtom().reduce((acc, target) => {
-		if (target.itemName === (quest?.target ?? "")) {
-			return ++acc;
-		}
-		return acc;
-	}, 0);
-
-	const hasEnough = collectedAmount >= (quest?.collectAmount ?? 1);
 
 	return (
 		<frame
@@ -150,7 +183,7 @@ export const QuestInfoSideButton = () => {
 				Text={
 					quest &&
 					`Bring ${quest.collectAmount} ${makePlural(quest.target, quest.collectAmount!)} ${
-						collectedAmount > 0 ? `${collectedAmount}/${quest.collectAmount}` : ""
+						collectedAmount > 0 ? `(${collectedAmount}/${quest.collectAmount})` : ""
 					}`
 				}
 				TextColor3={hasEnough ? Color3.fromRGB(0, 255, 0) : Color3.fromRGB(255, 255, 255)}

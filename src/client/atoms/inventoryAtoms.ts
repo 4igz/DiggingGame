@@ -7,3 +7,5 @@ import { gameConstants } from "shared/gameConstants";
 export const treasureCountAtom = atom(0);
 export const inventorySizeAtom = atom(gameConstants.TARGET_INVENTORY_DEFAULT_CAPACITY);
 export const treasureInventoryAtom = atom<Array<InventoryItemProps>>([]);
+export const mStrengthPotionsAtom = atom<number>(0);
+export const mLuckPotionsAtom = atom<number>(0);

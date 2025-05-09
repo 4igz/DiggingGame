@@ -274,7 +274,7 @@ export default class UiController implements OnStart, OnInit {
 			"Client module onStart lifecycle began.\n------------------------------------------------------------------------------------------------------",
 		);
 
-		this.toggleUi(gameConstants.DAILY_REWARD_UI);
+		
 
 		const createGiftUIZone = (inst: PVInstance) => {
 			const zone = new Zone(inst);

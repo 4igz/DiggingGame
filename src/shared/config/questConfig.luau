@@ -46,7 +46,7 @@ local questConfig: { [string]: { QuestConfig } } = {
 			subsequentResponse = "Did you forget already? \nI said bring me a bag of coins!",
 			completeResponse = "Thank you for the bag of coins!\n Here's your reward! Come back and I've got\n another ask of you!",
 
-			target = "Bag of coins" :: Targets, -- while strict, it's necessary to cast to Targets because of the luau typesolver
+			target = "Bag Of Coins" :: Targets, -- while strict, it's necessary to cast to Targets because of the luau typesolver
 			collectAmount = 1,
 		},
 		{
@@ -77,7 +77,7 @@ local questConfig: { [string]: { QuestConfig } } = {
 			subsequentResponse = "Did you find the peg-leg yet?",
 			completeResponse = "Yar!! I don't know what I would do without you. \nHere's your reward!",
 
-			target = "Bejeweled pegleg" :: Targets, -- while strict, it's necessary to cast to Targets because of the luau typesolver
+			target = "Bejeweled Pegleg" :: Targets, -- while strict, it's necessary to cast to Targets because of the luau typesolver
 			collectAmount = 1,
 		},
 		{
@@ -123,7 +123,7 @@ local questConfig: { [string]: { QuestConfig } } = {
 			subsequentResponse = "Did you find the Heat rock yet?",
 			completeResponse = "Here, take this as a token of my gratitude!",
 
-			target = "Heat rock" :: Targets,
+			target = "Heat Rock" :: Targets,
 			collectAmount = 3,
 		},
 
@@ -138,7 +138,7 @@ local questConfig: { [string]: { QuestConfig } } = {
 			subsequentResponse = "Did you find the jade statues yet?",
 			completeResponse = "Thank you!!!!!",
 
-			target = "Jade statue" :: Targets,
+			target = "Jade Statue" :: Targets,
 			collectAmount = 3,
 		},
 
@@ -153,7 +153,7 @@ local questConfig: { [string]: { QuestConfig } } = {
 			subsequentResponse = "Did you find the Obsidian crown yet?",
 			completeResponse = "Thank you!!!!!",
 
-			target = "Obsidian crown" :: Targets,
+			target = "Obsidian Crown" :: Targets,
 			collectAmount = 1,
 		},
 	},
@@ -170,7 +170,7 @@ local questConfig: { [string]: { QuestConfig } } = {
 			subsequentResponse = "Don't ask me why I need them, just find them!",
 			completeResponse = "I appreciate it. Here's a little something for you! \nCan you do something else for me?",
 
-			target = "Icecicle" :: Targets,
+			target = "Icicle" :: Targets,
 			collectAmount = 10,
 		},
 		{
@@ -184,7 +184,7 @@ local questConfig: { [string]: { QuestConfig } } = {
 			subsequentResponse = "Do you have my amulet?",
 			completeResponse = "Wow I looked everywhere for this! Thank you!",
 
-			target = "Topaz amulet" :: Targets,
+			target = "Topaz Amulet" :: Targets,
 			collectAmount = 1,
 		},
 	},

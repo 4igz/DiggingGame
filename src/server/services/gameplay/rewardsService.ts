@@ -16,6 +16,7 @@ import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
 import { LevelService } from "./levelService";
 import groupReward from "shared/config/groupReward";
 import { limitedOffer } from "shared/config/limitedOffer";
+import { codes } from "server/modules/config/codes";
 
 declare function unpack<T>(arr: Array<T>): T;
 
@@ -139,6 +140,25 @@ export class DailyRewardsService implements OnStart {
 				profile.Data.claimedFreeReward = true;
 				this.profileService.setProfile(player, profile);
 			}
+		});
+
+		Events.verifyCode.connect((player, code) => {
+			const profile = this.profileService.getProfileLoaded(player).expect();
+			if (profile.Data.redeemedCodes.includes(code)) {
+				Events.sendInvalidActionPopup(player, "You have already reedemed this code!");
+				return;
+			}
+			const rewards = codes[code];
+			if (!rewards) {
+				Events.sendInvalidActionPopup(player, "Code doesn't exist.");
+				return; // Code doesn't exist.
+			}
+			Events.sendActionPopup(player, `Reedemed '${code}' successfully!`);
+			for (const reward of rewards) {
+				this.claimReward(player, reward);
+			}
+			profile.Data.redeemedCodes.push(code);
+			this.profileService.setProfile(player, profile);
 		});
 
 		Functions.getHasClaimedFreeReward.setCallback((player) => {

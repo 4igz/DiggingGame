@@ -11,7 +11,7 @@ import { questConfig } from "shared/config/questConfig";
 import { PotionEffect } from "./services/gameplay/inventoryService";
 import { ReplicatedStorage } from "@rbxts/services";
 
-export const PROFILE_STORE_NAME = "pre_test58";
+export const PROFILE_STORE_NAME = "pre_test59";
 
 ReplicatedStorage.SetAttribute("CurrentStore", PROFILE_STORE_NAME);
 
@@ -53,6 +53,7 @@ export const profileTemplate = {
 	detectorInventory: ["StarterDetector"] as Array<keyof typeof metalDetectorConfig>,
 	shovelInventory: ["StarterShovel"] as Array<keyof typeof shovelConfig>,
 	potionInventory: [] as Array<keyof typeof potionConfig>,
+	redeemedCodes: [] as Array<string>,
 
 	ownedBoats: new Map<string, boolean>(Object.keys(boatConfig).map((boatName) => [boatName, false])),
 	ownedGamepasses: new Map(Object.keys(gameConstants.GAMEPASS_IDS).map((id) => [id, false])),

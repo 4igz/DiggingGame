@@ -339,6 +339,13 @@ export const Popups = () => {
 			});
 		});
 
+		Events.sendActionPopup.connect((message) => {
+			const popupText = message || "Done!";
+			queuePopup("Action", popupText, {
+				text: popupText,
+			});
+		});
+
 		Signals.actionPopup.Connect((text) => {
 			const popupText = text || "Done!";
 			queuePopup("Action", popupText, {

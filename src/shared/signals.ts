@@ -14,6 +14,8 @@ export const Signals = {
 	buyServerLuckMultiplier: new Signal<(player: Player) => void>(),
 	unlockPlaytimeRewards: new Signal<(player: Player) => void>(),
 	startDigging: new Signal<(player: Player, target: Target) => void>(),
+	giveLuckPot: new Signal<(player: Player, amt: number) => void>(),
+	giveStrengthPot: new Signal<(player: Player, amt: number) => void>(),
 
 	// Client only signals:
 	requestingNewPather: new Signal<() => void>(),
