@@ -188,7 +188,7 @@ export const BottomTips = (props: BottomTipsProps) => {
 					<textlabel
 						Size={UDim2.fromScale(1, 0.5)}
 						Position={UDim2.fromScale(0, 0.6)}
-						Text={" +10%"}
+						Text={` +${Players.LocalPlayer.MembershipType === Enum.MembershipType.Premium ? "10" : "0"}%`}
 						FontFace={Font.fromEnum(Enum.Font.BuilderSansBold)}
 						TextSize={px(25)}
 						BackgroundTransparency={1}

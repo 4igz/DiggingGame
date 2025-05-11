@@ -2,6 +2,7 @@ import React from "@rbxts/react";
 import { useMotion } from "client/hooks/useMotion";
 import { usePx } from "client/hooks/usePx";
 import { springs } from "client/utils/springs";
+import { Signals } from "shared/signals";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 
 interface HintProps {
@@ -21,8 +22,23 @@ export const DetectorHint = (props: HintProps) => {
 
 	React.useEffect(() => {
 		if (visible) {
-			task.wait(2);
-			setTransparency.spring(0, springs.crawl);
+			const seenSpring = task.delay(4, () => {
+				setTransparency.spring(0, springs.crawl);
+			});
+
+			const autoDiggingSignal = Signals.setAutoDiggingEnabled.Connect(() => {
+				setVisible(false);
+			});
+
+			const luckBarEnabledSignal = Signals.setLuckbarVisible.Connect(() => {
+				setVisible(false);
+			});
+
+			return () => {
+				autoDiggingSignal.Disconnect();
+				luckBarEnabledSignal.Disconnect();
+				task.cancel(seenSpring);
+			};
 		} else {
 			setTransparency.immediate(1);
 		}
@@ -34,7 +50,7 @@ export const DetectorHint = (props: HintProps) => {
 				Text={`<font color="rgb(200,200,200)"><b>Hold</b></font> ${
 					platform === "Mobile" ? "the detector button" : platform === "Console" ? "R2" : "left click"
 				} to search for treasures!`}
-				Position={UDim2.fromScale(0.5, 0)}
+				Position={UDim2.fromScale(0.5, 0.1)}
 				AnchorPoint={new Vector2(0.5, 0)}
 				BackgroundTransparency={1}
 				TextTransparency={transparency}

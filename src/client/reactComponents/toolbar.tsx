@@ -131,7 +131,7 @@ const ToolbarItemComponent: React.FC<ToolbarItemProps> = (props) => {
 
 const cleanupCallbacks: Array<() => void> = [];
 
-const DEFAULT_POS = UDim2.fromScale(0.5, 1);
+const DEFAULT_POS = UDim2.fromScale(0.5, 0.9875);
 const CLOSED_POS = UDim2.fromScale(0.5, 1.5);
 
 export const Toolbar = () => {

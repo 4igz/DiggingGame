@@ -66,7 +66,7 @@ export class DetectorController implements OnStart {
 
 		let understandsInput = false;
 
-		const HOLD_LENGTH = 0.2;
+		const HOLD_LENGTH = 0.25;
 		const DETECTION_KEYBINDS = [Enum.KeyCode.ButtonR2, Enum.UserInputType.MouseButton1];
 
 		// Wait for onStart so we arent holding up other systems while we wait for the PlayerModule to load.
@@ -212,7 +212,7 @@ export class DetectorController implements OnStart {
 						}
 					};
 
-					if (!understandsInput && !autoDigRunning) {
+					if (!understandsInput && !autoDigRunning && !isRolling) {
 						// Player hasn't shown yet that they understand how the detector works
 						Signals.setUiToggled.Fire(gameConstants.DETECTOR_HINT_TEXT, true, true);
 					}
@@ -221,11 +221,11 @@ export class DetectorController implements OnStart {
 
 					task.defer(() => {
 						ContextActionService.SetImage(actionName, cfg.itemImage);
-						ContextActionService.SetPosition(actionName, UDim2.fromScale(0.1, 0.225));
+						ContextActionService.SetPosition(actionName, UDim2.fromScale(0.125, 0.24));
 						pcall(() => {
 							const button = ContextActionService.GetButton(actionName);
 							if (button) {
-								button.Size = new UDim2(0, 100, 0, 100);
+								button.Size = new UDim2(0, 75, 0, 75);
 								button.Image = "rbxassetid://5713982324";
 								button.HoverImage = "rbxassetid://5713982324";
 								button.PressedImage = "rbxassetid://5713982324";

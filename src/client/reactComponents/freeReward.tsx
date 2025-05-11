@@ -62,8 +62,6 @@ export const FreeReward = (props: FreeRewardProps) => {
 			Functions.getHasClaimedFreeReward().then((status) => {
 				setHasClaimed(status);
 			});
-
-			AvatarEditorService.PromptSetFavorite(game.PlaceId, 1, true);
 		} else {
 			setMenuPos.immediate(UDim2.fromScale(0.5, 0.6));
 		}
@@ -347,6 +345,9 @@ export const FreeReward = (props: FreeRewardProps) => {
 							return;
 						}
 						Events.claimFreeReward();
+						task.delay(3, () => {
+							AvatarEditorService.PromptSetFavorite(game.PlaceId, 1, true);
+						});
 						task.defer(() => {
 							Functions.getHasClaimedFreeReward().then((status) => {
 								setHasClaimed(status);

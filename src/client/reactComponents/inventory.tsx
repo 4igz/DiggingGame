@@ -665,7 +665,7 @@ const CategoryButton = (props: CategoryButtonProps) => {
 				return UDim2.fromScale(size.X.Scale * s, size.Y.Scale * s);
 			})}
 			SliceCenter={new Rect(98, 73, 643, 212)}
-			SliceScale={sliceScale(0.45)}
+			SliceScale={sliceScale(0.5)}
 			Selectable={false}
 			ZIndex={-10}
 			Event={{
@@ -1549,7 +1549,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 	const [targetInventoryUsedSize, setTargetInventoryUsedSize] = useState(0);
 	const [enabledMenu, setEnabledMenu] = React.useState(MENUS.Inventory);
 	const [, setMenuIndex] = React.useState(0);
-	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0.5, 0.6));
+	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0.45, 0.6));
 	const [selectedIndexItem, setSelectedIndexItem] = useState<{
 		targetName: keyof typeof targetConfig | "";
 		mapName: keyof typeof mapConfig | "";
@@ -1699,7 +1699,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 
 	React.useEffect(() => {
 		if (visible) {
-			popInMotion.spring(UDim2.fromScale(0.48, 0.45), springs.responsive);
+			popInMotion.spring(UDim2.fromScale(0.45, 0.45), springs.responsive);
 		} else {
 			const connection = Signals.inventoryFull.Connect(() => {
 				if (visible) {
@@ -1711,7 +1711,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 					displayInventoryType: "Target",
 				});
 			});
-			popInMotion.immediate(UDim2.fromScale(0.48, 0.55));
+			popInMotion.immediate(UDim2.fromScale(0.45, 0.55));
 			return () => {
 				connection?.Disconnect();
 			};

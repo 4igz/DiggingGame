@@ -10,7 +10,7 @@ interface BottomRightButtonsProps {
 export const BottomRightButtons = (props: BottomRightButtonsProps) => {
 	return (
 		<frame
-			Size={UDim2.fromScale(0.05, 0.15)}
+			Size={UDim2.fromScale(0.035, 0.15)}
 			Position={UDim2.fromScale(1.0025, 1)}
 			AnchorPoint={new Vector2(1, 1)}
 			BackgroundTransparency={1}

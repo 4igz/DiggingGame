@@ -1978,7 +1978,7 @@ export const GamepassShop = (props: GamepassShopProps) => {
 							<imagelabel
 								AnchorPoint={new Vector2(0.5, 0)}
 								BackgroundTransparency={1}
-								Image={"rbxassetid://87717382502330"}
+								Image={"rbxassetid://83893510515400"}
 								key={"GpIcon"}
 								Position={UDim2.fromScale(0.5, 0.10177)}
 								Size={UDim2.fromScale(0.620513, 0.535398)}
