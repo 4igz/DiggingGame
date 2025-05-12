@@ -221,7 +221,7 @@ export class DetectorController implements OnStart {
 
 					task.defer(() => {
 						ContextActionService.SetImage(actionName, cfg.itemImage);
-						ContextActionService.SetPosition(actionName, UDim2.fromScale(0.125, 0.24));
+						ContextActionService.SetPosition(actionName, UDim2.fromScale(0.24, 0.475));
 						pcall(() => {
 							const button = ContextActionService.GetButton(actionName);
 							if (button) {

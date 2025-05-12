@@ -7,6 +7,7 @@ export interface ItemStat {
 	key: string;
 	value: string | number;
 	icon: string; // Asset ID
+	type?: "time" | "multiplier";
 }
 
 export const getRewardImage = (reward: Reward) => {

@@ -211,11 +211,12 @@ export const BuyButton = (props: BuyButtonProps) => {
 					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 					key={"Amount"}
 					Position={UDim2.fromScale(0.552466, 0.5)}
-					Size={UDim2.fromScale(1, 0.806)}
+					Size={UDim2.fromScale(1, 0.65)}
 					Text={displayText}
 					RichText={false}
 					TextColor3={new Color3(1, 1, 1)}
 					TextSize={px.ceil(props.textSize ?? 25)}
+					// TextScaled={true}
 					TextXAlignment={Enum.TextXAlignment.Center}
 					ZIndex={10}
 				>
@@ -226,16 +227,17 @@ export const BuyButton = (props: BuyButtonProps) => {
 						BackgroundTransparency={1}
 						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 						key={"Amount"}
-						Position={UDim2.fromScale(0.5, 0.475)}
-						Size={UDim2.fromScale(1, 0.806)}
+						Position={UDim2.fromScale(0.5, 0.45)}
+						Size={UDim2.fromScale(1, 1)}
 						Text={displayText}
 						RichText={false}
 						TextColor3={new Color3(1, 1, 1)}
 						TextSize={px.ceil(props.textSize ?? 25)}
+						// TextScaled={true}
 						TextXAlignment={Enum.TextXAlignment.Center}
 						ZIndex={9}
 					>
-						<uistroke key={"UIStroke"} Thickness={px.ceil(2)} />
+						<uistroke key={"UIStroke"} Thickness={px(2.5)} />
 					</textlabel>
 				</textlabel>
 			</imagelabel>

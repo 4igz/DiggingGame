@@ -445,7 +445,6 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 					Position={UDim2.fromScale(0.5, 0.5)}
 					Size={UDim2.fromScale(1, 1)}
 				/>
-
 				<folder key={"Bars"}>
 					<imagelabel
 						Active={false}
@@ -622,9 +621,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 						</textlabel>
 					</imagelabel>
 				</folder>
-
 				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.61} />
-
 				<frame
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
@@ -695,6 +692,41 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				</frame>
 
 				<frame
+					BackgroundTransparency={1}
+					key={"Title"}
+					Position={UDim2.fromScale(0.102245, -0.102229)}
+					Size={UDim2.fromScale(0.703086, 0.0800461)}
+					ZIndex={10}
+					Visible={true}
+				>
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						TextTransparency={0}
+						BackgroundTransparency={1}
+						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						LayoutOrder={1}
+						key={"Title"}
+						Position={UDim2.fromScale(0.768435, 0.506021)}
+						Size={UDim2.fromScale(1.12169, 0.961364)}
+						Text={`${
+							platform === "PC"
+								? "Click"
+								: platform === "Mobile"
+								? "Tap"
+								: platform === "Console"
+								? "L2/R2"
+								: "Tap"
+						} to Dig!`}
+						TextColor3={new Color3(1, 1, 1)}
+						// TextScaled={true}
+						TextSize={px(25)}
+						TextXAlignment={Enum.TextXAlignment.Left}
+					>
+						<uistroke key={"UIStroke"} Thickness={px(3)} Transparency={0} />
+					</textlabel>
+				</frame>
+
+				<frame
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 					BackgroundTransparency={1}
@@ -733,9 +765,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 						/>
 					</imagelabel>
 				</frame>
-
 				<uiscale key={"UIScale"} />
-
 				<folder key={"Bars2"}>
 					<imagelabel
 						Active={false}
@@ -937,7 +967,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 				BackgroundTransparency={1}
 				Position={UDim2.fromScale(0.5, 0.75)}
 				Size={UDim2.fromScale(0.233, 0.076)}
-				Visible={showReminder}
+				Visible={false}
 			>
 				<textlabel
 					key={"TextLabel"}

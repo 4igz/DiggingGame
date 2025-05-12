@@ -161,7 +161,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							TextSize={px(30)}
 							TextXAlignment={Enum.TextXAlignment.Left}
 						>
-							<uistroke key={"UIStroke"} Thickness={px(3)} />
+							<uistroke key={"UIStroke"} Thickness={px(2.5)} />
 
 							<uipadding
 								key={"UIPadding"}
@@ -209,7 +209,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 									new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
 								}
 								key={"Rarity"}
-								Position={UDim2.fromScale(0.5, 0.43)}
+								Position={UDim2.fromScale(0.50395, 0.43)}
 								Size={UDim2.fromScale(1, 1)}
 								Text={props.rarity}
 								TextColor3={gameConstants.RARITY_COLORS[props.rarity]}
@@ -241,7 +241,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							TextSize={px(25)}
 							TextXAlignment={Enum.TextXAlignment.Right}
 						>
-							<uistroke key={"UIStroke"} Thickness={px(3)} />
+							<uistroke key={"UIStroke"} Thickness={px.ceil(2)} />
 
 							<textlabel
 								AnchorPoint={new Vector2(0.5, 0.5)}
@@ -251,7 +251,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 								}
 								LayoutOrder={1}
 								key={"Name"}
-								Position={UDim2.fromScale(0.5, 0.45)}
+								Position={UDim2.fromScale(0.50395, 0.45)}
 								Size={UDim2.fromScale(1, 1)}
 								Text={props.itemName}
 								TextColor3={new Color3(1, 1, 1)}
@@ -259,7 +259,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 								TextSize={px(25)}
 								TextXAlignment={Enum.TextXAlignment.Right}
 							>
-								<uistroke key={"UIStroke"} Thickness={px(3)} />
+								<uistroke key={"UIStroke"} Thickness={px.ceil(2)} />
 							</textlabel>
 						</textlabel>
 					</frame>
@@ -300,7 +300,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 					Visible={!owned}
 					ZIndex={16}
 				>
-					<uistroke Color={Color3.fromRGB(23, 30, 52)} key={"2"} Thickness={px(4.6)} />
+					<uistroke Color={Color3.fromRGB(23, 30, 52)} key={"2"} Thickness={px(3)} />
 				</textlabel>
 				<frame
 					BackgroundColor3={new Color3()}
@@ -490,7 +490,7 @@ export const BoatShopComponent: React.FC<ShopProps> = (props) => {
 				TextScaled={true}
 				TextXAlignment={Enum.TextXAlignment.Left}
 			>
-				<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(4)} />
+				<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(5)} />
 
 				<uipadding
 					key={"UIPadding"}

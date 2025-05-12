@@ -116,6 +116,8 @@ export class ShovelController implements OnStart {
 
 			character.ChildAdded.Connect((child) => {
 				if (child.IsA("Tool") && shovelConfig[child.Name] !== undefined) {
+					const cfg = shovelConfig[child.Name];
+
 					const toolTrove = new Trove();
 
 					mouse.Icon = "";
@@ -298,8 +300,14 @@ export class ShovelController implements OnStart {
 						"Disconnect",
 					);
 
+					const actionName = "ShovelAction";
+
 					const shovelAction = (_: string, inputState: Enum.UserInputState) => {
 						if (inputState === Enum.UserInputState.Begin) {
+							const button = ContextActionService.GetButton(actionName);
+							if (button) {
+								button.Image = "rbxassetid://5713982324";
+							}
 							Signals.gotDigInput.Fire();
 
 							if (this.diggingActive) {
@@ -355,19 +363,40 @@ export class ShovelController implements OnStart {
 										humanoid.WalkSpeed = 16;
 									});
 							}
+						} else if (inputState === Enum.UserInputState.End) {
+							const button = ContextActionService.GetButton(actionName);
+							if (button) {
+								button.Image = "rbxassetid://5713982324";
+							}
 						}
 					};
 
-					const actionName = "ShovelAction";
-
 					// === Hook into tool activation ===
-					ContextActionService.BindAction(actionName, shovelAction, false, ...DIG_KEYBINDS);
+					ContextActionService.BindAction(actionName, shovelAction, true, ...DIG_KEYBINDS);
 
-					const uisConnection = UserInputService.TouchTap.Connect((input, gameProcessedEvent) => {
-						if (gameProcessedEvent) return;
-						Signals.gotDigInput.Fire();
-						shovelAction(actionName, Enum.UserInputState.Begin);
+					task.defer(() => {
+						ContextActionService.SetImage(actionName, cfg.itemImage);
+						ContextActionService.SetPosition(actionName, UDim2.fromScale(0.24, 0.475));
+						const button = ContextActionService.GetButton(actionName);
+						if (button) {
+							button.Size = new UDim2(0, 75, 0, 75);
+							button.Image = "rbxassetid://5713982324";
+							button.HoverImage = "rbxassetid://5713982324";
+							button.PressedImage = "rbxassetid://5713982324";
+							button.ImageTransparency = 0.6;
+
+							const btnImage = button.WaitForChild("ActionIcon") as ImageLabel;
+							btnImage.AnchorPoint = new Vector2(0.5, 0.5);
+							btnImage.Size = UDim2.fromScale(0.75, 0.75);
+							btnImage.Position = UDim2.fromScale(0.5, 0.5);
+						}
 					});
+
+					// const uisConnection = UserInputService.TouchTap.Connect((input, gameProcessedEvent) => {
+					// 	if (gameProcessedEvent) return;
+					// 	Signals.gotDigInput.Fire();
+					// 	shovelAction(actionName, Enum.UserInputState.Begin);
+					// });
 
 					// === Cleanup on tool removal ===
 					toolTrove.add(() => {
@@ -376,7 +405,7 @@ export class ShovelController implements OnStart {
 						pcall(() => {
 							ContextActionService.UnbindAction(actionName);
 						});
-						uisConnection.Disconnect();
+						// uisConnection.Disconnect();
 						mouse.Icon = "";
 						digTrack.Stop();
 
@@ -1012,7 +1041,7 @@ export class ShovelController implements OnStart {
 				const THROW_FORCE = observeAttribute("DigThrowForce", 20) as number;
 				const UP_FORCE = observeAttribute("DigUpForce", 5) as number;
 
-				if (primaryPart && target.digProgress >= target.maxProgress) {
+				if (primaryPart && target.successful) {
 					model.SetAttribute("DiggingComplete", true);
 					CollectionService.AddTag(model, "Treasure");
 					// Compute the direction from the object to the player

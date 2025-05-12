@@ -14,14 +14,14 @@ import {
 } from "@rbxts/services";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
-import { formatItemName, shortenNumber, spaceWords } from "shared/util/nameUtil";
+import { formatItemName, formatShortTime, shortenNumber, spaceWords } from "shared/util/nameUtil";
 import { shovelConfig } from "shared/config/shovelConfig";
 import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
 import { fullTargetConfig, targetConfig, trashConfig } from "shared/config/targetConfig";
 import { mapConfig } from "shared/config/mapConfig";
 import Object from "@rbxts/object-utils";
 import { getOneInXChance } from "shared/util/targetUtil";
-import { potionConfig } from "shared/config/potionConfig";
+import { potionConfig, PotionKind } from "shared/config/potionConfig";
 import { inventorySizeAtom, treasureCountAtom, treasureInventoryAtom } from "client/atoms/inventoryAtoms";
 import { Signals } from "shared/signals";
 import { GamepassController } from "client/controllers/gamepassController";
@@ -70,7 +70,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 
 	useEffect(() => {
 		// Get either strength or luck stat and set the order modifier based on that
-		const stat = stats.find((s) => s.key === "strength" || s.key === "luck");
+		const stat = stats.find((s) => s.key === "strength" || s.key === "luck" || s.key === "multiplier");
 		if (stat) {
 			setLayoutOrder(getOrderFromRarity(rarity, tonumber(stat.value)));
 		}
@@ -137,13 +137,13 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 						Visible={props.count !== undefined && props.count > 1}
 						BackgroundTransparency={1}
 						TextSize={px(30)}
-						TextXAlignment={"Left"}
+						TextXAlignment={"Right"}
 						Size={UDim2.fromScale(0.8, 0.2)}
 						TextColor3={new Color3(1, 1, 1)}
 						ZIndex={10}
 						FontFace={Font.fromEnum(Enum.Font.BuilderSansExtraBold)}
-						AnchorPoint={new Vector2(0.5, 0)}
-						Position={UDim2.fromScale(0.5, 0)}
+						AnchorPoint={new Vector2(1, 0)}
+						Position={UDim2.fromScale(0.9, 0.025)}
 					>
 						<uistroke Thickness={px(3)} />
 					</textlabel>
@@ -221,7 +221,11 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 									key={"Amount"}
 									Position={UDim2.fromScale(0.808, 0.382)}
 									Size={UDim2.fromScale(1.02, 0.763)}
-									Text={`x${shortenNumber(tonumber(stat.value) ?? 0)}`}
+									Text={
+										stat.type === "time"
+											? `${formatShortTime(tonumber(stat.value) ?? 0)}`
+											: `x${shortenNumber(tonumber(stat.value) ?? 0)}`
+									}
 									TextColor3={Color3.fromRGB(255, 255, 255)}
 									// TextScaled={true}
 									// TextWrapped={true}
@@ -1597,6 +1601,25 @@ export const InventoryComponent = (props: MainUiProps) => {
 					value: item.strengthMult,
 					icon: "rbxassetid://100052274681629",
 				});
+			} else if (item.type === "Potions") {
+				stats.push(
+					{
+						key: "duration",
+						value: item.duration,
+						icon: "http://www.roblox.com/asset/?id=17383555514",
+						type: "time",
+					},
+					{
+						key: "multiplier",
+						value: item.multiplier,
+						icon:
+							item.kind === PotionKind.STRENGTH
+								? "rbxassetid://100052274681629"
+								: item.kind === PotionKind.LUCK
+								? "rbxassetid://85733831609212"
+								: "",
+					},
+				);
 			} else if (item.type === "Target") {
 				// Populate stats
 				stats.push({ key: "weight", value: item.weight, icon: "" });

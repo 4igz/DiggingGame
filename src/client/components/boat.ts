@@ -222,12 +222,11 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 		}
 	}
 
-	onRender(dt: number): void {
+	onRender(_dt: number): void {
 		if (!this.isOwner) return;
-		const rootPart = this.instance.PrimaryPart; // Assuming the boat is a Model with a PrimaryPart
+		const rootPart = this.instance.PrimaryPart;
 		if (!rootPart) return;
 
-		// Get current CFrame
 		const currentCFrame = rootPart.CFrame;
 
 		const forwardVector = currentCFrame.LookVector;
@@ -242,7 +241,7 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 		// Apply the corrected CFrame
 		rootPart.CFrame = uprightCFrame;
 
-		const wakeSpeedThreshold = 25; // Define a threshold for enabling the wake
+		const wakeSpeedThreshold = 25;
 
 		const currentSpeed = this.instance.Physics.AssemblyLinearVelocity.Magnitude;
 		if (currentSpeed > wakeSpeedThreshold) {
@@ -252,13 +251,20 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 		}
 
 		if (!this.isSittingInDriverSeat) return;
-		// const character = Players.LocalPlayer.Character;
-		// if (!character) return;
-		// const ownerSeat = this.instance.OwnerSeat;
-		// character.PivotTo(ownerSeat.CFrame.add(new Vector3(0, 1, 0)));
+		const character = Players.LocalPlayer.Character;
+		if (!character) return;
+		const humanoid = character.FindFirstChild("Humanoid") as Humanoid | undefined;
+		if (!humanoid || humanoid.GetState() === Enum.HumanoidStateType.Dead) return;
 		const Vf = this.instance.Physics.ForceAttachment.LinearVelocity;
+		const Af = this.instance.Physics.ForceAttachment.AngularVelocity;
 
 		let moveVector = this.controls.GetMoveVector();
+
+		// Add a deadzone for X axis (turning) to prevent accidental turning on mobile
+		const DEADZONE = 0.2;
+		if (math.abs(moveVector.X) < DEADZONE) {
+			moveVector = new Vector3(0, moveVector.Y, moveVector.Z);
+		}
 
 		// Allow player to just move forward with R2 since that is a common control scheme
 		if (UserInputService.IsGamepadButtonDown(Enum.UserInputType.Gamepad1, Enum.KeyCode.ButtonR2)) {
@@ -277,14 +283,17 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 		const vel = new Vector3(0, 0, targetForwardSpeed);
 		const targetAngularVelocity = new Vector3(0, targetTurnSpeed, 0);
 
-		// 2. Smoothly blend from current velocity to target velocity
-		// const FPS = 60; // Assume 60 FPS instead of using dt as framerates can differ and cause the boat to move slower/faster.
-		// const alpha = 1 - math.exp(-FPS * dt);
-		// this.currentVelocity = this.currentVelocity.Lerp(vel, alpha);
+		// If no controls are being touched, slow down the turn force (angular velocity)
+		// Only apply angular velocity damping if the turning magnitude (X axis) is 0
+		if (math.abs(moveVector.X) === 0) {
+			this.currentAngularVelocity = Vector3.zero;
+			Af.MaxTorque = 6500;
+		} else {
+			this.currentAngularVelocity = targetAngularVelocity;
+			Af.MaxTorque = 2000;
+		}
 
-		// this.currentAngularVelocity = this.currentAngularVelocity.Lerp(targetAngularVelocity, this.velocityBlendAlpha);
-
+		Af.AngularVelocity = this.currentAngularVelocity;
 		Vf.VectorVelocity = vel;
-		this.instance.Physics.ForceAttachment.AngularVelocity.AngularVelocity = targetAngularVelocity;
 	}
 }

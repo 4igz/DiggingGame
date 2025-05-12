@@ -571,6 +571,7 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 				key={"Background"}
 				Position={UDim2.fromScale(0.5, 0.5)}
 				SliceCenter={new Rect(70, 183, 979, 449)}
+				SliceScale={0.7}
 				ScaleType={Enum.ScaleType.Slice}
 				Size={UDim2.fromScale(1, 1)}
 			>
@@ -605,9 +606,7 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 					menuRefToClose={menuRef}
 				/>
 			</imagelabel>
-
 			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.8} />
-
 			<frame
 				AnchorPoint={new Vector2(0.5, 0.5)}
 				BackgroundTransparency={1}
@@ -657,15 +656,30 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 					LayoutOrder={1}
 					key={"Title"}
-					Position={UDim2.fromScale(0.9, 0.5)}
-					Size={UDim2.fromScale(1.04396, 1.1697)}
-					Text={`Daily Rewards ${timeLeft > 0 ? `- Come back later!` : ""}`}
-					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextScaled={false}
-					TextSize={px(45)}
-					TextXAlignment={"Left"}
+					Position={UDim2.fromScale(0.82, 0.5)}
+					Size={UDim2.fromScale(0.943417, 1.05705)}
+					Text={"Daily Rewards"}
+					TextColor3={Color3.fromRGB(18, 23, 40)}
+					TextScaled={true}
+					TextXAlignment={Enum.TextXAlignment.Left}
 				>
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(5.3)} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(18, 23, 40)} Thickness={px(5)} />
+
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						LayoutOrder={1}
+						key={"Title"}
+						Position={UDim2.fromScale(0.5, 0.45)}
+						Size={UDim2.fromScale(1, 1)}
+						Text={"Daily Rewards"}
+						TextColor3={new Color3(1, 1, 1)}
+						TextScaled={true}
+						TextXAlignment={Enum.TextXAlignment.Left}
+					>
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(18, 23, 40)} Thickness={px(5)} />
+					</textlabel>
 				</textlabel>
 
 				<imagelabel
@@ -675,7 +689,6 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 					ScaleType={Enum.ScaleType.Fit}
 					Size={UDim2.fromScale(0.285, 1.38)}
 					ZIndex={10}
-					Rotation={0 /*imageRotation.map((v) => v - 10)*/}
 				>
 					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 
@@ -684,9 +697,9 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 						BackgroundTransparency={1}
 						Image={"rbxassetid://82246683047981"}
 						key={"Icon"}
-						Position={UDim2.fromScale(0.676524, 0.493855)}
+						Position={UDim2.fromScale(0.677315, 0.560399)}
 						ScaleType={Enum.ScaleType.Fit}
-						Size={UDim2.fromScale(1.18132, 1.18559)}
+						Size={UDim2.fromScale(1.1829, 1.1829)}
 						ZIndex={10}
 					>
 						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />

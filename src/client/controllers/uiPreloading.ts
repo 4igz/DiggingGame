@@ -1,4 +1,4 @@
-import { Controller, OnStart } from "@flamework/core";
+import { Controller, OnInit, OnStart } from "@flamework/core";
 import { Players, ContentProvider, ReplicatedStorage } from "@rbxts/services";
 import Sift from "@rbxts/sift";
 
@@ -25,7 +25,7 @@ const MANUAL_PRELOAD = [
 ];
 
 @Controller()
-export class PreloadingController implements OnStart {
+export class PreloadingController implements OnInit {
 	private player = Players.LocalPlayer;
 	private ui = this.player.WaitForChild("PlayerGui") as PlayerGui;
 
@@ -171,7 +171,7 @@ export class PreloadingController implements OnStart {
 		});
 	}
 
-	onStart() {
+	onInit() {
 		ReplicatedStorage.SetAttribute("PreloadedImages", 0);
 		this.preloadUiImages();
 		this.queueLoad();

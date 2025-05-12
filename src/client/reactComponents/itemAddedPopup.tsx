@@ -32,7 +32,7 @@ export const TreasureAddedPopup = (props: TreasurePopupProps) => {
 	const POPUP_TIME = 5;
 
 	useEffect(() => {
-		setSizeMotion.spring(UDim2.fromScale(0.3, 0.05), springs.responsive);
+		setSizeMotion.spring(UDim2.fromScale(0.4, 0.05), springs.responsive);
 
 		task.delay(POPUP_TIME, () => {
 			setSizeMotion.onComplete(() => {
@@ -144,7 +144,7 @@ export const TreasureAddedPopup = (props: TreasurePopupProps) => {
 				FontFace={Font.fromEnum(Enum.Font.FredokaOne)}
 				key={"ExplainerText"}
 				RichText={true}
-				Size={UDim2.fromScale(2, 1)}
+				Size={UDim2.fromScale(2, 1.5)}
 				TextXAlignment={Enum.TextXAlignment.Center}
 				Text={
 					trashConfig[props.itemName]

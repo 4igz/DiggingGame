@@ -59,7 +59,6 @@ const menus: Map<
 	string,
 	{ root: ReactRoblox.Root; element: React.Element; props: object; layer: LayerOrder; gui: ScreenGui }
 > = new Map();
-let currentOpenUi: string | undefined;
 let diggingBarActive = false; // We create this, so that we can cancel any active digging bar if we open another UI.
 let autoDiggingEnabled = false;
 math.randomseed(tick());
@@ -83,6 +82,8 @@ const EFFECTS_TWEEN_INFO = new TweenInfo(0.1, Enum.EasingStyle.Linear, Enum.Easi
 	loadOrder: 0,
 })
 export default class UiController implements OnStart, OnInit {
+	public currentOpenUi: string | undefined;
+
 	constructor(
 		private readonly autoDigging: AutoDigging,
 		private readonly zoneController: ZoneController,
@@ -112,10 +113,10 @@ export default class UiController implements OnStart, OnInit {
 			} else {
 				// We want to open the dig bar
 				// If autoDigging is NOT enabled, close current UI first
-				if (!autoDiggingEnabled && currentOpenUi) {
-					this.closeUi(currentOpenUi);
+				if (!autoDiggingEnabled && this.currentOpenUi) {
+					this.closeUi(this.currentOpenUi);
 				}
-				// Now open the dig bar without overriding `currentOpenUi`
+				// Now open the dig bar without overriding `this.currentOpenUi`
 				diggingBarActive = true;
 				this.updateUiProps(name, { resetTrigger: tick(), visible: true, ...newProps });
 				return;
@@ -123,14 +124,14 @@ export default class UiController implements OnStart, OnInit {
 		}
 
 		// If we get here, we're toggling a "normal" UI (not the dig bar)
-		if (currentOpenUi === name && closeIfAlreadyToggled) {
+		if (this.currentOpenUi === name && closeIfAlreadyToggled) {
 			// If it's already open, close it
 			this.closeUi(name);
 		} else {
 			// Opening a new normal UI
 			// Close the old normal UI if one exists
-			if (currentOpenUi !== undefined) {
-				this.closeUi(currentOpenUi);
+			if (this.currentOpenUi !== undefined) {
+				this.closeUi(this.currentOpenUi);
 			}
 			// If dig bar is open but autoDigging is disabled, close the dig bar
 			if (diggingBarActive && !autoDiggingEnabled) {
@@ -138,7 +139,7 @@ export default class UiController implements OnStart, OnInit {
 			}
 
 			menu.gui.Enabled = true;
-			currentOpenUi = name;
+			this.currentOpenUi = name;
 			this.updateUiProps(name, { resetTrigger: tick(), visible: true, ...newProps });
 
 			// MenuBlur and FOV effects on MENU_LAYER UIs
@@ -149,7 +150,7 @@ export default class UiController implements OnStart, OnInit {
 	}
 
 	public isMenuLayerOpen() {
-		const menu = menus.get(currentOpenUi!);
+		const menu = menus.get(this.currentOpenUi!);
 		if (!menu) return false;
 		return menu.layer === MENU_LAYER;
 	}
@@ -178,9 +179,9 @@ export default class UiController implements OnStart, OnInit {
 		}
 
 		// Otherwise, if the UI we're closing is the current one, clear it
-		if (currentOpenUi === name) {
+		if (this.currentOpenUi === name) {
 			menu.gui.Enabled = false;
-			currentOpenUi = undefined;
+			this.currentOpenUi = undefined;
 		}
 	}
 

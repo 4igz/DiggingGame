@@ -40,6 +40,7 @@ export interface NetworkedTarget {
 	mapName: keyof typeof mapConfig;
 	owner: Player;
 	base?: BasePart;
+	successful?: boolean;
 }
 
 export interface QuestProgress {

@@ -168,7 +168,9 @@ export class TargetService implements OnStart {
 				})),
 			]);
 
-			Events.soldItem(player, target.name, cfg.rarityType, target.weight * cfg.basePrice);
+			const owns2x = this.gamepassService.ownsGamepass(player, gameConstants.GAMEPASS_IDS["x2Cash"]) === true;
+
+			Events.soldItem(player, target.name, cfg.rarityType, target.weight * cfg.basePrice * (owns2x ? 2 : 1));
 		});
 
 		Events.sellAll.connect((player) => {
@@ -215,7 +217,8 @@ export class TargetService implements OnStart {
 				},
 				[],
 			]);
-			Events.soldAllItems(player, count, total);
+			const owns2x = this.gamepassService.ownsGamepass(player, gameConstants.GAMEPASS_IDS["x2Cash"]) === true;
+			Events.soldAllItems(player, count, total * (owns2x ? 2 : 1));
 		});
 
 		Signals.detectorInitialized.Connect((player, detector) => {
@@ -516,6 +519,7 @@ export class TargetService implements OnStart {
 				mapName: target.mapName,
 				maxProgress: target.maxProgress,
 				base: target.base,
+				successful: !failed,
 			});
 		}
 

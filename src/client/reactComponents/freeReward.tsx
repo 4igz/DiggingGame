@@ -85,10 +85,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 				Position={UDim2.fromScale(0.5, 0.5)}
 				Size={UDim2.fromScale(1, 1)}
 				ZIndex={-2}
-			>
-				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.5} />
-			</imagelabel>
-
+			/>
 			<imagelabel
 				AnchorPoint={new Vector2(0.5, 0.5)}
 				BackgroundTransparency={1}
@@ -101,20 +98,21 @@ export const FreeReward = (props: FreeRewardProps) => {
 				ZIndex={2}
 			/>
 
+			<uiaspectratioconstraint AspectRatio={1.81} />
+
 			<textlabel
 				BackgroundTransparency={1}
 				FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 				key={"Title"}
-				Position={UDim2.fromScale(0.125182, -0.0503847)}
-				Size={UDim2.fromScale(0.437538, 0.138158)}
+				Position={UDim2.fromScale(0.125182, -0.0762256)}
+				Size={UDim2.fromScale(0.519374, 0.163999)}
 				Text={"Free Reward"}
-				TextColor3={new Color3(1, 1, 1)}
+				TextColor3={Color3.fromRGB(23, 30, 52)}
 				TextScaled={true}
-				// TextSize={px(30)}
 				TextXAlignment={Enum.TextXAlignment.Left}
 				ZIndex={4}
 			>
-				<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(3)} />
+				<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(5)} />
 
 				<uigradient
 					key={"UIGradient"}
@@ -127,6 +125,34 @@ export const FreeReward = (props: FreeRewardProps) => {
 					}
 					Rotation={90}
 				/>
+
+				<textlabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundTransparency={1}
+					FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					key={"Title"}
+					Position={UDim2.fromScale(0.5, 0.46)}
+					Size={UDim2.fromScale(1, 1)}
+					Text={"Free Reward"}
+					TextColor3={new Color3(1, 1, 1)}
+					TextScaled={true}
+					TextXAlignment={Enum.TextXAlignment.Left}
+					ZIndex={4}
+				>
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(5)} />
+
+					<uigradient
+						key={"UIGradient"}
+						Color={
+							new ColorSequence([
+								new ColorSequenceKeypoint(0, new Color3(1, 1, 1)),
+								new ColorSequenceKeypoint(0.384083, new Color3(1, 1, 1)),
+								new ColorSequenceKeypoint(1, Color3.fromRGB(255, 204, 74)),
+							])
+						}
+						Rotation={90}
+					/>
+				</textlabel>
 			</textlabel>
 
 			<ExitButton
@@ -134,13 +160,12 @@ export const FreeReward = (props: FreeRewardProps) => {
 				uiName={gameConstants.FREE_REWARD_UI}
 				isMenuVisible={visible}
 			/>
-
 			<imagelabel
 				BackgroundTransparency={1}
 				Image={"rbxassetid://103970377309616"}
 				key={"DisplayLeft"}
-				Position={UDim2.fromScale(0.0304927, 0.0764869)}
-				Size={UDim2.fromScale(0.392544, 0.84375)}
+				Position={UDim2.fromScale(0.045, 0.088)}
+				Size={UDim2.fromScale(0.323, 0.832)}
 				ZIndex={0}
 			>
 				<textlabel
@@ -183,7 +208,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 					TextScaled={true}
 					ZIndex={2}
 				>
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px(3)} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px(4)} />
 
 					<textlabel
 						AnchorPoint={new Vector2(0.5, 0.5)}
@@ -197,7 +222,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 						TextScaled={true}
 						ZIndex={2}
 					>
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px(3)} />
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px(4)} />
 
 						<uigradient
 							key={"UIGradient"}
@@ -222,8 +247,6 @@ export const FreeReward = (props: FreeRewardProps) => {
 					}
 					Rotation={90}
 				/>
-
-				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.697856} />
 
 				<imagelabel
 					AnchorPoint={new Vector2(0.5, 0.5)}
@@ -301,19 +324,14 @@ export const FreeReward = (props: FreeRewardProps) => {
 					</textlabel>
 				</frame>
 			</imagelabel>
-
-			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.5} />
-
 			<imagelabel
 				BackgroundTransparency={1}
 				Image={"rbxassetid://84909493980683"}
 				key={"DisplayRight"}
-				Position={UDim2.fromScale(0.4, 0.0894969)}
-				Size={UDim2.fromScale(0.6, 0.820724)}
+				Position={UDim2.fromScale(0.378, 0.088)}
+				Size={UDim2.fromScale(0.592, 0.832)}
 				ZIndex={-1}
 			>
-				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1} />
-
 				<imagelabel
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundTransparency={1}
@@ -441,7 +459,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 					<imagelabel
 						AnchorPoint={new Vector2(0.5, 0.5)}
 						BackgroundTransparency={1}
-						Image={"rbxassetid://127513841052443"}
+						Image={"rbxassetid://15998186886"}
 						key={"Icon"}
 						Position={UDim2.fromScale(0.473635, 0.356499)}
 						Rotation={-15.0155}
@@ -461,21 +479,21 @@ export const FreeReward = (props: FreeRewardProps) => {
 						TextScaled={true}
 						ZIndex={2}
 					>
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px(3)} />
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px.ceil(2.5)} />
 
 						<textlabel
 							AnchorPoint={new Vector2(0.5, 0.5)}
 							BackgroundTransparency={1}
 							FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 							key={"Title"}
-							Position={UDim2.fromScale(0.5, 0.45)}
+							Position={UDim2.fromScale(0.50395, 0.45)}
 							Size={UDim2.fromScale(1, 1)}
 							Text={"LIKE THE GAME"}
 							TextColor3={new Color3(1, 1, 1)}
 							TextScaled={true}
 							ZIndex={2}
 						>
-							<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px(3)} />
+							<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px.ceil(2.5)} />
 						</textlabel>
 					</textlabel>
 				</frame>
@@ -497,7 +515,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 					<imagelabel
 						AnchorPoint={new Vector2(0.5, 0.5)}
 						BackgroundTransparency={1}
-						Image={"rbxassetid://127513841052443"}
+						Image={"rbxassetid://15998252639"}
 						key={"Icon"}
 						Position={UDim2.fromScale(0.473635, 0.356499)}
 						Rotation={-15.0155}
@@ -517,7 +535,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 						TextScaled={true}
 						ZIndex={2}
 					>
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px(3)} />
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px.ceil(2.5)} />
 
 						<textlabel
 							AnchorPoint={new Vector2(0.5, 0.5)}
@@ -531,7 +549,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 							TextScaled={true}
 							ZIndex={2}
 						>
-							<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px(3)} />
+							<uistroke key={"UIStroke"} Color={Color3.fromRGB(46, 46, 53)} Thickness={px.ceil(2.5)} />
 						</textlabel>
 					</textlabel>
 				</frame>

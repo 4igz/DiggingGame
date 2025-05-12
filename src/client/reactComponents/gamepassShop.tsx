@@ -3157,6 +3157,7 @@ export const GamepassShop = (props: GamepassShopProps) => {
 										position={UDim2.fromScale(0.373846, 0.5)}
 										size={UDim2.fromScale(0.747692, 0.551847)}
 										active={true}
+										textSize={28}
 									/>
 
 									<uilistlayout
@@ -3492,6 +3493,7 @@ export const GamepassShop = (props: GamepassShopProps) => {
 										position={UDim2.fromScale(0.373846, 0.5)}
 										size={UDim2.fromScale(0.747692, 0.551847)}
 										active={true}
+										textSize={28}
 										layoutOrder={0}
 									/>
 
@@ -3593,11 +3595,11 @@ export const GamepassShop = (props: GamepassShopProps) => {
 										new ColorSequence([
 											new ColorSequenceKeypoint(0, new Color3(1, 1, 1)),
 											new ColorSequenceKeypoint(0.211073, new Color3(1, 1, 1)),
-											new ColorSequenceKeypoint(0.214533, Color3.fromRGB(150, 97, 255)),
-											new ColorSequenceKeypoint(0.219723, Color3.fromRGB(150, 97, 255)),
-											new ColorSequenceKeypoint(0.221453, Color3.fromRGB(255, 179, 249)),
-											new ColorSequenceKeypoint(0.33391, Color3.fromRGB(255, 179, 249)),
-											new ColorSequenceKeypoint(1, Color3.fromRGB(184, 61, 255)),
+											new ColorSequenceKeypoint(0.214533, Color3.fromRGB(255, 119, 73)),
+											new ColorSequenceKeypoint(0.219723, Color3.fromRGB(255, 119, 73)),
+											new ColorSequenceKeypoint(0.221453, Color3.fromRGB(255, 229, 126)),
+											new ColorSequenceKeypoint(0.33391, Color3.fromRGB(255, 198, 105)),
+											new ColorSequenceKeypoint(1, Color3.fromRGB(255, 152, 48)),
 										])
 									}
 									Rotation={5}
@@ -3614,7 +3616,7 @@ export const GamepassShop = (props: GamepassShopProps) => {
 
 								<imagelabel
 									BackgroundTransparency={1}
-									Image={"rbxassetid://80631854554558"}
+									Image={"rbxassetid://130116642788720"}
 									ImageTransparency={0.8}
 									key={"Money Cover"}
 									Position={UDim2.fromScale(-0.431884, -1.09537)}
@@ -3625,7 +3627,7 @@ export const GamepassShop = (props: GamepassShopProps) => {
 
 								<imagelabel
 									BackgroundTransparency={1}
-									Image={"rbxassetid://80631854554558"}
+									Image={"rbxassetid://130116642788720"}
 									ImageTransparency={0.8}
 									key={"Money Cover"}
 									Position={UDim2.fromScale(0.299761, 0.114712)}
@@ -3637,7 +3639,7 @@ export const GamepassShop = (props: GamepassShopProps) => {
 
 								<imagelabel
 									BackgroundTransparency={1}
-									Image={"rbxassetid://80631854554558"}
+									Image={"rbxassetid://130116642788720"}
 									ImageTransparency={0.8}
 									key={"Money Cover"}
 									Position={UDim2.fromScale(0.410019, 0.728058)}
@@ -3649,7 +3651,7 @@ export const GamepassShop = (props: GamepassShopProps) => {
 
 								<imagelabel
 									BackgroundTransparency={1}
-									Image={"rbxassetid://80631854554558"}
+									Image={"rbxassetid://130116642788720"}
 									ImageTransparency={0.8}
 									key={"Money Cover"}
 									Position={UDim2.fromScale(0.626495, 0.398109)}
@@ -3661,7 +3663,7 @@ export const GamepassShop = (props: GamepassShopProps) => {
 
 								<imagelabel
 									BackgroundTransparency={1}
-									Image={"rbxassetid://80631854554558"}
+									Image={"rbxassetid://130116642788720"}
 									ImageTransparency={0.8}
 									key={"Money Cover"}
 									Position={UDim2.fromScale(0.773019, -0.233578)}
@@ -3673,7 +3675,7 @@ export const GamepassShop = (props: GamepassShopProps) => {
 
 								<imagelabel
 									BackgroundTransparency={1}
-									Image={"rbxassetid://80631854554558"}
+									Image={"rbxassetid://130116642788720"}
 									ImageTransparency={0.8}
 									key={"Money Cover"}
 									Position={UDim2.fromScale(0.118677, 0.494343)}
@@ -3685,7 +3687,7 @@ export const GamepassShop = (props: GamepassShopProps) => {
 
 								<imagelabel
 									BackgroundTransparency={1}
-									Image={"rbxassetid://80631854554558"}
+									Image={"rbxassetid://130116642788720"}
 									ImageTransparency={0.8}
 									key={"Money Cover"}
 									Position={UDim2.fromScale(-0.0322354, -0.203606)}
@@ -3696,7 +3698,7 @@ export const GamepassShop = (props: GamepassShopProps) => {
 
 								<imagelabel
 									BackgroundTransparency={1}
-									Image={"rbxassetid://80631854554558"}
+									Image={"rbxassetid://130116642788720"}
 									ImageTransparency={0.8}
 									key={"Money Cover"}
 									Position={UDim2.fromScale(0.533467, -0.279723)}
@@ -3720,7 +3722,7 @@ export const GamepassShop = (props: GamepassShopProps) => {
 								TextXAlignment={Enum.TextXAlignment.Left}
 								ZIndex={10}
 							>
-								<uistroke key={"UIStroke"} Color={Color3.fromRGB(71, 71, 71)} Thickness={2.5} />
+								<uistroke key={"UIStroke"} Color={Color3.fromRGB(71, 71, 71)} Thickness={px(2.5)} />
 
 								<textlabel
 									AnchorPoint={new Vector2(0.5, 0.5)}
@@ -3735,14 +3737,14 @@ export const GamepassShop = (props: GamepassShopProps) => {
 									TextXAlignment={Enum.TextXAlignment.Left}
 									ZIndex={10}
 								>
-									<uistroke key={"UIStroke"} Color={Color3.fromRGB(71, 71, 71)} Thickness={2.5} />
+									<uistroke key={"UIStroke"} Color={Color3.fromRGB(71, 71, 71)} Thickness={px(2.5)} />
 
 									<uigradient
 										key={"UIGradient"}
 										Color={
 											new ColorSequence([
-												new ColorSequenceKeypoint(0, Color3.fromRGB(111, 39, 255)),
-												new ColorSequenceKeypoint(0.512111, Color3.fromRGB(250, 199, 255)),
+												new ColorSequenceKeypoint(0, Color3.fromRGB(255, 135, 38)),
+												new ColorSequenceKeypoint(0.512111, Color3.fromRGB(255, 245, 145)),
 												new ColorSequenceKeypoint(1, new Color3(1, 1, 1)),
 											])
 										}
@@ -4037,7 +4039,7 @@ export const GamepassShop = (props: GamepassShopProps) => {
 
 						<imagelabel
 							BackgroundTransparency={1}
-							Image={"rbxassetid://94467002753149"}
+							Image={"rbxassetid://91446871280359"}
 							key={"Money Cover"}
 							Position={UDim2.fromScale(0.0355239, -0.162013)}
 							ScaleType={Enum.ScaleType.Fit}

@@ -328,6 +328,12 @@ export const StarterPackFrame = (props: StarterPackFrameProps) => {
 	useEffect(() => {
 		subscribe(highestLimitedOfferPack, (newValue) => {
 			setOffer(newValue);
+			if (
+				props.uiController.isMenuLayerOpen() &&
+				props.uiController.currentOpenUi === gameConstants.PACK_FRAME_UI
+			) {
+				props.uiController.closeUi(gameConstants.PACK_FRAME_UI);
+			}
 		});
 	}, []);
 
