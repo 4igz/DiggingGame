@@ -61,7 +61,7 @@ export class LevelService implements OnStart {
 
 	private xpForLevel(level: number): number {
 		const BASE_EXP = 100;
-		const LEVEL_FORMULA_TRANSITION = 80;
+		const LEVEL_FORMULA_TRANSITION = 50;
 		const TRANSITION_MODIFIER = 13;
 		const LEVEL_EXPONENT = 1.5;
 

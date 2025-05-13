@@ -1835,7 +1835,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 		});
 
 		Events.drankPotion.connect((potionName) => {
-			Signals.actionPopup.Fire(`Drank potion ${formatItemName("Potions", potionName)}`);
+			Signals.actionPopup.Fire(`Drank ${formatItemName("Potions", potionName)}`);
 			Signals.drankPotion.Fire(potionName);
 		});
 

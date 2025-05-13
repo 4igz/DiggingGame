@@ -52,7 +52,7 @@ const PotionTimer = (props: PotionProps) => {
 		<imagelabel
 			Image={props.cfg.itemImage}
 			BackgroundTransparency={1}
-			Size={UDim2.fromScale(0.1, 1)}
+			Size={UDim2.fromScale(1, 1)}
 			AnchorPoint={new Vector2(0, 1)}
 			LayoutOrder={props.timeLeft}
 			key={props.potionName}
@@ -72,7 +72,7 @@ const PotionTimer = (props: PotionProps) => {
 				TextXAlignment={Enum.TextXAlignment.Center}
 				TextColor3={new Color3(1, 1, 1)}
 			>
-				<uistroke Thickness={px(3)} />
+				<uistroke Thickness={px(2)} />
 			</textlabel>
 		</imagelabel>
 	);
@@ -124,7 +124,6 @@ export const BottomTips = (props: BottomTipsProps) => {
 						potionName,
 						updateId: math.random(),
 						onComplete: () => {
-							print("Called oncomplete for potion: " + potionName);
 							removePotion(potionName);
 						},
 					},
@@ -156,7 +155,7 @@ export const BottomTips = (props: BottomTipsProps) => {
 			ZIndex={100}
 			Visible={true}
 		>
-			<uilistlayout FillDirection={"Horizontal"} Padding={new UDim(px(10), 0)} VerticalAlignment={"Bottom"} />
+			<uilistlayout FillDirection={"Horizontal"} Padding={new UDim(0, px(50))} VerticalAlignment={"Bottom"} />
 
 			<AnimatedButton
 				layoutOrder={0}
@@ -245,12 +244,19 @@ export const BottomTips = (props: BottomTipsProps) => {
 			</AnimatedButton>
 
 			<frame
-				Size={UDim2.fromScale(0.5, 1)}
+				Size={UDim2.fromScale(0.1, 1)}
+				AutomaticSize={"X"}
 				BackgroundTransparency={1}
-				LayoutOrder={1}
-				Position={UDim2.fromScale(-0.000172565, 1)}
+				LayoutOrder={2}
+				Position={UDim2.fromScale(0.5, 0.5)}
+				AnchorPoint={new Vector2(0.5, 0.5)}
 			>
-				<uilistlayout FillDirection={"Horizontal"} Padding={new UDim(0, 10)} />
+				<uilistlayout
+					FillDirection={"Horizontal"}
+					Padding={new UDim(0, px(10))}
+					SortOrder={"LayoutOrder"}
+					VerticalAlignment={"Bottom"}
+				/>
 
 				{currentPotions.map((v) => {
 					return (
