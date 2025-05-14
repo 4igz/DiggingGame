@@ -93,7 +93,7 @@ const isleZoneParts = CollectionService.GetTagged(gameConstants.ISLE_ZONE_TAG).f
 });
 const ZONE_BILLBOARD_DIST_THRESHOLD = 200;
 
-let currentMapName = "Grasslands";
+let currentMapName = "";
 let isFirstZoneEnter = true;
 let currentPlayingAreaSound: Sound | undefined;
 
@@ -157,6 +157,7 @@ export class ZoneController implements OnStart, OnRender {
 			character.WaitForChild("HumanoidRootPart");
 			character.PivotTo(goal);
 			Events.teleportSuccess.fire();
+			this.onZoneEnter(islandName);
 		});
 	}
 
@@ -194,6 +195,7 @@ export class ZoneController implements OnStart, OnRender {
 	}
 
 	onZoneEnter(zoneName: keyof typeof mapConfig) {
+		if (zoneName === currentMapName) return;
 		let tweenInfo = AREA_CHANGE_TWEEN_INFO;
 		if (isFirstZoneEnter) {
 			tweenInfo = new TweenInfo(0);
@@ -209,9 +211,10 @@ export class ZoneController implements OnStart, OnRender {
 	onZoneLeave() {
 		// Check if player is in any zones, and if not then assume they are in the sea.
 		let playerIsInZone = false;
-		for (const [, zone] of this.isleZoneMap) {
-			if (zone.findLocalPlayer()) {
+		for (const [name, zone] of this.isleZoneMap) {
+			if (zone.findLocalPlayer() === true) {
 				playerIsInZone = true;
+				this.onZoneEnter(name);
 				break;
 			}
 		}
@@ -228,6 +231,7 @@ export class ZoneController implements OnStart, OnRender {
 				WATER_COLOR_PROPERTIES_TABLE.HighSeas,
 			).Play();
 			this.playAreaSound("HighSeas");
+			currentMapName = "";
 		}
 	}
 

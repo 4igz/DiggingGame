@@ -16,7 +16,7 @@ interface CursorTooltipProps {
 export const CursorTooltip = (props: CursorTooltipProps) => {
 	const px = usePx();
 	const [position, setPosition] = useState(UDim2.fromOffset(0, 0));
-	const offset = props.offset ?? new Vector2(20, 20);
+	const offset = props.offset ?? new Vector2(40, -60);
 	const zIndex = props.zIndex ?? 10000;
 
 	// Set up a global mouse tracking effect

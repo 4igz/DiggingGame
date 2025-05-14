@@ -11,7 +11,7 @@ import { questConfig } from "shared/config/questConfig";
 import { PotionEffect } from "./services/gameplay/inventoryService";
 import { ReplicatedStorage } from "@rbxts/services";
 
-export const PROFILE_STORE_NAME = "pre_test62";
+export const PROFILE_STORE_NAME = "pre_test66";
 
 ReplicatedStorage.SetAttribute("CurrentStore", PROFILE_STORE_NAME);
 
@@ -34,9 +34,9 @@ export const profileTemplate = {
 
 	// Skills
 	skillPoints: 0,
-	strength: 1,
-	detection: 1,
-	luck: 1,
+	strength: 0,
+	detection: 0,
+	luck: 0,
 	inventorySize: gameConstants.TARGET_INVENTORY_DEFAULT_CAPACITY,
 
 	// Devproducts
@@ -55,12 +55,6 @@ export const profileTemplate = {
 	potionInventory: [] as Array<keyof typeof potionConfig>,
 	redeemedCodes: [] as Array<string>,
 
-	ownedBoats: new Map<string, boolean>(Object.keys(boatConfig).map((boatName) => [boatName, false])),
-	ownedGamepasses: new Map(Object.keys(gameConstants.GAMEPASS_IDS).map((id) => [id, false])),
-
-	questProgress: new Map<keyof typeof questConfig, QuestProgress>(
-		Object.keys(questConfig).map((questName) => [questName, { stage: 0, active: false, completed: false }]),
-	),
 	lastQuestReset: 0,
 
 	// This being marked means that the player is an exploiter, and is either going to be marked for future ban waves, or will not show up on leaderboards.
@@ -75,6 +69,13 @@ export const profileTemplate = {
 	isFirstJoin: true, // Replicated to client, then set to false. Subsequent joins will replicate false.
 	firedWrongEventDataTimes: 0,
 	claimedFreeReward: false,
+
+	ownedBoats: new Map<string, boolean>(Object.keys(boatConfig).map((boatName) => [boatName, false])),
+	ownedGamepasses: new Map(Object.keys(gameConstants.GAMEPASS_IDS).map((id) => [id, false])),
+
+	questProgress: new Map<keyof typeof questConfig, QuestProgress>(
+		Object.keys(questConfig).map((questName) => [questName, { stage: 0, active: false, completed: false }]),
+	),
 };
 
 export type ProfileTemplate = typeof profileTemplate;

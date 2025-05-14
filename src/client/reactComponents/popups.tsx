@@ -318,6 +318,7 @@ export const Popups = () => {
 				reward: kind,
 				itemName: reward,
 			});
+			SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("Claim") as Sound);
 		});
 
 		Signals.inventoryFull.Connect(() => {
@@ -337,6 +338,7 @@ export const Popups = () => {
 			queuePopup("InvalidAction", popupText, {
 				text: popupText,
 			});
+			SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("ErrorSound") as Sound);
 		});
 
 		Events.sendActionPopup.connect((message) => {
@@ -344,6 +346,7 @@ export const Popups = () => {
 			queuePopup("Action", popupText, {
 				text: popupText,
 			});
+			SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("ActionSuccess") as Sound);
 		});
 
 		Signals.actionPopup.Connect((text) => {

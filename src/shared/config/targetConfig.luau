@@ -193,7 +193,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		description = "A fossil of an ancient creature. Probably a creepy one.",
 		indexRarity = 700,
 	},
-	
+
 	["Heat Rock"] = {
 		rarity = 1_000,
 		rarityType = "Common",
@@ -288,7 +288,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://84253809232755",
 		description = "Basically ruby, but blue.",
 	},
-	
+
 	["Viking Dagger"] = {
 		rarity = 25,
 		indexRarity = 2000,
@@ -318,7 +318,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://88040817247637",
 		description = "Encrusted with a small ruby.",
 	},
-	
+
 	["Frozen Teddy"] = {
 		rarity = 250,
 		indexRarity = 5000,
@@ -348,7 +348,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://112949825522969",
 		description = "Some say topaz is a symbol of love.",
 	},
-	
+
 	["Small Gift"] = {
 		rarity = 700,
 		indexRarity = 50000,

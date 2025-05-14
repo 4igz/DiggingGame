@@ -51,7 +51,7 @@ local gameConstants = {
 	-- Skills modifiers
 	STRENGTH_MODIFIER = 0.1,
 	DETECTION_MODIFIER = 0.1,
-	LUCK_MODIFIER = 0.1,
+	LUCK_MODIFIER = 0.025,
 
 	STARTER_PACK_DISCOUNTED_PRICE = 6000,
 

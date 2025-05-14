@@ -440,154 +440,159 @@ const TreasureItemComponent: React.FC<TreasureItemComponentProps> = ({
 	const px = usePx();
 
 	return (
-		<AnimatedButton
-			layoutOrder={trashConfig[itemName] ? 2147483647 : getOrderFromRarity(rarity)}
-			position={UDim2.fromScale(-1.69e-7, -0.0175)}
-			size={UDim2.fromScale(0.179, 0.39)}
-			scales={new NumberRange(0.975, 1.025)}
-			onClick={() => {
-				Events.equipTreasure(itemName);
-				Signals.actionPopup.Fire(`Equipped ${spaceWords(itemName)}`);
-			}}
+		<frame
+			Size={UDim2.fromScale(0.179, 0.425)}
+			LayoutOrder={trashConfig[itemName] ? 2147483647 : getOrderFromRarity(rarity)}
+			BackgroundTransparency={1}
 		>
-			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-
-			<frame
-				AnchorPoint={new Vector2(0.5, 0.5)}
-				BackgroundColor3={Color3.fromRGB(17, 25, 49)}
-				BorderColor3={Color3.fromRGB(0, 0, 0)}
-				BorderSizePixel={0}
-				key={"Item"}
-				Position={UDim2.fromScale(0.5, 0.5)}
-				Size={UDim2.fromScale(0.9, 0.9)}
+			<AnimatedButton
+				scales={new NumberRange(0.975, 1.025)}
+				size={UDim2.fromScale(1, 1)}
+				onClick={() => {
+					Events.equipTreasure(itemName);
+					Signals.actionPopup.Fire(`Equipped ${spaceWords(itemName)}`);
+				}}
 			>
-				<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
-
-				<uistroke key={"UIStroke"} Color={gameConstants.RARITY_COLORS[rarity]} Thickness={px(3)} />
+				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1} />
 
 				<frame
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
-					key={"Stats"}
-					Position={UDim2.fromScale(0.0923, 0.069)}
-					Size={UDim2.fromScale(0.472, 0.374)}
-					ZIndex={3}
-					Visible={count === 1}
-				>
-					<uilistlayout
-						key={"UIListLayout"}
-						Padding={new UDim(0.05, 0)}
-						SortOrder={Enum.SortOrder.LayoutOrder}
-					/>
-
-					{stats.map((stat) => {
-						return (
-							<frame
-								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-								BackgroundTransparency={1}
-								BorderColor3={Color3.fromRGB(0, 0, 0)}
-								BorderSizePixel={0}
-								key={stat.key}
-								Size={UDim2.fromScale(0.902, 0.5)}
-							>
-								<uilistlayout
-									key={"UIListLayout"}
-									FillDirection={Enum.FillDirection.Horizontal}
-									Padding={new UDim(0.1, 0)}
-									SortOrder={Enum.SortOrder.LayoutOrder}
-									VerticalAlignment={Enum.VerticalAlignment.Center}
-								/>
-
-								<imagelabel
-									BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-									BackgroundTransparency={1}
-									BorderColor3={Color3.fromRGB(0, 0, 0)}
-									BorderSizePixel={0}
-									Image={stat.icon ?? "rbxassetid://100052274681629"}
-									key={"Icon"}
-									Position={UDim2.fromScale(0.287, 0.0263)}
-									ScaleType={Enum.ScaleType.Fit}
-									Size={UDim2.fromScale(0.3, 0.947)}
-								/>
-
-								<textlabel
-									AnchorPoint={new Vector2(0.5, 0.5)}
-									BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-									BackgroundTransparency={1}
-									BorderColor3={Color3.fromRGB(0, 0, 0)}
-									BorderSizePixel={0}
-									FontFace={
-										new Font(
-											"rbxassetid://16658221428",
-											Enum.FontWeight.Bold,
-											Enum.FontStyle.Normal,
-										)
-									}
-									key={"Amount"}
-									Position={UDim2.fromScale(0.808, 0.382)}
-									Size={UDim2.fromScale(1.02, 0.763)}
-									Text={`${string.format("%.1f", stat.value)}kg`}
-									TextColor3={Color3.fromRGB(255, 255, 255)}
-									TextScaled={true}
-									TextWrapped={true}
-									TextXAlignment={Enum.TextXAlignment.Left}
-								>
-									<uistroke key={"UIStroke"} Thickness={px(2)} />
-
-									<uipadding
-										key={"UIPadding"}
-										PaddingBottom={new UDim(0.0198, 0)}
-										PaddingTop={new UDim(0.0198, 0)}
-									/>
-								</textlabel>
-							</frame>
-						);
-					})}
-				</frame>
-
-				<textlabel
-					BackgroundTransparency={1}
-					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-					key={"Amount"}
-					Position={UDim2.fromScale(0.1, 0.1)}
-					Size={UDim2.fromScale(0.2, 0.2)}
-					Text={`x${count}`}
-					TextColor3={Color3.fromRGB(255, 255, 255)}
-					TextScaled={true}
-					TextXAlignment={Enum.TextXAlignment.Left}
-					Visible={count > 1}
-					ZIndex={10}
-				>
-					<uistroke key={"UIStroke"} Thickness={px(2)} />
-				</textlabel>
-
-				<imagelabel
 					AnchorPoint={new Vector2(0.5, 0.5)}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-					BackgroundTransparency={1}
+					BackgroundColor3={Color3.fromRGB(17, 25, 49)}
 					BorderColor3={Color3.fromRGB(0, 0, 0)}
 					BorderSizePixel={0}
-					key={"Icon"}
+					key={"Item"}
 					Position={UDim2.fromScale(0.5, 0.5)}
-					Size={UDim2.fromScale(1, 1)}
-					Image={itemImage}
+					Size={UDim2.fromScale(0.9, 0.9)}
 				>
-					<textlabel
-						Size={UDim2.fromScale(1, 0.3)}
-						Position={UDim2.fromScale(0, 0.9)}
+					<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
+
+					<uistroke key={"UIStroke"} Color={gameConstants.RARITY_COLORS[rarity]} Thickness={px(3)} />
+
+					<frame
+						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
 						BackgroundTransparency={1}
-						Text={itemName}
-						TextScaled={true}
-						TextColor3={Color3.fromRGB(255, 255, 255)}
-						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						BorderColor3={Color3.fromRGB(0, 0, 0)}
+						BorderSizePixel={0}
+						key={"Stats"}
+						Position={UDim2.fromScale(0.0923, 0.069)}
+						Size={UDim2.fromScale(0.472, 0.374)}
+						ZIndex={3}
+						Visible={count === 1}
 					>
-						<uistroke Thickness={px(2)} />
+						<uilistlayout
+							key={"UIListLayout"}
+							Padding={new UDim(0.05, 0)}
+							SortOrder={Enum.SortOrder.LayoutOrder}
+						/>
+
+						{stats.map((stat) => {
+							return (
+								<frame
+									BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+									BackgroundTransparency={1}
+									BorderColor3={Color3.fromRGB(0, 0, 0)}
+									BorderSizePixel={0}
+									key={stat.key}
+									Size={UDim2.fromScale(0.902, 0.5)}
+								>
+									<uilistlayout
+										key={"UIListLayout"}
+										FillDirection={Enum.FillDirection.Horizontal}
+										Padding={new UDim(0.1, 0)}
+										SortOrder={Enum.SortOrder.LayoutOrder}
+										VerticalAlignment={Enum.VerticalAlignment.Center}
+									/>
+
+									<imagelabel
+										BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+										BackgroundTransparency={1}
+										BorderColor3={Color3.fromRGB(0, 0, 0)}
+										BorderSizePixel={0}
+										Image={stat.icon ?? "rbxassetid://100052274681629"}
+										key={"Icon"}
+										Position={UDim2.fromScale(0.287, 0.0263)}
+										ScaleType={Enum.ScaleType.Fit}
+										Size={UDim2.fromScale(0.3, 0.947)}
+									/>
+
+									<textlabel
+										AnchorPoint={new Vector2(0.5, 0.5)}
+										BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+										BackgroundTransparency={1}
+										BorderColor3={Color3.fromRGB(0, 0, 0)}
+										BorderSizePixel={0}
+										FontFace={
+											new Font(
+												"rbxassetid://16658221428",
+												Enum.FontWeight.Bold,
+												Enum.FontStyle.Normal,
+											)
+										}
+										key={"Amount"}
+										Position={UDim2.fromScale(0.808, 0.382)}
+										Size={UDim2.fromScale(1.02, 0.763)}
+										Text={`${string.format("%.1f", stat.value)}kg`}
+										TextColor3={Color3.fromRGB(255, 255, 255)}
+										TextScaled={true}
+										TextWrapped={true}
+										TextXAlignment={Enum.TextXAlignment.Left}
+									>
+										<uistroke key={"UIStroke"} Thickness={px(2)} />
+
+										<uipadding
+											key={"UIPadding"}
+											PaddingBottom={new UDim(0.0198, 0)}
+											PaddingTop={new UDim(0.0198, 0)}
+										/>
+									</textlabel>
+								</frame>
+							);
+						})}
+					</frame>
+
+					<textlabel
+						BackgroundTransparency={1}
+						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						key={"Amount"}
+						Position={UDim2.fromScale(0.1, 0.1)}
+						Size={UDim2.fromScale(0.2, 0.2)}
+						Text={`x${count}`}
+						TextColor3={Color3.fromRGB(255, 255, 255)}
+						TextScaled={true}
+						TextXAlignment={Enum.TextXAlignment.Left}
+						Visible={count > 1}
+						ZIndex={10}
+					>
+						<uistroke key={"UIStroke"} Thickness={px(2)} />
 					</textlabel>
-				</imagelabel>
-			</frame>
-		</AnimatedButton>
+
+					<imagelabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+						BackgroundTransparency={1}
+						BorderColor3={Color3.fromRGB(0, 0, 0)}
+						BorderSizePixel={0}
+						key={"Icon"}
+						Position={UDim2.fromScale(0.5, 0.5)}
+						Size={UDim2.fromScale(1, 1)}
+						Image={itemImage}
+					>
+						<textlabel
+							key={"ItemName"}
+							Size={UDim2.fromScale(1, 0.2)}
+							Position={UDim2.fromScale(0, 1)}
+							BackgroundTransparency={1}
+							Text={itemName}
+							TextScaled={true}
+							TextColor3={Color3.fromRGB(255, 255, 255)}
+							FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						>
+							<uistroke Thickness={px(2)} />
+						</textlabel>
+					</imagelabel>
+				</frame>
+			</AnimatedButton>
+		</frame>
 	);
 };
 
@@ -2067,7 +2072,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 							<uilistlayout
 								key={"UIListLayout"}
 								FillDirection={Enum.FillDirection.Horizontal}
-								Padding={new UDim(selectedInventoryType === "Target" ? 0.02 : 0.01, 0)}
+								Padding={new UDim(selectedInventoryType === "Target" ? 0.025 : 0.01, 0)}
 								SortOrder={Enum.SortOrder.LayoutOrder}
 								Wraps={selectedInventoryType === "Target" ? true : false}
 								VerticalAlignment={
@@ -2943,7 +2948,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 					TextXAlignment={Enum.TextXAlignment.Right}
 					TextYAlignment={Enum.TextYAlignment.Top}
 				>
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(20, 38, 80)} Thickness={px(3.5)} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(20, 38, 80)} Thickness={px(2.5)} />
 
 					<uipadding
 						key={"UIPadding"}

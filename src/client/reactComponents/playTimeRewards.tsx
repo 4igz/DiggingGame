@@ -115,7 +115,6 @@ const RewardSlot = (props: {
 				errorText={"Already claimed!"}
 				onClick={() => {
 					if (serverAllowedToClaim || time() >= props.requiredTime) {
-						SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("Claim") as Sound);
 						setClaimed(true);
 						if (serverAllowedToClaim) {
 							setServerAllowedToClaim(false);

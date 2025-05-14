@@ -111,9 +111,9 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 
 	useEffect(() => {
 		if (visible) {
-			popInMotion.spring(UDim2.fromScale(0.75, 0.5), springs.bubbly);
+			popInMotion.spring(UDim2.fromScale(0.75, 0.41), springs.bubbly);
 		} else {
-			popInMotion.immediate(UDim2.fromScale(0.75, 0.6));
+			popInMotion.immediate(UDim2.fromScale(0.75, 0.51));
 		}
 
 		let time = 0;

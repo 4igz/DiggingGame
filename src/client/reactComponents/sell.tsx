@@ -6,7 +6,7 @@ import { Events, Functions } from "client/network";
 import { springs } from "client/utils/springs";
 import { gameConstants } from "shared/gameConstants";
 import { TargetItem } from "shared/networkTypes";
-import { ExitButton, SellAllBtn } from "./inventory";
+import { ExitButton, InventoryItemProps, SellAllBtn } from "./inventory";
 import { fullTargetConfig } from "shared/config/targetConfig";
 import { shortenNumber } from "shared/util/nameUtil";
 import { getOrderFromRarity } from "shared/util/rarityUtil";
@@ -17,11 +17,14 @@ import { usePx } from "client/hooks/usePx";
 
 interface SellTargetProps {
 	target: TargetItem;
+	count: number;
 }
 
 const SellTargetComponent: React.FC<SellTargetProps> = (props) => {
 	const cfg = fullTargetConfig[props.target.name];
 	const rarity = cfg.rarityType;
+
+	const px = usePx();
 
 	return (
 		<frame
@@ -44,7 +47,7 @@ const SellTargetComponent: React.FC<SellTargetProps> = (props) => {
 			>
 				{/* <uiaspectratioconstraint key={"UIAspectRatioConstraint"} /> */}
 				<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
-				<uistroke key={"UIStroke"} Color={gameConstants.RARITY_COLORS[cfg.rarityType]} Thickness={3} />
+				<uistroke key={"UIStroke"} Color={gameConstants.RARITY_COLORS[cfg.rarityType]} Thickness={px(3)} />
 				<imagelabel
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -66,7 +69,23 @@ const SellTargetComponent: React.FC<SellTargetProps> = (props) => {
 					TextColor3={Color3.fromRGB(255, 255, 255)}
 					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 				>
-					<uistroke Thickness={2} />
+					<uistroke Thickness={px(2)} />
+				</textlabel>
+
+				<textlabel
+					BackgroundTransparency={1}
+					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					key={"Amount"}
+					Position={UDim2.fromScale(0.1, 0.1)}
+					Size={UDim2.fromScale(0.2, 0.2)}
+					Text={`x${props.count}`}
+					TextColor3={Color3.fromRGB(255, 255, 255)}
+					TextScaled={true}
+					TextXAlignment={Enum.TextXAlignment.Left}
+					Visible={props.count > 1}
+					ZIndex={10}
+				>
+					<uistroke key={"UIStroke"} Thickness={px(2)} />
 				</textlabel>
 
 				<textlabel
@@ -81,8 +100,9 @@ const SellTargetComponent: React.FC<SellTargetProps> = (props) => {
 					TextWrapped={true}
 					TextXAlignment={Enum.TextXAlignment.Left}
 					ZIndex={10}
+					Visible={props.count === 1}
 				>
-					<uistroke Color={Color3.fromRGB(23, 30, 52)} key={"4"} Thickness={3} />
+					<uistroke Color={Color3.fromRGB(23, 30, 52)} key={"4"} Thickness={px(3)} />
 				</textlabel>
 			</AnimatedButton>
 		</frame>
@@ -95,13 +115,29 @@ interface SellUiProps {
 }
 
 export const Sell: React.FC<SellUiProps> = (props) => {
-	const [shopContent, setShopContent] = React.useState<TargetItem[]>([]);
+	const [sellContent, setSellContent] = React.useState<SellTargetProps[]>([]);
 	const [visible, setVisible] = React.useState(false);
 	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0.5, 0.6));
 	const menuRef = React.useRef<Frame>();
 	const [platform, setPlatform] = React.useState(getPlayerPlatform());
 
 	const px = usePx();
+
+	const updateSellContent = (inventory: TargetItem[]) => {
+		const newSellContent: SellTargetProps[] = [];
+
+		inventory.forEach((item) => {
+			if (newSellContent.find((invItem) => invItem.target.name === item.name)) return;
+
+			// Push to new inventory
+			newSellContent.push({
+				target: item,
+				count: inventory.filter((invItem) => invItem.name === item.name).size(),
+			});
+		});
+
+		setSellContent(newSellContent);
+	};
 
 	React.useEffect(() => {
 		setVisible(props.visible);
@@ -129,23 +165,15 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 	React.useEffect(() => {
 		Functions.getInventory("Target")
 			.then(([_, targets]) => {
-				setShopContent(targets as TargetItem[]);
+				updateSellContent(targets as TargetItem[]);
 			})
 			.catch((e) => {
 				warn(e);
 			});
-		// Events.profileReady.connect(() => {
-		// 	Functions.getInventory("Target")
-		// 		.then(([_, targets]) => {
-		// 			setShopContent(targets as TargetItem[]);
-		// 		})
-		// 		.catch((e) => {
-		// 			warn(e);
-		// 		});
-		// });
+
 		Events.updateInventory.connect((invType, [_, inventory]) => {
 			if (invType !== "Target") return;
-			setShopContent(inventory as TargetItem[]);
+			updateSellContent(inventory as TargetItem[]);
 		});
 
 		UserInputService.InputChanged.Connect((input) => {
@@ -286,8 +314,8 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 						SortOrder={Enum.SortOrder.LayoutOrder}
 					/>
 
-					{shopContent.map((target) => (
-						<SellTargetComponent target={target} />
+					{sellContent.map((item) => (
+						<SellTargetComponent {...item} />
 					))}
 				</scrollingframe>
 

@@ -190,9 +190,11 @@ export class QuestService implements OnStart {
 		switch (quest.questReward) {
 			case "Money":
 				this.moneyService.giveMoney(player, quest.questRewardAmount as number, true);
+				Events.sendClaimedPopup.fire(player, "Money", quest.questRewardAmount);
 				break;
 			case "Experience":
 				this.levelService.addExperience(player, quest.questRewardAmount as number);
+				Events.sendClaimedPopup.fire(player, "Experience", quest.questRewardAmount);
 				break;
 			default:
 				error(`Quest reward type "${quest.questReward}" not implemented`);

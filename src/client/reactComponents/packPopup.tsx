@@ -31,7 +31,7 @@ export const PackPopup = (props: PackPopupProps) => {
 		});
 
 		Signals.menuOpened.Connect((isOpen) => {
-			menuPosMotion.spring(isOpen ? CLOSED_POS : DEFAULT_POS, springs.default);
+			menuPosMotion.spring(isOpen ? CLOSED_POS : DEFAULT_POS, springs.responsive);
 		});
 	}, []);
 

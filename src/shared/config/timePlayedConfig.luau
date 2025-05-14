@@ -27,8 +27,8 @@ end
 
 local timePlayedRewards: { PlaytimeReward } = {
 	{ -- Can have up to 12, these should be in order in terms of how much time they take
-		rewardType = "Potions",
-		itemName = "S.Strength Potion",
+		rewardType = "Money",
+		rewardAmount = 100,
 		unlockTime = 5,
 	},
 	{

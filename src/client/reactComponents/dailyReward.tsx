@@ -549,7 +549,6 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 	// Handler for claiming rewards
 	const handleClaim = () => {
 		Events.claimDailyReward();
-		SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("Claim") as Sound);
 	};
 
 	// Check if rewards are claimable

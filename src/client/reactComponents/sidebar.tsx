@@ -235,7 +235,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 		});
 
 		Signals.menuOpened.Connect((isOpen) => {
-			menuPosMotion.spring(isOpen ? CLOSED_POS : DEFAULT_POS, springs.default);
+			menuPosMotion.spring(isOpen ? CLOSED_POS : DEFAULT_POS, springs.responsive);
 		});
 	}, []);
 

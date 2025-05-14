@@ -14,14 +14,14 @@ type Reward = {
 }
 
 local codes: { [string]: { Reward } } = {
-	release = { -- Example code reward
+	release = {
 		{
 			rewardType = "Money",
-			rewardAmount = 5000,
+			rewardAmount = 1000,
 		},
 		{
-			rewardType = "MetalDetectors",
-			itemName = "GoldDetector",
+			rewardType = "Potions",
+			itemName = "M.Luck Potion",
 		},
 	},
 }

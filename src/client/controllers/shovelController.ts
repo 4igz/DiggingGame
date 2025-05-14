@@ -376,10 +376,10 @@ export class ShovelController implements OnStart {
 
 					task.defer(() => {
 						ContextActionService.SetImage(actionName, cfg.itemImage);
-						ContextActionService.SetPosition(actionName, UDim2.fromScale(0.24, 0.475));
+						ContextActionService.SetPosition(actionName, UDim2.fromScale(0.12, 0.325));
 						const button = ContextActionService.GetButton(actionName);
 						if (button) {
-							button.Size = new UDim2(0, 75, 0, 75);
+							button.Size = new UDim2(0, 90, 0, 90);
 							button.Image = "rbxassetid://5713982324";
 							button.HoverImage = "rbxassetid://5713982324";
 							button.PressedImage = "rbxassetid://5713982324";
@@ -392,11 +392,11 @@ export class ShovelController implements OnStart {
 						}
 					});
 
-					// const uisConnection = UserInputService.TouchTap.Connect((input, gameProcessedEvent) => {
-					// 	if (gameProcessedEvent) return;
-					// 	Signals.gotDigInput.Fire();
-					// 	shovelAction(actionName, Enum.UserInputState.Begin);
-					// });
+					const uisConnection = UserInputService.TouchTap.Connect((input, gameProcessedEvent) => {
+						if (gameProcessedEvent) return;
+						Signals.gotDigInput.Fire();
+						shovelAction(actionName, Enum.UserInputState.Begin);
+					});
 
 					// === Cleanup on tool removal ===
 					toolTrove.add(() => {
@@ -405,7 +405,7 @@ export class ShovelController implements OnStart {
 						pcall(() => {
 							ContextActionService.UnbindAction(actionName);
 						});
-						// uisConnection.Disconnect();
+						uisConnection.Disconnect();
 						mouse.Icon = "";
 						digTrack.Stop();
 
@@ -813,7 +813,7 @@ export class ShovelController implements OnStart {
 
 						const primaryPart =
 							existingModel.PrimaryPart ?? existingModel.FindFirstChildWhichIsA("BasePart");
-						const THROW_FORCE = observeAttribute("DigThrowForce", 20) as number;
+						const THROW_FORCE = observeAttribute("DigThrowForce", 22.5) as number;
 						const UP_FORCE = observeAttribute("DigUpForce", 5) as number;
 
 						// Compute the direction from the object to the player
@@ -840,17 +840,42 @@ export class ShovelController implements OnStart {
 						];
 
 						// Adjust the object's position to ensure it's above ground
+						// Calculate the offset to ensure the model is above ground, with a minimum Y offset for small items
+						const minYOffset = 4; // Minimum Y offset to ensure it's out of the ground
+						const extentsY = existingModel.GetExtentsSize().Y;
+						const yOffset = math.max(extentsY, minYOffset);
+
 						existingModel.PivotTo(
 							new CFrame(existingModel.GetAttribute(gameConstants.TREASURE_MODEL_ORIGIN) as Vector3).add(
-								new Vector3(0, existingModel.GetExtentsSize().Y, 0),
+								new Vector3(0, yOffset, 0),
 							),
 						);
+
 						for (const descendant of existingModel.GetDescendants()) {
 							if (descendant.IsA("BasePart")) {
 								descendant.Anchored = false;
 							}
 						}
-						primaryPart.ApplyImpulse(randomForce.mul(primaryPart.AssemblyMass));
+
+						RunService.Heartbeat.Once(() => {
+							primaryPart.AssemblyLinearVelocity = randomForce;
+						});
+
+						// task.delay(2, () => {
+						// 	if (primaryPart && primaryPart.Parent) {
+						// 		const tween = TweenService.Create(
+						// 			primaryPart,
+						// 			new TweenInfo(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+						// 			{
+						// 				AssemblyLinearVelocity: Vector3.zero,
+						// 			},
+						// 		);
+						// 		tween.Play();
+						// 		tween.Completed.Once(() => {
+						// 			primaryPart.AssemblyLinearVelocity = Vector3.zero;
+						// 		});
+						// 	}
+						// });
 					} else {
 						existingModel.Destroy();
 					}

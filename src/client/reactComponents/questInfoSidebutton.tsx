@@ -87,9 +87,9 @@ export const QuestInfoSideButton = () => {
 
 		const con = Signals.menuOpened.Connect((isOpen) => {
 			if (isOpen) {
-				setPos.spring(CLOSED_POS, springs.default);
+				setPos.spring(CLOSED_POS, springs.responsive);
 			} else {
-				setPos.spring(DEFAULT_POS, springs.default);
+				setPos.spring(DEFAULT_POS, springs.responsive);
 			}
 		});
 

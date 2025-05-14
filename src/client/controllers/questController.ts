@@ -167,6 +167,13 @@ export class QuestController implements OnStart {
 					Functions.isQuestComplete(npcName)
 						.then((value) => {
 							canComplete = value;
+
+							if (!canComplete) {
+								SoundService.PlayLocalSound(
+									SoundService.WaitForChild("UI").WaitForChild("ErrorSound") as Sound,
+								);
+								Signals.invalidAction.Fire("Quest not complete!");
+							}
 						})
 						.catch(warn)
 						.await();
