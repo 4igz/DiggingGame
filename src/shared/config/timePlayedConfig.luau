@@ -26,10 +26,15 @@ local hours = function(hours: number)
 end
 
 local timePlayedRewards: { PlaytimeReward } = {
-	{ -- Can have up to 12, these should be in order in terms of how much time they take
-		rewardType = "Money",
-		rewardAmount = 100,
-		unlockTime = 5,
+	-- { -- Can have up to 12, these should be in order in terms of how much time they take
+	-- 	rewardType = "Money",
+	-- 	rewardAmount = 100,
+	-- 	unlockTime = 5,
+	-- },
+	{
+		rewardType = "Potions",
+		itemName = "S.Strength Potion",
+		unlockTime = 1,
 	},
 	{
 		rewardType = "Experience",
@@ -44,7 +49,7 @@ local timePlayedRewards: { PlaytimeReward } = {
 	{
 		rewardType = "Potions",
 		itemName = "S.Strength Potion",
-		unlockTime = minutes(7),
+		unlockTime = 2, --minutes(7),
 	},
 	{
 		rewardType = "Experience",

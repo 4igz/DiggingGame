@@ -5,7 +5,7 @@ import { AnimatedButton } from "./buttons";
 import UiController from "client/controllers/uiController";
 import { useMotion } from "@rbxts/pretty-react-hooks";
 import { Signals } from "shared/signals";
-import { PotionConfig, potionConfig } from "shared/config/potionConfig";
+import { PotionConfig, potionConfig, PotionKind } from "shared/config/potionConfig";
 import { Events } from "client/network";
 import { formatShortTime } from "shared/util/nameUtil";
 
@@ -13,8 +13,9 @@ interface PotionProps {
 	cfg: PotionConfig;
 	potionName: keyof typeof potionConfig;
 	onComplete: () => void;
-	timeLeft?: number; // Defaults to the default time of that potion
-	updateId?: number; // Add a unique identifier for each update
+	timeLeft?: number;
+	updateId?: number;
+	paused?: boolean;
 }
 
 const PotionTimer = (props: PotionProps) => {
@@ -30,14 +31,17 @@ const PotionTimer = (props: PotionProps) => {
 		const timer = async () => {
 			while (running) {
 				await Promise.delay(1);
-				setTimeLeft((prev) => {
-					if (prev > 0) {
-						return math.max(prev - 1, 0);
-					} else {
-						props.onComplete();
-						return 0;
-					}
-				});
+				if (!props.paused) {
+					// Only decrease timer if not paused
+					setTimeLeft((prev) => {
+						if (prev > 0) {
+							return math.max(prev - 1, 0);
+						} else {
+							props.onComplete();
+							return 0;
+						}
+					});
+				}
 			}
 		};
 
@@ -46,7 +50,7 @@ const PotionTimer = (props: PotionProps) => {
 		return () => {
 			running = false;
 		};
-	}, [props.timeLeft, props.updateId]);
+	}, [props.timeLeft, props.updateId, props.paused]); // Add paused to dependencies
 
 	return (
 		<imagelabel
@@ -58,6 +62,7 @@ const PotionTimer = (props: PotionProps) => {
 			key={props.potionName}
 			ScaleType={"Fit"}
 			ZIndex={1}
+			Visible={!props.paused}
 		>
 			<uiaspectratioconstraint AspectRatio={1} />
 
@@ -105,43 +110,75 @@ export const BottomTips = (props: BottomTipsProps) => {
 			const cfg = potionConfig[potionName];
 
 			setCurrentPotions((prev) => {
-				const existingIndex = prev.findIndex((v: PotionProps) => v.potionName === potionName);
+				let newPotions = [...prev];
+				const existingIndex = newPotions.findIndex((v) => v.potionName === potionName);
 
 				if (existingIndex !== -1) {
-					const newPotions = [...prev];
 					newPotions[existingIndex] = {
-						...prev[existingIndex],
-						timeLeft: (prev[existingIndex].timeLeft || 0) + cfg.duration,
+						...newPotions[existingIndex],
+						timeLeft: (newPotions[existingIndex].timeLeft || 0) + cfg.duration,
 						updateId: math.random(),
 					};
-					return newPotions;
-				}
-
-				return [
-					...prev,
-					{
+				} else {
+					newPotions.push({
 						cfg,
 						potionName,
 						updateId: math.random(),
 						onComplete: () => {
 							removePotion(potionName);
 						},
-					},
-				];
+					});
+				}
+
+				// Find highest multiplier for each kind
+				const highestMultiplierByKind = new Map<PotionKind, number>();
+				for (const _ of newPotions) {
+					if (
+						!highestMultiplierByKind.has(cfg.kind) ||
+						cfg.multiplier > (highestMultiplierByKind.get(cfg.kind) ?? 0)
+					) {
+						highestMultiplierByKind.set(cfg.kind, cfg.multiplier);
+					}
+				}
+
+				// Mark lower multipliers as paused
+				newPotions = newPotions.map((p) => ({
+					...p,
+					paused: cfg.multiplier < (highestMultiplierByKind.get(cfg.kind) ?? 0),
+				}));
+
+				return newPotions;
 			});
 		});
 
 		Events.updateActivePotions.connect((potions) => {
-			setCurrentPotions(
-				potions.map((potion) => ({
-					cfg: potionConfig[potion.potionName],
-					potionName: potion.potionName,
-					timeLeft: potion.timeLeft,
-					onComplete: () => {
-						removePotion(potion.potionName);
-					},
-				})),
-			);
+			let newPotions = potions.map((potion) => ({
+				cfg: potionConfig[potion.potionName],
+				potionName: potion.potionName,
+				timeLeft: potion.timeLeft,
+				onComplete: () => {
+					removePotion(potion.potionName);
+				},
+			}));
+
+			// Find highest multiplier for each kind
+			const highestMultiplierByKind = new Map<PotionKind, number>();
+			for (const p of newPotions) {
+				if (
+					!highestMultiplierByKind.has(p.cfg.kind) ||
+					p.cfg.multiplier > (highestMultiplierByKind.get(p.cfg.kind) ?? 0)
+				) {
+					highestMultiplierByKind.set(p.cfg.kind, p.cfg.multiplier);
+				}
+			}
+
+			// Mark lower multipliers as paused
+			newPotions = newPotions.map((p) => ({
+				...p,
+				paused: p.cfg.multiplier < (highestMultiplierByKind.get(p.cfg.kind) ?? 0),
+			}));
+
+			setCurrentPotions(newPotions);
 		});
 	}, []);
 
@@ -265,6 +302,8 @@ export const BottomTips = (props: BottomTipsProps) => {
 							potionName={v.potionName}
 							timeLeft={v.timeLeft}
 							onComplete={v.onComplete}
+							updateId={v.updateId}
+							paused={v.paused} // Make sure to pass the paused prop
 						/>
 					);
 				})}

@@ -49,6 +49,7 @@ export declare const gameConstants: {
 	readonly PLAYER_COLGROUP: string;
 	readonly NOCHARACTERCOLLISION_COLGROUP: string;
 	readonly BOAT_COLGROUP: string;
+	readonly BOAT_COLLIDER_COLGROUP: string;
 	readonly SPAWN_TAG: string;
 	readonly ISLE_ZONE_TAG: string;
 

@@ -29,6 +29,13 @@ export class BoatService implements OnStart, OnTick {
 
 		PhysicsService.RegisterCollisionGroup(gameConstants.BOAT_COLGROUP);
 		PhysicsService.CollisionGroupSetCollidable(gameConstants.BOAT_COLGROUP, gameConstants.BOAT_COLGROUP, false); // Boats can't collide with another.
+		PhysicsService.RegisterCollisionGroup(gameConstants.BOAT_COLLIDER_COLGROUP);
+		PhysicsService.CollisionGroupSetCollidable(gameConstants.BOAT_COLGROUP, gameConstants.BOAT_COLGROUP, true); // Boats can't collide with another.
+		PhysicsService.CollisionGroupSetCollidable(
+			gameConstants.PLAYER_COLGROUP,
+			gameConstants.BOAT_COLLIDER_COLGROUP,
+			false,
+		); // Boats can't collide with another.
 
 		Workspace.Terrain.CollisionGroup = gameConstants.BOAT_COLGROUP; // Terrain can't collide with boats
 
@@ -38,10 +45,10 @@ export class BoatService implements OnStart, OnTick {
 				const [boatId] = result;
 				const boat = this.spawnedBoats.get(boatId);
 				if (boat) {
-					boat.Destroy();
 					this.spawnedBoats.delete(boatId);
 					this.boatOwners.delete(boatId);
 					this.lastActiveBoatTimes.delete(boatId);
+					boat.Destroy();
 				}
 			}
 		});
@@ -126,9 +133,11 @@ export class BoatService implements OnStart, OnTick {
 				}
 				// Player has a different boat spawned.
 				if (boat) {
-					boat.Destroy();
 					this.spawnedBoats.delete(boatId);
 					this.boatOwners.delete(boatId);
+					this.lastActiveBoatTimes.delete(boatId);
+					this.activeBoats.delete(boatId);
+					boat.Destroy();
 				}
 			}
 
@@ -167,6 +176,17 @@ export class BoatService implements OnStart, OnTick {
 					descendant.SetNetworkOwner(player);
 				}
 			}
+
+			// For example if the boat fell out of the world, we need to do despawning logic
+			boat.AncestryChanged.Once(() => {
+				if (this.spawnedBoats.has(boatId) === true) {
+					this.spawnedBoats.delete(boatId);
+					this.boatOwners.delete(boatId);
+					this.lastActiveBoatTimes.delete(boatId);
+					this.activeBoats.delete(boatId);
+					boat.Destroy();
+				}
+			});
 		});
 
 		Functions.sitInBoat.setCallback((player, boatId) => {
@@ -235,11 +255,11 @@ export class BoatService implements OnStart, OnTick {
 				const boat = this.spawnedBoats.get(boatId);
 				const boatOwner = this.boatOwners.get(boatId);
 				if (boat && boatOwner && boatOwner.Parent === Players && !this.zoneService.isPlayerAtSeas(boatOwner)) {
-					boat.Destroy();
 					this.spawnedBoats.delete(boatId);
 					this.boatOwners.delete(boatId);
 					this.lastActiveBoatTimes.delete(boatId);
 					this.activeBoats.delete(boatId);
+					boat.Destroy();
 				}
 			}
 		}

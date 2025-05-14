@@ -162,6 +162,7 @@ local gameConstants = {
 	PLAYER_COLGROUP = "Player",
 	NOCHARACTERCOLLISION_COLGROUP = "NoCollideWithCharacters",
 	BOAT_COLGROUP = "Boat",
+	BOAT_COLLIDER_COLGROUP = "BoatCollider",
 
 	-- CS Tags
 	SPAWN_TAG = "MapSpawn",

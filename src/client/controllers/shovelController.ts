@@ -789,7 +789,6 @@ export class ShovelController implements OnStart {
 					if (diggingComplete) {
 						SoundService.PlayLocalSound(digOutSound);
 
-						// A larger camera bump
 						if (!usingDigEverywhere) {
 							const c = new CameraShaker.CameraShakeInstance(2, 10, 0, 0.75);
 							c.PositionInfluence = new Vector3(2, 2, 2);
@@ -813,7 +812,7 @@ export class ShovelController implements OnStart {
 
 						const primaryPart =
 							existingModel.PrimaryPart ?? existingModel.FindFirstChildWhichIsA("BasePart");
-						const THROW_FORCE = observeAttribute("DigThrowForce", 22.5) as number;
+						const THROW_FORCE = observeAttribute("DigThrowForce", 20) as number;
 						const UP_FORCE = observeAttribute("DigUpForce", 5) as number;
 
 						// Compute the direction from the object to the player
@@ -854,11 +853,19 @@ export class ShovelController implements OnStart {
 						for (const descendant of existingModel.GetDescendants()) {
 							if (descendant.IsA("BasePart")) {
 								descendant.Anchored = false;
+								descendant.CanCollide = false;
 							}
 						}
 
 						RunService.Heartbeat.Once(() => {
 							primaryPart.AssemblyLinearVelocity = randomForce;
+							task.delay(0.1, () => {
+								for (const descendant of existingModel.GetDescendants()) {
+									if (descendant.IsA("BasePart")) {
+										descendant.CanCollide = true;
+									}
+								}
+							});
 						});
 
 						// task.delay(2, () => {
