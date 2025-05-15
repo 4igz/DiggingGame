@@ -117,6 +117,7 @@ interface ServerToClientEvents {
 }
 
 interface ClientToServerFunctions {
+	getActivePotions: () => (PotionConfig & { potionName: keyof typeof potionConfig; timeLeft: number })[] | undefined;
 	getMoneyShortString: () => string;
 	getLevelData: () => { level: number; xp: number; xpMax: number; skillPoints: number };
 	getInventory: (inventoryType: ItemType) =>

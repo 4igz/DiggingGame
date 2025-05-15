@@ -6,7 +6,7 @@ import UiController from "client/controllers/uiController";
 import { useMotion } from "@rbxts/pretty-react-hooks";
 import { Signals } from "shared/signals";
 import { PotionConfig, potionConfig, PotionKind } from "shared/config/potionConfig";
-import { Events } from "client/network";
+import { Events, Functions } from "client/network";
 import { formatShortTime } from "shared/util/nameUtil";
 
 interface PotionProps {
@@ -20,8 +20,13 @@ interface PotionProps {
 
 const PotionTimer = (props: PotionProps) => {
 	const [timeLeft, setTimeLeft] = useState(props.timeLeft ?? props.cfg.duration);
+	const [paused, setPaused] = useState(props.paused);
 
 	const px = usePx();
+
+	useEffect(() => {
+		setPaused(props.paused);
+	}, [props.paused]);
 
 	useEffect(() => {
 		setTimeLeft(props.timeLeft ?? props.cfg.duration);
@@ -31,7 +36,7 @@ const PotionTimer = (props: PotionProps) => {
 		const timer = async () => {
 			while (running) {
 				await Promise.delay(1);
-				if (!props.paused) {
+				if (!paused) {
 					// Only decrease timer if not paused
 					setTimeLeft((prev) => {
 						if (prev > 0) {
@@ -50,7 +55,7 @@ const PotionTimer = (props: PotionProps) => {
 		return () => {
 			running = false;
 		};
-	}, [props.timeLeft, props.updateId, props.paused]); // Add paused to dependencies
+	}, [props.timeLeft, props.updateId, paused]);
 
 	return (
 		<imagelabel
@@ -151,7 +156,39 @@ export const BottomTips = (props: BottomTipsProps) => {
 			});
 		});
 
+		Functions.getActivePotions.invoke().then((potions) => {
+			if (!potions) return;
+			let newPotions = potions.map((potion) => ({
+				cfg: potionConfig[potion.potionName],
+				potionName: potion.potionName,
+				timeLeft: potion.timeLeft,
+				onComplete: () => {
+					removePotion(potion.potionName);
+				},
+			}));
+
+			// Find highest multiplier for each kind
+			const highestMultiplierByKind = new Map<PotionKind, number>();
+			for (const p of newPotions) {
+				if (
+					!highestMultiplierByKind.has(p.cfg.kind) ||
+					p.cfg.multiplier > (highestMultiplierByKind.get(p.cfg.kind) ?? 0)
+				) {
+					highestMultiplierByKind.set(p.cfg.kind, p.cfg.multiplier);
+				}
+			}
+
+			// Mark lower multipliers as paused
+			newPotions = newPotions.map((p) => ({
+				...p,
+				paused: p.cfg.multiplier < (highestMultiplierByKind.get(p.cfg.kind) ?? 0),
+			}));
+
+			setCurrentPotions(newPotions);
+		});
+
 		Events.updateActivePotions.connect((potions) => {
+			print(potions);
 			let newPotions = potions.map((potion) => ({
 				cfg: potionConfig[potion.potionName],
 				potionName: potion.potionName,

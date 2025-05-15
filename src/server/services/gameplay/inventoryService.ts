@@ -141,6 +141,27 @@ export class InventoryService implements OnStart, OnTick {
 			});
 		});
 
+		Functions.getActivePotions.setCallback((player) => {
+			const profile = this.profileService.getProfileLoaded(player).expect();
+			if (profile.Data.activePotions.size() > 0) {
+				if (!this.potionDrinkers.includes(player)) {
+					this.potionDrinkers.push(player);
+				}
+				const potions = [];
+				for (const [_kind, effect] of pairs(profile.Data.activePotions)) {
+					const cfg = table.clone(potionConfig[effect.potionName]) as PotionConfig & {
+						potionName: keyof typeof potionConfig;
+						timeLeft: number;
+					};
+					cfg.potionName = effect.potionName;
+					cfg.timeLeft = effect.timeRemaining;
+
+					potions.push(cfg);
+				}
+				return potions;
+			}
+		});
+
 		Functions.getInventorySize.setCallback((player) => {
 			return this.getInventorySize(player);
 		});

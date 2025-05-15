@@ -52,7 +52,12 @@ export class Treasure extends BaseComponent<Attributes, TreasureComponent> {
 			const chance = getOneInXChance(name, getMapFromTarget(name) ?? "Grasslands");
 
 			const isTrash = trashConfig[name] !== undefined;
-			const color = isTrash ? "rgb(255,100,100)" : "rgb(100,125,255)";
+			const rarityColor = gameConstants.RARITY_COLORS[cfg.rarityType];
+			const color = isTrash
+				? `rgb(255,100,100)`
+				: `rgb(${math.floor(rarityColor.R * 255)},${math.floor(rarityColor.G * 255)},${math.floor(
+						rarityColor.B * 255,
+				  )})`;
 
 			return (
 				<RichBillboardText

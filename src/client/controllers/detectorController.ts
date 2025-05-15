@@ -221,11 +221,11 @@ export class DetectorController implements OnStart {
 
 					task.defer(() => {
 						ContextActionService.SetImage(actionName, cfg.itemImage);
-						ContextActionService.SetPosition(actionName, UDim2.fromScale(0.24, 0.475));
+						ContextActionService.SetPosition(actionName, UDim2.fromScale(0.12, 0.325));
 						pcall(() => {
 							const button = ContextActionService.GetButton(actionName);
 							if (button) {
-								button.Size = new UDim2(0, 75, 0, 75);
+								button.Size = new UDim2(0, 90, 0, 90);
 								button.Image = "rbxassetid://5713982324";
 								button.HoverImage = "rbxassetid://5713982324";
 								button.PressedImage = "rbxassetid://5713982324";
