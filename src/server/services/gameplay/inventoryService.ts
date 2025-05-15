@@ -32,6 +32,7 @@ export interface PotionEffect {
 	timeRemaining: number;
 	multiplier: number;
 	potionName: keyof typeof potionConfig;
+	kind: PotionKind;
 }
 
 const inventoryConfigMap: Record<
@@ -117,18 +118,7 @@ export class InventoryService implements OnStart, OnTick {
 				if (!this.potionDrinkers.includes(player)) {
 					this.potionDrinkers.push(player);
 				}
-				const potions = [];
-				for (const [_kind, effect] of pairs(profile.Data.activePotions)) {
-					const cfg = table.clone(potionConfig[effect.potionName]) as PotionConfig & {
-						potionName: keyof typeof potionConfig;
-						timeLeft: number;
-					};
-					cfg.potionName = effect.potionName;
-					cfg.timeLeft = effect.timeRemaining;
-
-					potions.push(cfg);
-				}
-				Events.updateActivePotions.fire(player, potions);
+				this.updatePlayerActivePotions(player);
 			}
 
 			Events.updateInventorySize(player, this.getInventorySize(player));
@@ -276,30 +266,28 @@ export class InventoryService implements OnStart, OnTick {
 
 			if (profile.Data.potionInventory.includes(potionName)) {
 				const potionIndex = profile.Data.potionInventory.indexOf(potionName);
-				profile.Data.potionInventory.remove(potionIndex); // remove from their inventory
+				profile.Data.potionInventory.remove(potionIndex); // remove from inventory
 
-				// Get the effect type from the potion
-				const effectType = potion.kind;
+				const existingPotion = profile.Data.activePotions.find(
+					(effect) => effect.potionName === potionName && effect.kind === potion.kind,
+				);
 
-				// Check if this effect type is already active
-				const existingEffect = profile.Data.activePotions.get(effectType);
+				if (existingPotion) {
+					existingPotion.timeRemaining += potion.duration;
+				} else {
+					// Add the new potion effect to the array
+					profile.Data.activePotions.push({
+						timeRemaining: potion.duration,
+						multiplier: potion.multiplier,
+						potionName: potionName as keyof typeof potionConfig,
+						kind: potion.kind as PotionKind,
+					});
+				}
 
-				// Create or update the effect
-				const updatedEffect: PotionEffect = {
-					timeRemaining: (existingEffect?.timeRemaining || 0) + potion.duration,
-					multiplier: math.max(existingEffect?.multiplier || 1, potion.multiplier),
-					potionName: potionName,
-				};
-
-				// Store the updated effect
-				profile.Data.activePotions.set(effectType, updatedEffect);
-
-				Events.drankPotion(player, potionName);
-
-				// Update the appropriate multiplier based on effect type
 				this.updatePotionMultipliers(profile);
 
 				this.profileService.setProfile(player, profile);
+
 				if (!this.potionDrinkers.includes(player)) {
 					this.potionDrinkers.push(player);
 				}
@@ -312,9 +300,17 @@ export class InventoryService implements OnStart, OnTick {
 						equippedTreasure: profile.Data.equippedTreasure,
 					},
 					profile.Data.potionInventory.map(
-						(value) => ({ name: value, type: "Potions", ...potionConfig[value as string] } as Item),
+						(value) =>
+							({
+								name: value,
+								type: "Potions",
+								...potionConfig[value as string],
+							} as Item),
 					),
 				]);
+				Events.drankPotion(player, potionName);
+
+				this.updatePlayerActivePotions(player);
 			}
 		});
 
@@ -459,22 +455,23 @@ export class InventoryService implements OnStart, OnTick {
 		profile.Data.potionLuckMultiplier = 1;
 		profile.Data.potionStrengthMultiplier = 1;
 
-		// Update each multiplier based on active effects
-		for (const [effectType, effect] of profile.Data.activePotions) {
-			switch (effectType) {
-				case PotionKind.LUCK:
-					profile.Data.potionLuckMultiplier = effect.multiplier;
-					break;
-				case PotionKind.STRENGTH:
-					profile.Data.potionStrengthMultiplier = effect.multiplier;
-					break;
-			}
+		// Find the highest-multiplier active potion for each kind
+		const luckPotions = profile.Data.activePotions.filter((effect) => effect.kind === PotionKind.LUCK);
+		const strengthPotions = profile.Data.activePotions.filter((effect) => effect.kind === PotionKind.STRENGTH);
+
+		if (luckPotions.size() > 0) {
+			// Set to the highest multiplier among active luck potions
+			profile.Data.potionLuckMultiplier = math.max(...luckPotions.map((effect) => effect.multiplier));
+		}
+
+		if (strengthPotions.size() > 0) {
+			// Set to the highest multiplier among active strength potions
+			profile.Data.potionStrengthMultiplier = math.max(...strengthPotions.map((effect) => effect.multiplier));
 		}
 	}
 
 	private POTION_SEC_INTERVAL = interval(1);
 
-	// Update the onTick method to handle multiple potion types
 	onTick(): void {
 		const playersToRemove = new Array<Player>();
 
@@ -488,21 +485,40 @@ export class InventoryService implements OnStart, OnTick {
 				const profile = this.profileService.getProfile(player);
 				if (!profile) continue;
 
-				if (profile.Data.activePotions.size() > 0) {
+				const activePotions = profile.Data.activePotions;
+				if (activePotions.size() > 0) {
 					let anyPotionActive = false;
 
-					// Iterate through all active effects
-					for (const [effectType, effect] of profile.Data.activePotions) {
-						// Reduce the time remaining
-						effect.timeRemaining--;
+					// Group potions by kind
+					const kinds = new Set(activePotions.map((p) => p.kind));
 
-						// If the effect has expired, remove it
-						if (effect.timeRemaining <= 0) {
-							profile.Data.activePotions.delete(effectType);
-						} else {
-							anyPotionActive = true;
+					for (const kind of kinds) {
+						// Get all potions of this kind, sorted by multiplier descending
+						const potionsOfKind = activePotions
+							.filter((p) => p.kind === kind)
+							.sort((a, b) => b.multiplier < a.multiplier);
+
+						if (potionsOfKind.size() > 0) {
+							// Only decrement the highest-multiplier potion
+							potionsOfKind[0].timeRemaining--;
+
+							// If the potion expired, remove it from activePotions
+							if (potionsOfKind[0].timeRemaining <= 0) {
+								// Remove by reference
+								const index = activePotions.indexOf(potionsOfKind[0]);
+								if (index !== -1) {
+									activePotions.remove(index);
+
+									this.updatePlayerActivePotions(player);
+								}
+							} else {
+								anyPotionActive = true;
+							}
 						}
 					}
+
+					// Remove any other expired potions (in case of edge cases)
+					profile.Data.activePotions = activePotions.filter((p) => p.timeRemaining > 0);
 
 					// Update all multipliers based on remaining effects
 					this.updatePotionMultipliers(profile);
@@ -523,38 +539,20 @@ export class InventoryService implements OnStart, OnTick {
 		this.potionDrinkers = this.potionDrinkers.filter((p) => !playersToRemove.includes(p));
 	}
 
-	subtractFromHighestMultiplierPotion(activePotions: Map<keyof typeof potionConfig, number>): [boolean, number] {
-		if (activePotions.size() === 0) return [false, 1];
-		const [highestMultiplierName, highestMultiplier] = this.getHighestMultiplierPotionName(activePotions);
+	updatePlayerActivePotions(player: Player) {
+		const profile = this.profileService.getProfileLoaded(player).expect();
+		const potions = [];
+		for (const effect of profile.Data.activePotions) {
+			const cfg = table.clone(potionConfig[effect.potionName]) as PotionConfig & {
+				potionName: keyof typeof potionConfig;
+				timeLeft: number;
+			};
+			cfg.potionName = effect.potionName;
+			cfg.timeLeft = effect.timeRemaining;
 
-		if (highestMultiplierName !== "") {
-			const timeLeft = activePotions.get(highestMultiplierName) as number;
-			activePotions.set(highestMultiplierName, timeLeft - 1);
-			return [true, highestMultiplier];
+			potions.push(cfg);
 		}
-
-		return [false, 1];
-	}
-
-	getHighestMultiplierPotionName(activePotions: Map<keyof typeof potionConfig, number>): [string, number] {
-		let highestMultiplierName: keyof typeof potionConfig = "";
-		let highestMultiplier = 1;
-		for (const [potionName, timeLeft] of activePotions) {
-			if (timeLeft <= 0) {
-				activePotions.delete(potionName);
-				continue;
-			}
-
-			const potionCfg = potionConfig[potionName];
-			const { multiplier } = potionCfg;
-
-			if (multiplier > highestMultiplier) {
-				highestMultiplier = multiplier;
-				highestMultiplierName = potionName;
-			}
-		}
-
-		return [highestMultiplierName, highestMultiplier];
+		Events.updateActivePotions(player, potions);
 	}
 
 	giveTools(player: Player, profile: LoadedProfile) {

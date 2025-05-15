@@ -309,7 +309,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 				gamepadCode={Enum.KeyCode.ButtonL3}
 				onClick={() => {
 					const enabled = !autoDigEnabled;
-					props.autoDigController.setAutoDiggingEnabled(enabled);
+					props.autoDigController.setAutoDiggingEnabled(enabled, true, true);
 					setAutoDiggingEnabled(enabled);
 				}}
 				pxProvider={px}

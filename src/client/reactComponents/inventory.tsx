@@ -2860,7 +2860,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 				{/* SKILLS BUTTON */}
 				<CategoryButton
 					title="Skills"
-					iconId="rbxassetid://107635803594907"
+					iconId="rbxassetid://90345162177443"
 					position={UDim2.fromScale(0.597, 0.323)}
 					iconSz={UDim2.fromScale(0.72, 1.596)}
 					leftPad={-0.45}

@@ -8,6 +8,7 @@ import { Signals } from "shared/signals";
 import { PotionConfig, potionConfig, PotionKind } from "shared/config/potionConfig";
 import { Events, Functions } from "client/network";
 import { formatShortTime } from "shared/util/nameUtil";
+import { springs } from "client/utils/springs";
 
 interface PotionProps {
 	cfg: PotionConfig;
@@ -99,8 +100,39 @@ export const BottomTips = (props: BottomTipsProps) => {
 	const [hoveringPremium, setHoveringPremium] = useState(false);
 	const [menuPos, menuPosMotion] = useMotion(DEFAULT_POS);
 	const [currentPotions, setCurrentPotions] = useState(new Array<PotionProps>());
+	const [visiblePotions, setVisiblePotions] = useState(new Array<PotionProps>());
 
 	const px = usePx();
+
+	const updatePotions = (potions: (PotionConfig & { potionName: keyof typeof potionConfig; timeLeft: number })[]) => {
+		let newPotions = potions.map((potion) => ({
+			cfg: potionConfig[potion.potionName],
+			potionName: potion.potionName,
+			timeLeft: potion.timeLeft,
+			onComplete: () => {
+				removePotion(potion.potionName);
+			},
+		}));
+
+		// Find highest multiplier for each kind
+		const highestMultiplierByKind = new Map<PotionKind, number>();
+		for (const p of newPotions) {
+			if (
+				!highestMultiplierByKind.has(p.cfg.kind) ||
+				p.cfg.multiplier > (highestMultiplierByKind.get(p.cfg.kind) ?? 0)
+			) {
+				highestMultiplierByKind.set(p.cfg.kind, p.cfg.multiplier);
+			}
+		}
+
+		// Mark lower multipliers as paused
+		newPotions = newPotions.map((p) => ({
+			...p,
+			paused: p.cfg.multiplier < (highestMultiplierByKind.get(p.cfg.kind) ?? 0),
+		}));
+
+		setCurrentPotions(newPotions);
+	};
 
 	const removePotion = (potionName: keyof typeof potionConfig) => {
 		setCurrentPotions((prev) => prev.filter((v) => v.potionName !== potionName));
@@ -108,116 +140,29 @@ export const BottomTips = (props: BottomTipsProps) => {
 
 	useEffect(() => {
 		Signals.menuOpened.Connect((isOpen) => {
-			menuPosMotion.spring(isOpen ? CLOSED_POS : DEFAULT_POS);
-		});
-
-		Signals.drankPotion.Connect((potionName: keyof typeof potionConfig) => {
-			const cfg = potionConfig[potionName];
-
-			setCurrentPotions((prev) => {
-				let newPotions = [...prev];
-				const existingIndex = newPotions.findIndex((v) => v.potionName === potionName);
-
-				if (existingIndex !== -1) {
-					newPotions[existingIndex] = {
-						...newPotions[existingIndex],
-						timeLeft: (newPotions[existingIndex].timeLeft || 0) + cfg.duration,
-						updateId: math.random(),
-					};
-				} else {
-					newPotions.push({
-						cfg,
-						potionName,
-						updateId: math.random(),
-						onComplete: () => {
-							removePotion(potionName);
-						},
-					});
-				}
-
-				// Find highest multiplier for each kind
-				const highestMultiplierByKind = new Map<PotionKind, number>();
-				for (const _ of newPotions) {
-					if (
-						!highestMultiplierByKind.has(cfg.kind) ||
-						cfg.multiplier > (highestMultiplierByKind.get(cfg.kind) ?? 0)
-					) {
-						highestMultiplierByKind.set(cfg.kind, cfg.multiplier);
-					}
-				}
-
-				// Mark lower multipliers as paused
-				newPotions = newPotions.map((p) => ({
-					...p,
-					paused: cfg.multiplier < (highestMultiplierByKind.get(cfg.kind) ?? 0),
-				}));
-
-				return newPotions;
-			});
+			menuPosMotion.spring(isOpen ? CLOSED_POS : DEFAULT_POS, springs.responsive);
 		});
 
 		Functions.getActivePotions.invoke().then((potions) => {
 			if (!potions) return;
-			let newPotions = potions.map((potion) => ({
-				cfg: potionConfig[potion.potionName],
-				potionName: potion.potionName,
-				timeLeft: potion.timeLeft,
-				onComplete: () => {
-					removePotion(potion.potionName);
-				},
-			}));
-
-			// Find highest multiplier for each kind
-			const highestMultiplierByKind = new Map<PotionKind, number>();
-			for (const p of newPotions) {
-				if (
-					!highestMultiplierByKind.has(p.cfg.kind) ||
-					p.cfg.multiplier > (highestMultiplierByKind.get(p.cfg.kind) ?? 0)
-				) {
-					highestMultiplierByKind.set(p.cfg.kind, p.cfg.multiplier);
-				}
-			}
-
-			// Mark lower multipliers as paused
-			newPotions = newPotions.map((p) => ({
-				...p,
-				paused: p.cfg.multiplier < (highestMultiplierByKind.get(p.cfg.kind) ?? 0),
-			}));
-
-			setCurrentPotions(newPotions);
+			updatePotions(potions);
 		});
 
 		Events.updateActivePotions.connect((potions) => {
-			print(potions);
-			let newPotions = potions.map((potion) => ({
-				cfg: potionConfig[potion.potionName],
-				potionName: potion.potionName,
-				timeLeft: potion.timeLeft,
-				onComplete: () => {
-					removePotion(potion.potionName);
-				},
-			}));
-
-			// Find highest multiplier for each kind
-			const highestMultiplierByKind = new Map<PotionKind, number>();
-			for (const p of newPotions) {
-				if (
-					!highestMultiplierByKind.has(p.cfg.kind) ||
-					p.cfg.multiplier > (highestMultiplierByKind.get(p.cfg.kind) ?? 0)
-				) {
-					highestMultiplierByKind.set(p.cfg.kind, p.cfg.multiplier);
-				}
-			}
-
-			// Mark lower multipliers as paused
-			newPotions = newPotions.map((p) => ({
-				...p,
-				paused: p.cfg.multiplier < (highestMultiplierByKind.get(p.cfg.kind) ?? 0),
-			}));
-
-			setCurrentPotions(newPotions);
+			updatePotions(potions);
 		});
 	}, []);
+
+	useEffect(() => {
+		setVisiblePotions(
+			currentPotions.filter((potion, _, arr) => {
+				const highest = math.max(
+					...arr.filter((p) => p.cfg.kind === potion.cfg.kind).map((p) => p.cfg.multiplier),
+				);
+				return potion.cfg.multiplier === highest && !potion.paused;
+			}),
+		);
+	}, [currentPotions]);
 
 	return (
 		<frame
@@ -332,7 +277,7 @@ export const BottomTips = (props: BottomTipsProps) => {
 					VerticalAlignment={"Bottom"}
 				/>
 
-				{currentPotions.map((v) => {
+				{visiblePotions.map((v) => {
 					return (
 						<PotionTimer
 							cfg={v.cfg}
@@ -340,7 +285,7 @@ export const BottomTips = (props: BottomTipsProps) => {
 							timeLeft={v.timeLeft}
 							onComplete={v.onComplete}
 							updateId={v.updateId}
-							paused={v.paused} // Make sure to pass the paused prop
+							paused={v.paused}
 						/>
 					);
 				})}

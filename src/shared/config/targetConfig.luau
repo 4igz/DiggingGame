@@ -54,7 +54,7 @@ local targetConfig: { [string]: TargetConfig } = {
 
 	Necklace = {
 		rarity = 16, -- 1 in 16
-		rarityType = "Uncommon",
+		rarityType = "Common",
 		baseWeight = NumberRange.new(1, 3),
 		basePrice = 500,
 		itemImage = "rbxassetid://81302821988412",
@@ -77,7 +77,7 @@ local targetConfig: { [string]: TargetConfig } = {
 
 	["Golden Eyepatch"] = {
 		rarity = 32, -- 1 in 32
-		rarityType = "Rare",
+		rarityType = "Uncommon",
 		baseWeight = NumberRange.new(5, 10),
 		basePrice = 400,
 		itemImage = "rbxassetid://121457379559507",
@@ -98,7 +98,7 @@ local targetConfig: { [string]: TargetConfig } = {
 
 	["Bejeweled Pegleg"] = {
 		rarity = 64, -- 1 in 64
-		rarityType = "Uncommon",
+		rarityType = "Rare",
 		baseWeight = NumberRange.new(7, 10),
 		basePrice = 500,
 		itemImage = "rbxassetid://81795788928547",

@@ -6,12 +6,12 @@ import { targetConfig } from "shared/config/targetConfig";
 import Object from "@rbxts/object-utils";
 import { gameConstants } from "shared/gameConstants";
 import { boatConfig } from "shared/config/boatConfig";
-import { potionConfig, PotionKind } from "shared/config/potionConfig";
+import { potionConfig } from "shared/config/potionConfig";
 import { questConfig } from "shared/config/questConfig";
 import { PotionEffect } from "./services/gameplay/inventoryService";
 import { ReplicatedStorage } from "@rbxts/services";
 
-export const PROFILE_STORE_NAME = "pre_test66";
+export const PROFILE_STORE_NAME = "pre_test77";
 
 ReplicatedStorage.SetAttribute("CurrentStore", PROFILE_STORE_NAME);
 
@@ -46,7 +46,7 @@ export const profileTemplate = {
 	// Luck multiplier
 	potionLuckMultiplier: 1,
 	potionStrengthMultiplier: 1,
-	activePotions: new Map<PotionKind, PotionEffect>(),
+	activePotions: new Array<PotionEffect>(),
 
 	targetInventory: new Array<TargetItem>(),
 	previouslyFoundTargets: new Set<keyof typeof targetConfig>(),

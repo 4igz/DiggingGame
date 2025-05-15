@@ -114,6 +114,16 @@ local gameConstants = {
 		Perfect = ColorSequence.new(Color3.new(1, 0.15, 0), Color3.new(1, 0.37, 0)),
 	},
 
+	RARITY_EXPERIENCE_MULTIPLIERS = {
+		Secret = 7,
+		Mythical = 6,
+		Legendary = 5,
+		Epic = 4,
+		Rare = 3,
+		Uncommon = 2,
+		Common = 1,
+	},
+
 	RARITY_COLORS = {
 		Common = Color3.new(1, 1, 1),
 		Uncommon = Color3.new(0, 1, 0),

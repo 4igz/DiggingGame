@@ -372,8 +372,10 @@ export const AnimatedProductButton = (props: AnimatedProductButtonProps) => {
 					switch (props.productType) {
 						case Enum.InfoType.GamePass:
 							MarketplaceService.PromptGamePassPurchase(Players.LocalPlayer, props.productId);
+							break;
 						case Enum.InfoType.Product:
 							MarketplaceService.PromptProductPurchase(Players.LocalPlayer, props.productId);
+							break;
 					}
 				}}
 			>
@@ -503,13 +505,15 @@ export const GamepassShop = (props: GamepassShopProps) => {
 			}
 		});
 
-		Events.drankPotion.connect((potionName: keyof typeof potionConfig) => {
+		Events.drankPotion.connect((potionName) => {
 			switch (potionName) {
 				case "M.Strength Potion": {
 					setMStrengthPotions((prev) => --prev);
+					break;
 				}
 				case "M.Luck Potion": {
 					setMLuckPotions((prev) => --prev);
+					break;
 				}
 			}
 		});

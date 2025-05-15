@@ -12,7 +12,7 @@ import {
 } from "@rbxts/services";
 import { Events, Functions } from "server/network";
 import { gameConstants } from "shared/gameConstants";
-import { fullTargetConfig, TargetConfig as TargetConfig, targetConfig } from "shared/config/targetConfig";
+import { fullTargetConfig, TargetConfig as TargetConfig, targetConfig, trashConfig } from "shared/config/targetConfig";
 import { ProfileService } from "../backend/profileService";
 import { BASE_SHOVEL_STRENGTH, shovelConfig } from "shared/config/shovelConfig";
 import { Target } from "shared/networkTypes";
@@ -336,52 +336,6 @@ export class TargetService implements OnStart {
 			};
 		});
 
-		// let latestClientUpdateId = 0;
-
-		// Events.dig.connect((player, serializedBatch) => {
-		// 	if (this.playerDigCooldown.get(player)) {
-		// 		return;
-		// 	}
-		// 	const MAX_BATCH_SZ = math.ceil(gameConstants.BATCH_SEND_INTERVAL / gameConstants.DIG_TIME_SEC);
-		// 	const batch = batchSerializer.deserialize(serializedBatch as buffer);
-
-		// 	const currentUpdateId = latestClientUpdateId;
-		// 	let batchAcc = 0;
-		// 	for (const { id, batchNum } of batch) {
-		// 		if (id <= latestClientUpdateId) continue;
-		// 		latestClientUpdateId = id;
-		// 		if (batchAcc >= MAX_BATCH_SZ) break;
-		// 		batchAcc += batchNum;
-		// 	}
-		// 	batchAcc = math.min(batchAcc, MAX_BATCH_SZ);
-
-		// 	if (currentUpdateId === latestClientUpdateId) {
-		// 		return;
-		// 	}
-		// 	Events.confirmRecievedDigBatch.fire(player, latestClientUpdateId);
-
-		// 	let target = this.getPlayerTarget(player);
-		// 	if (!target) {
-		// 		return;
-		// 	}
-		// 	const targetDistance = player.Character?.GetPivot().Position.sub(target.position).Magnitude;
-		// 	if (targetDistance === undefined) {
-		// 		// This can happen when their character is destroyed, forex, they fell into void or reset.
-		// 		debugWarn("Player character destroyed while digging, cancelling this treasure.");
-		// 		this.endDigging(player, true);
-		// 		return;
-		// 	}
-		// 	// Ensure exploiters can't dig from far away
-		// 	if (targetDistance > gameConstants.DIG_RANGE * 4) {
-		// 		// If we didn't end here, then their dig wouldn't end until the timer ran out and they would be stuck.
-		// 		debugWarn("Player too far away from target to dig, cancelling this treasure.");
-		// 		this.endDigging(player, true);
-		// 		return;
-		// 	}
-
-		// 	this.dig(player, target, batchAcc);
-		// });
-
 		Events.replicateDigProgress.connect((player, progress) => {
 			const deserializedProgress = numberSerializer.deserialize(progress as buffer);
 			const playerTarget = this.getPlayerTarget(player);
@@ -482,16 +436,27 @@ export class TargetService implements OnStart {
 			if (!targetResult) break;
 			const [extraTarget] = targetResult;
 			this.inventoryService.addItemToTargetInventory(player, extraTarget);
-			this.levelService.addExperience(player, extraTarget.weight * 10);
+			const isTrash = trashConfig[extraTarget.name] !== undefined;
+			if (!isTrash) {
+				this.levelService.addExperience(
+					player,
+					extraTarget.weight * gameConstants.RARITY_EXPERIENCE_MULTIPLIERS[extraTarget.rarityType] * 10,
+				);
+			}
 			profile.Data.treasuresDug++;
 		}
 
 		this.profileService.setProfile(player, profile);
 		this.dugTreasures.Fire(player, profile.Data.treasuresDug);
 
-		// Add experience to the player
 		// TODO: Take rarity, or if it's trash into account.
-		this.levelService.addExperience(player, target.weight * 10);
+		const isTrash = trashConfig[target.name] !== undefined;
+		if (!isTrash) {
+			this.levelService.addExperience(
+				player,
+				target.weight * gameConstants.RARITY_EXPERIENCE_MULTIPLIERS[target.rarityType] * 10,
+			);
+		}
 
 		this.playerLastSuccessfulDigCooldown.add(player);
 

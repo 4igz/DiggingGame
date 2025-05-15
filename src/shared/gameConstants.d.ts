@@ -78,6 +78,8 @@ export declare const gameConstants: {
 	readonly DETECTION_MODIFIER: number;
 	readonly LUCK_MODIFIER: number;
 
+	readonly RARITY_EXPERIENCE_MULTIPLIERS: Record<Rarity, number>;
+
 	// Maps itemType name to config
 	readonly SHOP_CONFIGS: Record<ItemType, Readonly<Record<string, MetalDetector | Shovel | BoatConfig>>>;
 

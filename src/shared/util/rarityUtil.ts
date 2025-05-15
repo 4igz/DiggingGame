@@ -1,4 +1,5 @@
 //!optimize 2
+import { gameConstants } from "shared/gameConstants";
 import { Rarity } from "shared/networkTypes";
 
 export const getOrderFromRarity = (rarity: Rarity, statValue: number = 0): number => {

@@ -109,7 +109,7 @@ export class AutoDigging implements OnStart {
 		});
 
 		Signals.forceSetAutoDigging.Connect((enabled: boolean) => {
-			this.setAutoDiggingEnabled(enabled);
+			this.setAutoDiggingEnabled(enabled, true);
 		});
 
 		UserInputService.InputBegan.Connect((input, gameProcessedEvent) => {
@@ -420,7 +420,7 @@ export class AutoDigging implements OnStart {
 		}
 	}
 
-	public setAutoDiggingEnabled(enabled: boolean, quitTarget: boolean = true) {
+	public setAutoDiggingEnabled(enabled: boolean, quitTarget: boolean = true, resetFails = false) {
 		this.autoDiggingEnabled = enabled;
 
 		if (enabled) {
@@ -438,6 +438,9 @@ export class AutoDigging implements OnStart {
 			}
 			this.cleanupPather();
 			Signals.setAutoDiggingRunning.Fire(false);
+			if (resetFails) {
+				consecutiveFails = 0;
+			}
 		}
 
 		Signals.setAutoDiggingEnabled.Fire(enabled);

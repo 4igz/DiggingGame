@@ -68,7 +68,7 @@ export class LevelService implements OnStart {
 		if (level < LEVEL_FORMULA_TRANSITION) {
 			return math.floor(BASE_EXP * (level / TRANSITION_MODIFIER));
 		} else {
-			return math.floor(math.pow(level, LEVEL_EXPONENT));
+			return math.floor(BASE_EXP * math.pow(level, LEVEL_EXPONENT));
 		}
 	}
 	// private xpForLevel(level: number): number {
