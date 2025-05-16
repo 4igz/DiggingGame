@@ -307,6 +307,7 @@ export const scrollTo = (labelRef: React.RefObject<Frame>, scrollingRef: React.R
 	if (currentScrolling && currentLabel) {
 		// Reset the CanvasPosition to 0, ensuring a clean starting point
 		// Will doing a 0 timed tween will cancel any concurrent tweens and position it at the start
+		const currentPos = currentScrolling.CanvasPosition;
 		TweenService.Create(currentScrolling, new TweenInfo(0), {
 			CanvasPosition: new Vector2(0, 0),
 		}).Play();
@@ -323,6 +324,8 @@ export const scrollTo = (labelRef: React.RefObject<Frame>, scrollingRef: React.R
 			0,
 			currentScrolling.AbsoluteCanvasSize.Y - currentScrolling.AbsoluteSize.Y,
 		);
+
+		currentScrolling.CanvasPosition = currentPos;
 
 		// Set the CanvasPosition to the calculated clamped position
 		// currentScrolling.CanvasPosition = new Vector2(0, currentPos);
@@ -1982,7 +1985,7 @@ export const GamepassShop = (props: GamepassShopProps) => {
 							<imagelabel
 								AnchorPoint={new Vector2(0.5, 0)}
 								BackgroundTransparency={1}
-								Image={"rbxassetid://83893510515400"}
+								Image={"rbxassetid://126307359783259"}
 								key={"GpIcon"}
 								Position={UDim2.fromScale(0.5, 0.10177)}
 								Size={UDim2.fromScale(0.620513, 0.535398)}
@@ -2202,7 +2205,7 @@ export const GamepassShop = (props: GamepassShopProps) => {
 								Size={UDim2.fromScale(0.4, 0.287611)}
 								Text={"Sell  Anywhere!"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(27)}
+								TextSize={px(TITLE_PX)}
 								// TextScaled={true}
 								TextXAlignment={Enum.TextXAlignment.Left}
 								ZIndex={105}
@@ -2221,12 +2224,13 @@ export const GamepassShop = (props: GamepassShopProps) => {
 									)
 								}
 								key={"Description"}
-								Position={UDim2.fromScale(0.521219, 0.465076)}
+								Position={UDim2.fromScale(0.521219, 0.5376)}
 								RichText={true}
 								Size={UDim2.fromScale(0.502469, 0.115044)}
 								Text={"Get the ability to sell anywhere on the map."}
 								TextColor3={Color3.fromRGB(27, 37, 76)}
-								TextSize={px(DESC_PX)}
+								TextSize={px(28)}
+								TextWrapped={true}
 								// TextScaled={true}
 								TextXAlignment={Enum.TextXAlignment.Left}
 								ZIndex={105}

@@ -318,9 +318,9 @@ export class TargetService implements OnStart {
 		});
 
 		Functions.requestNextTarget.setCallback((player) => {
-			const target =
-				this.getPlayerTarget(player) ?? (this.spawnTarget(player, 10) && this.getPlayerTarget(player));
+			const target = this.getPlayerTarget(player) ?? this.spawnTarget(player, 10);
 			if (!target) {
+				print("Failed to spawn");
 				Events.targetSpawnFailure.fire(player);
 				return;
 			}
@@ -525,13 +525,16 @@ export class TargetService implements OnStart {
 
 	// Spawn a target and assign it to a player.
 	// Returns true if the target was successfully spawned, false otherwise.
-	public spawnTarget(player: Player, luckMult: number): boolean {
+	public spawnTarget(player: Player, luckMult: number): Target | undefined {
 		const profile = this.profileService.getProfile(player);
 
-		if (!profile) return false;
+		if (!profile) return;
 
 		const map = Maps.find((map) => map.Name === profile.Data.currentMap) as Folder | undefined;
-		if (!map) return false;
+		if (!map) {
+			debugWarn("No map");
+			return;
+		}
 
 		// Get the spawn bases from the map
 		const spawnBaseFolder = map.WaitForChild("SpawnBases");
@@ -543,7 +546,10 @@ export class TargetService implements OnStart {
 
 		const playerPosition = player.Character?.GetPivot().Position;
 
-		if (!playerPosition) return false;
+		if (!playerPosition) {
+			debugWarn("No player position");
+			return;
+		}
 
 		const [position, spawnBase] = findFurthestPointWithinRadius(
 			playerPosition,
@@ -551,13 +557,22 @@ export class TargetService implements OnStart {
 			adjustedRadius,
 		);
 
-		if (!position) return false;
+		if (!position) {
+			debugWarn("No point position");
+			return;
+		}
 
 		const targetResult = this.createTarget(player, luckMult);
-		if (!targetResult) return false;
+		if (!targetResult) {
+			debugWarn("No target result");
+			return;
+		}
 		const [target] = targetResult;
 
-		if (!target) return false;
+		if (!target) {
+			debugWarn("No target");
+			return;
+		}
 
 		target.position = position;
 		target.mapName = map.Name;
@@ -569,7 +584,7 @@ export class TargetService implements OnStart {
 		Events.targetSpawnSuccess.fire(player, position);
 		Events.createWaypointVisualization(player, position, profile.Data.equippedDetector);
 
-		return true;
+		return target;
 	}
 
 	private createTarget(

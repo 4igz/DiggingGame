@@ -76,12 +76,12 @@ export class InventoryService implements OnStart, OnTick {
 			}
 		}
 
-		for (const tool of ShovelFolder.GetChildren()) {
-			if (tool.IsA("Tool")) {
-				if (shovelConfig[tool.Name] === undefined) {
-					warn(`Shovel tool ${tool.Name} is missing from the shovelConfig`);
-					continue;
-				}
+		for (const [shovelName, _cfg] of pairs(shovelConfig)) {
+			if (!ShovelFolder.FindFirstChild(shovelName)) {
+				warn(`Shovel tool ${shovelName} is missing from the shovelConfig`);
+			}
+			if (!ShovelAccessoryFolder.FindFirstChild(shovelName)) {
+				warn(`Shovel tool ${shovelName} is missing an accessory in ${ShovelAccessoryFolder.GetFullName()}`);
 			}
 		}
 

@@ -41,6 +41,7 @@ export declare const gameConstants: {
 	readonly BOTTOM_RIGHT_HUD: string;
 
 	readonly STARTER_PACK_DISCOUNTED_PRICE: number;
+	readonly MEDIUM_PACK_DISCOUNTED_PRICE: number;
 
 	readonly BOAT_DRIVER_SITTING: "SittingInBoatDriverSeat";
 	readonly AREA_INDICATOR_POS: "OriginalPosition";

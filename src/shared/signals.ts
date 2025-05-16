@@ -2,6 +2,7 @@
 import Signal from "@rbxts/goodsignal";
 import { Target } from "./networkTypes";
 import { potionConfig } from "./config/potionConfig";
+import { mapConfig } from "./config/mapConfig";
 
 export const Signals = {
 	// Server only signals:
@@ -38,6 +39,7 @@ export const Signals = {
 	closeLuckbar: new Signal(),
 	invalidAction: new Signal<(text?: string) => void>(),
 	actionPopup: new Signal<(text?: string) => void>(),
+	enteredIsland: new Signal<(zoneName: keyof typeof mapConfig) => void>(),
 	drankPotion: new Signal<(potionName: keyof typeof potionConfig) => void>(),
 
 	menuOpened: new Signal<(isOpen: boolean, menuName: string) => void>(),

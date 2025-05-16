@@ -214,8 +214,8 @@ export const BuyButton = (props: BuyButtonProps) => {
 					Size={UDim2.fromScale(1, 0.65)}
 					Text={displayText}
 					RichText={false}
-					TextColor3={new Color3(1, 1, 1)}
 					TextSize={px.ceil(props.textSize ?? 25)}
+					TextColor3={new Color3()}
 					// TextScaled={true}
 					TextXAlignment={Enum.TextXAlignment.Center}
 					ZIndex={10}

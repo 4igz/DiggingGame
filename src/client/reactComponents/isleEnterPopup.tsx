@@ -12,6 +12,7 @@ import { redToGreen } from "shared/util/colorUtil";
 import { AnimatedButton } from "./buttons";
 import { getOrderFromRarity } from "shared/util/rarityUtil";
 import { usePx } from "client/hooks/usePx";
+import { Signals } from "shared/signals";
 
 interface ItemProps {
 	itemName: string;
@@ -96,10 +97,10 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 		});
 
 		if (!isleName || isleName === "") return;
-		if (firstEnter) {
-			setFirstEnter(false);
-			return;
-		}
+		// if (firstEnter) {
+		// setFirstEnter(false);
+		// return;
+		// }
 		const cfg = mapConfig[isleName];
 		if (!cfg) {
 			warn(`Island ${isleName} does not have a corresponding config in mapConfig`);
@@ -155,26 +156,12 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 	}, [isleName, resetTick]);
 
 	useEffect(() => {
-		props.zoneController.isleZoneMap.forEach((zone, name) => {
-			connectedZoneNames.add(name);
-			zone.localPlayerEntered.Connect(() => {
-				setIsleName(name);
-				setResetTick(time());
-			});
+		const enteredSignal = Signals.enteredIsland.Connect((zoneName) => {
+			setIsleName(zoneName);
+			setResetTick(tick());
 		});
 
-		props.zoneController.zonesUpdated.Connect(() => {
-			props.zoneController.isleZoneMap.forEach((zone, name) => {
-				if (connectedZoneNames.has(name)) return;
-				connectedZoneNames.add(name);
-				zone.localPlayerEntered.Connect(() => {
-					setIsleName(name);
-					setResetTick(time());
-				});
-			});
-		});
-
-		transparencyMotion.onStep((value) => {
+		const unsub = transparencyMotion.onStep((value) => {
 			if (frameRef.current) {
 				frameRef.current.Transparency = value;
 
@@ -194,6 +181,11 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 				}
 			}
 		});
+
+		return () => {
+			enteredSignal.Disconnect();
+			unsub();
+		};
 	}, [frameRef]);
 
 	return (

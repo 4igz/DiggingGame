@@ -19,12 +19,34 @@ import { Reward } from "shared/networkTypes";
 import { TooltipStats } from "./tooltips";
 
 const BuyButton = () => {
-	const packPrice = getDeveloperProductInfo(
-		gameConstants.DEVPRODUCT_IDS["StarterPack"],
-		Enum.InfoType.Product,
-	).expect()?.PriceInRobux;
+	const [packPrice, setPackPrice] = useState(100);
+
+	const [pack, setPack] = useState(highestLimitedOfferPack());
 
 	const px = usePx();
+
+	useEffect(() => {
+		subscribe(highestLimitedOfferPack, (newV) => {
+			setPack(newV);
+			setPackPrice(
+				getDeveloperProductInfo(
+					newV === NONE
+						? gameConstants.DEVPRODUCT_IDS["StarterPack"]
+						: gameConstants.DEVPRODUCT_IDS["MediumPack"],
+					Enum.InfoType.Product,
+				).expect()?.PriceInRobux!,
+			);
+		});
+
+		setPackPrice(
+			getDeveloperProductInfo(
+				highestLimitedOfferPack() === NONE
+					? gameConstants.DEVPRODUCT_IDS["StarterPack"]
+					: gameConstants.DEVPRODUCT_IDS["MediumPack"],
+				Enum.InfoType.Product,
+			).expect()?.PriceInRobux!,
+		);
+	}, []);
 
 	return (
 		<AnimatedButton
@@ -33,11 +55,21 @@ const BuyButton = () => {
 			zindex={4}
 			backgroundTransparency={0}
 			onClick={() => {
-				if (highestLimitedOfferPack() < RETRO) {
-					MarketplaceService.PromptProductPurchase(
-						Players.LocalPlayer,
-						gameConstants.DEVPRODUCT_IDS["StarterPack"],
-					);
+				switch (pack) {
+					case NONE: {
+						MarketplaceService.PromptProductPurchase(
+							Players.LocalPlayer,
+							gameConstants.DEVPRODUCT_IDS["StarterPack"],
+						);
+						break;
+					}
+					case NATURE: {
+						MarketplaceService.PromptProductPurchase(
+							Players.LocalPlayer,
+							gameConstants.DEVPRODUCT_IDS["MediumPack"],
+						);
+						break;
+					}
 				}
 			}}
 		>
@@ -82,11 +114,19 @@ const BuyButton = () => {
 					key={"Title"}
 					Position={UDim2.fromScale(-0.00166464, 0.155)}
 					Size={UDim2.fromScale(0.990199, 0.75)}
-					Text={`${math.round(
-						((gameConstants.STARTER_PACK_DISCOUNTED_PRICE - packPrice!) /
-							gameConstants.STARTER_PACK_DISCOUNTED_PRICE) *
-							100,
-					)}% OFF`}
+					Text={
+						pack === NONE
+							? `${math.round(
+									((gameConstants.STARTER_PACK_DISCOUNTED_PRICE - packPrice!) /
+										gameConstants.STARTER_PACK_DISCOUNTED_PRICE) *
+										100,
+							  )}% OFF`
+							: `${math.round(
+									((gameConstants.MEDIUM_PACK_DISCOUNTED_PRICE - packPrice!) /
+										gameConstants.MEDIUM_PACK_DISCOUNTED_PRICE) *
+										100,
+							  )}% OFF`
+					}
 					TextColor3={new Color3(1, 1, 1)}
 					// TextScaled={true}
 					TextSize={px(20)}
@@ -185,7 +225,11 @@ const BuyButton = () => {
 				key={"OldAmount"}
 				Position={UDim2.fromScale(0.661586, 1.09565)}
 				Size={UDim2.fromScale(0.338414, 0.371925)}
-				Text={separateWithCommas(gameConstants.STARTER_PACK_DISCOUNTED_PRICE)}
+				Text={
+					pack === NONE
+						? separateWithCommas(gameConstants.STARTER_PACK_DISCOUNTED_PRICE)
+						: separateWithCommas(gameConstants.MEDIUM_PACK_DISCOUNTED_PRICE)
+				}
 				TextColor3={new Color3(1, 1, 1)}
 				// TextScaled={true}
 				TextSize={px(20)}
@@ -313,7 +357,7 @@ const PACK_NAME = {
 
 const PACK_DESCRIPTION = {
 	[RETRO]: "",
-	[NATURE]: "Buy the OP Retro pack! The ultimate pack in the game!",
+	[NATURE]: "Buy the OP Retro pack! The medium pack!",
 	[NONE]: "Buy the Nature pack! The ultimate starter pack!",
 };
 

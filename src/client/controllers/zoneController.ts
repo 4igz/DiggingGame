@@ -6,6 +6,8 @@ import { Zone } from "@rbxts/zone-plus";
 import { Events } from "client/network";
 import { mapConfig } from "shared/config/mapConfig";
 import { gameConstants } from "shared/gameConstants";
+import { Signals } from "shared/signals";
+import { debugWarn } from "shared/util/logUtil";
 
 const COLOR_CORRECTION_PROPERTIES_TABLE = {
 	Grasslands: {
@@ -88,9 +90,7 @@ let prevPlayerPos = new Vector3();
 let prevSittingInBoat = false; // or undefined initially
 
 const areaSounds = SoundService.WaitForChild("Areas") as SoundGroup;
-const isleZoneParts = CollectionService.GetTagged(gameConstants.ISLE_ZONE_TAG).filter((inst) => {
-	return inst.IsA("PVInstance");
-});
+
 const ZONE_BILLBOARD_DIST_THRESHOLD = 200;
 
 let currentMapName = "";
@@ -107,19 +107,6 @@ export class ZoneController implements OnStart, OnRender {
 	constructor() {}
 
 	onStart() {
-		isleZoneParts.forEach((element) => {
-			// Ensure this zone part is named after its corresponding map in the config.
-			assert(mapConfig[element.Name], `Zone ${element.Name} does not have a corresponding config in mapConfig`);
-			const zone = new Zone(element);
-			zone.localPlayerEntered.Connect(() => {
-				this.onZoneEnter(element.Name as keyof typeof mapConfig);
-			});
-			zone.localPlayerExited.Connect(() => {
-				this.onZoneLeave();
-			});
-			this.isleZoneMap.set(element.Name, zone);
-		});
-
 		CollectionService.GetInstanceAddedSignal(gameConstants.ISLE_ZONE_TAG).Connect((instance) => {
 			if (instance.IsA("PVInstance")) {
 				// Ensure this zone part is named after its corresponding map in the config.
@@ -137,6 +124,23 @@ export class ZoneController implements OnStart, OnRender {
 				});
 				this.zonesUpdated.Fire();
 			}
+		});
+
+		const isleZoneParts = CollectionService.GetTagged(gameConstants.ISLE_ZONE_TAG).filter((inst) => {
+			return inst.IsA("PVInstance");
+		});
+
+		isleZoneParts.forEach((element) => {
+			// Ensure this zone part is named after its corresponding map in the config.
+			assert(mapConfig[element.Name], `Zone ${element.Name} does not have a corresponding config in mapConfig`);
+			const zone = new Zone(element);
+			zone.localPlayerEntered.Connect(() => {
+				this.onZoneEnter(element.Name as keyof typeof mapConfig);
+			});
+			zone.localPlayerExited.Connect(() => {
+				this.onZoneLeave();
+			});
+			this.isleZoneMap.set(element.Name, zone);
 		});
 
 		// This is important because this is how we know that the island has streamed in before we teleport the player to it.
@@ -195,6 +199,7 @@ export class ZoneController implements OnStart, OnRender {
 	}
 
 	onZoneEnter(zoneName: keyof typeof mapConfig) {
+		Signals.enteredIsland.Fire(zoneName);
 		if (zoneName === currentMapName) return;
 		let tweenInfo = AREA_CHANGE_TWEEN_INFO;
 		if (isFirstZoneEnter) {
@@ -210,29 +215,18 @@ export class ZoneController implements OnStart, OnRender {
 
 	onZoneLeave() {
 		// Check if player is in any zones, and if not then assume they are in the sea.
-		let playerIsInZone = false;
 		for (const [name, zone] of this.isleZoneMap) {
 			if (zone.findLocalPlayer() === true) {
-				playerIsInZone = true;
 				this.onZoneEnter(name);
-				break;
+				debugWarn("Already in zone");
+				return;
 			}
 		}
-		if (!playerIsInZone) {
-			TweenService.Create(clouds, AREA_CHANGE_TWEEN_INFO, CLOUD_ZONE_PROPERTIES_TABLE.HighSeas).Play();
-			TweenService.Create(
-				colorCorrection,
-				AREA_CHANGE_TWEEN_INFO,
-				COLOR_CORRECTION_PROPERTIES_TABLE.HighSeas,
-			).Play();
-			TweenService.Create(
-				Workspace.Terrain,
-				AREA_CHANGE_TWEEN_INFO,
-				WATER_COLOR_PROPERTIES_TABLE.HighSeas,
-			).Play();
-			this.playAreaSound("HighSeas");
-			currentMapName = "";
-		}
+		TweenService.Create(clouds, AREA_CHANGE_TWEEN_INFO, CLOUD_ZONE_PROPERTIES_TABLE.HighSeas).Play();
+		TweenService.Create(colorCorrection, AREA_CHANGE_TWEEN_INFO, COLOR_CORRECTION_PROPERTIES_TABLE.HighSeas).Play();
+		TweenService.Create(Workspace.Terrain, AREA_CHANGE_TWEEN_INFO, WATER_COLOR_PROPERTIES_TABLE.HighSeas).Play();
+		this.playAreaSound("HighSeas");
+		currentMapName = "";
 	}
 
 	playAreaSound(zoneName: keyof typeof mapConfig) {

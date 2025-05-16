@@ -1,7 +1,6 @@
 --!optimize 2
 --!native
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
--- Compiled with roblox-ts v3.0.0
 local boatConfig = require(ReplicatedStorage.TS.config.boatConfig)
 local potionConfig = require(ReplicatedStorage.TS.config.potionConfig)
 local TS = require(game:GetService("ReplicatedStorage"):WaitForChild("rbxts_include"):WaitForChild("RuntimeLib"))
@@ -53,7 +52,8 @@ local gameConstants = {
 	DETECTION_MODIFIER = 0.1,
 	LUCK_MODIFIER = 0.025,
 
-	STARTER_PACK_DISCOUNTED_PRICE = 6000,
+	STARTER_PACK_DISCOUNTED_PRICE = 1000,
+	MEDIUM_PACK_DISCOUNTED_PRICE = 6000,
 
 	SHOP_CONFIGS = {
 		MetalDetectors = metalDetectorConfig,
@@ -115,12 +115,12 @@ local gameConstants = {
 	},
 
 	RARITY_EXPERIENCE_MULTIPLIERS = {
-		Secret = 7,
-		Mythical = 6,
-		Legendary = 5,
-		Epic = 4,
-		Rare = 3,
-		Uncommon = 2,
+		Secret = 5,
+		Mythical = 4,
+		Legendary = 3,
+		Epic = 2.2,
+		Rare = 1.7,
+		Uncommon = 1.3,
 		Common = 1,
 	},
 

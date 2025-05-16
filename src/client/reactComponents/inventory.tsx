@@ -1611,7 +1611,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 					{
 						key: "duration",
 						value: item.duration,
-						icon: "http://www.roblox.com/asset/?id=17383555514",
+						icon: "rbxassetid://91859975750951",
 						type: "time",
 					},
 					{

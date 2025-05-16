@@ -167,7 +167,7 @@ export const DialogResponseComponent = (props: DialogResponseProps) => {
 			BorderColor3={Color3.fromRGB(0, 0, 0)}
 			BorderSizePixel={0}
 			key={"Options"}
-			Position={UDim2.fromScale(0.5, 0.75)}
+			Position={UDim2.fromScale(0.5, 0.65)}
 			Size={UDim2.fromScale(0.294, 0.198)}
 			Visible={options !== undefined && selectedOption === undefined}
 		>
