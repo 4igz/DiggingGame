@@ -95,10 +95,11 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 		});
 
 		if (!isleName || isleName === "") return;
-		if (firstEnter) {
-			setFirstEnter(false);
-			return;
-		}
+		print(firstEnter, isleName);
+		// if (firstEnter) {
+		// 	setFirstEnter(false);
+		// 	return;
+		// }
 		const cfg = mapConfig[isleName];
 		if (!cfg) {
 			warn(`Island ${isleName} does not have a corresponding config in mapConfig`);

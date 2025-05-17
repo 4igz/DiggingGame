@@ -4,6 +4,7 @@ import React from "@rbxts/react";
 import ReactRoblox from "@rbxts/react-roblox";
 import {
 	CollectionService,
+	GuiService,
 	Players,
 	ReplicatedStorage,
 	RunService,
@@ -288,6 +289,12 @@ export default class UiController implements OnStart, OnInit {
 				Size: isOpen ? TARGET_BLUR_SZ : 0,
 			}).Play();
 			effectsActive = isOpen;
+		});
+
+		GuiService.MenuOpened.Connect(() => {
+			if (this.currentOpenUi !== undefined) {
+				this.closeUi(this.currentOpenUi);
+			}
 		});
 	}
 

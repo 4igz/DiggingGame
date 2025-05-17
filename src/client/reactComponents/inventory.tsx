@@ -1282,6 +1282,7 @@ export const ExitButton = (props: ExitButtonProps) => {
 			zindex={100}
 			onClick={exit}
 			selectable={false}
+			modal={true}
 		>
 			<uiaspectratioconstraint AspectRatio={1} />
 
@@ -1292,24 +1293,23 @@ export const ExitButton = (props: ExitButtonProps) => {
 				key={"ExitBtn"}
 				Position={UDim2.fromScale(0.5, 0.5)}
 				ScaleType={Enum.ScaleType.Fit}
-				Selectable={false}
 				Size={UDim2.fromScale(1, 1)}
 				SliceScale={0.4}
-				// ZIndex={100}
+				ZIndex={98}
 				Active={false}
 			/>
 
 			<textlabel
 				key={"TextLabel"}
-				AnchorPoint={new Vector2(0.5, 0.5)}
 				BackgroundTransparency={1}
 				FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+				AnchorPoint={new Vector2(0.5, 0.5)}
 				Position={UDim2.fromScale(0.5, 0.5)}
 				Size={UDim2.fromScale(0.6, 0.6)}
 				Text={"X"}
 				TextColor3={new Color3(1, 1, 1)}
 				TextScaled={true}
-				// ZIndex={10}
+				ZIndex={99}
 				Active={false}
 			/>
 		</AnimatedButton>

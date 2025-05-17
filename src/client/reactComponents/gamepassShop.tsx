@@ -559,18 +559,35 @@ export const GamepassShop = (props: GamepassShopProps) => {
 				Rotation={imageRotation}
 			/>
 			<textlabel
+				AnchorPoint={new Vector2(0.5, 0.5)}
 				BackgroundTransparency={1}
-				FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+				FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+				LayoutOrder={1}
 				key={"Title"}
-				Position={UDim2.fromScale(0.125182, -0.0503847)}
+				Position={UDim2.fromScale(0.22, 0.015)}
 				Size={UDim2.fromScale(0.208333, 0.138158)}
-				Text={"Shop!"}
-				TextColor3={new Color3(1, 1, 1)}
+				Text={"Shop"}
+				TextColor3={Color3.fromRGB(18, 23, 40)}
 				TextScaled={true}
 				TextXAlignment={Enum.TextXAlignment.Left}
-				ZIndex={2}
 			>
-				<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(6)} />
+				<uistroke key={"UIStroke"} Color={Color3.fromRGB(18, 23, 40)} Thickness={px(5)} />
+
+				<textlabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundTransparency={1}
+					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					LayoutOrder={1}
+					key={"Title"}
+					Position={UDim2.fromScale(0.5, 0.45)}
+					Size={UDim2.fromScale(1, 1)}
+					Text={"Shop"}
+					TextColor3={new Color3(1, 1, 1)}
+					TextScaled={true}
+					TextXAlignment={Enum.TextXAlignment.Left}
+				>
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(18, 23, 40)} Thickness={px(5)} />
+				</textlabel>
 			</textlabel>
 			<frame
 				AnchorPoint={new Vector2(0.5, 0)}

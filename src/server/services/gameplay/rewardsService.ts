@@ -188,7 +188,8 @@ export class DailyRewardsService implements OnStart {
 			}
 
 			const playerServerTime = tick() - this.playerJoinTimes.get(player)!;
-			if (playerServerTime < rewardCfg.unlockTime) {
+			const CLAIM_LEEWAY = 5;
+			if (playerServerTime + CLAIM_LEEWAY < rewardCfg.unlockTime) {
 				return false;
 			}
 
@@ -200,7 +201,7 @@ export class DailyRewardsService implements OnStart {
 			claimed.set(rewardIndex, true);
 			this.claimReward(player, rewardCfg);
 
-			const claimedAll = timePlayedRewards.every((reward, index) => claimed.get(index));
+			const claimedAll = timePlayedRewards.every((_reward, index) => claimed.get(index));
 			if (claimedAll) {
 				this.playerRewardClaimMap.set(player, new Map());
 			}

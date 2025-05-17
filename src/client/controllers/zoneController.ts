@@ -86,8 +86,6 @@ const AREA_CHANGE_TWEEN_INFO = new TweenInfo(2, Enum.EasingStyle.Quad);
 
 const clouds = Workspace.Terrain.WaitForChild("Clouds") as Clouds;
 const colorCorrection = Lighting.WaitForChild("ZonesCC") as ColorCorrectionEffect;
-let prevPlayerPos = new Vector3();
-let prevSittingInBoat = false; // or undefined initially
 
 const areaSounds = SoundService.WaitForChild("Areas") as SoundGroup;
 
@@ -161,7 +159,7 @@ export class ZoneController implements OnStart, OnRender {
 			character.WaitForChild("HumanoidRootPart");
 			character.PivotTo(goal);
 			Events.teleportSuccess.fire();
-			this.onZoneEnter(islandName);
+			// this.onZoneEnter(islandName);
 		});
 	}
 
@@ -199,8 +197,12 @@ export class ZoneController implements OnStart, OnRender {
 	}
 
 	onZoneEnter(zoneName: keyof typeof mapConfig) {
-		Signals.enteredIsland.Fire(zoneName);
 		if (zoneName === currentMapName) return;
+		if (!isFirstZoneEnter) {
+			Signals.enteredIsland.Fire(zoneName);
+		} else {
+			isFirstZoneEnter = false;
+		}
 		let tweenInfo = AREA_CHANGE_TWEEN_INFO;
 		if (isFirstZoneEnter) {
 			tweenInfo = new TweenInfo(0);
