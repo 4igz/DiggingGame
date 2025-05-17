@@ -486,7 +486,6 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 	}, []);
 
 	useEffect(() => {
-		// Handle invalid lastClaimed values
 		if (lastClaimed <= 0) {
 			setTimeLeft(0);
 			return;
@@ -496,13 +495,17 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 
 		const thread = task.spawn(() => {
 			while (running) {
-				const currentTime = tick();
+				const currentTime = os.time();
 				const timePassed = currentTime - lastClaimed;
 
-				// Extra safety check for negative values
 				if (timePassed < 0) {
-					warn(`Negative time passed detected: ${timePassed}. Current: ${currentTime}, Last: ${lastClaimed}`);
-					setTimeLeft(0);
+					warn(`Time inconsistency detected: ${timePassed}. Current: ${currentTime}, Last: ${lastClaimed}`);
+					// Handle inconsistency by forcing a refresh of the lastClaimed value
+					Functions.getLastDailyClaimTime()
+						.then((serverTime) => {
+							setLastClaimed(serverTime);
+						})
+						.catch(warn);
 				} else {
 					const newTime = math.clamp(DAILY_REWARD_COOLDOWN - timePassed, 0, DAILY_REWARD_COOLDOWN);
 					setTimeLeft(newTime);

@@ -2,7 +2,7 @@
 import { Controller, OnStart, OnTick } from "@flamework/core";
 import { ContextActionService, Players, ReplicatedStorage, RunService, SoundService, Workspace } from "@rbxts/services";
 import { Events } from "client/network";
-import { BASE_DETECTOR_STRENGTH, metalDetectorConfig } from "shared/config/metalDetectorConfig";
+import { BASE_DETECTOR_STRENGTH, MetalDetector, metalDetectorConfig } from "shared/config/metalDetectorConfig";
 import { Trove } from "@rbxts/trove";
 import { Signals } from "shared/signals";
 import { ShovelController } from "./shovelController";
@@ -13,6 +13,7 @@ import { gameConstants } from "shared/gameConstants";
 import { ObjectPool } from "shared/util/objectPool";
 import { allowDigging } from "client/atoms/detectorAtoms";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
+import Signal from "@rbxts/goodsignal";
 
 const DING_SOUND_INTERVAL = interval(1);
 const RENDER_STEP_ID = "WaypointArrow";
@@ -101,6 +102,172 @@ export class DetectorController implements OnStart {
 				}
 			};
 
+			const setupDetector = (child: Tool, cfg: MetalDetector) => {
+				// We use this to check if the player has just finished digging, to determine if the equip should have a cooldown
+				// before working since they are possibly still spam clicking the shovel as the detector is being equipped.
+				let beep = child.FindFirstChild(beepSound.Name) as Sound | undefined;
+				if (!beep) {
+					beep = beepSoundPool.acquire();
+					beep.Parent = child.FindFirstChildWhichIsA("BasePart") as BasePart;
+				}
+
+				Signals.detectorEquipUpdate.Fire(true);
+				currentBeepSound = beep as Sound;
+
+				const trove = new Trove();
+				holdStart = tick();
+				holding = false;
+				this.detectorActive = true;
+
+				trove.add(cleanupTrack);
+
+				trove.add(
+					RunService.RenderStepped.Connect(() => {
+						if (holding && tick() - holdStart > HOLD_LENGTH) {
+							if (!isRolling) {
+								Signals.setLuckbarVisible.Fire(true);
+								isRolling = true;
+								Events.beginDetectorLuckRoll();
+							}
+						}
+					}),
+					"Disconnect",
+				);
+
+				// Cleanup indicators when unequipping
+				trove.add(
+					child.Unequipped.Once(() => {
+						trove.destroy();
+					}),
+				);
+
+				trove.add(
+					character.ChildRemoved.Connect((child2) => {
+						if (child2 === child) {
+							trove.destroy();
+						}
+					}),
+				);
+
+				// Play the animation when the tool is equipped
+				detectorTrack.Play();
+
+				// Ensure animation is playing after 1 second
+				task.delay(1, () => {
+					if (!detectorTrack.IsPlaying && child.Parent === character) {
+						detectorTrack.Play();
+					}
+				});
+
+				const actionName = "DetectorAction";
+
+				const detectorAction = (
+					_actionName: string,
+					inputState: Enum.UserInputState,
+					_inputObject: InputObject,
+				) => {
+					if (inputState === Enum.UserInputState.Begin) {
+						const button = ContextActionService.GetButton(actionName);
+						if (button) {
+							button.Image = "rbxassetid://5713982324";
+						}
+						if (
+							holding || // Not currently holding down the detector button
+							awaitingResponse || // And not currently waiting for a target to spawn
+							this.targetActive || // And a target is not already active
+							isRolling || // And not currently already rolling for a target
+							(isAutoDigging && autoDigRunning) // And we aren't autodigging
+						)
+							return;
+						if (isInventoryFull) {
+							Signals.inventoryFull.Fire();
+							return;
+						}
+						holding = true;
+						holdStart = tick();
+					} else if (inputState === Enum.UserInputState.End) {
+						const button = ContextActionService.GetButton(actionName);
+						if (button) {
+							button.Image = "rbxassetid://5713982324";
+						}
+						if (!holding || (isAutoDigging && autoDigRunning)) return;
+						holding = false;
+						if (isRolling) {
+							awaitingResponse = true;
+							isRolling = false;
+							Signals.setLuckbarVisible.Fire(false);
+
+							Events.endDetectorLuckRoll();
+
+							if (!understandsInput) {
+								Signals.setUiToggled.Fire(gameConstants.DETECTOR_HINT_TEXT, false, true);
+								understandsInput = true;
+							}
+						}
+					}
+				};
+
+				if (!understandsInput && !autoDigRunning && !isRolling) {
+					// Player hasn't shown yet that they understand how the detector works
+					Signals.setUiToggled.Fire(gameConstants.DETECTOR_HINT_TEXT, true, true);
+				}
+
+				ContextActionService.BindAction(actionName, detectorAction, true, ...DETECTION_KEYBINDS);
+
+				task.defer(() => {
+					ContextActionService.SetImage(actionName, cfg.itemImage);
+					ContextActionService.SetPosition(actionName, UDim2.fromScale(0.12, 0.325));
+					pcall(() => {
+						const button = ContextActionService.GetButton(actionName);
+						if (button) {
+							button.Size = new UDim2(0, 90, 0, 90);
+							button.Image = "rbxassetid://5713982324";
+							button.HoverImage = "rbxassetid://5713982324";
+							button.PressedImage = "rbxassetid://5713982324";
+							button.ImageTransparency = 0.6;
+
+							const btnImage = button.WaitForChild("ActionIcon") as ImageLabel;
+							btnImage.AnchorPoint = new Vector2(0.5, 0.5);
+							btnImage.Size = UDim2.fromScale(0.75, 0.75);
+							btnImage.Position = UDim2.fromScale(0.5, 0.5);
+						}
+					});
+				});
+
+				trove.add(() => {
+					this.detectorActive = false;
+					holding = false;
+
+					Signals.detectorEquipUpdate.Fire(false);
+
+					if (isRolling) {
+						isRolling = false;
+						awaitingResponse = true;
+						Events.endDetectorLuckRoll(true);
+						Signals.setLuckbarVisible.Fire(false);
+					}
+
+					if (beep) {
+						beepSoundPool.release(beep);
+						beep = undefined;
+					}
+
+					Signals.setUiToggled.Fire(gameConstants.DETECTOR_HINT_TEXT, false, true);
+
+					task.defer(() => {
+						if (!this.shovelController.diggingActive && isAutoDigging) {
+							Signals.forceSetAutoDigging.Fire(false);
+						}
+					});
+				});
+
+				trove.add(() => {
+					pcall(() => {
+						ContextActionService.UnbindAction(actionName);
+					});
+				});
+			};
+
 			character.AncestryChanged.Connect(() => {
 				if (!character.IsDescendantOf(game)) {
 					cleanupTrack();
@@ -113,162 +280,19 @@ export class DetectorController implements OnStart {
 				detectorTrack?.Destroy();
 			});
 
+			const existingTool = character.FindFirstChildWhichIsA("Tool");
+			if (existingTool) {
+				const cfg = metalDetectorConfig[existingTool.Name];
+				if (existingTool.IsA("Tool") && cfg !== undefined) {
+					setupDetector(existingTool, cfg);
+				}
+			}
+
 			// Detect tools being equipped
 			character.ChildAdded.Connect((child) => {
 				const cfg = metalDetectorConfig[child.Name];
 				if (child.IsA("Tool") && cfg !== undefined) {
-					// We use this to check if the player has just finished digging, to determine if the equip should have a cooldown
-					// before working since they are possibly still spam clicking the shovel as the detector is being equipped.
-					let beep = child.FindFirstChild(beepSound.Name) as Sound | undefined;
-					if (!beep) {
-						beep = beepSoundPool.acquire();
-						beep.Parent = child.FindFirstChildWhichIsA("BasePart") as BasePart;
-					}
-					currentBeepSound = beep as Sound;
-
-					const trove = new Trove();
-					holdStart = tick();
-					holding = false;
-					this.detectorActive = true;
-
-					trove.add(cleanupTrack);
-
-					trove.add(
-						RunService.RenderStepped.Connect(() => {
-							if (holding && tick() - holdStart > HOLD_LENGTH) {
-								if (!isRolling) {
-									Signals.setLuckbarVisible.Fire(true);
-									isRolling = true;
-									Events.beginDetectorLuckRoll();
-								}
-							}
-						}),
-						"Disconnect",
-					);
-
-					// Cleanup indicators when unequipping
-					trove.add(
-						child.Unequipped.Once(() => {
-							trove.destroy();
-						}),
-					);
-
-					trove.add(
-						character.ChildRemoved.Connect((child2) => {
-							if (child2 === child) {
-								trove.destroy();
-							}
-						}),
-					);
-
-					// Play the animation when the tool is equipped
-					detectorTrack.Play();
-
-					const actionName = "DetectorAction";
-
-					const detectorAction = (
-						_actionName: string,
-						inputState: Enum.UserInputState,
-						_inputObject: InputObject,
-					) => {
-						if (inputState === Enum.UserInputState.Begin) {
-							const button = ContextActionService.GetButton(actionName);
-							if (button) {
-								button.Image = "rbxassetid://5713982324";
-							}
-							if (
-								holding || // Not currently holding down the detector button
-								awaitingResponse || // And not currently waiting for a target to spawn
-								this.targetActive || // And a target is not already active
-								isRolling || // And not currently already rolling for a target
-								(isAutoDigging && autoDigRunning) // And we aren't autodigging
-							)
-								return;
-							if (isInventoryFull) {
-								Signals.inventoryFull.Fire();
-								return;
-							}
-							holding = true;
-							holdStart = tick();
-						} else if (inputState === Enum.UserInputState.End) {
-							const button = ContextActionService.GetButton(actionName);
-							if (button) {
-								button.Image = "rbxassetid://5713982324";
-							}
-							if (!holding || (isAutoDigging && autoDigRunning)) return;
-							holding = false;
-							if (isRolling) {
-								awaitingResponse = true;
-								isRolling = false;
-								Signals.setLuckbarVisible.Fire(false);
-
-								Events.endDetectorLuckRoll();
-
-								if (!understandsInput) {
-									Signals.setUiToggled.Fire(gameConstants.DETECTOR_HINT_TEXT, false, true);
-									understandsInput = true;
-								}
-							}
-						}
-					};
-
-					if (!understandsInput && !autoDigRunning && !isRolling) {
-						// Player hasn't shown yet that they understand how the detector works
-						Signals.setUiToggled.Fire(gameConstants.DETECTOR_HINT_TEXT, true, true);
-					}
-
-					ContextActionService.BindAction(actionName, detectorAction, true, ...DETECTION_KEYBINDS);
-
-					task.defer(() => {
-						ContextActionService.SetImage(actionName, cfg.itemImage);
-						ContextActionService.SetPosition(actionName, UDim2.fromScale(0.12, 0.325));
-						pcall(() => {
-							const button = ContextActionService.GetButton(actionName);
-							if (button) {
-								button.Size = new UDim2(0, 90, 0, 90);
-								button.Image = "rbxassetid://5713982324";
-								button.HoverImage = "rbxassetid://5713982324";
-								button.PressedImage = "rbxassetid://5713982324";
-								button.ImageTransparency = 0.6;
-
-								const btnImage = button.WaitForChild("ActionIcon") as ImageLabel;
-								btnImage.AnchorPoint = new Vector2(0.5, 0.5);
-								btnImage.Size = UDim2.fromScale(0.75, 0.75);
-								btnImage.Position = UDim2.fromScale(0.5, 0.5);
-							}
-						});
-					});
-
-					trove.add(() => {
-						this.detectorActive = false;
-						holding = false;
-
-						if (isRolling) {
-							isRolling = false;
-							awaitingResponse = true;
-							Events.endDetectorLuckRoll(true);
-							Signals.setLuckbarVisible.Fire(false);
-						}
-
-						if (beep) {
-							beepSoundPool.release(beep);
-							beep = undefined;
-						}
-
-						Signals.setUiToggled.Fire(gameConstants.DETECTOR_HINT_TEXT, false, true);
-
-						task.defer(() => {
-							if (!this.shovelController.diggingActive && isAutoDigging) {
-								Signals.forceSetAutoDigging.Fire(false);
-							}
-						});
-					});
-
-					trove.add(() => {
-						pcall(() => {
-							ContextActionService.UnbindAction(actionName);
-						});
-					});
+					setupDetector(child, cfg);
 				}
 			});
 		};
@@ -352,7 +376,7 @@ export class DetectorController implements OnStart {
 		const player = Players.LocalPlayer;
 		const character = player.Character ?? player.CharacterAdded.Wait()[0];
 		if (!character) return undefined;
-		const root = character.WaitForChild("HumanoidRootPart");
+		const root = character.WaitForChild("HumanoidRootPart", 2);
 		if (!root || !root.IsA("BasePart")) return undefined;
 		return root;
 	}

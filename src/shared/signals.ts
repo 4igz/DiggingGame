@@ -41,6 +41,7 @@ export const Signals = {
 	actionPopup: new Signal<(text?: string) => void>(),
 	enteredIsland: new Signal<(zoneName: keyof typeof mapConfig) => void>(),
 	drankPotion: new Signal<(potionName: keyof typeof potionConfig) => void>(),
+	detectorEquipUpdate: new Signal<(equipped: boolean) => void>(),
 
 	menuOpened: new Signal<(isOpen: boolean, menuName: string) => void>(),
 };

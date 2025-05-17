@@ -4,12 +4,12 @@ import { UserInputService } from "@rbxts/services";
 type Platforms = "Mobile" | "PC" | "Console" | "Unknown";
 
 export function getPlayerPlatform(): Platforms {
-	if (UserInputService.GamepadEnabled) {
-		return "Console";
-	} else if (UserInputService.KeyboardEnabled && UserInputService.MouseEnabled) {
-		return "PC";
-	} else if (UserInputService.TouchEnabled && !UserInputService.KeyboardEnabled) {
+	if (UserInputService.TouchEnabled && !UserInputService.MouseEnabled) {
 		return "Mobile";
+	} else if (UserInputService.GamepadEnabled && !UserInputService.KeyboardEnabled && !UserInputService.MouseEnabled) {
+		return "Console";
+	} else if (UserInputService.KeyboardEnabled || UserInputService.MouseEnabled) {
+		return "PC";
 	} else {
 		return "Unknown";
 	}

@@ -11,8 +11,8 @@ import { questConfig } from "shared/config/questConfig";
 import { PotionEffect } from "./services/gameplay/inventoryService";
 import { ReplicatedStorage } from "@rbxts/services";
 
-//!If you change this store name, it will reset all player data!
-export const PROFILE_STORE_NAME = "RELEASE";
+// !If you change this store name, it will reset all player data!
+export const PROFILE_STORE_NAME = "DataStore";
 
 ReplicatedStorage.SetAttribute("CurrentStore", PROFILE_STORE_NAME);
 

@@ -48,7 +48,7 @@ export const DetectorHint = (props: HintProps) => {
 		<frame Size={UDim2.fromScale(1, 1)} BackgroundTransparency={1} Visible={visible}>
 			<textlabel
 				Text={`<font color="rgb(200,200,200)"><b>Hold</b></font> ${
-					platform === "Mobile" ? "the detector button" : platform === "Console" ? "R2" : "left click"
+					platform === "Mobile" ? "the detector button" : platform === "Console" ? "R2" : "tap"
 				} to search for treasures!`}
 				Position={UDim2.fromScale(0.5, 0.1)}
 				AnchorPoint={new Vector2(0.5, 0)}

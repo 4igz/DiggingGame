@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "@rbxts/react";
 import { Players, RunService } from "@rbxts/services";
 import { Trove } from "@rbxts/trove";
 import { useMotion } from "client/hooks/useMotion";
+import { usePx } from "client/hooks/usePx";
 import { Events } from "client/network";
 import { springs } from "client/utils/springs";
 import { BASE_DETECTOR_STRENGTH } from "shared/config/metalDetectorConfig";
@@ -13,6 +14,8 @@ const DistanceLabel = () => {
 	const [startDistance, setStartDistance] = useState(0);
 	const [pos, setPos] = useState(new Vector3(0, 0, 0));
 	const [barSize, setBarSize] = useMotion(UDim2.fromScale(0, 0.465));
+
+	const px = usePx();
 
 	useEffect(() => {
 		const trove = new Trove();
@@ -127,8 +130,8 @@ const DistanceLabel = () => {
 						>
 							<uisizeconstraint
 								key={"UISizeConstraint"}
-								MaxSize={new Vector2(75, 75)}
-								MinSize={new Vector2(75, 75)}
+								MaxSize={new Vector2(px(90), px(90))}
+								MinSize={new Vector2(px(90), px(90))}
 							/>
 
 							<imagelabel
@@ -174,7 +177,7 @@ const DistanceLabel = () => {
 								TextWrapped={true}
 								ZIndex={10}
 							>
-								<uistroke key={"UIStroke"} Thickness={3} />
+								<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 								<uipadding
 									key={"UIPadding"}

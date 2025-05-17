@@ -123,7 +123,9 @@ export class InventoryService implements OnStart, OnTick {
 
 			Events.updateInventorySize(player, this.getInventorySize(player));
 
-			this.giveTools(player, profile);
+			if (player.Character) {
+				this.giveTools(player, profile);
+			}
 			player.CharacterAdded.Connect(() => {
 				this.profileService.getProfileLoaded(player).then((loadedProfile) => {
 					this.giveTools(player, loadedProfile);
@@ -567,6 +569,11 @@ export class InventoryService implements OnStart, OnTick {
 		const detector = this.addToolToBackpack(backpack, character, DetectorFolder, profile.Data.equippedDetector);
 		if (detector) {
 			Signals.detectorInitialized.Fire(player, detector);
+			if (profile.Data.isFirstJoin && player.Character) {
+				detector.Parent = player.Character;
+				profile.Data.isFirstJoin = false;
+				this.profileService.setProfile(player, profile);
+			}
 		}
 
 		const shovelTool = this.addToolToBackpack(backpack, character, ShovelFolder, profile.Data.equippedShovel);

@@ -110,6 +110,7 @@ export class ProfileService implements OnInit, OnStart {
 		Players.PlayerRemoving.Connect((player) => {
 			const profile = this.profileCache.get(player);
 			if (profile) {
+				profile.Data.isFirstJoin = false;
 				profile.EndSession();
 				this.profileCache.delete(player);
 			}

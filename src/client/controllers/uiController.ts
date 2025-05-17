@@ -49,6 +49,7 @@ import { FreeReward } from "client/reactComponents/freeReward";
 import { PackPopup } from "client/reactComponents/packPopup";
 import { StarterPackFrame } from "client/reactComponents/starterPackFrame";
 import { BottomRightButtons } from "client/reactComponents/bottomRightButtons";
+import { HoldToDetectText } from "client/reactComponents/holdToDetectText";
 
 const LOW_LAYER = 0;
 const MENU_LAYER = 1;
@@ -541,6 +542,7 @@ export default class UiController implements OnStart, OnInit {
 			true,
 			LOW_LAYER,
 		);
+		this.registerUi("HoldToDetectText", React.createElement(HoldToDetectText), {}, undefined, undefined, LOW_LAYER);
 
 		// // Hide some stuff from the client that we already have cached.
 		// // By the time we init here, all modules have been loaded already, so we can safely remove them.

@@ -112,7 +112,7 @@ export class DailyRewardsService implements OnStart {
 			if (!profile) return;
 
 			// Current time
-			const currentTime = tick();
+			const currentTime = os.time();
 
 			// Check if enough time has passed
 			if (
