@@ -107,13 +107,28 @@ export class DailyRewardsService implements OnStart {
 			}
 		}
 
-		Events.claimDailyReward.connect((player) => {
+		Functions.claimDailyReward.setCallback((player) => {
 			const profile = this.profileService.getProfile(player);
 			if (!profile) return;
 
-			if (profile.Data.lastDailyClaimed + DAILY_REWARD_COOLDOWN > tick()) {
+			// Current time
+			const currentTime = tick();
+
+			// Check if enough time has passed
+			if (
+				profile.Data.lastDailyClaimed > 0 &&
+				profile.Data.lastDailyClaimed + DAILY_REWARD_COOLDOWN > currentTime
+			) {
 				// Trying to claim reward too soon
-				return;
+				return {
+					streak: profile.Data.dailyStreak,
+					lastClaimTime: profile.Data.lastDailyClaimed,
+				};
+			}
+
+			// Handle edge case for new players or corrupted data
+			if (profile.Data.lastDailyClaimed <= 0) {
+				profile.Data.lastDailyClaimed = 0;
 			}
 
 			let reward = dailyRewards[profile.Data.dailyStreak];
@@ -125,11 +140,17 @@ export class DailyRewardsService implements OnStart {
 
 			this.claimReward(player, reward);
 
-			profile.Data.dailyStreak++;
-			profile.Data.lastDailyClaimed = tick();
-			profile.Data.dailyStreak = profile.Data.dailyStreak % dailyRewards.size(); // Resets streak if it reaches the end
-			Events.updateDailyStreak(player, profile.Data.dailyStreak, profile.Data.lastDailyClaimed);
+			// Save the current time first
+			profile.Data.lastDailyClaimed = currentTime;
+
+			// Then update the streak (separated from the time update)
+			profile.Data.dailyStreak = (profile.Data.dailyStreak + 1) % dailyRewards.size();
+
 			this.profileService.setProfile(player, profile);
+			return {
+				streak: profile.Data.dailyStreak,
+				lastClaimTime: profile.Data.lastDailyClaimed,
+			};
 		});
 
 		Events.claimFreeReward.connect((player) => {
@@ -221,6 +242,7 @@ export class DailyRewardsService implements OnStart {
 
 		this.profileService.onProfileLoaded.Connect((player, profile) => {
 			Events.updateClaimedLimitedOfferPack(player, profile.Data.claimedLimitedOffer as 0 | 1 | 2);
+			Events.updateDailyStreak(player, profile.Data.dailyStreak, profile.Data.lastDailyClaimed);
 		});
 
 		Functions.getClaimedLimitedOfferPack.setCallback((player) => {

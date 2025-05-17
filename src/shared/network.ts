@@ -148,6 +148,7 @@ interface ClientToServerFunctions {
 	getCurrentStrength: () => number;
 	getHasClaimedFreeReward: () => boolean;
 	getClaimedLimitedOfferPack: () => 0 | 1 | 2;
+	claimDailyReward: () => { streak: number; lastClaimTime: number } | undefined;
 }
 
 interface ServerToClientFunctions {}

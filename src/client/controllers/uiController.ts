@@ -258,9 +258,11 @@ export default class UiController implements OnStart, OnInit {
 		// This is as far as we need to log, since all `onStart()`s run in parallel.
 		// We don't need to log the end of the start lifecycle since we can assume that
 		// if we got here, everything is fine leading up to this point.
-		debugWarn("Client module onInit lifecycle complete.");
+		debugWarn("Client module onInit lifecycle complete.", "INIT", true);
 		debugWarn(
 			"Client module onStart lifecycle began.\n------------------------------------------------------------------------------------------------------",
+			"INIT",
+			true,
 		);
 
 		const createGiftUIZone = (inst: PVInstance) => {
@@ -292,9 +294,7 @@ export default class UiController implements OnStart, OnInit {
 		});
 
 		GuiService.MenuOpened.Connect(() => {
-			if (this.currentOpenUi !== undefined) {
-				this.closeUi(this.currentOpenUi);
-			}
+			this.closeCurrentOpenMenu();
 		});
 	}
 
@@ -302,8 +302,14 @@ export default class UiController implements OnStart, OnInit {
 		return uiGuid;
 	}
 
+	public closeCurrentOpenMenu() {
+		if (this.currentOpenUi !== undefined) {
+			this.closeUi(this.currentOpenUi);
+		}
+	}
+
 	onInit(): void | Promise<void> {
-		debugWarn("Client module onInit lifecycle began.");
+		debugWarn("Client module onInit lifecycle began.", "INIT", true);
 
 		Events.beginDigging.connect(() => {
 			diggingBarActive = true;

@@ -916,8 +916,8 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 				FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 				LayoutOrder={1}
 				key={"Title"}
-				Position={UDim2.fromScale(0.35, 0.015)}
-				Size={UDim2.fromScale(0.5, 0.225)}
+				Position={UDim2.fromScale(0.35, 0.005)}
+				Size={UDim2.fromScale(0.5, 0.15)}
 				Text={"Magia's Shop"}
 				TextColor3={Color3.fromRGB(18, 23, 40)}
 				TextScaled={true}

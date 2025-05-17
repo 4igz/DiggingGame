@@ -388,7 +388,6 @@ export class AutoDigging implements OnStart {
 						}
 					}
 				}
-
 				this.startPathTo(target.position);
 			})
 			.catch((err) => {
@@ -423,6 +422,10 @@ export class AutoDigging implements OnStart {
 	public setAutoDiggingEnabled(enabled: boolean, quitTarget: boolean = true, resetFails = false) {
 		this.autoDiggingEnabled = enabled;
 
+		if (resetFails) {
+			consecutiveFails = 0;
+		}
+
 		if (enabled) {
 			if (treasureCountAtom() >= inventorySizeAtom()) {
 				this.setAutoDiggingEnabled(false);
@@ -438,9 +441,6 @@ export class AutoDigging implements OnStart {
 			}
 			this.cleanupPather();
 			Signals.setAutoDiggingRunning.Fire(false);
-			if (resetFails) {
-				consecutiveFails = 0;
-			}
 		}
 
 		Signals.setAutoDiggingEnabled.Fire(enabled);

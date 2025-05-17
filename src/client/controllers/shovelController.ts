@@ -65,6 +65,8 @@ export class ShovelController implements OnStart {
 		let usingDigEverywhere = false;
 		let isAutoDigging = false;
 
+		let replicatedDigSoundInterval = interval(1);
+
 		let lastSuccessfulDig = 0;
 
 		let digProgress = 0;
@@ -1047,7 +1049,9 @@ export class ShovelController implements OnStart {
 			);
 
 			setSize.Fire((digTarget.digProgress / digTarget.maxProgress) * craterSize);
-			digSound?.Play();
+			if (replicatedDigSoundInterval(digTarget.itemId)) {
+				digSound?.Play();
+			}
 		});
 
 		Events.endDigReplication.connect((target: NetworkedTarget) => {
@@ -1074,8 +1078,6 @@ export class ShovelController implements OnStart {
 				const UP_FORCE = observeAttribute("DigUpForce", 5) as number;
 
 				if (primaryPart && target.successful) {
-					model.SetAttribute("DiggingComplete", true);
-					CollectionService.AddTag(model, "Treasure");
 					// Compute the direction from the object to the player
 					const directionToPlayer = character.GetPivot().Position.sub(primaryPart.Position).Unit;
 

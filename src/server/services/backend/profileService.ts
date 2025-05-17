@@ -100,7 +100,7 @@ export class ProfileService implements OnInit, OnStart {
 	}
 
 	onInit() {
-		debugWarn("Server module onInit lifecycle began.");
+		debugWarn("Server module onInit lifecycle began.", "INIT", true);
 		for (const player of Players.GetPlayers()) {
 			this.onPlayerAdded(player);
 		}
@@ -117,9 +117,11 @@ export class ProfileService implements OnInit, OnStart {
 	}
 
 	onStart() {
-		debugWarn("Server module onInit lifecycle complete.");
+		debugWarn("Server module onInit lifecycle complete.", "INIT", true);
 		debugWarn(
 			"Server module onStart lifecycle began.\n------------------------------------------------------------------------------------------------------",
+			"INIT",
+			true,
 		);
 	}
 }

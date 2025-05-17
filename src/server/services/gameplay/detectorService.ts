@@ -60,6 +60,7 @@ export class DetectorService implements OnStart, OnTick {
 			const response = !cancelled ? this.targetService.spawnTarget(player, finalLuckValue) : undefined;
 			if (!response) {
 				Events.targetSpawnFailure.fire(player);
+				Events.sendInvalidActionPopup(player, "Can't locate any nearby treasures!");
 			}
 		});
 

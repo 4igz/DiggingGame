@@ -487,13 +487,8 @@ export const GamepassShop = (props: GamepassShopProps) => {
 				return acc;
 			}, 0);
 
-			if (luckPotions) {
-				setMLuckPotions(luckPotions);
-			}
-
-			if (strengthPotions) {
-				setMStrengthPotions(strengthPotions);
-			}
+			setMLuckPotions(luckPotions);
+			setMStrengthPotions(strengthPotions);
 		};
 
 		Functions.getInventory("Potions").then(([_, inv]) => {
@@ -508,17 +503,12 @@ export const GamepassShop = (props: GamepassShopProps) => {
 			}
 		});
 
-		Events.drankPotion.connect((potionName) => {
-			switch (potionName) {
-				case "M.Strength Potion": {
-					setMStrengthPotions((prev) => --prev);
-					break;
+		Events.drankPotion.connect(() => {
+			Functions.getInventory("Potions").then(([_, inv]) => {
+				if (inv) {
+					updatePotionCounts(inv);
 				}
-				case "M.Luck Potion": {
-					setMLuckPotions((prev) => --prev);
-					break;
-				}
-			}
+			});
 		});
 
 		return () => {

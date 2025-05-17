@@ -10,9 +10,7 @@ import UiController from "client/controllers/uiController";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
 import { usePx } from "client/hooks/usePx";
-import { SoundService } from "@rbxts/services";
 import { AnimatedButton } from "./buttons";
-import { Signals } from "shared/signals";
 import { hasDailyAtom } from "client/atoms/rewardAtoms";
 
 interface DailyRewardsProps {
@@ -487,9 +485,9 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 		});
 	}, []);
 
-	// Effect to update timer
 	useEffect(() => {
-		if (lastClaimed === 0) {
+		// Handle invalid lastClaimed values
+		if (lastClaimed <= 0) {
 			setTimeLeft(0);
 			return;
 		}
@@ -498,9 +496,18 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 
 		const thread = task.spawn(() => {
 			while (running) {
-				const timePassed = tick() - lastClaimed;
-				const timeLeft = math.clamp(DAILY_REWARD_COOLDOWN - timePassed, 0, DAILY_REWARD_COOLDOWN);
-				setTimeLeft(timeLeft);
+				const currentTime = tick();
+				const timePassed = currentTime - lastClaimed;
+
+				// Extra safety check for negative values
+				if (timePassed < 0) {
+					warn(`Negative time passed detected: ${timePassed}. Current: ${currentTime}, Last: ${lastClaimed}`);
+					setTimeLeft(0);
+				} else {
+					const newTime = math.clamp(DAILY_REWARD_COOLDOWN - timePassed, 0, DAILY_REWARD_COOLDOWN);
+					setTimeLeft(newTime);
+				}
+
 				task.wait(1);
 			}
 		});
@@ -553,7 +560,14 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 
 	// Handler for claiming rewards
 	const handleClaim = () => {
-		Events.claimDailyReward();
+		Functions.claimDailyReward.invoke().then((dailyInfo) => {
+			if (dailyInfo === undefined) {
+				return;
+			}
+
+			setLastClaimed(dailyInfo.lastClaimTime);
+			setStreak(dailyInfo.streak);
+		});
 	};
 
 	// Check if rewards are claimable

@@ -73,6 +73,7 @@ export const UpdateLogButton = (props: UpdateLogButtonProps) => {
 		<AnimatedButton
 			onClick={() => {
 				if (!visible) {
+					props.uiController.closeCurrentOpenMenu();
 					updateLog.Enabled = true;
 
 					TweenService.Create(containerFrame, tinfo, { Position: UDim2.fromScale(0.5, 0.45) }).Play();

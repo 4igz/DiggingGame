@@ -69,6 +69,14 @@ export const FreeReward = (props: FreeRewardProps) => {
 		}
 	}, [visible]);
 
+	useEffect(() => {
+		setHasJoinedGroup(Players.LocalPlayer.IsInGroup(game.CreatorId));
+
+		Functions.getHasClaimedFreeReward().then((status) => {
+			setHasClaimed(status);
+		});
+	}, []);
+
 	return (
 		<frame
 			AnchorPoint={new Vector2(0.5, 0.5)}
@@ -369,11 +377,11 @@ export const FreeReward = (props: FreeRewardProps) => {
 						task.delay(3, () => {
 							AvatarEditorService.PromptSetFavorite(game.PlaceId, 1, true);
 						});
-						task.defer(() => {
-							Functions.getHasClaimedFreeReward().then((status) => {
-								setHasClaimed(status);
-							});
-						});
+						// task.defer(() => {
+						// 	Functions.getHasClaimedFreeReward().then((status) => {
+						// 		setHasClaimed(status);
+						// 	});
+						// });
 					}}
 				>
 					<imagelabel
