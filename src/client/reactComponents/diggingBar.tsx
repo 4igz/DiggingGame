@@ -335,7 +335,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 			let running = true;
 			const beganDigging = tick();
 
-			task.spawn(() => {
+			const thread = task.spawn(() => {
 				while (running) {
 					if (tick() - beganDigging > DIG_REMINDER_TIMER) {
 						setShowReminder(true);
@@ -356,6 +356,7 @@ export const DiggingBar = (props: Readonly<DiggingBarProps>): ReactNode => {
 			return () => {
 				running = false;
 				inputConnection.Disconnect();
+				task.cancel(thread);
 				setShowReminder(false);
 			};
 		}

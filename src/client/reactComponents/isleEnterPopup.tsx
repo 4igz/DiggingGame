@@ -72,8 +72,6 @@ interface IsleEnterPopupProps {
 	zoneController: ZoneController;
 }
 
-const connectedZoneNames = new Set<string>();
-
 export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 	const [isleName, setIsleName] = useState<keyof typeof mapConfig>("");
 	const [firstEnter, setFirstEnter] = useState(true);
@@ -97,10 +95,10 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 		});
 
 		if (!isleName || isleName === "") return;
-		// if (firstEnter) {
-		// setFirstEnter(false);
-		// return;
-		// }
+		if (firstEnter) {
+			setFirstEnter(false);
+			return;
+		}
 		const cfg = mapConfig[isleName];
 		if (!cfg) {
 			warn(`Island ${isleName} does not have a corresponding config in mapConfig`);
@@ -153,7 +151,7 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 			cleaned = true;
 			unsub2();
 		};
-	}, [isleName, resetTick]);
+	}, [isleName, resetTick, firstEnter]);
 
 	useEffect(() => {
 		const enteredSignal = Signals.enteredIsland.Connect((zoneName) => {

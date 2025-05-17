@@ -484,8 +484,8 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 		Array<Exclude<Item, { type: "Potions" }> & { owned: boolean }>
 	>([]);
 	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0.5, 0.6));
-	const [radialRotation, setRadialRotation] = useState(0);
 	const menuRef = React.createRef<Frame>();
+	const radialElement = React.useRef<ImageLabel>();
 
 	const px = usePx();
 
@@ -566,6 +566,18 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 	React.useEffect(() => {
 		if (visible) {
 			popInMotion.spring(UDim2.fromScale(0.5, 0.5), springs.responsive);
+
+			const SPEED = 0.2;
+			let currentRotation = 0;
+
+			const radialSpinSignal = RunService.RenderStepped.Connect(() => {
+				currentRotation = (currentRotation + SPEED) % 360;
+				if (radialElement.current) {
+					radialElement.current.Rotation = currentRotation;
+				}
+			});
+
+			return () => radialSpinSignal.Disconnect();
 		} else {
 			popInMotion.immediate(UDim2.fromScale(0.5, 0.6));
 
@@ -591,11 +603,6 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 					warn(e);
 				});
 		}
-
-		RunService.RenderStepped.Connect(() => {
-			const SPEED = 0.2;
-			setRadialRotation((prev) => (prev + SPEED) % 360);
-		});
 	}, []);
 
 	return (
@@ -806,9 +813,10 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 								ImageColor3={Color3.fromRGB(207, 0, 0)}
 								ImageTransparency={0.94}
 								Position={UDim2.fromScale(0.5, 0.5)}
-								Rotation={radialRotation}
+								Rotation={0}
 								ScaleType={Enum.ScaleType.Crop}
 								Size={UDim2.fromScale(1.03294, 4.25594)}
+								ref={radialElement}
 							>
 								<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 							</imagelabel>

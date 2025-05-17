@@ -1,6 +1,6 @@
 import { Service, OnStart, OnInit } from "@flamework/core";
 import Signal from "@rbxts/goodsignal";
-import { GetProfileStore, Profile } from "@rbxts/rbx-profileservice-plus";
+import ProfileStore, { Profile } from "@rbxts/profile-store";
 import { BadgeService, Players } from "@rbxts/services";
 import { Events } from "server/network";
 import { PROFILE_STORE_NAME, ProfileTemplate, profileTemplate } from "server/profileTemplate";
@@ -18,7 +18,7 @@ export class ProfileService implements OnInit, OnStart {
 	public onProfileLoaded = new Signal<(player: Player, profile: LoadedProfile) => void>();
 	public profileChanged = new Signal<(player: Player, profile: LoadedProfile) => void>();
 
-	private profileStore = GetProfileStore(PROFILE_STORE_NAME, profileTemplate);
+	private profileStore = ProfileStore.New(PROFILE_STORE_NAME, profileTemplate);
 	private profileCache = new Map<Player, Profile<ProfileTemplate>>();
 
 	public getLoadedProfiles(): Map<Player, LoadedProfile> {
@@ -64,36 +64,39 @@ export class ProfileService implements OnInit, OnStart {
 
 	// Load and cache the profile for the player
 	private onPlayerAdded(player: Player) {
-		const DATA_KEY = tostring(player.UserId);
+		const profile = this.profileStore.StartSessionAsync(`${player.UserId}`, {
+			Cancel: () => {
+				return player.Parent !== Players;
+			},
+		});
 
-		this.profileStore
-			.LoadProfileAsync(DATA_KEY)
-			.andThen((profile) => {
-				profile?.AddUserId(player.UserId);
-				profile?.Reconcile();
-				profile?.ListenToRelease(() => {
-					this.profileCache.delete(player);
-					if (player.IsDescendantOf(Players)) {
-						player.Kick("Player data was loaded in another server. Disconnecting to prevent data loss.");
-					}
-				});
-				if (player.IsDescendantOf(Players) && profile) {
-					this.profileCache.set(player, profile);
-					this.onProfileLoaded.Fire(player, profile as LoadedProfile);
-					Events.profileReady.fire(player);
+		if (profile !== undefined) {
+			profile.AddUserId(player.UserId);
+			profile.Reconcile();
 
-					pcall(() => {
-						BadgeService.AwardBadge(player.UserId, WELCOME_BADGE);
-					});
-				} else {
-					profile?.Release();
+			profile.OnSessionEnd.Connect(() => {
+				this.profileCache.delete(player);
+				if (player.IsDescendantOf(Players)) {
+					player.Kick("Player data was loaded in another server. Disconnecting to prevent data loss.");
 				}
-			})
-			.catch((e) => {
-				// Prevent data loss/corruption. If the profile fails to load, kick the player.
-				player.Kick("Failed to load player data. Please rejoin.");
-				error(e);
 			});
+
+			if (player.IsDescendantOf(Players)) {
+				this.profileCache.set(player, profile);
+				this.profileCache.set(player, profile);
+				this.onProfileLoaded.Fire(player, profile as LoadedProfile);
+				Events.profileReady.fire(player);
+
+				pcall(() => {
+					BadgeService.AwardBadge(player.UserId, WELCOME_BADGE);
+				});
+			} else {
+				// The player has left before the profile session started
+				profile.EndSession();
+			}
+		} else {
+			player.Kick("Failed to load player data. Please rejoin.");
+		}
 	}
 
 	onInit() {
@@ -107,7 +110,7 @@ export class ProfileService implements OnInit, OnStart {
 		Players.PlayerRemoving.Connect((player) => {
 			const profile = this.profileCache.get(player);
 			if (profile) {
-				profile.Release();
+				profile.EndSession();
 				this.profileCache.delete(player);
 			}
 		});

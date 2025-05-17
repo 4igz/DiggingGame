@@ -494,8 +494,10 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 			return;
 		}
 
+		let running = true;
+
 		const thread = task.spawn(() => {
-			while (true) {
+			while (running) {
 				const timePassed = tick() - lastClaimed;
 				const timeLeft = math.clamp(DAILY_REWARD_COOLDOWN - timePassed, 0, DAILY_REWARD_COOLDOWN);
 				setTimeLeft(timeLeft);
@@ -505,6 +507,7 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 
 		return () => {
 			task.cancel(thread);
+			running = false;
 		};
 	}, [lastClaimed]);
 
@@ -532,8 +535,9 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 
 	useEffect(() => {
 		let currentRotation = imageRotation.getValue();
+		let running = true;
 		const rotationThread = task.spawn(() => {
-			while (true) {
+			while (running) {
 				// Make gift image bob back and forth
 				task.wait(1);
 				currentRotation = currentRotation < MAX_IMAGE_ROTATION ? MAX_IMAGE_ROTATION : -MAX_IMAGE_ROTATION;
@@ -543,6 +547,7 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 
 		return () => {
 			task.cancel(rotationThread);
+			running = false;
 		};
 	}, []);
 

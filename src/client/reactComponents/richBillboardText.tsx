@@ -30,6 +30,7 @@ export const RichBillboardText = (props: BillboardGuiProps) => {
 			Adornee={props.adornee}
 			Enabled={isEnabled ?? true}
 			AlwaysOnTop={true}
+			MaxDistance={50}
 		>
 			<textlabel
 				Text={props.text}

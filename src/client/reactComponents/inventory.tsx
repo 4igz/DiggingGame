@@ -1295,21 +1295,23 @@ export const ExitButton = (props: ExitButtonProps) => {
 				Selectable={false}
 				Size={UDim2.fromScale(1, 1)}
 				SliceScale={0.4}
-				ZIndex={100}
-			>
-				<textlabel
-					key={"TextLabel"}
-					AnchorPoint={new Vector2(0.5, 0.5)}
-					BackgroundTransparency={1}
-					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
-					Position={UDim2.fromScale(0.5, 0.5)}
-					Size={UDim2.fromScale(0.6, 0.6)}
-					Text={"X"}
-					TextColor3={new Color3(1, 1, 1)}
-					TextScaled={true}
-					ZIndex={105}
-				/>
-			</imagelabel>
+				// ZIndex={100}
+				Active={false}
+			/>
+
+			<textlabel
+				key={"TextLabel"}
+				AnchorPoint={new Vector2(0.5, 0.5)}
+				BackgroundTransparency={1}
+				FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+				Position={UDim2.fromScale(0.5, 0.5)}
+				Size={UDim2.fromScale(0.6, 0.6)}
+				Text={"X"}
+				TextColor3={new Color3(1, 1, 1)}
+				TextScaled={true}
+				// ZIndex={10}
+				Active={false}
+			/>
 		</AnimatedButton>
 	);
 };

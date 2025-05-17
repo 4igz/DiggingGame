@@ -388,22 +388,35 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 				ZIndex={10}
 			>
 				<textlabel
-					AnchorPoint={new Vector2(0, 0.5)}
-					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
+					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundTransparency={1}
-					BorderColor3={Color3.fromRGB(0, 0, 0)}
-					BorderSizePixel={0}
 					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 					LayoutOrder={1}
 					key={"Title"}
-					Position={UDim2.fromScale(0.3, 0.5)}
-					Size={UDim2.fromScale(0.552, 0.654)}
+					Position={UDim2.fromScale(0.82, 0.5)}
+					Size={UDim2.fromScale(0.943417, 1.05705)}
 					Text={"Free Gifts!"}
-					TextColor3={Color3.fromRGB(255, 255, 255)}
+					TextColor3={Color3.fromRGB(18, 23, 40)}
 					TextScaled={true}
-					TextWrapped={true}
+					TextXAlignment={Enum.TextXAlignment.Left}
 				>
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(23, 30, 52)} Thickness={px(5.3)} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(18, 23, 40)} Thickness={px(5)} />
+
+					<textlabel
+						AnchorPoint={new Vector2(0.5, 0.5)}
+						BackgroundTransparency={1}
+						FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+						LayoutOrder={1}
+						key={"Title"}
+						Position={UDim2.fromScale(0.5, 0.45)}
+						Size={UDim2.fromScale(1, 1)}
+						Text={"Free Gifts!"}
+						TextColor3={new Color3(1, 1, 1)}
+						TextScaled={true}
+						TextXAlignment={Enum.TextXAlignment.Left}
+					>
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(18, 23, 40)} Thickness={px(5)} />
+					</textlabel>
 				</textlabel>
 
 				<imagelabel

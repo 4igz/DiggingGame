@@ -36,8 +36,9 @@ export const FreeReward = (props: FreeRewardProps) => {
 
 	useEffect(() => {
 		let currentRotation = imageRotation.getValue();
+		let running = true;
 		const rotationThread = task.spawn(() => {
-			while (true) {
+			while (running) {
 				task.wait(1);
 				currentRotation = currentRotation < MAX_IMAGE_ROTATION ? MAX_IMAGE_ROTATION : -MAX_IMAGE_ROTATION;
 				setImageRotation.spring(currentRotation, springs.bubbly);
@@ -46,6 +47,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 
 		return () => {
 			task.cancel(rotationThread);
+			running = false;
 		};
 	}, []);
 
@@ -362,6 +364,7 @@ export const FreeReward = (props: FreeRewardProps) => {
 							setHasJoinedGroup(Players.LocalPlayer.IsInGroup(game.CreatorId));
 							return;
 						}
+						setHasClaimed(true);
 						Events.claimFreeReward();
 						task.delay(3, () => {
 							AvatarEditorService.PromptSetFavorite(game.PlaceId, 1, true);

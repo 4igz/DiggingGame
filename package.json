@@ -34,6 +34,7 @@
 		"@rbxts/goodsignal": "^1.0.0",
 		"@rbxts/object-utils": "^1.0.4",
 		"@rbxts/pretty-react-hooks": "^0.6.1",
+		"@rbxts/profile-store": "^1.0.3",
 		"@rbxts/rbx-profileservice-plus": "^2.0.0",
 		"@rbxts/react": "^17.2.3",
 		"@rbxts/react-roblox": "^17.2.3",
