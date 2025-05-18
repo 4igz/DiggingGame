@@ -55,14 +55,18 @@ export const HoldToDetectText = () => {
 			key={"Frame"}
 			BackgroundTransparency={1}
 			Position={UDim2.fromScale(0.743, 0.92)}
-			Size={UDim2.fromScale(0.105198, 0.0591133)}
+			Size={UDim2.fromScale(0.105198, 0.05)}
 			Visible={platform === "Mobile" && detectorEquipped}
 		>
 			<textlabel
 				key={"TextLabel"}
 				BackgroundTransparency={1}
 				FontFace={
-					new Font("rbxasset://fonts/families/FredokaOne.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+					new Font(
+						"rbxasset://fonts/families/FredokaOne.json",
+						Enum.FontWeight.Regular,
+						Enum.FontStyle.Normal,
+					)
 				}
 				Position={UDim2.fromScale(-0.0588235, 0)}
 				Size={UDim2.fromScale(1.09698, 1)}

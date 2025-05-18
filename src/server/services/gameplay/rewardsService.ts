@@ -165,20 +165,20 @@ export class DailyRewardsService implements OnStart {
 
 		Events.verifyCode.connect((player, code) => {
 			const profile = this.profileService.getProfileLoaded(player).expect();
-			if (profile.Data.redeemedCodes.includes(code)) {
+			if (profile.Data.redeemedCodes.includes(string.lower(code))) {
 				Events.sendInvalidActionPopup(player, "You have already reedemed this code!");
 				return;
 			}
-			const rewards = codes[code];
+			const rewards = codes[string.lower(code)];
 			if (!rewards) {
 				Events.sendInvalidActionPopup(player, "Code doesn't exist.");
 				return; // Code doesn't exist.
 			}
-			Events.sendActionPopup(player, `Reedemed '${code}' successfully!`);
+			Events.sendActionPopup(player, `Reedemed '${string.lower(code)}' successfully!`);
 			for (const reward of rewards) {
 				this.claimReward(player, reward);
 			}
-			profile.Data.redeemedCodes.push(code);
+			profile.Data.redeemedCodes.push(string.lower(code));
 			this.profileService.setProfile(player, profile);
 		});
 

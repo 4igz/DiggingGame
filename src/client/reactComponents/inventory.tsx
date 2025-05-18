@@ -1299,7 +1299,7 @@ export const ExitButton = (props: ExitButtonProps) => {
 				Active={false}
 			/>
 
-			<textlabel
+			<textbutton
 				key={"TextLabel"}
 				BackgroundTransparency={1}
 				FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
@@ -1309,8 +1309,14 @@ export const ExitButton = (props: ExitButtonProps) => {
 				Text={"X"}
 				TextColor3={new Color3(1, 1, 1)}
 				TextScaled={true}
+				AutoButtonColor={false}
 				ZIndex={99}
-				Active={false}
+				Active={true}
+				Event={{
+					MouseButton1Click: () => {
+						exit();
+					},
+				}}
 			/>
 		</AnimatedButton>
 	);
