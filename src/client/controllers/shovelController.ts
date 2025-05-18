@@ -28,6 +28,8 @@ import { findFurthestPointWithinRadius } from "shared/util/detectorUtil";
 import { observeAttribute } from "shared/util/attributeUtil";
 import { NetworkedTarget } from "shared/networkTypes";
 import { allowDigging } from "client/atoms/detectorAtoms";
+import { ObjectPool } from "shared/util/objectPool";
+import PartCacheModule from "@rbxts/partcache";
 
 const camera = Workspace.CurrentCamera;
 const holeTroveMap = new Map<Trove, [Signal<(size: number) => void>, Sound, BasePart]>();
@@ -47,6 +49,79 @@ export class ShovelController implements OnStart {
 
 	public onDiggingComplete = new Signal<() => void>();
 	public canStartDigging = false;
+
+	private holeCenterCache = new PartCacheModule(
+		(() => {
+			const hole = new Instance("Part");
+			hole.Name = "HoleCenter";
+			hole.Shape = Enum.PartType.Cylinder;
+
+			hole.Anchored = true;
+			hole.CanCollide = false;
+			hole.BrickColor = new BrickColor("Really black");
+			hole.Material = Enum.Material.SmoothPlastic;
+			hole.Parent = Workspace;
+			CollectionService.AddTag(hole, "DigCrater");
+			CollectionService.AddTag(hole, "CameraIgnore");
+			return hole;
+		})(),
+		5,
+	);
+
+	private holePartCache = new PartCacheModule(
+		(() => {
+			const part = new Instance("Part");
+			part.Name = "HolePart";
+
+			part.Anchored = true;
+			part.CanCollide = false;
+			part.Parent = Workspace;
+			CollectionService.AddTag(part, "DigCrater");
+			CollectionService.AddTag(part, "CameraIgnore");
+			return part as BasePart;
+		})(),
+		40,
+	);
+
+	private rng = new Random(tick());
+
+	private digPartCache = new PartCacheModule(
+		(() => {
+			const minSize = 0.55;
+			const maxSize = 1.8;
+			const dirtBlock = new Instance("Part");
+			dirtBlock.Size = new Vector3(
+				this.rng.NextNumber(minSize, maxSize),
+				this.rng.NextNumber(minSize, maxSize),
+				this.rng.NextNumber(minSize, maxSize),
+			);
+
+			dirtBlock.Material = Enum.Material.Sand;
+			dirtBlock.Anchored = true;
+			dirtBlock.CanCollide = true;
+
+			dirtBlock.CollisionGroup = gameConstants.NOCHARACTERCOLLISION_COLGROUP;
+			dirtBlock.Name = "DigBlock";
+			CollectionService.AddTag(dirtBlock, "CameraIgnore");
+			dirtBlock.Parent = Workspace;
+			return dirtBlock;
+		})(),
+		45,
+	);
+
+	private digSoundPool = new ObjectPool(() => {
+		const digSound = SoundService.WaitForChild("Tools").WaitForChild("Digging") as Sound;
+		return digSound.Clone();
+	});
+
+	private rewardVfxPartCache = new ObjectPool(() => {
+		const rewardVfx = ReplicatedStorage.WaitForChild("Assets")
+			.WaitForChild("VFX")
+			.WaitForChild("Reward") as BasePart;
+		const clone = rewardVfx.Clone();
+		clone.Name = "RewardVfx";
+		return clone;
+	}, 5);
 
 	constructor(private readonly zoneController: ZoneController) {}
 
@@ -622,14 +697,21 @@ export class ShovelController implements OnStart {
 			);
 
 			// For the reward vfx, we want to relocate the particles to the target model.
-			const rewardVfxClone = rewardVfx.Clone();
-			for (const descendant of rewardVfxClone.GetDescendants()) {
+			const rewardVfx = this.rewardVfxPartCache.acquire();
+			for (const descendant of rewardVfx.GetDescendants()) {
 				if (descendant.IsA("ParticleEmitter")) {
-					descendant.Parent = model.PrimaryPart;
+					if (model.PrimaryPart && model.PrimaryPart.Parent) {
+						descendant.Parent = model.PrimaryPart;
+						digTrove.add(() => {
+							descendant.Parent = rewardVfx;
+						});
+					}
 				}
 			}
 
-			digTrove.add(rewardVfxClone);
+			digTrove.add(() => {
+				this.rewardVfxPartCache.release(rewardVfx);
+			});
 			digTrove.add(diggingVfx);
 			digTrove.add(model);
 			digTrove.add(
@@ -687,47 +769,39 @@ export class ShovelController implements OnStart {
 					model,
 					...CollectionService.GetTagged("Treasure"),
 					diggingVfx,
-					rewardVfxClone,
+					rewardVfx,
 					...CollectionService.GetTagged("DigCrater"),
 				];
 				// const raycast = Workspace.Raycast(origin, new Vector3(0, -5, 0), params);
 				const [hitPart] = getTopmostPartAtPosition(origin, params, 5, 10, target.base);
 
 				const particleNum = math.random(8, 14);
-				const rng = new Random(tick());
+
+				let blockColor = Color3.fromRGB(101, 67, 33);
+
+				if (
+					hitPart &&
+					hitPart.Material !== Enum.Material.Grass &&
+					hitPart.Material !== Enum.Material.LeafyGrass &&
+					hitPart.Material !== Enum.Material.Ground &&
+					// We'll ignore slate because they're generally just small rocks and we don't want a rock hole
+					hitPart.Material !== Enum.Material.Slate &&
+					hitPart.Material !== Enum.Material.Basalt
+				) {
+					blockColor = hitPart.Color;
+				}
 				for (let i = 0; i < particleNum; i++) {
-					const dirtBlock = new Instance("Part");
+					const dirtBlock = this.digPartCache.GetPart();
+					dirtBlock.Anchored = false;
+					dirtBlock.Color = blockColor;
 					const minSize = 0.55;
 					const maxSize = 1.8;
 					dirtBlock.Size = new Vector3(
-						rng.NextNumber(minSize, maxSize),
-						rng.NextNumber(minSize, maxSize),
-						rng.NextNumber(minSize, maxSize),
+						this.rng.NextNumber(minSize, maxSize),
+						this.rng.NextNumber(minSize, maxSize),
+						this.rng.NextNumber(minSize, maxSize),
 					);
-
-					let color = Color3.fromRGB(101, 67, 33);
-
-					if (
-						hitPart &&
-						hitPart.Material !== Enum.Material.Grass &&
-						hitPart.Material !== Enum.Material.LeafyGrass &&
-						hitPart.Material !== Enum.Material.Ground &&
-						// We'll ignore slate because they're generally just small rocks and we don't want a rock hole
-						hitPart.Material !== Enum.Material.Slate &&
-						hitPart.Material !== Enum.Material.Basalt
-					) {
-						color = hitPart.Color;
-					}
-
-					dirtBlock.Color = color;
-					dirtBlock.Position = origin.add(new Vector3(math.random(-3, 3), 0, math.random(-3, 3)));
-					dirtBlock.Material = Enum.Material.Sand;
-					dirtBlock.Anchored = false;
-					dirtBlock.CanCollide = true; // Because the collision groups wont work
-					dirtBlock.Parent = Workspace;
-
-					dirtBlock.CollisionGroup = gameConstants.NOCHARACTERCOLLISION_COLGROUP;
-					CollectionService.AddTag(dirtBlock, "CameraIgnore");
+					dirtBlock.CFrame = new CFrame(origin.add(new Vector3(math.random(-3, 3), 0, math.random(-3, 3))));
 
 					const mass = dirtBlock.AssemblyMass;
 					const dirtBlockThrowForce = 20;
@@ -749,12 +823,23 @@ export class ShovelController implements OnStart {
 						{ Transparency: 1 },
 					);
 
+					let returned = false;
+					const returnPart = () => {
+						if (!returned) {
+							this.digPartCache.ReturnPart(dirtBlock);
+							dirtBlock.Anchored = true;
+							TweenService.Create(dirtBlock, new TweenInfo(0), { Transparency: 0 }).Play();
+							returned = true;
+						}
+					};
+
 					// Play the fade-out tween and destroy the block when finished
 					digTrove.add(fadeTween);
-					digTrove.add(dirtBlock);
+					digTrove.add(returnPart);
 					fadeTween.Play();
 					fadeTween.Completed.Once(() => {
-						dirtBlock.Destroy();
+						returnPart();
+
 						fadeTween.Destroy();
 					});
 				}
@@ -1156,30 +1241,23 @@ export class ShovelController implements OnStart {
 
 		const digHoleSignal = new Signal<(size: number) => void>();
 
-		const hole = new Instance("Part");
-		hole.Shape = Enum.PartType.Cylinder;
+		const hole = this.holeCenterCache.GetPart();
 		hole.Size = new Vector3(0.1, holeRadius * 2, holeRadius * 2);
 		hole.Orientation = new Vector3(0, 0, 90);
-		hole.Position = position;
-		hole.Anchored = true;
-		hole.CanCollide = false;
-		hole.BrickColor = new BrickColor("Really black");
-		hole.Material = Enum.Material.SmoothPlastic;
-		hole.Parent = Workspace;
 		hole.SetAttribute(gameConstants.TREASURE_MODEL_ORIGIN, trackedOrigin);
 		hole.SetAttribute("ItemId", itemId);
-		CollectionService.AddTag(hole, "DigCrater");
-		CollectionService.AddTag(hole, "CameraIgnore");
-		digTrove.add(hole);
+		hole.Position = position;
 
-		let digSound = hole.FindFirstChild("Digging") as Sound | undefined;
-		if (!digSound) {
-			digSound = SoundService.WaitForChild("Tools").FindFirstChild("Digging") as Sound | undefined;
-			digSound = digSound?.Clone();
-			if (digSound) {
-				digSound.Parent = hole;
-			}
-		}
+		let digSound = this.digSoundPool.acquire();
+		digSound.Parent = hole;
+
+		digTrove.add(() => {
+			this.holeCenterCache.ReturnPart(hole);
+			hole.SetAttribute(gameConstants.TREASURE_MODEL_ORIGIN, new Vector3());
+			TweenService.Create(hole, new TweenInfo(0), { Transparency: 0 }).Play();
+			hole.SetAttribute("ItemId", "");
+			this.digSoundPool.release(digSound);
+		});
 
 		const holeParts = new Map<BasePart, Vector3>();
 
@@ -1193,12 +1271,10 @@ export class ShovelController implements OnStart {
 			const offsetZ = math.sin(angle) * distance;
 
 			const partPosition = position.add(new Vector3(offsetX, 0, offsetZ));
-			const part = new Instance("Part");
 
 			// Set random size for jaggedness
 			const rng = new Random();
 			const randomSize = new Vector3(rng.NextNumber(2, 4), rng.NextNumber(4, 4), rng.NextNumber(2, 4));
-			part.Size = randomSize;
 
 			// Rotate part to face the center of the hole
 			const lookAtCenter = CFrame.lookAt(partPosition, position); // Face the center
@@ -1208,24 +1284,28 @@ export class ShovelController implements OnStart {
 				math.rad(math.random(-75, 75)),
 			);
 
-			part.CFrame = lookAtCenter.mul(randomTilt);
+			const holePart = this.holePartCache.GetPart();
 
-			part.Anchored = true;
-			part.CanCollide = false;
-			part.Color = craterColor;
-			part.Material =
+			holePart.SetAttribute(gameConstants.TREASURE_MODEL_ORIGIN, trackedOrigin);
+			holePart.SetAttribute("OriginalSize", holePart.Size);
+			holePart.SetAttribute("ItemId", itemId);
+			holePart.Size = randomSize;
+			holePart.Color = craterColor;
+			holePart.Material =
 				material === Enum.Material.Grass || material === Enum.Material.LeafyGrass
 					? Enum.Material.Ground
 					: material ?? Enum.Material.SmoothPlastic;
-			part.Parent = Workspace;
-			part.SetAttribute(gameConstants.TREASURE_MODEL_ORIGIN, trackedOrigin);
-			part.SetAttribute("OriginalSize", part.Size);
-			part.SetAttribute("ItemId", itemId);
 
-			CollectionService.AddTag(part, "DigCrater");
-			CollectionService.AddTag(part, "CameraIgnore");
-			digTrove.add(part);
-			holeParts.set(part, part.Size);
+			holePart.CFrame = lookAtCenter.mul(randomTilt);
+
+			digTrove.add(() => {
+				this.holePartCache.ReturnPart(holePart);
+				holePart.SetAttribute(gameConstants.TREASURE_MODEL_ORIGIN, new Vector3());
+				holePart.SetAttribute("ItemId", "");
+				TweenService.Create(holePart, new TweenInfo(0), { Transparency: 0 }).Play();
+				holeParts.delete(holePart);
+			});
+			holeParts.set(holePart, holePart.Size);
 		}
 
 		let prevSize = holeRadius;
@@ -1286,10 +1366,8 @@ export class ShovelController implements OnStart {
 		digTrove.add(() => {
 			holeTroveMap.delete(digTrove);
 			digHoleSignal.DisconnectAll();
-			digSound?.Destroy();
-			hole.Destroy();
 			for (const [part] of holeParts) {
-				part.Destroy();
+				this.holePartCache.ReturnPart(part);
 			}
 		});
 
