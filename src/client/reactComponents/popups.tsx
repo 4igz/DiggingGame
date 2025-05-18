@@ -362,7 +362,7 @@ export const Popups = () => {
 		<frame
 			Size={UDim2.fromScale(0.5, 0.6)}
 			AnchorPoint={new Vector2(0.5, 0.5)}
-			Position={UDim2.fromScale(0.5, 0.5)}
+			Position={UDim2.fromScale(0.5, 0.45)}
 			BackgroundTransparency={1}
 			ZIndex={100}
 		>

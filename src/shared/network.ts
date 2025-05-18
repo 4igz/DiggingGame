@@ -49,6 +49,7 @@ interface ClientToServerEvents {
 	startNextQuest: (questName: keyof typeof questConfig) => void;
 	claimFreeReward: () => void;
 	verifyCode: (code: string) => void;
+	requestSpawn: () => void;
 
 	// Anti exploit event
 	selfReport: (flag: string) => void;

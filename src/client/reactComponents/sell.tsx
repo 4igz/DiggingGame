@@ -14,6 +14,8 @@ import { SoundService, UserInputService } from "@rbxts/services";
 import { AnimatedButton } from "./buttons";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 import { usePx } from "client/hooks/usePx";
+import { treasureInventoryAtom } from "client/atoms/inventoryAtoms";
+import { Signals } from "shared/signals";
 
 interface SellTargetProps {
 	target: TargetItem;

@@ -94,6 +94,7 @@ const ZONE_BILLBOARD_DIST_THRESHOLD = 200;
 let currentMapName = "";
 let isFirstZoneEnter = true;
 let currentPlayingAreaSound: Sound | undefined;
+let spawned = false;
 
 const rng = new Random();
 
@@ -159,8 +160,11 @@ export class ZoneController implements OnStart, OnRender {
 			character.WaitForChild("HumanoidRootPart");
 			character.PivotTo(goal);
 			Events.teleportSuccess.fire();
+			spawned = true;
 			// this.onZoneEnter(islandName);
 		});
+
+		Events.requestSpawn();
 	}
 
 	onRender() {

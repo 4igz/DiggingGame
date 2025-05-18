@@ -1185,6 +1185,11 @@ export const SellAllBtn = (props: SellAllBtnProps) => {
 					);
 					return;
 				}
+				const inventorySize = treasureInventoryAtom().size();
+				if (inventorySize === 0) {
+					Signals.invalidAction.Fire("Nothing to sell!");
+					return;
+				}
 				Events.sellAll();
 				SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("Sell") as Sound);
 			}}

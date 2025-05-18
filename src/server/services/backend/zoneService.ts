@@ -67,6 +67,13 @@ export class ZoneService implements OnStart {
 			});
 		}
 
+		Events.requestSpawn.connect((player) => {
+			if (!this.spawnedPlayers.has(player)) {
+				const currentProfile = this.profileService.getProfileLoaded(player).expect();
+				this.spawnPlayer(player, currentProfile.Data.currentMap);
+			}
+		});
+
 		this.profileService.onProfileLoaded.Connect((player, profile) => {
 			if (player.Character) {
 				this.spawnPlayer(player, profile.Data.currentMap);
@@ -77,6 +84,19 @@ export class ZoneService implements OnStart {
 				this.spawnPlayer(player, currentProfile.Data.currentMap);
 			});
 		});
+
+		// task.spawn(() => {
+		// 	while (true) {
+		// 		task.wait(3);
+		// 		for (const player of Players.GetPlayers()) {
+		// 			if (!this.spawnedPlayers.has(player)) {
+		// 				const currentProfile = this.profileService.getProfile(player);
+		// 				if (!currentProfile) continue;
+		// 				this.spawnPlayer(player, currentProfile.Data.currentMap);
+		// 			}
+		// 		}
+		// 	}
+		// });
 	}
 
 	isPlayerAtSeas(player: Player): boolean {

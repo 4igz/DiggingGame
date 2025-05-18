@@ -198,7 +198,10 @@ export class TargetService implements OnStart {
 				if (!withinRange) return;
 			}
 			const count = profile.Data.targetInventory.size();
-			if (count === 0) return;
+			if (count === 0) {
+				// Events.sendInvalidActionPopup(player, "Nothing to sell!");
+				return;
+			}
 			const total = profile.Data.targetInventory.reduce((acc, item) => {
 				const cfg = fullTargetConfig[item.name];
 				return acc + item.weight * cfg.basePrice;
