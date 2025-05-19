@@ -50,6 +50,8 @@ import { PackPopup } from "client/reactComponents/packPopup";
 import { StarterPackFrame } from "client/reactComponents/starterPackFrame";
 import { BottomRightButtons } from "client/reactComponents/bottomRightButtons";
 import { HoldToDetectText } from "client/reactComponents/holdToDetectText";
+import { TutorialMessage } from "client/reactComponents/tutorialMessage";
+import { TutorialController } from "./tutorialController";
 
 const LOW_LAYER = 0;
 const MENU_LAYER = 1;
@@ -91,6 +93,7 @@ export default class UiController implements OnStart, OnInit {
 		private readonly zoneController: ZoneController,
 		private readonly shovelController: ShovelController,
 		private readonly gamepassController: GamepassController,
+		private readonly tutorialController: TutorialController,
 	) {}
 
 	/**
@@ -384,6 +387,7 @@ export default class UiController implements OnStart, OnInit {
 			{
 				uiController: this,
 				autoDigController: this.autoDigging,
+				tutorialController: this.tutorialController,
 			},
 			true,
 			undefined,
@@ -404,7 +408,7 @@ export default class UiController implements OnStart, OnInit {
 		this.registerUi(
 			gameConstants.SELL_UI,
 			React.createElement(Sell),
-			{ visible: false, uiController: this },
+			{ visible: false, uiController: this, tutorialController: this.tutorialController },
 			undefined,
 			true,
 			MENU_LAYER,
@@ -497,14 +501,14 @@ export default class UiController implements OnStart, OnInit {
 			undefined,
 			OVERLAY_LAYER,
 		);
-		this.registerUi(
-			gameConstants.DETECTOR_HINT_TEXT,
-			React.createElement(DetectorHint),
-			{ visible: false },
-			undefined,
-			undefined,
-			LOW_LAYER,
-		);
+		// this.registerUi(
+		// 	gameConstants.DETECTOR_HINT_TEXT,
+		// 	React.createElement(DetectorHint),
+		// 	{ visible: false },
+		// 	undefined,
+		// 	undefined,
+		// 	LOW_LAYER,
+		// );
 		this.registerUi(
 			gameConstants.QUEST_INFO_SIDEBUTTON,
 			React.createElement(QuestInfoSideButton),
@@ -543,6 +547,14 @@ export default class UiController implements OnStart, OnInit {
 			LOW_LAYER,
 		);
 		this.registerUi("HoldToDetectText", React.createElement(HoldToDetectText), {}, undefined, undefined, LOW_LAYER);
+		this.registerUi(
+			"TutorialMessage",
+			React.createElement(TutorialMessage),
+			{ uiController: this },
+			undefined,
+			undefined,
+			OVERLAY_LAYER,
+		);
 
 		// // Hide some stuff from the client that we already have cached.
 		// // By the time we init here, all modules have been loaded already, so we can safely remove them.

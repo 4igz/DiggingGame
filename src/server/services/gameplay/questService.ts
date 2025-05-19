@@ -152,7 +152,7 @@ export class QuestService implements OnStart {
 			}
 
 			if (tick() - lastReset > this.QUEST_RESET_TIME || !keysMatch) {
-				profile.Data.questProgress = this.DEFAULT_QUEST_PROGRESS;
+				profile.Data.questProgress = table.clone(this.DEFAULT_QUEST_PROGRESS);
 				profile.Data.lastQuestReset = tick();
 			}
 

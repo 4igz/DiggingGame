@@ -22,6 +22,7 @@ import { createBinarySerializer } from "@rbxts/flamework-binary-serializer";
 export const numberSerializer = createBinarySerializer<number>();
 
 interface ClientToServerEvents {
+	clientLoaded: () => void;
 	finishedDigging: () => void;
 	digRequest: () => void;
 	replicateDigProgress: Networking.Unreliable<(progress: unknown) => void>;
@@ -49,6 +50,7 @@ interface ClientToServerEvents {
 	startNextQuest: (questName: keyof typeof questConfig) => void;
 	claimFreeReward: () => void;
 	verifyCode: (code: string) => void;
+	completedTutorial: () => void;
 
 	// Anti exploit event
 	selfReport: (flag: string) => void;
@@ -113,7 +115,7 @@ interface ServerToClientEvents {
 	) => void;
 	updateClaimedLimitedOfferPack: (packNum: 0 | 1 | 2) => void;
 	drankPotion: (potionName: keyof typeof potionConfig) => void;
-	beginTutorialStep: (stepNum: number) => void;
+	endTutorial: () => void;
 }
 
 interface ClientToServerFunctions {
@@ -150,6 +152,7 @@ interface ClientToServerFunctions {
 	getClaimedLimitedOfferPack: () => 0 | 1 | 2;
 	claimDailyReward: () => { streak: number; lastClaimTime: number } | undefined;
 	requestSpawn: () => keyof typeof mapConfig;
+	getTutorial: () => boolean;
 }
 
 interface ServerToClientFunctions {}

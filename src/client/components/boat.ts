@@ -40,7 +40,7 @@ interface Controls {
 	Enable(): void;
 }
 
-const highlightPool = new ObjectPool(() => {
+export const highlightPool = new ObjectPool(() => {
 	return new Instance("Highlight");
 }, 1);
 

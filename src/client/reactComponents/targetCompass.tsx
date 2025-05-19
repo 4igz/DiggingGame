@@ -130,8 +130,8 @@ const DistanceLabel = () => {
 						>
 							<uisizeconstraint
 								key={"UISizeConstraint"}
-								MaxSize={new Vector2(px(90), px(90))}
-								MinSize={new Vector2(px(90), px(90))}
+								MinSize={new Vector2(px.floor(85), px.floor(85))}
+								MaxSize={new Vector2(px.ceil(90), px.ceil(90))}
 							/>
 
 							<imagelabel

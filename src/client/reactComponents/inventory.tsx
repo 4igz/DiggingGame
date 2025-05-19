@@ -1160,6 +1160,7 @@ interface SellAllBtnProps {
 	requiresGamepass: boolean;
 	gamepassController?: GamepassController;
 	visible: boolean;
+	after?: () => void;
 }
 
 export const SellAllBtn = (props: SellAllBtnProps) => {
@@ -1192,6 +1193,7 @@ export const SellAllBtn = (props: SellAllBtnProps) => {
 				}
 				Events.sellAll();
 				SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("Sell") as Sound);
+				props.after?.();
 			}}
 		>
 			<imagelabel
@@ -1291,7 +1293,7 @@ export const ExitButton = (props: ExitButtonProps) => {
 		>
 			<uiaspectratioconstraint AspectRatio={1} />
 
-			<imagelabel
+			<imagebutton
 				AnchorPoint={new Vector2(0.5, 0.5)}
 				BackgroundTransparency={1}
 				Image={"rbxassetid://72404231811403"}
@@ -1300,8 +1302,15 @@ export const ExitButton = (props: ExitButtonProps) => {
 				ScaleType={Enum.ScaleType.Fit}
 				Size={UDim2.fromScale(1, 1)}
 				SliceScale={0.4}
+				AutoButtonColor={false}
 				ZIndex={98}
-				Active={false}
+				Selectable={false}
+				Active={true}
+				Event={{
+					MouseButton1Click: () => {
+						exit();
+					},
+				}}
 			/>
 
 			<textbutton
@@ -1316,6 +1325,7 @@ export const ExitButton = (props: ExitButtonProps) => {
 				TextScaled={true}
 				AutoButtonColor={false}
 				ZIndex={99}
+				Selectable={false}
 				Active={true}
 				Event={{
 					MouseButton1Click: () => {

@@ -21,13 +21,15 @@ import Object from "@rbxts/object-utils";
 import { debugWarn } from "shared/util/logUtil";
 import UiController from "./uiController";
 import { Signals } from "shared/signals";
+import { TutorialController } from "./tutorialController";
+import { QUEST_STEP } from "shared/config/tutorialConfig";
 
 const registeredNpcs = new Set<Instance>();
 let questProgress = new Map<keyof typeof questConfig, QuestProgress>();
 
 @Controller({})
 export class QuestController implements OnStart {
-	constructor(private readonly uiController: UiController) {}
+	constructor(private readonly uiController: UiController, private readonly tutorialController: TutorialController) {}
 
 	onStart(): void | Promise<void> {
 		const animationFolder = ReplicatedStorage.WaitForChild("Assets").WaitForChild("Animations");
@@ -143,6 +145,9 @@ export class QuestController implements OnStart {
 
 			prompt.Triggered.Connect((playerWhoTriggered) => {
 				if (playerWhoTriggered !== Players.LocalPlayer) return;
+				if (this.tutorialController.tutorialActive && this.tutorialController.currentStage === QUEST_STEP) {
+					Signals.tutorialStepCompleted.Fire(QUEST_STEP);
+				}
 				const currentProgress = questProgress.get(questNpc.Name);
 				if (!currentProgress) {
 					debugWarn(`No quest progress found for ${npcName}`);

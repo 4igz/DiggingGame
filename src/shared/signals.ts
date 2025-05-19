@@ -42,6 +42,11 @@ export const Signals = {
 	enteredIsland: new Signal<(zoneName: keyof typeof mapConfig) => void>(),
 	drankPotion: new Signal<(potionName: keyof typeof potionConfig) => void>(),
 	detectorEquipUpdate: new Signal<(equipped: boolean) => void>(),
+	setTutorialStep: new Signal<(step: number) => void>(),
+	tutorialStepCompleted: new Signal<(step: number) => void>(),
+	resetTutorial: new Signal<() => void>(),
+	waypointArrow: new Signal<(pos: Vector3) => void>(),
+	hideWaypointArrow: new Signal<() => void>(),
 
 	menuOpened: new Signal<(isOpen: boolean, menuName: string) => void>(),
 };

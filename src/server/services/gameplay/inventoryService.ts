@@ -571,8 +571,6 @@ export class InventoryService implements OnStart, OnTick {
 			Signals.detectorInitialized.Fire(player, detector);
 			if (profile.Data.isFirstJoin && player.Character) {
 				detector.Parent = player.Character;
-				profile.Data.isFirstJoin = false;
-				this.profileService.setProfile(player, profile);
 			}
 		}
 

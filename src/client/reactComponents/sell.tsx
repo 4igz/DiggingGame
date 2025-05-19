@@ -16,10 +16,13 @@ import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 import { usePx } from "client/hooks/usePx";
 import { treasureInventoryAtom } from "client/atoms/inventoryAtoms";
 import { Signals } from "shared/signals";
+import { SELL_STEP } from "shared/config/tutorialConfig";
+import { TutorialController } from "client/controllers/tutorialController";
 
 interface SellTargetProps {
 	target: TargetItem;
 	count: number;
+	tutorialController: TutorialController;
 }
 
 const SellTargetComponent: React.FC<SellTargetProps> = (props) => {
@@ -45,6 +48,13 @@ const SellTargetComponent: React.FC<SellTargetProps> = (props) => {
 				onClick={() => {
 					Events.sellTarget(props.target.itemId);
 					SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("Sell2") as Sound);
+
+					if (
+						props.tutorialController.tutorialActive &&
+						props.tutorialController.currentStage === SELL_STEP
+					) {
+						Signals.tutorialStepCompleted.Fire(SELL_STEP);
+					}
 				}}
 			>
 				{/* <uiaspectratioconstraint key={"UIAspectRatioConstraint"} /> */}
@@ -114,6 +124,7 @@ const SellTargetComponent: React.FC<SellTargetProps> = (props) => {
 interface SellUiProps {
 	uiController: UiController;
 	visible: boolean;
+	tutorialController: TutorialController;
 }
 
 export const Sell: React.FC<SellUiProps> = (props) => {
@@ -135,6 +146,7 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 			newSellContent.push({
 				target: item,
 				count: inventory.filter((invItem) => invItem.name === item.name).size(),
+				tutorialController: props.tutorialController,
 			});
 		});
 
@@ -330,7 +342,7 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 					/>
 
 					{sellContent.map((item) => (
-						<SellTargetComponent {...item} />
+						<SellTargetComponent {...item} tutorialController={props.tutorialController} />
 					))}
 				</scrollingframe>
 
@@ -344,6 +356,14 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 				size={UDim2.fromScale(0.278, 0.154)}
 				requiresGamepass={false}
 				visible={true}
+				after={() => {
+					if (
+						props.tutorialController.tutorialActive &&
+						props.tutorialController.currentStage === SELL_STEP
+					) {
+						Signals.tutorialStepCompleted.Fire(SELL_STEP);
+					}
+				}}
 			/>
 
 			<imagelabel

@@ -162,10 +162,12 @@ export class ZoneController implements OnStart, OnRender {
 					// Wait for HumanoidRootPart so we can ensure that they can be teleported.
 					const hrp = character.WaitForChild("HumanoidRootPart") as BasePart;
 					hrp.Anchored = false;
-					character.PivotTo(goal);
-					spawned = true;
 					const humanoid = character.WaitForChild("Humanoid") as Humanoid;
 					humanoid.WalkSpeed = 16;
+					spawned = true;
+					task.delay(0.1, () => {
+						character.PivotTo(goal);
+					});
 					Events.teleportSuccess();
 				})
 				.catch(warn)

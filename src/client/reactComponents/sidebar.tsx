@@ -11,6 +11,7 @@ import { Signals } from "shared/signals";
 import { Events, Functions } from "client/network";
 import { ScaleFunction, usePx } from "client/hooks/usePx";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
+import { TutorialController } from "client/controllers/tutorialController";
 
 interface SidebarButtonProps {
 	icon: string;
@@ -197,6 +198,7 @@ const SidebarButton = (props: SidebarButtonProps) => {
 interface SidebarProps {
 	autoDigController: AutoDigging;
 	uiController: UiController;
+	tutorialController: TutorialController;
 }
 
 const DEFAULT_POS = UDim2.fromScale(0.025, 0.5);
@@ -308,6 +310,10 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 				notificationColor={autoDigEnabled ? Color3.fromRGB(69, 186, 15) : Color3.fromRGB(230, 42, 25)}
 				gamepadCode={Enum.KeyCode.ButtonL3}
 				onClick={() => {
+					if (props.tutorialController.tutorialActive) {
+						Signals.invalidAction.Fire("Complete the tutorial first!");
+						return;
+					}
 					const enabled = !autoDigEnabled;
 					props.autoDigController.setAutoDiggingEnabled(enabled, true, true);
 					setAutoDiggingEnabled(enabled);

@@ -50,7 +50,7 @@ export class MoneyService implements OnStart {
 		profile.Data.money = EternityNum.toString(moneyEN);
 		this.profileService.setProfile(player, profile);
 		Events.updateMoney.fire(player, profile.Data.money);
-		
+
 		this.moneyChanged.Fire(player, moneyEN);
 	}
 

@@ -14,6 +14,8 @@ import { ObjectPool } from "shared/util/objectPool";
 import { allowDigging } from "client/atoms/detectorAtoms";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 import Signal from "@rbxts/goodsignal";
+import { TutorialController } from "./tutorialController";
+import { DETECT_STEP, DIG_STEP, QUEST_STEP, SELL_STEP, TREASURE_STEP } from "shared/config/tutorialConfig";
 
 const DING_SOUND_INTERVAL = interval(1);
 const RENDER_STEP_ID = "WaypointArrow";
@@ -53,7 +55,10 @@ export class DetectorController implements OnStart {
 	public targetActive = false;
 	public detectorActive = false;
 
-	constructor(private readonly shovelController: ShovelController) {}
+	constructor(
+		private readonly shovelController: ShovelController,
+		private readonly tutorialController: TutorialController,
+	) {}
 
 	onStart() {
 		let autoDigRunning = false;
@@ -114,6 +119,9 @@ export class DetectorController implements OnStart {
 				Signals.detectorEquipUpdate.Fire(true);
 				currentBeepSound = beep as Sound;
 
+				if (this.tutorialController.tutorialActive && this.tutorialController.currentStage === 0) {
+					Signals.setTutorialStep.Fire(DETECT_STEP);
+				}
 				const trove = new Trove();
 				holdStart = tick();
 				holding = false;
@@ -172,6 +180,8 @@ export class DetectorController implements OnStart {
 							button.Image = "rbxassetid://5713982324";
 						}
 						if (
+							this.tutorialController.currentStage === SELL_STEP ||
+							this.tutorialController.currentStage === QUEST_STEP ||
 							holding || // Not currently holding down the detector button
 							awaitingResponse || // And not currently waiting for a target to spawn
 							this.targetActive || // And a target is not already active
@@ -190,7 +200,13 @@ export class DetectorController implements OnStart {
 						if (button) {
 							button.Image = "rbxassetid://5713982324";
 						}
-						if (!holding || (isAutoDigging && autoDigRunning)) return;
+						if (
+							!holding ||
+							(isAutoDigging && autoDigRunning) ||
+							this.tutorialController.currentStage === SELL_STEP ||
+							this.tutorialController.currentStage === QUEST_STEP
+						)
+							return;
 						holding = false;
 						if (isRolling) {
 							awaitingResponse = true;
@@ -202,6 +218,9 @@ export class DetectorController implements OnStart {
 							if (!understandsInput) {
 								Signals.setUiToggled.Fire(gameConstants.DETECTOR_HINT_TEXT, false, true);
 								understandsInput = true;
+							}
+							if (this.tutorialController.tutorialActive) {
+								Signals.tutorialStepCompleted.Fire(DETECT_STEP);
 							}
 						}
 					}
@@ -237,6 +256,13 @@ export class DetectorController implements OnStart {
 				trove.add(() => {
 					this.detectorActive = false;
 					holding = false;
+
+					if (
+						this.tutorialController.tutorialActive &&
+						this.tutorialController.currentStage < TREASURE_STEP
+					) {
+						Signals.setTutorialStep.Fire(0);
+					}
 
 					Signals.detectorEquipUpdate.Fire(false);
 
@@ -310,6 +336,14 @@ export class DetectorController implements OnStart {
 			understandsInput = true;
 		});
 
+		Signals.waypointArrow.Connect((pos) => {
+			this.showWaypointArrow(pos, 2, false);
+		});
+
+		Signals.hideWaypointArrow.Connect(() => {
+			this.hideWaypointArrow();
+		});
+
 		Events.targetSpawnSuccess.connect(() => {
 			this.targetActive = true;
 			awaitingResponse = false;
@@ -381,7 +415,7 @@ export class DetectorController implements OnStart {
 		return root;
 	}
 
-	public showWaypointArrow(targetPos: Vector3, detectorSearchRadius: number) {
+	public showWaypointArrow(targetPos: Vector3, detectorSearchRadius: number, doEffects: boolean = true) {
 		const playerRootPart = this.getLocalPlayerRootPart();
 		if (!playerRootPart) {
 			warn("No player root part found, cannot show arrow");
@@ -478,7 +512,7 @@ export class DetectorController implements OnStart {
 			const isNearby = distance < detectorSearchRadius;
 
 			// Randomize the area indicator position, but use a set seed so each target has the same area
-			if (isNearby && !areaIndicator) {
+			if (isNearby && !areaIndicator && doEffects) {
 				const rng = new Random(targetPos.X + targetPos.Y + targetPos.Z);
 				const randomAngle = rng.NextNumber() * 2 * math.pi;
 				const randomRadius = math.sqrt(rng.NextNumber()) * (detectorSearchRadius / 4); // Reduced radius to center the target
@@ -511,12 +545,12 @@ export class DetectorController implements OnStart {
 
 				// Lerp color from green (far) to red (closer)
 				const t = (MAX_DIST - distance) / (MAX_DIST - MIN_DIST);
-				const alpha = math.clamp(t, 0, 1);
+				const alpha = doEffects ? math.clamp(t, 0, 1) : 0;
 				dot.ImageColor3 = Color3.fromRGB(0, 255, 0).Lerp(Color3.fromRGB(255, 0, 0), alpha);
 
 				dot.Visible = true;
 				exclamationMarkBlur.Visible = false;
-			} else if (distance <= MIN_DIST && distance > gameConstants.DIG_RANGE * 0.95) {
+			} else if (distance <= MIN_DIST && distance > gameConstants.DIG_RANGE * 0.95 && doEffects) {
 				// Show exclamation mark
 				dot.Visible = false;
 				exclamationMarkBlur.Visible = true;
@@ -524,15 +558,17 @@ export class DetectorController implements OnStart {
 				shovel.Visible = false;
 				isReallyClose = true;
 			} else {
-				// Very close
-				dot.Visible = false;
-				exclamationMarkBlur.Visible = true;
-				exclamationMark.Visible = false;
-				shovel.Visible = true;
+				if (doEffects) {
+					// Very close
+					dot.Visible = false;
+					exclamationMarkBlur.Visible = true;
+					exclamationMark.Visible = false;
+					shovel.Visible = true;
 
-				// Snap arrow onto the exact waypoint position
-				arrowIndicator.CFrame = new CFrame(targetPos);
-				canDig = true;
+					// Snap arrow onto the exact waypoint position
+					arrowIndicator.CFrame = new CFrame(targetPos);
+					canDig = true;
+				}
 			}
 
 			const now = time();
@@ -561,17 +597,19 @@ export class DetectorController implements OnStart {
 
 			// Clamp transparency to ensure it doesn't go out of bounds
 			const clampedTransparency = math.clamp(transparency, 0, 1);
-			dot.ImageTransparency = clampedTransparency;
+			dot.ImageTransparency = doEffects ? clampedTransparency : 0;
 			exclamationMark.ImageTransparency = clampedTransparency;
 
 			exclamationMark.Rotation = sinVal * 10;
 			shovel.Rotation = sinVal * 10;
 
-			this.onCanDig(canDig);
-			allowDigging(isReallyClose);
+			if (doEffects) {
+				this.onCanDig(canDig);
+				allowDigging(isReallyClose);
+			}
 
 			// 4) Check zero-crossing (- => +) for beep & blink
-			if (sinVal <= 0 && prevSinVal > 0 && !canDig) {
+			if (sinVal <= 0 && prevSinVal > 0 && !canDig && doEffects) {
 				if (currentBeepSound) currentBeepSound.Play();
 
 				const blinkVfx = detector?.FindFirstChild("Blink") as Instance;

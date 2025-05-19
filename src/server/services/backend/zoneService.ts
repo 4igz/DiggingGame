@@ -47,6 +47,18 @@ export class ZoneService implements OnStart {
 			const character = player.Character || player.CharacterAdded.Wait()[0];
 			const humanoid = character.WaitForChild("Humanoid") as Humanoid;
 			const hrp = character.WaitForChild("HumanoidRootPart") as BasePart;
+
+			this.profileService.getProfileLoaded(player).then((profile) => {
+				const island = CollectionService.GetTagged("Map").filter(
+					(instance) => instance.Name === profile.Data.currentMap,
+				)[0];
+				const spawnLocation = island.WaitForChild("SpawnLocation") as Model;
+				const spawnPos = spawnLocation.GetPivot();
+				if (hrp.Position.sub(spawnPos.Position).Magnitude > 30) {
+					character.PivotTo(spawnPos.add(new Vector3(0, 5, 0)));
+				}
+			});
+
 			humanoid.WalkSpeed = 16;
 			hrp.Anchored = false;
 		});

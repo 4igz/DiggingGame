@@ -13,6 +13,7 @@ import { gameConstants } from "shared/gameConstants";
 import { ItemName, ItemType } from "shared/networkTypes";
 import { ActionPopup, ActionPopupProps } from "./actionPopup";
 import { SoundService } from "@rbxts/services";
+import { FINISH_STEP } from "shared/config/tutorialConfig";
 
 const POPUP_TYPES = {
 	ItemAdded: "ItemAdded",
@@ -110,6 +111,7 @@ const Popup = ({ popup, onComplete }: PopupProps) => {
 
 export const Popups = () => {
 	const [activePopups, setActivePopups] = useState<ActivePopup[]>([]);
+	const [tutorialActive, setTutorialActive] = useState(false);
 	const nextId = useRef(0);
 	// For tracking pending popups that are waiting to be displayed
 	const pendingPopupsRef = useRef<Map<string, { type: keyof typeof POPUP_TYPES; props: any; timer?: thread }>>(
@@ -356,13 +358,21 @@ export const Popups = () => {
 			});
 			SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("ActionSuccess") as Sound);
 		});
+
+		Signals.setTutorialStep.Connect((step) => {
+			if (step > 0 && step < FINISH_STEP) {
+				setTutorialActive(true);
+			} else {
+				setTutorialActive(false);
+			}
+		});
 	}, []);
 
 	return (
 		<frame
 			Size={UDim2.fromScale(0.5, 0.6)}
 			AnchorPoint={new Vector2(0.5, 0.5)}
-			Position={UDim2.fromScale(0.5, 0.45)}
+			Position={tutorialActive ? UDim2.fromScale(0.5, 0.35) : UDim2.fromScale(0.5, 0.45)}
 			BackgroundTransparency={1}
 			ZIndex={100}
 		>

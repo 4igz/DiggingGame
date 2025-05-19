@@ -62,9 +62,9 @@ const DialogOption = (props: DialogOptionProps) => {
 						Size={UDim2.fromScale(0.785, 0.7)}
 						Text={props.description}
 						TextColor3={Color3.fromRGB(255, 255, 255)}
-						// TextScaled={true}
-						// TextWrapped={true}
-						TextSize={px(35)}
+						TextScaled={true}
+						TextWrapped={true}
+						// TextSize={px(35)}
 						TextXAlignment={Enum.TextXAlignment.Left}
 						TextYAlignment={Enum.TextYAlignment.Center}
 					>

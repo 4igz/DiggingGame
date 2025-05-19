@@ -12,7 +12,12 @@ import { PotionEffect } from "./services/gameplay/inventoryService";
 import { ReplicatedStorage } from "@rbxts/services";
 
 // !If you change this store name, it will reset all player data!
-export const PROFILE_STORE_NAME = "DataStore";
+export let PROFILE_STORE_NAME = "test12DataStore";
+
+if (game.PlaceId === 91664813726836) {
+	// Failsafe to ensure the store name stays consistent on main game
+	PROFILE_STORE_NAME = "DataStore";
+}
 
 ReplicatedStorage.SetAttribute("CurrentStore", PROFILE_STORE_NAME);
 
@@ -67,6 +72,7 @@ export const profileTemplate = {
 	banTimes: 0,
 
 	// Analytics
+	claimedTutorialRewards: false,
 	isFirstJoin: true, // Replicated to client, then set to false. Subsequent joins will replicate false.
 	firedWrongEventDataTimes: 0,
 	claimedFreeReward: false,

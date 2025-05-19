@@ -30,6 +30,8 @@ import { NetworkedTarget } from "shared/networkTypes";
 import { allowDigging } from "client/atoms/detectorAtoms";
 import { ObjectPool } from "shared/util/objectPool";
 import PartCacheModule from "@rbxts/partcache";
+import { TutorialController } from "./tutorialController";
+import { DETECT_STEP, DIG_STEP, QUEST_STEP, SELL_STEP, TREASURE_STEP } from "shared/config/tutorialConfig";
 
 const camera = Workspace.CurrentCamera;
 const holeTroveMap = new Map<Trove, [Signal<(size: number) => void>, Sound, BasePart]>();
@@ -114,16 +116,10 @@ export class ShovelController implements OnStart {
 		return digSound.Clone();
 	});
 
-	private rewardVfxPartCache = new ObjectPool(() => {
-		const rewardVfx = ReplicatedStorage.WaitForChild("Assets")
-			.WaitForChild("VFX")
-			.WaitForChild("Reward") as BasePart;
-		const clone = rewardVfx.Clone();
-		clone.Name = "RewardVfx";
-		return clone;
-	}, 5);
-
-	constructor(private readonly zoneController: ZoneController) {}
+	constructor(
+		private readonly zoneController: ZoneController,
+		private readonly tutorialController: TutorialController,
+	) {}
 
 	onStart() {
 		const DigTargetModelFolder = ReplicatedStorage.WaitForChild("Assets").WaitForChild("TargetModels");
@@ -385,6 +381,11 @@ export class ShovelController implements OnStart {
 							if (button) {
 								button.Image = "rbxassetid://5713982324";
 							}
+							if (
+								this.tutorialController.currentStage === SELL_STEP ||
+								this.tutorialController.currentStage === QUEST_STEP
+							)
+								return;
 							Signals.gotDigInput.Fire();
 
 							if (this.diggingActive) {
@@ -563,6 +564,10 @@ export class ShovelController implements OnStart {
 			this.lastDiggingTime = tick();
 			this.canStartDigging = true;
 			Signals.clientStartedDigging.Fire();
+
+			if (this.tutorialController.tutorialActive) {
+				Signals.tutorialStepCompleted.Fire(TREASURE_STEP);
+			}
 
 			const digTrove = new Trove();
 
@@ -858,7 +863,21 @@ export class ShovelController implements OnStart {
 			this.canStartDigging = false;
 			this.onDiggingComplete.Fire();
 			Signals.endDigging.Fire(diggingComplete);
-			if (!itemId) return;
+			if (!diggingComplete) {
+				if (
+					(this.tutorialController.tutorialActive && this.tutorialController.currentStage === DIG_STEP) ||
+					this.tutorialController.currentStage === TREASURE_STEP
+				) {
+					Signals.resetTutorial.Fire(); // Because they failed the dig, reset tutorial if it's active
+				}
+			} else {
+				if (this.tutorialController.tutorialActive && this.tutorialController.currentStage === DIG_STEP) {
+					Signals.tutorialStepCompleted.Fire(DIG_STEP);
+				}
+			}
+			if (!itemId) {
+				return;
+			}
 			const existingModel = digModels.get(itemId);
 			const digTrove = digTroves.get(itemId);
 			if (existingModel && digTrove) {

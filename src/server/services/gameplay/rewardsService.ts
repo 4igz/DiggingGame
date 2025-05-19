@@ -21,7 +21,7 @@ import { codes } from "server/modules/config/codes";
 declare function unpack<T>(arr: Array<T>): T;
 
 @Service({})
-export class DailyRewardsService implements OnStart {
+export class RewardService implements OnStart {
 	private playerJoinTimes = new Map<Player, number>();
 	private playerRewardClaimMap = new Map<Player, Map<number, boolean | undefined>>();
 

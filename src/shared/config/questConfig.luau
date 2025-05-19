@@ -89,7 +89,7 @@ local questConfig: { [string]: { QuestConfig } } = {
 
 			initialResponse = "I've heard you can find diamonds on this island. \nCan you bring me one? I'll reward you well!",
 			subsequentResponse = "Bring me a diamond and I'll reward you well!",
-			completeResponse = "Yarrr!!! I can't believe you found a diamond! \nEveryone is going to be so jealous!",
+			completeResponse = "Thanks! Now go to the docks to buy a boat and visit other islands!",
 
 			target = "Diamond" :: Targets, -- while strict, it's necessary to cast to Targets because of the luau typesolver
 			collectAmount = 1,

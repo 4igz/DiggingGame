@@ -10,6 +10,8 @@ import { Events } from "client/network";
 import { ItemType } from "shared/networkTypes";
 import Object from "@rbxts/object-utils";
 import { Signals } from "shared/signals";
+import { TutorialController } from "./tutorialController";
+import { SELL_STEP } from "shared/config/tutorialConfig";
 
 const NPC_TAG = "NPC";
 
@@ -17,7 +19,7 @@ let currentOpenMenu: string | undefined;
 const registeredShops = new Set<Instance>();
 @Controller({})
 export class ShopController implements OnStart, OnRender {
-	constructor(private readonly uiController: UiController) {}
+	constructor(private readonly uiController: UiController, private readonly tutorialController: TutorialController) {}
 
 	onStart() {
 		const PROMPT_DIALOGS = {
