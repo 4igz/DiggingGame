@@ -3,7 +3,7 @@ import { Controller, OnInit, OnRender, OnStart } from "@flamework/core";
 import Signal from "@rbxts/goodsignal";
 import { CollectionService, Lighting, Players, SoundService, TweenService, Workspace } from "@rbxts/services";
 import { Zone } from "@rbxts/zone-plus";
-import { Events } from "client/network";
+import { Events, Functions } from "client/network";
 import { mapConfig } from "shared/config/mapConfig";
 import { gameConstants } from "shared/gameConstants";
 import { Signals } from "shared/signals";
@@ -142,29 +142,35 @@ export class ZoneController implements OnStart, OnRender {
 			this.isleZoneMap.set(element.Name, zone);
 		});
 
-		// This is important because this is how we know that the island has streamed in before we teleport the player to it.
-		Events.teleportToIsland.connect((islandName) => {
-			const island = CollectionService.GetTagged("Map").filter((instance) => instance.Name === islandName)[0];
-			const spawnLocation = island.WaitForChild("SpawnLocation") as Model;
-			const spawnPos = spawnLocation.GetPivot();
-			const character = Players.LocalPlayer.Character || Players.LocalPlayer.CharacterAdded.Wait()[0];
-			const extents = spawnLocation.GetExtentsSize();
-			const goal = spawnPos.add(
-				new Vector3(
-					rng.NextNumber(-extents.X, extents.X),
-					extents.Y * 2,
-					rng.NextNumber(-extents.Z, extents.Z),
-				),
-			);
-			// Wait for HumanoidRootPart so we can ensure that they can be teleported.
-			character.WaitForChild("HumanoidRootPart");
-			character.PivotTo(goal);
-			Events.teleportSuccess.fire();
-			spawned = true;
-			// this.onZoneEnter(islandName);
-		});
-
-		Events.requestSpawn();
+		while (!spawned) {
+			Functions.requestSpawn()
+				.then((islandName) => {
+					const island = CollectionService.GetTagged("Map").filter(
+						(instance) => instance.Name === islandName,
+					)[0];
+					const spawnLocation = island.WaitForChild("SpawnLocation") as Model;
+					const spawnPos = spawnLocation.GetPivot();
+					const character = Players.LocalPlayer.Character || Players.LocalPlayer.CharacterAdded.Wait()[0];
+					const extents = spawnLocation.GetExtentsSize();
+					const goal = spawnPos.add(
+						new Vector3(
+							rng.NextNumber(-extents.X, extents.X),
+							extents.Y * 2,
+							rng.NextNumber(-extents.Z, extents.Z),
+						),
+					);
+					// Wait for HumanoidRootPart so we can ensure that they can be teleported.
+					const hrp = character.WaitForChild("HumanoidRootPart") as BasePart;
+					hrp.Anchored = false;
+					character.PivotTo(goal);
+					spawned = true;
+					const humanoid = character.WaitForChild("Humanoid") as Humanoid;
+					humanoid.WalkSpeed = 16;
+					Events.teleportSuccess();
+				})
+				.catch(warn)
+				.await();
+		}
 	}
 
 	onRender() {

@@ -95,7 +95,6 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 		});
 
 		if (!isleName || isleName === "") return;
-		print(firstEnter, isleName);
 		// if (firstEnter) {
 		// 	setFirstEnter(false);
 		// 	return;

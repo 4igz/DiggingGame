@@ -49,7 +49,6 @@ interface ClientToServerEvents {
 	startNextQuest: (questName: keyof typeof questConfig) => void;
 	claimFreeReward: () => void;
 	verifyCode: (code: string) => void;
-	requestSpawn: () => void;
 
 	// Anti exploit event
 	selfReport: (flag: string) => void;
@@ -94,7 +93,6 @@ interface ServerToClientEvents {
 		itemConfig: Partial<Shovel | MetalDetector | BoatConfig>,
 	) => void;
 	purchaseFailed: (itemType: ItemType) => void;
-	teleportToIsland: (islandName: keyof typeof mapConfig) => void;
 	updateDailyStreak: (streak: number, lastClaimTime: number) => void;
 	updateInventorySize: (size: number) => void;
 	updateTreasureCount: (count: number) => void;
@@ -115,6 +113,7 @@ interface ServerToClientEvents {
 	) => void;
 	updateClaimedLimitedOfferPack: (packNum: 0 | 1 | 2) => void;
 	drankPotion: (potionName: keyof typeof potionConfig) => void;
+	beginTutorialStep: (stepNum: number) => void;
 }
 
 interface ClientToServerFunctions {
@@ -150,6 +149,7 @@ interface ClientToServerFunctions {
 	getHasClaimedFreeReward: () => boolean;
 	getClaimedLimitedOfferPack: () => 0 | 1 | 2;
 	claimDailyReward: () => { streak: number; lastClaimTime: number } | undefined;
+	requestSpawn: () => keyof typeof mapConfig;
 }
 
 interface ServerToClientFunctions {}

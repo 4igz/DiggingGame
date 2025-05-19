@@ -697,21 +697,16 @@ export class ShovelController implements OnStart {
 			);
 
 			// For the reward vfx, we want to relocate the particles to the target model.
-			const rewardVfx = this.rewardVfxPartCache.acquire();
-			for (const descendant of rewardVfx.GetDescendants()) {
+			const rewardVfxClone = rewardVfx.Clone() as BasePart;
+			for (const descendant of rewardVfxClone.GetDescendants()) {
 				if (descendant.IsA("ParticleEmitter")) {
 					if (model.PrimaryPart && model.PrimaryPart.Parent) {
 						descendant.Parent = model.PrimaryPart;
-						digTrove.add(() => {
-							descendant.Parent = rewardVfx;
-						});
 					}
 				}
 			}
 
-			digTrove.add(() => {
-				this.rewardVfxPartCache.release(rewardVfx);
-			});
+			digTrove.add(rewardVfxClone);
 			digTrove.add(diggingVfx);
 			digTrove.add(model);
 			digTrove.add(
@@ -769,7 +764,7 @@ export class ShovelController implements OnStart {
 					model,
 					...CollectionService.GetTagged("Treasure"),
 					diggingVfx,
-					rewardVfx,
+					rewardVfxClone,
 					...CollectionService.GetTagged("DigCrater"),
 				];
 				// const raycast = Workspace.Raycast(origin, new Vector3(0, -5, 0), params);

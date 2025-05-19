@@ -7,12 +7,6 @@ import Signal from "@rbxts/goodsignal";
 import { Signals } from "shared/signals";
 
 const player = Players.LocalPlayer;
-const playerGui = player.WaitForChild("PlayerGui") as PlayerGui;
-const updateLog = playerGui.WaitForChild(gameConstants.UPDATE_LOG_UI) as ScreenGui;
-const containerFrame = updateLog.WaitForChild("Container") as Frame;
-
-const closeFrame = containerFrame.WaitForChild("X") as Frame;
-const closeButton = closeFrame.WaitForChild("Btn") as TextButton;
 
 const tinfo = new TweenInfo(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In);
 
@@ -20,10 +14,18 @@ interface UpdateLogButtonProps {
 	uiController: UiController;
 }
 
+const playerGui = player.WaitForChild("PlayerGui") as PlayerGui;
+
 export const UpdateLogButton = (props: UpdateLogButtonProps) => {
 	const [visible, setVisible] = useState(false);
 
 	useEffect(() => {
+		const updateLog = playerGui.WaitForChild(gameConstants.UPDATE_LOG_UI) as ScreenGui;
+		const containerFrame = updateLog.WaitForChild("Container") as Frame;
+
+		const closeFrame = containerFrame.WaitForChild("X") as Frame;
+		const closeButton = closeFrame.WaitForChild("Btn") as TextButton;
+
 		const con1 = closeButton.MouseEnter.Connect(() => {
 			TweenService.Create(closeFrame, tinfo, { Size: UDim2.fromScale(0.15, 0.25) }).Play();
 		});
@@ -73,12 +75,18 @@ export const UpdateLogButton = (props: UpdateLogButtonProps) => {
 		<AnimatedButton
 			onClick={() => {
 				if (!visible) {
+					const updateLog = playerGui.WaitForChild(gameConstants.UPDATE_LOG_UI) as ScreenGui;
+					const containerFrame = updateLog.WaitForChild("Container") as Frame;
+
 					props.uiController.closeCurrentOpenMenu();
 					updateLog.Enabled = true;
 
 					TweenService.Create(containerFrame, tinfo, { Position: UDim2.fromScale(0.5, 0.45) }).Play();
 					Signals.menuOpened.Fire(true, "UpdateLog");
 				} else {
+					const updateLog = playerGui.WaitForChild(gameConstants.UPDATE_LOG_UI) as ScreenGui;
+					const containerFrame = updateLog.WaitForChild("Container") as Frame;
+
 					updateLog.Enabled = false;
 
 					TweenService.Create(containerFrame, new TweenInfo(0), {

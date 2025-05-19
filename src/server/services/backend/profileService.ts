@@ -68,6 +68,7 @@ export class ProfileService implements OnInit, OnStart {
 			Cancel: () => {
 				return player.Parent !== Players;
 			},
+			Steal: true,
 		});
 
 		if (profile !== undefined) {
@@ -76,12 +77,12 @@ export class ProfileService implements OnInit, OnStart {
 
 			profile.OnSessionEnd.Connect(() => {
 				this.profileCache.delete(player);
-				if (player.IsDescendantOf(Players)) {
+				if (player.Parent === Players) {
 					player.Kick("Player data was loaded in another server. Disconnecting to prevent data loss.");
 				}
 			});
 
-			if (player.IsDescendantOf(Players)) {
+			if (player.Parent === Players) {
 				this.profileCache.set(player, profile);
 				this.profileCache.set(player, profile);
 				this.onProfileLoaded.Fire(player, profile as LoadedProfile);
@@ -111,8 +112,8 @@ export class ProfileService implements OnInit, OnStart {
 			const profile = this.profileCache.get(player);
 			if (profile) {
 				profile.Data.isFirstJoin = false;
-				profile.EndSession();
 				this.profileCache.delete(player);
+				profile.EndSession();
 			}
 		});
 	}

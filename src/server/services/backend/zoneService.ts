@@ -1,11 +1,11 @@
-import { Service, OnStart, OnInit } from "@flamework/core";
-import { CollectionService, Players, Workspace } from "@rbxts/services";
+import { Service, OnStart } from "@flamework/core";
+import { CollectionService, Players } from "@rbxts/services";
 import { Zone } from "@rbxts/zone-plus";
 import { mapConfig } from "shared/config/mapConfig";
 import { gameConstants } from "shared/gameConstants";
 import { ProfileService } from "./profileService";
 import Signal from "@rbxts/goodsignal";
-import { Events } from "server/network";
+import { Events, Functions } from "server/network";
 import Object from "@rbxts/object-utils";
 
 @Service({})
@@ -55,48 +55,14 @@ export class ZoneService implements OnStart {
 			this.spawnedPlayers.delete(player);
 		});
 
-		// Incase profile loaded before zone service
-		for (const [player, profile] of this.profileService.getLoadedProfiles()) {
-			if (player.Character) {
-				this.spawnPlayer(player, profile.Data.currentMap);
-			}
-			player.CharacterAdded.Connect((char) => {
-				const currentProfile = this.profileService.getProfile(player);
-				if (!currentProfile) return;
-				this.spawnPlayer(player, currentProfile.Data.currentMap);
-			});
-		}
+		Functions.requestSpawn.setCallback((player) => {
+			const profile = this.profileService.getProfileLoaded(player).expect();
+			const map = profile.Data.currentMap;
 
-		Events.requestSpawn.connect((player) => {
-			if (!this.spawnedPlayers.has(player)) {
-				const currentProfile = this.profileService.getProfileLoaded(player).expect();
-				this.spawnPlayer(player, currentProfile.Data.currentMap);
-			}
+			this.immobilizeCharacter(player);
+			this.streamSpawn(player, map).await();
+			return map;
 		});
-
-		this.profileService.onProfileLoaded.Connect((player, profile) => {
-			if (player.Character) {
-				this.spawnPlayer(player, profile.Data.currentMap);
-			}
-			player.CharacterAdded.Connect((char) => {
-				const currentProfile = this.profileService.getProfile(player);
-				if (!currentProfile) return;
-				this.spawnPlayer(player, currentProfile.Data.currentMap);
-			});
-		});
-
-		// task.spawn(() => {
-		// 	while (true) {
-		// 		task.wait(3);
-		// 		for (const player of Players.GetPlayers()) {
-		// 			if (!this.spawnedPlayers.has(player)) {
-		// 				const currentProfile = this.profileService.getProfile(player);
-		// 				if (!currentProfile) continue;
-		// 				this.spawnPlayer(player, currentProfile.Data.currentMap);
-		// 			}
-		// 		}
-		// 	}
-		// });
 	}
 
 	isPlayerAtSeas(player: Player): boolean {
@@ -120,26 +86,16 @@ export class ZoneService implements OnStart {
 		player.RequestStreamAroundAsync(spawn.GetPivot().Position);
 	}
 
-	spawnPlayer(player: Player, zoneName: keyof typeof mapConfig) {
-		const map = CollectionService.GetTagged("Map").filter((instance) => instance.Name === zoneName)[0];
-		const spawn = map.FindFirstChild("SpawnLocation") as Model;
-		if (!spawn) {
-			warn(`SpawnLocation not found for zone ${zoneName}`);
-			return;
-		}
+	immobilizeCharacter(player: Player) {
 		// Before they spawn, set their walkspeed to 0 so they don't move around while loading
-		task.spawn(() => {
-			const humanoid = player.Character?.WaitForChild("Humanoid") as Humanoid;
-			if (humanoid) {
-				humanoid.WalkSpeed = 0;
-			}
-			const hrp = player.Character?.WaitForChild("HumanoidRootPart") as BasePart;
-			if (hrp) {
-				hrp.Anchored = true;
-			}
-		});
-		this.streamSpawn(player, zoneName);
-		Events.teleportToIsland(player, zoneName);
+		const humanoid = player.Character?.WaitForChild("Humanoid") as Humanoid;
+		if (humanoid) {
+			humanoid.WalkSpeed = 0;
+		}
+		const hrp = player.Character?.WaitForChild("HumanoidRootPart") as BasePart;
+		if (hrp) {
+			hrp.Anchored = true;
+		}
 	}
 
 	onZoneEntered(player: Player, zoneName: keyof typeof mapConfig) {
