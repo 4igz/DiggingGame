@@ -6,6 +6,7 @@ import { Events, Functions } from "client/network";
 import { boatConfig, DEFAULT_BOAT_SPEED, DEFAULT_BOAT_TURN_SPEED } from "shared/config/boatConfig";
 import { gameConstants } from "shared/gameConstants";
 import { ObjectPool } from "shared/util/objectPool";
+import { Signals } from "shared/signals";
 
 interface Attributes {
 	boatId: string; // Assigned by the server to indicate the boat's unique ID
@@ -134,6 +135,8 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 						return;
 					}
 					this.isSittingInDriverSeat = true;
+
+					Signals.quitTarget.Fire();
 
 					ownerSeatPrompt.Enabled = false;
 

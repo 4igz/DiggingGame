@@ -12,6 +12,7 @@ import { Events, Functions } from "client/network";
 import { ScaleFunction, usePx } from "client/hooks/usePx";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 import { TutorialController } from "client/controllers/tutorialController";
+import { AnimatedButton } from "./buttons";
 
 interface SidebarButtonProps {
 	icon: string;
@@ -25,6 +26,7 @@ interface SidebarButtonProps {
 	onClick?: () => void;
 	pxProvider: ScaleFunction;
 	textOffset?: number;
+	showOp?: boolean;
 }
 
 const SidebarButton = (props: SidebarButtonProps) => {
@@ -202,7 +204,7 @@ interface SidebarProps {
 }
 
 const DEFAULT_POS = UDim2.fromScale(0.025, 0.5);
-const CLOSED_POS = UDim2.fromScale(-0.6, 0.4);
+const CLOSED_POS = UDim2.fromScale(-0.6, 0.5);
 
 export const Sidebar: React.FC<SidebarProps> = (props) => {
 	const [autoDigEnabled, setAutoDiggingEnabled] = React.useState(false);
@@ -249,7 +251,7 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 			BorderSizePixel={0}
 			key={"QuickActionButtons"}
 			Position={menuPos}
-			Size={UDim2.fromScale(0.2, 0.6)}
+			Size={UDim2.fromScale(0.185, 0.6)}
 			AnchorPoint={new Vector2(0, 0.5)}
 		>
 			<uilistlayout

@@ -624,7 +624,6 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 					uiController={props.uiController}
 					uiName={gameConstants.DAILY_REWARD_UI}
 					isMenuVisible={visible}
-					menuRefToClose={menuRef}
 				/>
 			</imagelabel>
 			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.8} />

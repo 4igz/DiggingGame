@@ -52,6 +52,8 @@ import { BottomRightButtons } from "client/reactComponents/bottomRightButtons";
 import { HoldToDetectText } from "client/reactComponents/holdToDetectText";
 import { TutorialMessage } from "client/reactComponents/tutorialMessage";
 import { TutorialController } from "./tutorialController";
+import { freeTimedRewardButton } from "client/reactComponents/freeTimedRewardButton";
+import { FreeTimedRewardMenu } from "client/reactComponents/freeTimedRewardMenu";
 
 const LOW_LAYER = 0;
 const MENU_LAYER = 1;
@@ -548,12 +550,28 @@ export default class UiController implements OnStart, OnInit {
 		);
 		this.registerUi("HoldToDetectText", React.createElement(HoldToDetectText), {}, undefined, undefined, LOW_LAYER);
 		this.registerUi(
+			"TimedRewardButton",
+			React.createElement(freeTimedRewardButton),
+			{ uiController: this },
+			undefined,
+			undefined,
+			LOW_LAYER,
+		);
+		this.registerUi(
 			"TutorialMessage",
 			React.createElement(TutorialMessage),
 			{ uiController: this },
 			undefined,
 			undefined,
 			OVERLAY_LAYER,
+		);
+		this.registerUi(
+			gameConstants.FREE_TIMED_REWARD_MENU,
+			React.createElement(FreeTimedRewardMenu),
+			{ uiController: this, visible: false },
+			undefined,
+			undefined,
+			MENU_LAYER,
 		);
 
 		// // Hide some stuff from the client that we already have cached.

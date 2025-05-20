@@ -1,5 +1,5 @@
 //!optimize 2
-import { Controller, OnStart } from "@flamework/core";
+import { Controller, OnRender, OnStart } from "@flamework/core";
 import { CollectionService, Players, RunService, UserInputService } from "@rbxts/services";
 import { Events, Functions } from "client/network";
 import { Pather } from "shared/util/pather";
@@ -7,9 +7,9 @@ import { ShovelController } from "./shovelController";
 import { DetectorController } from "./detectorController";
 import { Signals } from "shared/signals";
 import { gameConstants } from "shared/gameConstants";
-import { inventorySizeAtom, treasureCountAtom } from "client/atoms/inventoryAtoms";
 import { debugWarn } from "shared/util/logUtil";
 import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
+import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 
 interface MovementKeyMap {
 	[keyCode: number]: boolean;
@@ -17,6 +17,16 @@ interface MovementKeyMap {
 
 interface MovementInputsMap {
 	[inputType: number]: MovementKeyMap | boolean;
+}
+
+interface PlayerModule {
+	GetControls(this: PlayerModule): Controls;
+}
+
+interface Controls {
+	GetMoveVector(this: Controls): Vector3;
+	Disable(): void;
+	Enable(): void;
 }
 
 /**
@@ -59,8 +69,13 @@ const logWarn = (message: string) => {
 };
 
 @Controller({})
-export class AutoDigging implements OnStart {
+export class AutoDigging implements OnStart, OnRender {
 	public autoDiggingEnabled: boolean = false;
+
+	private playerModule = require(Players.LocalPlayer.WaitForChild("PlayerScripts").WaitForChild(
+		"PlayerModule",
+	) as ModuleScript) as PlayerModule;
+	private controls = this.playerModule.GetControls();
 
 	constructor(private readonly shovelController: ShovelController, private readonly detector: DetectorController) {}
 
@@ -73,11 +88,6 @@ export class AutoDigging implements OnStart {
 
 		Events.targetSpawnSuccess.connect(() => {
 			targetSpawnTime = tick();
-			if (treasureCountAtom() >= inventorySizeAtom()) {
-				Signals.inventoryFull.Fire();
-				this.setAutoDiggingEnabled(false);
-				return;
-			}
 		});
 
 		// Events.targetSpawnFailure.connect(() => {
@@ -112,6 +122,10 @@ export class AutoDigging implements OnStart {
 			this.setAutoDiggingEnabled(enabled, true);
 		});
 
+		Signals.quitTarget.Connect(() => {
+			Events.endDiggingClient();
+		});
+
 		UserInputService.InputBegan.Connect((input, gameProcessedEvent) => {
 			this.onInputBegan(input, gameProcessedEvent);
 		});
@@ -129,6 +143,18 @@ export class AutoDigging implements OnStart {
 
 		// Start a periodic check to see if we might be stuck
 		this.beginStuckCheck();
+	}
+
+	onRender(): void {
+		const shouldDetectMovement = this.autoDiggingEnabled && getPlayerPlatform() === "Mobile";
+
+		if (shouldDetectMovement) {
+			const moveDir = this.controls.GetMoveVector();
+
+			if (moveDir.Magnitude > 0 && !this.shovelController.diggingActive) {
+				this.setAutoDiggingEnabled(false, false, true);
+			}
+		}
 	}
 
 	/**
@@ -348,13 +374,6 @@ export class AutoDigging implements OnStart {
 		)
 			return;
 
-		if (treasureCountAtom() >= inventorySizeAtom()) {
-			Signals.inventoryFull.Fire();
-			this.setAutoDiggingEnabled(false);
-			this.quitCurrentTarget();
-			return;
-		}
-
 		this.cleanupPather();
 
 		targetRequestInProgress = true;
@@ -367,12 +386,6 @@ export class AutoDigging implements OnStart {
 				if (!target) {
 					logWarn("Target request failed. Retrying...");
 					task.delay(0.1, () => this.requestAndPathToNextTarget());
-					return;
-				}
-				if (treasureCountAtom() >= inventorySizeAtom()) {
-					Signals.inventoryFull.Fire();
-					this.setAutoDiggingEnabled(false);
-					this.quitCurrentTarget();
 					return;
 				}
 				this.tryResetIfStuck();
@@ -409,7 +422,7 @@ export class AutoDigging implements OnStart {
 		}
 	}
 
-	private quitCurrentTarget() {
+	public quitCurrentTarget() {
 		if (
 			this.autoDiggingEnabled &&
 			(!this.shovelController.diggingActive ||
@@ -427,12 +440,6 @@ export class AutoDigging implements OnStart {
 		}
 
 		if (enabled) {
-			if (treasureCountAtom() >= inventorySizeAtom()) {
-				this.setAutoDiggingEnabled(false);
-				Signals.inventoryFull.Fire();
-				return;
-			}
-
 			this.cleanupPather();
 			this.requestAndPathToNextTarget();
 		} else {

@@ -182,9 +182,44 @@ export class RewardService implements OnStart {
 			this.profileService.setProfile(player, profile);
 		});
 
+		Events.claimTimedReward.connect((player) => {
+			const joinTime = this.playerJoinTimes.get(player);
+			if (joinTime === undefined) return;
+
+			const profile = this.profileService.getProfileLoaded(player).expect();
+			if (profile.Data.claimedTimedReward) return;
+
+			if (tick() - joinTime > 60 * 45) {
+				profile.Data.claimedTimedReward = true;
+				this.profileService.setProfile(player, profile);
+				this.claimReward(player, { rewardType: "Shovels", itemName: "DemonicShovel" });
+				this.claimReward(player, { rewardType: "Potions", itemName: "L.Luck Potion" });
+				this.claimReward(player, { rewardType: "Potions", itemName: "L.Luck Potion" });
+				Events.claimedTimedReward(player);
+			}
+		});
+
+		Signals.completeTimedReward.Connect((player) => {
+			const profile = this.profileService.getProfileLoaded(player).expect();
+
+			if (profile.Data.claimedTimedReward) return;
+			profile.Data.claimedTimedReward = true;
+			this.profileService.setProfile(player, profile);
+
+			this.claimReward(player, { rewardType: "Shovels", itemName: "DemonicShovel" });
+			this.claimReward(player, { rewardType: "Potions", itemName: "L.Luck Potion" });
+			this.claimReward(player, { rewardType: "Potions", itemName: "L.Luck Potion" });
+			Events.claimedTimedReward(player);
+		});
+
 		Functions.getHasClaimedFreeReward.setCallback((player) => {
 			const profile = this.profileService.getProfileLoaded(player).expect();
 			return profile.Data.claimedFreeReward;
+		});
+
+		Functions.getClaimedTimedReward.setCallback((player) => {
+			const profile = this.profileService.getProfileLoaded(player).expect();
+			return profile.Data.claimedTimedReward;
 		});
 
 		Signals.giveLimitedOffer.Connect((player, num: 0 | 1 | 2) => {

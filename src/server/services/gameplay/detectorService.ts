@@ -21,11 +21,7 @@ export class DetectorService implements OnStart, OnTick {
 	private readonly VISUALIZATION_RATE = 1; // seconds
 	public startedDigging = new Signal<(player: Player, target: Target) => void>();
 
-	constructor(
-		private readonly targetService: TargetService,
-		private readonly profileService: ProfileService,
-		private readonly inventoryService: InventoryService,
-	) {}
+	constructor(private readonly targetService: TargetService, private readonly profileService: ProfileService) {}
 
 	onStart() {
 		Events.beginDetectorLuckRoll.connect((player) => {
@@ -182,15 +178,6 @@ export class DetectorService implements OnStart, OnTick {
 
 			if (distance < gameConstants.DIG_RANGE) {
 				withinDigRange = true;
-			}
-
-			const profile = this.profileService.getProfile(player);
-
-			if (profile) {
-				if (profile.Data.targetInventory.size() >= this.inventoryService.getInventorySize(player)) {
-					this.targetService.endDigging(player, true, false);
-					return;
-				}
 			}
 
 			if (withinDigRange && target) {

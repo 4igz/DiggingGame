@@ -51,6 +51,7 @@ interface ClientToServerEvents {
 	claimFreeReward: () => void;
 	verifyCode: (code: string) => void;
 	completedTutorial: () => void;
+	claimTimedReward: () => void;
 
 	// Anti exploit event
 	selfReport: (flag: string) => void;
@@ -116,6 +117,7 @@ interface ServerToClientEvents {
 	updateClaimedLimitedOfferPack: (packNum: 0 | 1 | 2) => void;
 	drankPotion: (potionName: keyof typeof potionConfig) => void;
 	endTutorial: () => void;
+	claimedTimedReward: () => void;
 }
 
 interface ClientToServerFunctions {
@@ -153,6 +155,7 @@ interface ClientToServerFunctions {
 	claimDailyReward: () => { streak: number; lastClaimTime: number } | undefined;
 	requestSpawn: () => keyof typeof mapConfig;
 	getTutorial: () => boolean;
+	getClaimedTimedReward: () => boolean;
 }
 
 interface ServerToClientFunctions {}

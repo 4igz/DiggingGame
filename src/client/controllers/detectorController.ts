@@ -7,13 +7,10 @@ import { Trove } from "@rbxts/trove";
 import { Signals } from "shared/signals";
 import { ShovelController } from "./shovelController";
 import { interval } from "shared/util/interval";
-import { subscribe } from "@rbxts/charm";
-import { inventorySizeAtom, treasureCountAtom } from "client/atoms/inventoryAtoms";
 import { gameConstants } from "shared/gameConstants";
 import { ObjectPool } from "shared/util/objectPool";
 import { allowDigging } from "client/atoms/detectorAtoms";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
-import Signal from "@rbxts/goodsignal";
 import { TutorialController } from "./tutorialController";
 import { DETECT_STEP, DIG_STEP, QUEST_STEP, SELL_STEP, TREASURE_STEP } from "shared/config/tutorialConfig";
 
@@ -83,10 +80,6 @@ export class DetectorController implements OnStart {
 
 		Signals.setAutoDiggingRunning.Connect((running: boolean) => {
 			autoDigRunning = running;
-		});
-
-		subscribe(treasureCountAtom, (count) => {
-			isInventoryFull = count >= inventorySizeAtom();
 		});
 
 		const beepSoundPool = new ObjectPool(() => {

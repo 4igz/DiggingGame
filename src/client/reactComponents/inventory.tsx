@@ -22,16 +22,16 @@ import { mapConfig } from "shared/config/mapConfig";
 import Object from "@rbxts/object-utils";
 import { getOneInXChance } from "shared/util/targetUtil";
 import { potionConfig, PotionKind } from "shared/config/potionConfig";
-import { inventorySizeAtom, treasureCountAtom, treasureInventoryAtom } from "client/atoms/inventoryAtoms";
+import { treasureCountAtom, treasureInventoryAtom } from "client/atoms/inventoryAtoms";
 import { Signals } from "shared/signals";
 import { GamepassController } from "client/controllers/gamepassController";
 import { getOrderFromRarity, potionSizeFromRarity } from "shared/util/rarityUtil";
 import { NetworkingFunctionError } from "@flamework/networking";
-import { whiteToRed } from "shared/util/colorUtil";
 import { usePx } from "client/hooks/usePx";
 import { AnimatedButton, BuyButton } from "./buttons";
 import { useSliceScale } from "client/hooks/useSlice";
 import { ItemStat } from "shared/util/rewardUtil";
+import { subscribe } from "@rbxts/charm";
 
 export function capitalizeWords(str: string): string {
 	return str
@@ -1254,11 +1254,9 @@ export const SellAllBtn = (props: SellAllBtnProps) => {
 interface ExitButtonProps {
 	uiController: UiController;
 	uiName: string;
-	menuRefToClose?: React.RefObject<Frame>;
 	onClick?: () => void;
 	isMenuVisible: boolean;
 	size?: UDim2;
-	ref?: RefObject<ImageButton>;
 }
 
 export const ExitButton = (props: ExitButtonProps) => {
@@ -1312,7 +1310,6 @@ export const ExitButton = (props: ExitButtonProps) => {
 						exit();
 					},
 				}}
-				ref={props.ref}
 			/>
 
 			<textbutton
@@ -1590,9 +1587,6 @@ export const InventoryComponent = (props: MainUiProps) => {
 	}>({ targetName: "", mapName: "" });
 	const [loading, setLoading] = React.useState(false);
 	const [loadingSpring, setLoadingSpring] = useMotion(1);
-	const [targetInventoryCapacity, setTargetInventoryCapacity] = useState(
-		gameConstants.TARGET_INVENTORY_DEFAULT_CAPACITY,
-	);
 	const [visible, setVisible] = React.useState(false);
 	const [gamepadEnabled, setGamepadEnabled] = React.useState(UserInputService.GamepadEnabled);
 	const menuRef = createRef<Frame>();
@@ -1610,6 +1604,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 			Array<Item>,
 		],
 		shouldSetInventory: boolean = true,
+		shouldSetAtom: boolean = true,
 	) {
 		const newInventory: InventoryItemProps[] = [];
 
@@ -1684,7 +1679,9 @@ export const InventoryComponent = (props: MainUiProps) => {
 		}
 		if (inventoryType === "Target") {
 			setTargetInventoryUsedSize(inv.size());
-			treasureInventoryAtom(newInventory);
+			if (shouldSetAtom) {
+				treasureInventoryAtom(newInventory);
+			}
 		}
 	}
 
@@ -1754,20 +1751,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 		if (visible) {
 			popInMotion.spring(UDim2.fromScale(0.45, 0.45), springs.responsive);
 		} else {
-			const connection = Signals.inventoryFull.Connect(() => {
-				if (visible) {
-					connection?.Disconnect();
-					return;
-				}
-				props.uiController.toggleUi(gameConstants.MAIN_UI, {
-					menu: MENUS.Inventory,
-					displayInventoryType: "Target",
-				});
-			});
 			popInMotion.immediate(UDim2.fromScale(0.45, 0.55));
-			return () => {
-				connection?.Disconnect();
-			};
 		}
 	}, [visible]);
 
@@ -1838,19 +1822,6 @@ export const InventoryComponent = (props: MainUiProps) => {
 
 		Events.updateUnlockedTargets.connect(setUnlockedTreasures);
 
-		Functions.getInventorySize()
-			.then((size) => {
-				setTargetInventoryCapacity(size);
-				inventorySizeAtom(size);
-			})
-			.catch(warn);
-
-		// Events.updateInventorySize: (size: number) => void;
-		Events.updateInventorySize.connect((size) => {
-			setTargetInventoryCapacity(size);
-			inventorySizeAtom(size);
-		});
-
 		Events.updateTreasureCount.connect((count) => {
 			setTargetInventoryUsedSize(count);
 			treasureCountAtom(count);
@@ -1903,6 +1874,28 @@ export const InventoryComponent = (props: MainUiProps) => {
 				});
 			}
 		});
+
+		const equipRarestTreasure = () => {
+			let highestRarity = 0;
+			let bestTreasureName: string | undefined = undefined;
+			for (const treasure of treasureInventoryAtom()) {
+				const cfg = fullTargetConfig[treasure.itemName];
+				if (!cfg) continue;
+
+				if ((cfg.indexRarity ?? cfg.rarity) > highestRarity) {
+					highestRarity = cfg.indexRarity ?? cfg.rarity;
+					bestTreasureName = treasure.itemName;
+				}
+			}
+
+			if (bestTreasureName !== undefined) {
+				Events.equipTreasure(bestTreasureName);
+			}
+		};
+
+		equipRarestTreasure();
+
+		subscribe(treasureCountAtom, equipRarestTreasure);
 
 		// This is part of my `renameRemotes` "security" measure. It will deter script kiddies, but not a fully determined exploiter.
 		// Read `renameRemotes` in server/services/security for more information on how they might get around it and why it's not foolproof (or literally foolproof).
@@ -1957,12 +1950,7 @@ export const InventoryComponent = (props: MainUiProps) => {
 					{/* <uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.66} /> */}
 				</imagelabel>
 
-				<ExitButton
-					uiController={props.uiController}
-					uiName={gameConstants.MAIN_UI}
-					menuRefToClose={menuRef}
-					isMenuVisible={visible}
-				/>
+				<ExitButton uiController={props.uiController} uiName={gameConstants.MAIN_UI} isMenuVisible={visible} />
 
 				<frame
 					BackgroundColor3={Color3.fromRGB(255, 255, 255)}
@@ -2958,17 +2946,8 @@ export const InventoryComponent = (props: MainUiProps) => {
 					key={"Count"}
 					Position={UDim2.fromScale(0.467971, 0.73751)}
 					Size={UDim2.fromScale(1.04598, 1.15834)}
-					Text={`Treasures: ${targetInventoryUsedSize}/${targetInventoryCapacity}`}
-					TextColor3={
-						targetInventoryUsedSize >= targetInventoryCapacity
-							? Color3.fromRGB(255, 0, 0)
-							: targetInventoryUsedSize > targetInventoryCapacity / 2
-							? whiteToRed(
-									(targetInventoryUsedSize - targetInventoryCapacity / 2) / targetInventoryCapacity,
-									0.5,
-							  )
-							: new Color3(1, 1, 1)
-					}
+					Text={`Treasures: ${targetInventoryUsedSize}`}
+					TextColor3={new Color3(1, 1, 1)}
 					TextScaled={true}
 					TextXAlignment={Enum.TextXAlignment.Right}
 					TextYAlignment={Enum.TextYAlignment.Top}

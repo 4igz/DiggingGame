@@ -172,6 +172,7 @@ export class PreloadingController implements OnInit {
 	}
 
 	onInit() {
+		return;
 		ReplicatedStorage.SetAttribute("PreloadedImages", 0);
 		this.preloadUiImages();
 		this.queueLoad();

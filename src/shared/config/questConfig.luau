@@ -162,11 +162,11 @@ local questConfig: { [string]: { QuestConfig } } = {
 		{
 			questType = "Collect",
 			questReward = "Money",
-			questRewardAmount = 1000,
+			questRewardAmount = 70_000,
 
 			playerResponses = { [QUEST_ACCEPT] = "Of course", [QUEST_DECLINE] = "No, find them yourself" },
 
-			initialResponse = "Do you mind bringing me 10 Icecicles?",
+			initialResponse = "Do you mind bringing me 10 Icicles?",
 			subsequentResponse = "Don't ask me why I need them, just find them!",
 			completeResponse = "I appreciate it. Here's a little something for you! \nCan you do something else for me?",
 
@@ -176,7 +176,7 @@ local questConfig: { [string]: { QuestConfig } } = {
 		{
 			questType = "Collect",
 			questReward = "Money",
-			questRewardAmount = 10_000,
+			questRewardAmount = 300_000,
 
 			playerResponses = { [QUEST_ACCEPT] = "Sure!", [QUEST_DECLINE] = "If I did I would keep it for myself" },
 

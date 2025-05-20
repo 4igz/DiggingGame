@@ -382,6 +382,8 @@ export const BoatShopComponent: React.FC<ShopProps> = (props) => {
 				})
 				.catch(warn);
 
+			Signals.quitTarget.Fire();
+
 			const connection = Events.updateBoatInventory.connect((ownedBoats) => {
 				setOwnedBoats(ownedBoats);
 			});
@@ -445,7 +447,6 @@ export const BoatShopComponent: React.FC<ShopProps> = (props) => {
 			<ExitButton
 				uiController={props.uiController}
 				uiName={gameConstants.SHOP_UI}
-				menuRefToClose={menuRef}
 				onClick={() => {
 					props.uiController.closeUi(gameConstants.BOAT_SHOP_UI);
 				}}

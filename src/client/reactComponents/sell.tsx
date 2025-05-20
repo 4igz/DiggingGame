@@ -14,7 +14,6 @@ import { SoundService, TweenService, UserInputService } from "@rbxts/services";
 import { AnimatedButton } from "./buttons";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 import { usePx } from "client/hooks/usePx";
-import { treasureInventoryAtom } from "client/atoms/inventoryAtoms";
 import { Signals } from "shared/signals";
 import { SELL_STEP } from "shared/config/tutorialConfig";
 import { TutorialController } from "client/controllers/tutorialController";
@@ -257,7 +256,6 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 			<ExitButton
 				uiName={gameConstants.SELL_UI}
 				uiController={props.uiController}
-				menuRefToClose={menuRef}
 				isMenuVisible={visible}
 			/>
 

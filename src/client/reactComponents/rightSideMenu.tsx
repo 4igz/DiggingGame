@@ -9,11 +9,12 @@ import { GuiService, RunService, UserInputService } from "@rbxts/services";
 import { gameConstants } from "shared/gameConstants";
 import { subscribe } from "@rbxts/charm";
 import { hasDailyAtom, hasGiftAtom } from "client/atoms/rewardAtoms";
-import { shortenNumber } from "shared/util/nameUtil";
+import { formatShortTime } from "shared/util/nameUtil";
 import { usePx } from "client/hooks/usePx";
 import { AnimatedButton } from "./buttons";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 import { Signals } from "shared/signals";
+import { nextClaimTimeAtom } from "client/atoms/uiAtoms";
 
 interface MoneyVectorProps {
 	offset: UDim2;
@@ -138,6 +139,7 @@ export const RightSideMenu = (props: MenuProps) => {
 	const [hasGift, setHasGift] = useState(hasGiftAtom());
 	const [hasDaily, setHasDaily] = useState(hasDailyAtom());
 	const [menuPos, setMenuPos] = useMotion(DEFAULT_POS);
+	const [nextClaimTime, setNextClaimTime] = useState(nextClaimTimeAtom());
 
 	const px = usePx();
 
@@ -196,13 +198,9 @@ export const RightSideMenu = (props: MenuProps) => {
 			);
 		});
 
-		subscribe(hasGiftAtom, (hasGift) => {
-			setHasGift(hasGift);
-		});
-
-		subscribe(hasDailyAtom, (hasDaily) => {
-			setHasDaily(hasDaily);
-		});
+		subscribe(hasGiftAtom, setHasGift);
+		subscribe(hasDailyAtom, setHasDaily);
+		subscribe(nextClaimTimeAtom, setNextClaimTime);
 	}, []);
 
 	const MENU_MOBILE_SCALE = 1.25;
@@ -310,12 +308,12 @@ export const RightSideMenu = (props: MenuProps) => {
 					BorderSizePixel={0}
 					key={"Items Menu"}
 					Position={UDim2.fromScale(0.031, 0.176)}
-					Size={UDim2.fromScale(1.013, 0.221)}
+					Size={UDim2.fromScale(1.013, 0.35)}
 				>
 					<AnimatedButton
 						layoutOrder={1}
 						position={UDim2.fromScale(0.341, -0.368)}
-						size={UDim2.fromScale(0.329, 0.981)}
+						size={UDim2.fromScale(0.598, 0.654)}
 						selectable={false}
 						onClick={() => {
 							props.uiController.toggleUi(gameConstants.PLAYTIME_REWARD_UI);
@@ -343,7 +341,7 @@ export const RightSideMenu = (props: MenuProps) => {
 								key={"Icon"}
 								Position={UDim2.fromScale(0.5, 0.5)}
 								ScaleType={Enum.ScaleType.Fit}
-								Size={UDim2.fromScale(0.8, 0.8)}
+								Size={UDim2.fromScale(1, 1)}
 							/>
 
 							<textlabel
@@ -356,8 +354,8 @@ export const RightSideMenu = (props: MenuProps) => {
 									new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
 								}
 								key={"Title"}
-								Position={UDim2.fromScale(0.493, 0.854)}
-								Size={UDim2.fromScale(1.25, 0.246)}
+								Position={UDim2.fromScale(0.493, 0.88)}
+								Size={UDim2.fromScale(1.25, 0.285)}
 								Text={"Gift"}
 								TextColor3={Color3.fromRGB(255, 255, 255)}
 								// TextScaled={true}
@@ -378,7 +376,6 @@ export const RightSideMenu = (props: MenuProps) => {
 
 							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 						</imagelabel>
-
 						<frame
 							BackgroundColor3={Color3.fromRGB(255, 0, 0)}
 							key={".$Notification"}
@@ -419,6 +416,47 @@ export const RightSideMenu = (props: MenuProps) => {
 							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 						</frame>
 
+						<frame
+							AnchorPoint={new Vector2(0.5, 0.5)}
+							BackgroundColor3={Color3.fromRGB(254, 254, 254)}
+							LayoutOrder={-1}
+							key={".$Alert"}
+							Position={UDim2.fromScale(0.5, 0.6)}
+							Size={UDim2.fromScale(0.5, 0.2)}
+							ZIndex={30}
+						>
+							<uistroke key={"UIStroke"} Thickness={2} />
+
+							<textlabel
+								key={"TextLabel"}
+								AnchorPoint={new Vector2(0.5, 0.5)}
+								BackgroundTransparency={1}
+								FontFace={Font.fromEnum(Enum.Font.FredokaOne)}
+								Position={UDim2.fromScale(0.5, 0.5)}
+								Size={UDim2.fromScale(0.727899, 0.8)}
+								Text={nextClaimTime > 0 ? formatShortTime(nextClaimTime) : "Claim"}
+								TextColor3={new Color3(1, 1, 1)}
+								TextScaled={true}
+								TextStrokeTransparency={0}
+								ZIndex={100}
+							>
+								<uistroke key={"UIStroke"} LineJoinMode={Enum.LineJoinMode.Miter} Thickness={2} />
+							</textlabel>
+
+							<uigradient
+								key={"UIGradient"}
+								Color={
+									new ColorSequence([
+										new ColorSequenceKeypoint(0, Color3.fromRGB(57, 166, 45)),
+										new ColorSequenceKeypoint(1, Color3.fromRGB(115, 255, 0)),
+									])
+								}
+								Rotation={135}
+							/>
+
+							<uicorner key={"UICorner"} CornerRadius={new UDim(0.8, 0)} />
+						</frame>
+
 						<imagelabel
 							Image={UserInputService.GetImageForKeyCode(Enum.KeyCode.DPadRight)}
 							Position={UDim2.fromScale(0.5, 1)}
@@ -439,7 +477,7 @@ export const RightSideMenu = (props: MenuProps) => {
 						BorderSizePixel={0}
 						key={"Daily Menu"}
 						Position={UDim2.fromScale(0.671, -0.368)}
-						Size={UDim2.fromScale(0.329, 0.981)}
+						Size={UDim2.fromScale(0.553, 0.601)}
 					>
 						<AnimatedButton
 							size={UDim2.fromScale(1, 1)}
@@ -500,9 +538,9 @@ export const RightSideMenu = (props: MenuProps) => {
 								BorderSizePixel={0}
 								Image={"rbxassetid://82246683047981"}
 								key={"Icon"}
-								Position={UDim2.fromScale(0.5, 0.5)}
+								Position={UDim2.fromScale(0.5, 0.6)}
 								ScaleType={Enum.ScaleType.Fit}
-								Size={UDim2.fromScale(0.8, 0.8)}
+								Size={UDim2.fromScale(1, 1)}
 							/>
 							<imagelabel
 								Image={UserInputService.GetImageForKeyCode(Enum.KeyCode.DPadLeft)}
@@ -524,7 +562,7 @@ export const RightSideMenu = (props: MenuProps) => {
 									new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
 								}
 								key={"Title"}
-								Position={UDim2.fromScale(0.493, 0.854)}
+								Position={UDim2.fromScale(0.493, 0.9)}
 								Size={UDim2.fromScale(1.25, 0.246)}
 								Text={"Daily"}
 								TextColor3={Color3.fromRGB(255, 255, 255)}
@@ -555,80 +593,6 @@ export const RightSideMenu = (props: MenuProps) => {
 						HorizontalAlignment={Enum.HorizontalAlignment.Right}
 						SortOrder={Enum.SortOrder.LayoutOrder}
 					/>
-
-					<frame
-						BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-						BackgroundTransparency={1}
-						BorderColor3={Color3.fromRGB(0, 0, 0)}
-						BorderSizePixel={0}
-						LayoutOrder={1}
-						key={"Codes Menu"}
-						Position={UDim2.fromScale(0.341, -0.368)}
-						Size={UDim2.fromScale(0.329, 0.981)}
-						Visible={false}
-					>
-						<imagebutton
-							AnchorPoint={new Vector2(0.5, 0.5)}
-							BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-							BackgroundTransparency={1}
-							BorderColor3={Color3.fromRGB(0, 0, 0)}
-							BorderSizePixel={0}
-							key={"Button"}
-							Position={UDim2.fromScale(0.5, 0.5)}
-							ScaleType={Enum.ScaleType.Fit}
-							Selectable={false}
-							Size={UDim2.fromScale(0.9, 0.9)}
-						>
-							<imagelabel
-								AnchorPoint={new Vector2(0.5, 0.5)}
-								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-								BackgroundTransparency={1}
-								BorderColor3={Color3.fromRGB(0, 0, 0)}
-								BorderSizePixel={0}
-								Image={"rbxassetid://122946695401404"}
-								key={"Icon"}
-								Position={UDim2.fromScale(0.5, 0.5)}
-								ScaleType={Enum.ScaleType.Fit}
-								Size={UDim2.fromScale(0.8, 0.8)}
-							/>
-
-							<textlabel
-								AnchorPoint={new Vector2(0.5, 0.5)}
-								BackgroundColor3={Color3.fromRGB(255, 255, 255)}
-								BackgroundTransparency={1}
-								BorderColor3={Color3.fromRGB(0, 0, 0)}
-								BorderSizePixel={0}
-								FontFace={
-									new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-								}
-								key={"Title"}
-								Position={UDim2.fromScale(0.493, 0.854)}
-								Size={UDim2.fromScale(1.25, 0.246)}
-								Text={"Codes"}
-								TextColor3={Color3.fromRGB(255, 255, 255)}
-								// TextScaled={true}
-								// TextWrapped={true}
-								TextSize={px(25)}
-								ZIndex={10}
-							>
-								<uistroke key={"UIStroke"} Thickness={px(3)} />
-
-								<uipadding
-									key={"UIPadding"}
-									PaddingBottom={new UDim(0.0056, 0)}
-									PaddingLeft={new UDim(0.305, 0)}
-									PaddingRight={new UDim(0.305, 0)}
-									PaddingTop={new UDim(0.0056, 0)}
-								/>
-							</textlabel>
-
-							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-						</imagebutton>
-
-						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-					</frame>
-
-					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={2.98} />
 				</frame>
 
 				<uilistlayout

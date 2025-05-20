@@ -666,9 +666,6 @@ export class InventoryService implements OnStart, OnTick {
 	public addItemToTargetInventory(player: Player, item: Target) {
 		const profile = this.profileService.getProfile(player);
 		if (profile) {
-			if (profile.Data.targetInventory.size() >= this.getInventorySize(player)) {
-				error("Unhandled full inventory case", 2);
-			}
 			profile.Data.targetInventory.push({ itemId: item.itemId, name: item.name, weight: item.weight });
 			if (!profile.Data.previouslyFoundTargets.has(item.name)) {
 				profile.Data.previouslyFoundTargets.add(item.name);

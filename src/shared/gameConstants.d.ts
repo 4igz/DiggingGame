@@ -39,6 +39,7 @@ export declare const gameConstants: {
 	readonly PACK_FRAME_UI: string;
 	readonly UPDATE_LOG_UI: string;
 	readonly BOTTOM_RIGHT_HUD: string;
+	readonly FREE_TIMED_REWARD_MENU: string;
 
 	readonly STARTER_PACK_DISCOUNTED_PRICE: number;
 	readonly MEDIUM_PACK_DISCOUNTED_PRICE: number;

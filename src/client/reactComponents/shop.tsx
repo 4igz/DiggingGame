@@ -541,6 +541,7 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 			);
 		} else if (selectedShop === "Store") {
 			props.uiController.toggleUi(gameConstants.GAMEPASS_SHOP_UI);
+			setSelectedShop("MetalDetectors");
 		}
 
 		const connection = Events.updateInventory.connect((inventoryType, [_, inventory]) => {
@@ -565,6 +566,9 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 
 	React.useEffect(() => {
 		if (visible) {
+			setSelectedShop("MetalDetectors");
+			Signals.quitTarget.Fire();
+
 			popInMotion.spring(UDim2.fromScale(0.5, 0.5), springs.responsive);
 
 			const SPEED = 0.2;
@@ -582,7 +586,7 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 			popInMotion.immediate(UDim2.fromScale(0.5, 0.6));
 
 			const unsub = popInMotion.onComplete(() => {
-				setSelectedShop("");
+				setSelectedShop("MetalDetectors");
 			});
 
 			return () => {
@@ -632,7 +636,6 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 			<ExitButton
 				uiController={props.uiController}
 				uiName={gameConstants.SHOP_UI}
-				menuRefToClose={menuRef}
 				isMenuVisible={visible}
 			/>
 			<frame
@@ -640,12 +643,12 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 				key={"Select Menu Frame"}
 				Position={UDim2.fromScale(0.037, 0.0705)}
 				Size={UDim2.fromScale(0.933, 0.853)}
-				Visible={selectedShop === ""}
+				Visible={false}
 			>
 				<AnimatedButton
 					anchorPoint={new Vector2(0.5, 0.5)}
-					position={UDim2.fromScale(0.261, 0.254)}
-					size={UDim2.fromScale(0.505, 0.487)}
+					position={UDim2.fromScale(0.261, 0.5)}
+					size={UDim2.fromScale(0.505, 0.8)}
 					onClick={() => {
 						setSelectedShop("Shovels");
 					}}
@@ -705,8 +708,8 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 
 				<AnimatedButton
 					anchorPoint={new Vector2(0.5, 0.5)}
-					position={UDim2.fromScale(0.728, 0.254)}
-					size={UDim2.fromScale(0.505, 0.487)}
+					position={UDim2.fromScale(0.728, 0.5)}
+					size={UDim2.fromScale(0.505, 0.8)}
 					onClick={() => {
 						setSelectedShop("MetalDetectors");
 					}}
@@ -763,7 +766,7 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 						<uistroke key={"UIStroke"} Thickness={px.ceil(4)} />
 					</textlabel>
 				</AnimatedButton>
-
+				{/* 
 				<AnimatedButton
 					anchorPoint={new Vector2(0.5, 0.5)}
 					position={UDim2.fromScale(0.495198, 0.758)}
@@ -881,7 +884,7 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 
 						<uipadding key={"UIPadding"} />
 					</textlabel>
-				</AnimatedButton>
+				</AnimatedButton> */}
 			</frame>
 
 			<frame

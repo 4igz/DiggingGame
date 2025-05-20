@@ -17,6 +17,7 @@ export const Signals = {
 	startDigging: new Signal<(player: Player, target: Target) => void>(),
 	giveLuckPot: new Signal<(player: Player, amt: number) => void>(),
 	giveStrengthPot: new Signal<(player: Player, amt: number) => void>(),
+	completeTimedReward: new Signal<(player: Player) => void>(),
 
 	// Client only signals:
 	requestingNewPather: new Signal<() => void>(),
@@ -47,6 +48,7 @@ export const Signals = {
 	resetTutorial: new Signal<() => void>(),
 	waypointArrow: new Signal<(pos: Vector3) => void>(),
 	hideWaypointArrow: new Signal<() => void>(),
+	quitTarget: new Signal<() => void>(),
 
 	menuOpened: new Signal<(isOpen: boolean, menuName: string) => void>(),
 };

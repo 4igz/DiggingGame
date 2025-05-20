@@ -425,7 +425,7 @@ export const BottomTips = (props: BottomTipsProps) => {
 						key={"UIStroke"}
 						Color={Color3.fromRGB(9, 55, 12)}
 						LineJoinMode={Enum.LineJoinMode.Miter}
-						Thickness={3.7}
+						Thickness={px(3.7)}
 					/>
 
 					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />

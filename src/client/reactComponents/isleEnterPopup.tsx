@@ -47,7 +47,9 @@ const IsleItem = (props: ItemProps) => {
 					key={"ItemImage"}
 					Position={UDim2.fromScale(0.5, 0.46)}
 					Size={UDim2.fromScale(0.666667, 0.64)}
-				/>
+				>
+					<uiaspectratioconstraint />
+				</imagelabel>
 
 				<textlabel
 					AnchorPoint={new Vector2(0.5, 0.5)}
@@ -82,6 +84,8 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 	const [resetTick, setResetTick] = useState(0);
 	const [disappearing, setDisappearing] = useState(true);
 	const frameRef = createRef<Frame>();
+
+	const px = usePx();
 
 	useEffect(() => {
 		Functions.getCurrentStrength().then((strength) => {
@@ -154,16 +158,14 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 	}, [isleName, resetTick, firstEnter]);
 
 	useEffect(() => {
-		const enteredSignal = Signals.enteredIsland.Connect((zoneName) => {
-			setIsleName(zoneName);
-			setResetTick(tick());
-		});
+		if (frameRef.current) {
+			const enteredSignal = Signals.enteredIsland.Connect((zoneName) => {
+				setIsleName(zoneName);
+				setResetTick(tick());
+			});
 
-		const unsub = transparencyMotion.onStep((value) => {
-			if (frameRef.current) {
-				frameRef.current.Transparency = value;
-
-				for (const descendant of frameRef.current.GetDescendants()) {
+			const unsub = transparencyMotion.onStep((value) => {
+				for (const descendant of frameRef.current!.GetDescendants()) {
 					// if (descendant.IsA("GuiObject")) {
 					// 	descendant.BackgroundTransparency = value;
 					// }
@@ -177,20 +179,20 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 						descendant.Transparency = value;
 					}
 				}
-			}
-		});
+			});
 
-		return () => {
-			enteredSignal.Disconnect();
-			unsub();
-		};
+			return () => {
+				enteredSignal.Disconnect();
+				unsub();
+			};
+		}
 	}, [frameRef]);
 
 	return (
 		<frame
 			AnchorPoint={new Vector2(0.5, 0)}
 			BackgroundColor3={new Color3()}
-			BackgroundTransparency={0.5}
+			BackgroundTransparency={1}
 			key={"Container"}
 			Position={pos}
 			Size={UDim2.fromScale(0.9, 0.071)}
@@ -198,29 +200,18 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 		>
 			<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
 
-			<uigradient
-				key={"UIGradient"}
-				Transparency={
-					new NumberSequence([
-						new NumberSequenceKeypoint(0, 1),
-						new NumberSequenceKeypoint(0.5, 0),
-						new NumberSequenceKeypoint(1, 1),
-					])
-				}
-			/>
-
 			<frame
 				AnchorPoint={new Vector2(0.5, 0.5)}
 				BackgroundTransparency={1}
 				key={"PopupList"}
-				Position={UDim2.fromScale(0.5, 0.5)}
-				Size={UDim2.fromScale(1, 1)}
+				Position={UDim2.fromScale(0.5, 0.2)}
+				Size={UDim2.fromScale(1, 0.8)}
 			>
 				<uilistlayout
 					key={"UIListLayout"}
 					FillDirection={Enum.FillDirection.Horizontal}
 					HorizontalAlignment={Enum.HorizontalAlignment.Center}
-					Padding={new UDim(0.01, 0)}
+					Padding={new UDim(0, 2)}
 					SortOrder={Enum.SortOrder.LayoutOrder}
 					VerticalAlignment={Enum.VerticalAlignment.Center}
 				/>
@@ -241,7 +232,7 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 				TextColor3={new Color3(1, 1, 1)}
 				TextScaled={true}
 			>
-				<uistroke key={"UIStroke"} Thickness={3} />
+				<uistroke key={"UIStroke"} Thickness={px(3)} />
 
 				<uigradient
 					key={"UIGradient"}
@@ -263,13 +254,13 @@ export const IsleEnterPopup = (props: IsleEnterPopupProps) => {
 				BackgroundTransparency={1}
 				FontFace={new Font("rbxassetid://11702779409", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
 				key={"PlaceName"}
-				Position={UDim2.fromScale(0.501, 1.9)}
+				Position={UDim2.fromScale(0.501, 1.2)}
 				Size={UDim2.fromScale(0.266344, 0.375)}
 				Text={`(${mapConfig[isleName]?.difficulty ?? ""})`}
 				TextColor3={difficulties[mapConfig[isleName]?.difficulty]}
 				TextScaled={true}
 			>
-				<uistroke key={"UIStroke"} Thickness={2} />
+				<uistroke key={"UIStroke"} Thickness={px(2)} />
 			</textlabel>
 
 			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={25.8125} />

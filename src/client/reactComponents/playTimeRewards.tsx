@@ -18,6 +18,7 @@ import { Signals } from "shared/signals";
 import { SoundService } from "@rbxts/services";
 import { AnimatedButton } from "./buttons";
 import { usePx } from "client/hooks/usePx";
+import { nextClaimTimeAtom } from "client/atoms/uiAtoms";
 
 const SEC_INTERVAL = interval(1);
 
@@ -44,6 +45,7 @@ const RewardSlot = (props: {
 	rewardName: string | undefined;
 	onClaimed: (index: number) => void;
 	pxProvider: (value: number) => number;
+	isLowestTime?: boolean;
 }) => {
 	const [timeLeft, setTimeLeft] = useState(props.requiredTime - time());
 	const [serverAllowedToClaim, setServerAllowedToClaim] = useState(false);
@@ -71,16 +73,29 @@ const RewardSlot = (props: {
 	}, [props.shouldResetClaims]);
 
 	useEffect(() => {
+		if (props.isLowestTime) {
+			nextClaimTimeAtom(math.floor(props.requiredTime - time()));
+		}
+	}, [props.isLowestTime]);
+
+	useEffect(() => {
 		const thread = task.spawn(() => {
-			if (serverAllowedToClaim) return;
+			if (serverAllowedToClaim) {
+				nextClaimTimeAtom(0);
+				return;
+			}
 			while (time() < props.requiredTime) {
-				if (SEC_INTERVAL(props.order)) {
-					setTimeLeft(props.requiredTime - time());
+				setTimeLeft(props.requiredTime - time());
+				if (props.isLowestTime) {
+					nextClaimTimeAtom(math.floor(props.requiredTime - time()));
 				}
 				task.wait(1);
 			}
 			if (time() >= props.requiredTime && !claimed) {
 				setTimeLeft(0);
+				if (props.isLowestTime) {
+					nextClaimTimeAtom(0);
+				}
 			}
 		});
 
@@ -455,6 +470,8 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 				/>
 
 				{timePlayedRewards.map((cfg, i) => {
+					// Find the lowest requiredTime that hasn't been claimed yet
+					const lowestUnclaimedIndex = timePlayedRewards.findIndex((_, idx) => !(claimed.get(idx) ?? false));
 					return (
 						<RewardSlot
 							requiredTime={cfg.unlockTime + startTime}
@@ -466,6 +483,7 @@ export const PlaytimeRewardsUi = (props: PlaytimeRewardsProps) => {
 							rewardType={cfg.rewardType}
 							rewardName={cfg.itemName}
 							pxProvider={px}
+							isLowestTime={i === lowestUnclaimedIndex}
 							onClaimed={(index) => {
 								hasGiftAtom(false);
 								setClaimed((prevClaimed) => {

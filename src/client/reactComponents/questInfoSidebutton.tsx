@@ -23,8 +23,8 @@ const getActiveQuest = (
 	return undefined;
 };
 
-const DEFAULT_POS = UDim2.fromScale(1.013, 0.6);
-const CLOSED_POS = UDim2.fromScale(1.275, 0.6);
+const DEFAULT_POS = UDim2.fromScale(1.013, 0.63);
+const CLOSED_POS = UDim2.fromScale(1.275, 0.63);
 
 export const QuestInfoSideButton = () => {
 	const [pos, setPos] = useMotion(DEFAULT_POS);

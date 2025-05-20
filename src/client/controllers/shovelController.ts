@@ -22,8 +22,6 @@ import { interval } from "shared/util/interval";
 import { emitParticleDescendants, emitUsingAttributes, setParticleDescendantsEnabled } from "shared/util/vfxUtil";
 import { ZoneController } from "./zoneController";
 import CameraShaker from "@rbxts/camera-shaker";
-import { subscribe } from "@rbxts/charm";
-import { inventorySizeAtom, treasureCountAtom } from "client/atoms/inventoryAtoms";
 import { findFurthestPointWithinRadius } from "shared/util/detectorUtil";
 import { observeAttribute } from "shared/util/attributeUtil";
 import { NetworkedTarget } from "shared/networkTypes";
@@ -145,10 +143,6 @@ export class ShovelController implements OnStart {
 		let digGoal = 0;
 
 		let digRequestInProgress = false;
-
-		subscribe(treasureCountAtom, (count) => {
-			isInventoryFull = count >= inventorySizeAtom();
-		});
 
 		let autoSendDigCD = interval(math.max(gameConstants.AUTO_DIG_CLICK_INTERVAL, gameConstants.DIG_TIME_SEC));
 		let nearbySpawnCheckCD = interval(0.1);
@@ -326,7 +320,7 @@ export class ShovelController implements OnStart {
 							if ((humanoid && humanoid.Parent && this.diggingActive) || digRequestInProgress) {
 								humanoid.WalkSpeed = 0;
 							} else {
-								humanoid.WalkSpeed = 16;
+								humanoid.WalkSpeed = 19;
 							}
 
 							if (this.diggingActive) {
@@ -443,7 +437,7 @@ export class ShovelController implements OnStart {
 									})
 									.catch((err) => {
 										warn(err);
-										humanoid.WalkSpeed = 16;
+										humanoid.WalkSpeed = 19;
 									});
 							}
 						} else if (inputState === Enum.UserInputState.End) {
@@ -493,7 +487,7 @@ export class ShovelController implements OnStart {
 						digTrack.Stop();
 
 						// Reset speed
-						humanoid.WalkSpeed = 16;
+						humanoid.WalkSpeed = 19;
 
 						this.canStartDigging = false;
 						// If we were digging, end it
@@ -1182,6 +1176,7 @@ export class ShovelController implements OnStart {
 				const UP_FORCE = observeAttribute("DigUpForce", 5) as number;
 
 				if (primaryPart && target.successful) {
+					CollectionService.AddTag(model, "Treasure");
 					// Compute the direction from the object to the player
 					const directionToPlayer = character.GetPivot().Position.sub(primaryPart.Position).Unit;
 

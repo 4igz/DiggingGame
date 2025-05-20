@@ -65,7 +65,7 @@ export class LevelService implements OnStart {
 		const BASE_EXP = 100;
 		const LEVEL_FORMULA_TRANSITION = 50;
 		const TRANSITION_MODIFIER = 13;
-		const LEVEL_EXPONENT = 1.15;
+		const LEVEL_EXPONENT = 1.05;
 
 		if (level < LEVEL_FORMULA_TRANSITION) {
 			return math.floor(BASE_EXP * (level / TRANSITION_MODIFIER));

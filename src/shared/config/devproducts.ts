@@ -140,6 +140,13 @@ export const developerProducts: DeveloperProduct[] = [
 			Signals.giveLuckPot.Fire(player, 1);
 		},
 	},
+	{
+		id: IDS.CompleteTimedReward,
+		name: "Instant Complete Timed Reward",
+		grantReward: (player) => {
+			Signals.completeTimedReward.Fire(player);
+		},
+	},
 	// {
 	// 	id: IDS.MediumPack,
 	// 	name: "Medium Pack",

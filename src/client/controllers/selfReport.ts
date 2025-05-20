@@ -16,7 +16,6 @@ const flyCheck = (character: Model) => {
 };
 
 const humanoidProps = {
-	WalkSpeed: 16,
 	JumpHeight: 7.2,
 	JumpPower: 50,
 };

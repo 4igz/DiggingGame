@@ -59,7 +59,7 @@ export class ZoneService implements OnStart {
 				}
 			});
 
-			humanoid.WalkSpeed = 16;
+			humanoid.WalkSpeed = 19;
 			hrp.Anchored = false;
 		});
 

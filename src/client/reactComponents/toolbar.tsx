@@ -7,11 +7,13 @@ import { usePx } from "client/hooks/usePx";
 import { springs } from "client/utils/springs";
 import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
 import { shovelConfig } from "shared/config/shovelConfig";
-import { fullTargetConfig } from "shared/config/targetConfig";
+import { fullTargetConfig, trashConfig } from "shared/config/targetConfig";
 import { gameConstants } from "shared/gameConstants";
 import { ItemType, Rarity } from "shared/networkTypes";
 import { Signals } from "shared/signals";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
+import { shortenNumber } from "shared/util/nameUtil";
+import { getMapFromTarget, getOneInXChance } from "shared/util/targetUtil";
 
 interface ToolbarItemProps {
 	icon: string;
@@ -29,6 +31,19 @@ const MOBILE_TOOLBAR_SCALE = 1.25;
 
 const ToolbarItemComponent: React.FC<ToolbarItemProps> = (props) => {
 	const px = usePx();
+
+	const chance =
+		props.itemType === "Target" &&
+		getOneInXChance(props.itemName, getMapFromTarget(props.itemName) ?? "Grasslands");
+
+	const isTrash = trashConfig[props.itemName] !== undefined;
+	const rarityColor = gameConstants.RARITY_COLORS[props.rarity];
+
+	const color = isTrash
+		? `rgb(255,100,100)`
+		: `rgb(${math.floor(rarityColor.R * 255)},${math.floor(rarityColor.G * 255)},${math.floor(
+				rarityColor.B * 255,
+		  )})`;
 
 	return (
 		<imagebutton
@@ -109,9 +124,26 @@ const ToolbarItemComponent: React.FC<ToolbarItemProps> = (props) => {
 				TextScaled={true}
 				TextWrapped={true}
 				ZIndex={100}
-			>
+		>
 				<uistroke key={"UIStroke"} Thickness={px(3)} />
 			</textlabel>
+
+			{props.itemType === "Target" && (
+				<textlabel
+					Text={`1 in <font color="${color}"><b>${shortenNumber(chance as number, false)}</b></font>`}
+					RichText={true}
+					Size={UDim2.fromScale(1, 0.3)}
+					BackgroundTransparency={1}
+					TextColor3={new Color3(1, 1, 1)}
+					Position={UDim2.fromScale(0, 0.9)}
+					AnchorPoint={new Vector2(0, 1)}
+					FontFace={Font.fromEnum(Enum.Font.BuilderSansBold)}
+					TextScaled={true}
+					ZIndex={100}
+				>
+					<uistroke Thickness={px(2)} />
+				</textlabel>
+			)}
 
 			<imagelabel
 				AnchorPoint={new Vector2(0.5, 0.5)}

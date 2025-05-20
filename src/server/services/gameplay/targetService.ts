@@ -224,24 +224,24 @@ export class TargetService implements OnStart {
 			Events.soldAllItems(player, count, total * (owns2x ? 2 : 1));
 		});
 
-		Signals.detectorInitialized.Connect((player, detector) => {
-			detector.Unequipped.Connect(() => {
-				// Sometimes the player will unequip the detector to equip their shovel before they reach the location.
-				// We should NOT end the dig if this happens, and instead make them walk closer to the target.
-				const target = this.getPlayerTarget(player);
-				const character = player.Character;
-				if (!character || !target) return;
-				const distance = character.GetPivot().Position.sub(target.position).Magnitude;
+		// Signals.detectorInitialized.Connect((player, detector) => {
+		// 	detector.Unequipped.Connect(() => {
+		// 		// Sometimes the player will unequip the detector to equip their shovel before they reach the location.
+		// 		// We should NOT end the dig if this happens, and instead make them walk closer to the target.
+		// 		const target = this.getPlayerTarget(player);
+		// 		const character = player.Character;
+		// 		if (!character || !target) return;
+		// 		const distance = character.GetPivot().Position.sub(target.position).Magnitude;
 
-				// If they are too far away, we should end the dig.
-				const TOO_FAR_AWAY = gameConstants.DIG_RANGE * 4;
-				if (distance > TOO_FAR_AWAY && !this.playerDiggingTargets.get(player)) {
-					debugWarn("Player unequipped detector too far away from target, cancelling this treasure.");
-					this.endDigging(player, true, false);
-					return;
-				}
-			});
-		});
+		// 		// If they are too far away, we should end the dig.
+		// 		const TOO_FAR_AWAY = gameConstants.DIG_RANGE * 4;
+		// 		if (distance > TOO_FAR_AWAY && !this.playerDiggingTargets.get(player)) {
+		// 			debugWarn("Player unequipped detector too far away from target, cancelling this treasure.");
+		// 			this.endDigging(player, true, false);
+		// 			return;
+		// 		}
+		// 	});
+		// });
 
 		Events.endDiggingClient.connect((player) => {
 			this.endDigging(player, true);
@@ -276,14 +276,6 @@ export class TargetService implements OnStart {
 
 			const map = Maps.find((map) => map.Name === mapName) as Folder | undefined;
 			if (!map) return false;
-
-			const invSz = this.inventoryService.getInventorySize(player);
-			if (profile.Data.targetInventory.size() >= invSz) {
-				// This should only happen if their data is out of sync with the server
-				// So sync them up here
-				Events.updateInventorySize(player, invSz);
-				return false;
-			}
 
 			const shovel = character.FindFirstChild(profile.Data.equippedShovel) as Tool;
 
@@ -433,8 +425,6 @@ export class TargetService implements OnStart {
 		const multiDigLevel = profile.Data.multiDigLevel;
 
 		for (let i = 0; i < multiDigLevel; i++) {
-			const usedSz = profile.Data.targetInventory.size();
-			if (usedSz >= this.inventoryService.getInventorySize(player)) break;
 			const targetResult = this.createTarget(player, target.usedLuckMult, target.usingDigEverywhere);
 			if (!targetResult) break;
 			const [extraTarget] = targetResult;
@@ -500,7 +490,7 @@ export class TargetService implements OnStart {
 		const character = player.Character;
 		if (!character || !character.Parent) return;
 		const humanoid = character.WaitForChild("Humanoid") as Humanoid;
-		humanoid.WalkSpeed = 16;
+		humanoid.WalkSpeed = 19;
 
 		// Equip the metal detector back from their backpack and unequip the shovel
 		const backpack = player.WaitForChild("Backpack");

@@ -80,6 +80,8 @@ local gameConstants = {
 
 		StrengthPot = 3282059158,
 		LuckPot = 3282059102,
+
+		CompleteTimedReward = 3289592581,
 	},
 
 	GAMEPASS_IDS = {
@@ -162,6 +164,7 @@ local gameConstants = {
 	PACK_FRAME_UI = "StarterPackFrameUi",
 	UPDATE_LOG_UI = "UpdateLogUi",
 	BOTTOM_RIGHT_HUD = "BottomRightHud",
+	FREE_TIMED_REWARD_MENU = "FREE_TIMED_REWARD_MENU",
 
 	-- Attributes
 	BOAT_DRIVER_SITTING = "SittingInBoatDriverSeat",

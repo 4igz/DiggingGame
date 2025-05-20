@@ -167,6 +167,11 @@ export class QuestController implements OnStart {
 				const active = currentProgress.active;
 				prompt.Enabled = false;
 
+				for (const billboard of CollectionService.GetTagged("QuestBillboard")) {
+					if (!billboard.IsA("BillboardGui")) continue;
+					billboard.Enabled = false;
+				}
+
 				let canComplete = false;
 				if (active) {
 					Functions.isQuestComplete(npcName)
@@ -202,6 +207,10 @@ export class QuestController implements OnStart {
 								Functions.requestTurnInQuest(npcName);
 								task.delay(1, () => {
 									prompt.Enabled = true;
+									for (const billboard of CollectionService.GetTagged("QuestBillboard")) {
+										if (!billboard.IsA("BillboardGui")) continue;
+										billboard.Enabled = true;
+									}
 									dialogRoot.unmount();
 									playAnimation(IDLE);
 								});
@@ -210,6 +219,10 @@ export class QuestController implements OnStart {
 							if (active) {
 								task.delay(1, () => {
 									prompt.Enabled = true;
+									for (const billboard of CollectionService.GetTagged("QuestBillboard")) {
+										if (!billboard.IsA("BillboardGui")) continue;
+										billboard.Enabled = true;
+									}
 									dialogRoot.unmount();
 									playAnimation(IDLE);
 								});
@@ -221,6 +234,10 @@ export class QuestController implements OnStart {
 								onOptionSelected: (responseType: DialogResponse) => {
 									dialogRoot.unmount();
 									prompt.Enabled = true;
+									for (const billboard of CollectionService.GetTagged("QuestBillboard")) {
+										if (!billboard.IsA("BillboardGui")) continue;
+										billboard.Enabled = true;
+									}
 									this.uiController.closeUi(gameConstants.DIALOG_PROMPT);
 
 									switch (responseType) {
