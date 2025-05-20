@@ -1,5 +1,6 @@
 import { Controller, OnStart } from "@flamework/core";
 import { Players, Workspace } from "@rbxts/services";
+import { tutorialActiveAtom } from "client/atoms/uiAtoms";
 import { highlightPool } from "client/components/boat";
 import { Events, Functions } from "client/network";
 import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
@@ -16,6 +17,7 @@ export class TutorialController implements OnStart {
 	onStart() {
 		Signals.setTutorialStep.Connect((step) => {
 			this.tutorialActive = true;
+			tutorialActiveAtom(true);
 			this.currentStage = step;
 
 			if (step === SELL_STEP) {
@@ -24,6 +26,8 @@ export class TutorialController implements OnStart {
 					?.FindFirstChild("Shops")
 					?.FindFirstChild("GrasslandsSell")
 					?.FindFirstChild("Sell");
+
+				highlight.FillColor = new Color3(1, 0.6, 0);
 
 				const period = 1; // Time in seconds for a full oscillation
 				const halfPeriod = period / 2;
@@ -42,6 +46,8 @@ export class TutorialController implements OnStart {
 					?.FindFirstChild("Quests")
 					?.FindFirstChild("Plankwalker Paul");
 
+				highlight.FillColor = new Color3(1, 0.6, 0);
+
 				const period = 1; // Time in seconds for a full oscillation
 				const halfPeriod = period / 2;
 				let elapsedTime = 0;
@@ -57,6 +63,7 @@ export class TutorialController implements OnStart {
 				Signals.hideWaypointArrow.Fire();
 				Events.completedTutorial();
 				this.tutorialActive = false;
+				tutorialActiveAtom(false);
 			}
 		});
 

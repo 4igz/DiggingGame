@@ -1,5 +1,5 @@
 //!optimize 2
-import React from "@rbxts/react";
+import React, { useEffect, useRef, useState } from "@rbxts/react";
 import UiController from "client/controllers/uiController";
 import { useMotion } from "client/hooks/useMotion";
 import { Events, Functions } from "client/network";
@@ -10,7 +10,7 @@ import { ExitButton, InventoryItemProps, SellAllBtn } from "./inventory";
 import { fullTargetConfig } from "shared/config/targetConfig";
 import { shortenNumber } from "shared/util/nameUtil";
 import { getOrderFromRarity } from "shared/util/rarityUtil";
-import { SoundService, UserInputService } from "@rbxts/services";
+import { SoundService, TweenService, UserInputService } from "@rbxts/services";
 import { AnimatedButton } from "./buttons";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 import { usePx } from "client/hooks/usePx";
@@ -18,6 +18,8 @@ import { treasureInventoryAtom } from "client/atoms/inventoryAtoms";
 import { Signals } from "shared/signals";
 import { SELL_STEP } from "shared/config/tutorialConfig";
 import { TutorialController } from "client/controllers/tutorialController";
+import { subscribe } from "@rbxts/charm";
+import { sellShopXArrowAtom } from "client/atoms/uiAtoms";
 
 interface SellTargetProps {
 	target: TargetItem;
@@ -133,8 +135,10 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 	const [popInPos, popInMotion] = useMotion(UDim2.fromScale(0.5, 0.6));
 	const menuRef = React.useRef<Frame>();
 	const [platform, setPlatform] = React.useState(getPlayerPlatform());
+	const [exitArrow, setExitArrow] = useState(false);
 
 	const px = usePx();
+	const arrowRef = useRef<ImageLabel>();
 
 	const updateSellContent = (inventory: TargetItem[]) => {
 		const newSellContent: SellTargetProps[] = [];
@@ -193,7 +197,38 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 		UserInputService.InputChanged.Connect((input) => {
 			setPlatform(getPlayerPlatform());
 		});
+
+		subscribe(sellShopXArrowAtom, (on) => {
+			setExitArrow(on);
+		});
 	}, []);
+
+	useEffect(() => {
+		if (!arrowRef.current) return;
+		if (!exitArrow) return;
+		const tween1 = TweenService.Create(arrowRef.current, new TweenInfo(1), {
+			Position: UDim2.fromScale(0.978, 0.1765),
+		});
+		const tween2 = TweenService.Create(arrowRef.current, new TweenInfo(1), {
+			Position: UDim2.fromScale(0.978, 0.2),
+		});
+		let running = true;
+		const thread = task.spawn(() => {
+			while (running) {
+				tween1.Play();
+				tween1.Completed.Wait();
+				tween2.Play();
+				tween2.Completed.Wait();
+			}
+		});
+
+		return () => {
+			running = false;
+			task.cancel(thread);
+			tween1.Destroy();
+			tween2.Destroy();
+		};
+	}, [exitArrow, arrowRef.current]);
 
 	return (
 		<frame
@@ -225,6 +260,20 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 				uiController={props.uiController}
 				menuRefToClose={menuRef}
 				isMenuVisible={visible}
+			/>
+
+			<imagelabel
+				AnchorPoint={new Vector2(0.5, 0.5)}
+				BackgroundTransparency={1}
+				Image={"rbxassetid://136665615709133"}
+				ImageColor3={Color3.fromRGB(255, 0, 4)}
+				Position={UDim2.fromScale(0.978, 0.1765)}
+				Rotation={0}
+				ScaleType={Enum.ScaleType.Fit}
+				Size={UDim2.fromScale(0.15, 0.15)}
+				ZIndex={150}
+				Visible={exitArrow}
+				ref={arrowRef}
 			/>
 
 			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={1.74} />

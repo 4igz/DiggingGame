@@ -55,7 +55,7 @@ export const HoldToDetectText = () => {
 			key={"Frame"}
 			BackgroundTransparency={1}
 			Position={UDim2.fromScale(0.743, 0.92)}
-			Size={UDim2.fromScale(0.105198, 0.05)}
+			Size={UDim2.fromScale(0.105198, 0.075)}
 			Visible={platform === "Mobile" && detectorEquipped}
 		>
 			<textlabel

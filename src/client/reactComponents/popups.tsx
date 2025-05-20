@@ -14,6 +14,8 @@ import { ItemName, ItemType } from "shared/networkTypes";
 import { ActionPopup, ActionPopupProps } from "./actionPopup";
 import { SoundService } from "@rbxts/services";
 import { FINISH_STEP } from "shared/config/tutorialConfig";
+import { subscribe } from "@rbxts/charm";
+import { tutorialActiveAtom } from "client/atoms/uiAtoms";
 
 const POPUP_TYPES = {
 	ItemAdded: "ItemAdded",
@@ -359,12 +361,8 @@ export const Popups = () => {
 			SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("ActionSuccess") as Sound);
 		});
 
-		Signals.setTutorialStep.Connect((step) => {
-			if (step > 0 && step < FINISH_STEP) {
-				setTutorialActive(true);
-			} else {
-				setTutorialActive(false);
-			}
+		subscribe(tutorialActiveAtom, (active) => {
+			setTutorialActive(active);
 		});
 	}, []);
 

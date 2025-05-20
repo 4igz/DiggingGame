@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "@rbxts/react";
 import { TweenService, UserInputService } from "@rbxts/services";
+import { sellShopXArrowAtom } from "client/atoms/uiAtoms";
 import { TutorialController } from "client/controllers/tutorialController";
 import UiController from "client/controllers/uiController";
 import { useMotion } from "client/hooks/useMotion";
@@ -7,7 +8,14 @@ import { usePx } from "client/hooks/usePx";
 import { useSliceScale } from "client/hooks/useSlice";
 import { Events, Functions } from "client/network";
 import { springs } from "client/utils/springs";
-import { DETECT_STEP, DIG_STEP, FINISH_STEP, SELL_STEP, tutorialConfig } from "shared/config/tutorialConfig";
+import {
+	DETECT_STEP,
+	DIG_STEP,
+	FINISH_STEP,
+	QUEST_STEP,
+	SELL_STEP,
+	tutorialConfig,
+} from "shared/config/tutorialConfig";
 import { gameConstants } from "shared/gameConstants";
 import { Signals } from "shared/signals";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
@@ -24,6 +32,7 @@ export const TutorialMessage = (props: MessageProps) => {
 	const [sellMenuOpen, setSellMenuOpen] = useState(false);
 	const [platform, setPlatform] = useState(getPlayerPlatform());
 	const [tutorialActive, setTutorialActive] = useState(false);
+	const [otherMenuOpen, setOtherMenuOpen] = useState(false);
 
 	const arrow1Ref = useRef<ImageLabel>();
 
@@ -63,6 +72,8 @@ export const TutorialMessage = (props: MessageProps) => {
 
 			if (menuName === gameConstants.SELL_UI) {
 				setSellMenuOpen(isOpen);
+			} else {
+				setOtherMenuOpen(isOpen);
 			}
 		});
 
@@ -75,6 +86,18 @@ export const TutorialMessage = (props: MessageProps) => {
 			setPlatform(getPlayerPlatform());
 		});
 	}, []);
+
+	useEffect(() => {
+		if (step === DETECT_STEP && tutorialActive) {
+			const connection = Signals.setLuckbarVisible.Connect((open) => {
+				posMotion.spring(open ? UDim2.fromScale(0.45, 0.775) : UDim2.fromScale(0.5, 0.775));
+			});
+
+			return () => {
+				connection.Disconnect();
+			};
+		}
+	}, [step, tutorialActive]);
 
 	useEffect(() => {
 		if (!arrow1Ref.current) return;
@@ -147,8 +170,12 @@ export const TutorialMessage = (props: MessageProps) => {
 				tween1.Destroy();
 				tween2.Destroy();
 			};
+		} else if (step === QUEST_STEP && sellMenuOpen) {
+			sellShopXArrowAtom(true);
+		} else if (step === QUEST_STEP && !sellMenuOpen) {
+			sellShopXArrowAtom(false);
 		}
-	}, [step, arrow1Ref.current, message, platform]);
+	}, [step, arrow1Ref.current, message, platform, sellMenuOpen]);
 
 	return (
 		<frame Size={UDim2.fromScale(1, 1)} BackgroundTransparency={1}>
@@ -158,11 +185,12 @@ export const TutorialMessage = (props: MessageProps) => {
 				Image={"rbxassetid://136665615709133"}
 				ImageColor3={Color3.fromRGB(255, 0, 4)}
 				Position={UDim2.fromScale(0.37, 0.91)}
-				Rotation={90}
+				Rotation={step === QUEST_STEP && sellMenuOpen ? 0 : 90}
 				ScaleType={Enum.ScaleType.Fit}
 				Size={UDim2.fromScale(0.05, 0.15)}
 				ZIndex={10}
 				Visible={
+					!otherMenuOpen &&
 					(step === 0 ||
 						(step === SELL_STEP && sellMenuOpen) ||
 						(step === DIG_STEP && platform === "Mobile") ||

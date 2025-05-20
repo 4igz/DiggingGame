@@ -41,7 +41,7 @@ local tutorialConfig: { { TutorialStep } } = {
 		message = `Great job, now use <font color="rgb(255, 255, 0)"><b>{digButton}</b></font> to dig the treasure!`,
 	},
 	[SELL_STEP] = {
-		message = `Amazing! Your first treasure! <font color="rgb(255, 255, 0)"><b>Follow the arrow</b></font> and talk to the Sell Booth merchant to sell your treasure!`,
+		message = `Amazing! Your first treasure! <font color="rgb(255, 255, 0)"><b>Follow the arrow</b></font> and talk to the Sell Booth merchant to <font color="rgb(255, 255, 0)"><b>sell your treasure!</b></font>`,
 	},
 	[QUEST_STEP] = {
 		message = `Now go <font color="rgb(255, 255, 0)"><b>talk</b></font> to Plankwalker Paul!`,

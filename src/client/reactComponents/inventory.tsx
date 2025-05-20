@@ -1,5 +1,5 @@
 //!optimize 2
-import React, { createRef, Dispatch, useEffect, useState } from "@rbxts/react";
+import React, { createRef, Dispatch, Ref, RefObject, useEffect, useState } from "@rbxts/react";
 import UiController from "client/controllers/uiController";
 import { gameConstants } from "shared/gameConstants";
 import { Item, type ItemType, Rarity, SkillName } from "shared/networkTypes";
@@ -1258,6 +1258,7 @@ interface ExitButtonProps {
 	onClick?: () => void;
 	isMenuVisible: boolean;
 	size?: UDim2;
+	ref?: RefObject<ImageButton>;
 }
 
 export const ExitButton = (props: ExitButtonProps) => {
@@ -1311,6 +1312,7 @@ export const ExitButton = (props: ExitButtonProps) => {
 						exit();
 					},
 				}}
+				ref={props.ref}
 			/>
 
 			<textbutton

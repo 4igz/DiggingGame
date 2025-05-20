@@ -631,6 +631,29 @@ export class TargetService implements OnStart {
 		const weight = this.rng.NextNumber(targetConfig.baseWeight.Min, adjustedWeight);
 		const maxProgress = weight * gameConstants.DIG_PROGRESS_MULTIPLIER;
 
+		if (profile.Data.treasuresDug < 3 && totalLuck > 0) {
+			const targetInstance: Target = {
+				...fullTargetConfig["Bag Of Coins"],
+				name: "Bag Of Coins",
+				position: new Vector3(),
+				weight,
+				digProgress: maxProgress / 3, // Start at 1/3 progress
+				maxProgress,
+				activelyDigging: false,
+				itemId: HttpService.GenerateGUID(),
+
+				mapName: profile.Data.currentMap,
+
+				base: undefined,
+
+				usedLuckMult: luckMult,
+				owner: player,
+				usingDigEverywhere: includeTrash,
+			};
+
+			return [targetInstance, profile.Data.currentMap];
+		}
+
 		const targetInstance: Target = {
 			...targetConfig,
 			name,

@@ -569,8 +569,10 @@ export class InventoryService implements OnStart, OnTick {
 		const detector = this.addToolToBackpack(backpack, character, DetectorFolder, profile.Data.equippedDetector);
 		if (detector) {
 			Signals.detectorInitialized.Fire(player, detector);
-			if (profile.Data.isFirstJoin && player.Character) {
+			if (!profile.Data.autoGaveDetector && player.Character) {
 				detector.Parent = player.Character;
+				profile.Data.autoGaveDetector = true;
+				this.profileService.setProfile(player, profile);
 			}
 		}
 

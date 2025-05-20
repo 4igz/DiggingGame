@@ -32,6 +32,7 @@ import { ObjectPool } from "shared/util/objectPool";
 import PartCacheModule from "@rbxts/partcache";
 import { TutorialController } from "./tutorialController";
 import { DETECT_STEP, DIG_STEP, QUEST_STEP, SELL_STEP, TREASURE_STEP } from "shared/config/tutorialConfig";
+import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 
 const camera = Workspace.CurrentCamera;
 const holeTroveMap = new Map<Trove, [Signal<(size: number) => void>, Sound, BasePart]>();
@@ -276,7 +277,6 @@ export class ShovelController implements OnStart {
 							const spawnBaseFolder = mapFolder?.WaitForChild("SpawnBases");
 
 							if (!spawnBaseFolder) {
-								warn("Spawn base folder not found.");
 								return;
 							}
 
@@ -375,7 +375,7 @@ export class ShovelController implements OnStart {
 
 					const actionName = "ShovelAction";
 
-					const shovelAction = (_: string, inputState: Enum.UserInputState) => {
+					const shovelAction = (name: string, inputState: Enum.UserInputState) => {
 						if (inputState === Enum.UserInputState.Begin) {
 							const button = ContextActionService.GetButton(actionName);
 							if (button) {
@@ -383,7 +383,9 @@ export class ShovelController implements OnStart {
 							}
 							if (
 								this.tutorialController.currentStage === SELL_STEP ||
-								this.tutorialController.currentStage === QUEST_STEP
+								this.tutorialController.currentStage === QUEST_STEP ||
+								(this.tutorialController.currentStage <= TREASURE_STEP &&
+									this.tutorialController.tutorialActive)
 							)
 								return;
 							Signals.gotDigInput.Fire();
@@ -410,7 +412,10 @@ export class ShovelController implements OnStart {
 							}
 
 							// "Dig Everywhere" logic here
+							// Only allow "Dig Everywhere" on mobile if the input is TouchTap
 							if (!targetActive && !noPositionFound) {
+								if (getPlayerPlatform() === "Mobile" && name === "TouchTap") return;
+
 								if (isInventoryFull) {
 									Signals.inventoryFull.Fire();
 									return;
@@ -473,7 +478,7 @@ export class ShovelController implements OnStart {
 					const uisConnection = UserInputService.TouchTap.Connect((input, gameProcessedEvent) => {
 						if (gameProcessedEvent) return;
 						Signals.gotDigInput.Fire();
-						shovelAction(actionName, Enum.UserInputState.Begin);
+						shovelAction("TouchTap", Enum.UserInputState.Begin);
 					});
 
 					// === Cleanup on tool removal ===

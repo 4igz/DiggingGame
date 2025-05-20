@@ -14,6 +14,7 @@ export class TutorialService implements OnStart {
 
 			profile.Data.isFirstJoin = false;
 			this.profileService.setProfile(player, profile);
+
 			return firstJoin;
 		});
 
@@ -30,7 +31,7 @@ export class TutorialService implements OnStart {
 	}
 
 	endTutorial(player: Player) {
-		this.rewardService.claimReward(player, { rewardType: "Money", rewardAmount: 5_000 });
+		this.rewardService.claimReward(player, { rewardType: "Money", rewardAmount: 500 });
 		this.rewardService.claimReward(player, { rewardType: "Potions", itemName: "M.Luck Potion" });
 		Events.endTutorial(player);
 	}

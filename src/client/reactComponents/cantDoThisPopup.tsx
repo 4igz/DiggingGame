@@ -1,5 +1,6 @@
 import { useMotion } from "@rbxts/pretty-react-hooks";
 import React, { useEffect } from "@rbxts/react";
+import { usePx } from "client/hooks/usePx";
 import { springs } from "client/utils/springs";
 
 const POPUP_TIME = 3;
@@ -14,6 +15,8 @@ export const CantdoThisPopup = (props: CantdoThisPopupProps) => {
 	const [popupSize, setSizeMotion] = useMotion(UDim2.fromScale(0, 0));
 	const popupText = "🚫 " + (props.text ?? "Done!");
 	const count = props.count ?? 1; // Use provided count or default to 1
+
+	const px = usePx();
 
 	useEffect(() => {
 		// Animate the popup
@@ -59,7 +62,7 @@ export const CantdoThisPopup = (props: CantdoThisPopupProps) => {
 				TextScaled={true}
 				ZIndex={2}
 			>
-				<uistroke key={"UIStroke"} Thickness={3.4} />
+				<uistroke key={"UIStroke"} Thickness={px(3.4)} />
 
 				<frame
 					AnchorPoint={new Vector2(0.5, 0.5)}
