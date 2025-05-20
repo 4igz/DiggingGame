@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "@rbxts/react";
-import { MarketplaceService, Players } from "@rbxts/services";
+import { MarketplaceService, Players, SocialService } from "@rbxts/services";
 import { usePx } from "client/hooks/usePx";
 import { AnimatedButton } from "./buttons";
 import UiController from "client/controllers/uiController";
@@ -98,9 +98,12 @@ const CLOSED_POS = UDim2.fromScale(0.01, 1.15);
 
 export const BottomTips = (props: BottomTipsProps) => {
 	const [hoveringPremium, setHoveringPremium] = useState(false);
+	const [hoveringFriend, setHoveringFriend] = useState(false);
 	const [menuPos, menuPosMotion] = useMotion(DEFAULT_POS);
 	const [currentPotions, setCurrentPotions] = useState(new Array<PotionProps>());
 	const [visiblePotions, setVisiblePotions] = useState(new Array<PotionProps>());
+	const [canInvite, setCanInvite] = useState(true);
+	const [ingameFriends, setIngameFriends] = useState(0);
 
 	const px = usePx();
 
@@ -151,6 +154,41 @@ export const BottomTips = (props: BottomTipsProps) => {
 		Events.updateActivePotions.connect((potions) => {
 			updatePotions(potions);
 		});
+
+		if (!SocialService.CanSendGameInviteAsync(Players.LocalPlayer)) {
+			setCanInvite(false);
+		}
+
+		const countFriendsIngame = () => {
+			let pages = Players.GetFriendsAsync(Players.LocalPlayer.UserId);
+			const friendIds: number[] = [];
+
+			while (true) {
+				pages.GetCurrentPage().forEach((fi) => friendIds.push(fi.Id));
+				if (pages.IsFinished) break;
+				pages.AdvanceToNextPageAsync();
+			}
+
+			let count = 0;
+
+			for (const id of friendIds) {
+				if (Players.GetPlayerByUserId(id)) {
+					++count;
+				}
+			}
+
+			setIngameFriends(count);
+		};
+
+		countFriendsIngame();
+
+		Players.PlayerAdded.Connect(() => {
+			countFriendsIngame();
+		});
+
+		Players.PlayerRemoving.Connect(() => {
+			countFriendsIngame();
+		});
 	}, []);
 
 	useEffect(() => {
@@ -174,7 +212,12 @@ export const BottomTips = (props: BottomTipsProps) => {
 			ZIndex={100}
 			Visible={true}
 		>
-			<uilistlayout FillDirection={"Horizontal"} Padding={new UDim(0, px(50))} VerticalAlignment={"Bottom"} />
+			<uilistlayout
+				FillDirection={"Horizontal"}
+				Padding={new UDim(0, 15)}
+				VerticalAlignment={"Bottom"}
+				SortOrder={"LayoutOrder"}
+			/>
 
 			<AnimatedButton
 				layoutOrder={0}
@@ -201,27 +244,36 @@ export const BottomTips = (props: BottomTipsProps) => {
 					Size={UDim2.fromScale(1, 1)}
 					BackgroundTransparency={1}
 				>
-					<uistroke key={"UIStroke"} Thickness={px(4)} />
+					<uistroke key={"UIStroke"} Thickness={px(3.5)} />
 
 					<textlabel
-						Size={UDim2.fromScale(1, 0.5)}
-						Position={UDim2.fromScale(0, 0.6)}
-						Text={` +${Players.LocalPlayer.MembershipType === Enum.MembershipType.Premium ? "10" : "0"}%`}
-						FontFace={Font.fromEnum(Enum.Font.BuilderSansBold)}
-						TextSize={px(25)}
+						AnchorPoint={new Vector2(0.5, 0.5)}
 						BackgroundTransparency={1}
+						FontFace={Font.fromEnum(Enum.Font.FredokaOne)}
+						key={"Timer"}
+						Position={UDim2.fromScale(0.5, 0.84918)}
+						Size={UDim2.fromScale(0.9, 0.401635)}
+						Text={` +${Players.LocalPlayer.MembershipType === Enum.MembershipType.Premium ? "10" : "0"}%`}
 						TextColor3={new Color3(1, 1, 1)}
-						TextXAlignment={Enum.TextXAlignment.Center}
+						TextScaled={true}
 					>
-						<uistroke key={"UIStroke"} Thickness={px(3)} />
+						<uistroke
+							key={"UIStroke"}
+							Color={Color3.fromRGB(5, 35, 55)}
+							LineJoinMode={Enum.LineJoinMode.Miter}
+							Thickness={px(3)}
+						/>
 
 						<uigradient
+							key={"UIGradient"}
 							Color={
 								new ColorSequence([
-									new ColorSequenceKeypoint(0, new Color3(1, 0.77, 0.28)),
-									new ColorSequenceKeypoint(1, new Color3(1, 0.68, 0)),
+									new ColorSequenceKeypoint(0, new Color3(1, 1, 1)),
+									new ColorSequenceKeypoint(0.223183, Color3.fromRGB(255, 237, 87)),
+									new ColorSequenceKeypoint(1, Color3.fromRGB(255, 139, 56)),
 								])
 							}
+							Rotation={90}
 						/>
 					</textlabel>
 
@@ -259,6 +311,124 @@ export const BottomTips = (props: BottomTipsProps) => {
 							Color={new Color3()}
 						/>
 					</textlabel>
+				</textlabel>
+			</AnimatedButton>
+
+			<AnimatedButton
+				layoutOrder={1}
+				key={"Friends"}
+				size={UDim2.fromScale(0.033, 1)}
+				onClick={() => {
+					if (canInvite) {
+						SocialService.PromptGameInvite(Players.LocalPlayer);
+					}
+				}}
+				onHover={() => {
+					setHoveringFriend(true);
+				}}
+				onLeave={() => {
+					setHoveringFriend(false);
+				}}
+				anchorPoint={new Vector2(0.5, 1)}
+			>
+				<uiaspectratioconstraint />
+
+				<imagelabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundTransparency={1}
+					Image={"rbxassetid://99636606211613"}
+					key={"IMG"}
+					Position={UDim2.fromScale(0.5, 0.48)}
+					Size={UDim2.fromScale(0.929516, 0.929516)}
+				>
+					<uiscale key={"UIScale"} />
+				</imagelabel>
+
+				<textlabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					AutomaticSize={Enum.AutomaticSize.Y}
+					BackgroundColor3={new Color3()}
+					BackgroundTransparency={0.3}
+					BorderColor3={Color3.fromRGB(27, 42, 53)}
+					BorderSizePixel={0}
+					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					key={"ToolTip"}
+					Position={UDim2.fromScale(3.82001, -0.59)}
+					Size={UDim2.fromScale(7, 0.4)}
+					Text={"Gain +5% money and +5% experience for every friend that joins!"}
+					TextColor3={new Color3(1, 1, 1)}
+					// TextScaled={true}
+					TextSize={px(12)}
+					TextWrapped={true}
+					TextTransparency={0.1}
+					ZIndex={100}
+					Visible={hoveringFriend}
+				>
+					<uistroke
+						key={"UIStroke"}
+						ApplyStrokeMode={Enum.ApplyStrokeMode.Border}
+						Thickness={px(10)}
+						Transparency={0.3}
+					/>
+					<uistroke
+						key={"UIStroke"}
+						ApplyStrokeMode={Enum.ApplyStrokeMode.Contextual}
+						Thickness={px(2)}
+						Transparency={0.3}
+						Color={new Color3()}
+					/>
+				</textlabel>
+
+				<textlabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundTransparency={1}
+					FontFace={Font.fromEnum(Enum.Font.FredokaOne)}
+					key={"Timer"}
+					Position={UDim2.fromScale(0.5, 0.84918)}
+					Size={UDim2.fromScale(0.9, 0.401635)}
+					Text={`+${math.min(15, 5 * ingameFriends)}%`}
+					TextColor3={new Color3(1, 1, 1)}
+					TextScaled={true}
+				>
+					<uistroke
+						key={"UIStroke"}
+						Color={Color3.fromRGB(5, 35, 55)}
+						LineJoinMode={Enum.LineJoinMode.Miter}
+						Thickness={px(3)}
+					/>
+
+					<uigradient
+						key={"UIGradient"}
+						Color={
+							new ColorSequence([
+								new ColorSequenceKeypoint(0, new Color3(1, 1, 1)),
+								new ColorSequenceKeypoint(0.223183, Color3.fromRGB(255, 237, 87)),
+								new ColorSequenceKeypoint(1, Color3.fromRGB(255, 139, 56)),
+							])
+						}
+						Rotation={90}
+					/>
+				</textlabel>
+
+				<textlabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundTransparency={1}
+					FontFace={Font.fromEnum(Enum.Font.FredokaOne)}
+					key={"Plus"}
+					Position={UDim2.fromScale(0.891626, 0.152336)}
+					Size={UDim2.fromScale(0.67968, 0.67968)}
+					Text={"+"}
+					TextColor3={Color3.fromRGB(126, 255, 21)}
+					TextScaled={true}
+				>
+					<uistroke
+						key={"UIStroke"}
+						Color={Color3.fromRGB(9, 55, 12)}
+						LineJoinMode={Enum.LineJoinMode.Miter}
+						Thickness={3.7}
+					/>
+
+					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 				</textlabel>
 			</AnimatedButton>
 

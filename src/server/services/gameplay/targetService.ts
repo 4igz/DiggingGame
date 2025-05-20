@@ -268,7 +268,7 @@ export class TargetService implements OnStart {
 			// If the player has no target, it's likely because they're digging without detecting anything first.
 			// Realistically, just digging in a a random spot would rarely yield anything of value.
 			// We'll spawn a target, but it won't be good.
-			const targetResult = this.createTarget(player, profile.Data.luck * gameConstants.LUCK_MODIFIER, true); // Spawn with 0 luck, which means it will be a trash item.
+			const targetResult = this.createTarget(player, 0, true); // Spawn with 0 luck, which means it will be a trash item.
 			if (targetResult === undefined) return false;
 			const [target, mapName] = targetResult;
 			const character = player.Character;

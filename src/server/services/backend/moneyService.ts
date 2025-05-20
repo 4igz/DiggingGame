@@ -8,12 +8,17 @@ import { gameConstants } from "shared/gameConstants";
 import Signal from "@rbxts/goodsignal";
 import { EN } from "shared/networkTypes";
 import { MarketplaceService } from "@rbxts/services";
+import { FriendCountService } from "./friendCountService";
 
 @Service({})
 export class MoneyService implements OnStart {
 	public moneyChanged = new Signal<(player: Player, amount: EN) => void>();
 
-	constructor(private readonly profileService: ProfileService, private readonly gamepassService: GamepassService) {}
+	constructor(
+		private readonly profileService: ProfileService,
+		private readonly gamepassService: GamepassService,
+		private readonly friendCountService: FriendCountService,
+	) {}
 
 	onStart() {
 		Signals.addMoney.Connect((player, amount) => {
@@ -43,6 +48,12 @@ export class MoneyService implements OnStart {
 
 		if (canMultiply && player.MembershipType === Enum.MembershipType.Premium) {
 			amount *= 1.1;
+		}
+
+		const friendMult = this.friendCountService.getMultiplier(player);
+
+		if (canMultiply) {
+			amount *= friendMult;
 		}
 
 		const moneyEN = EternityNum.add(EternityNum.fromString(profile.Data.money), EternityNum.fromNumber(amount));

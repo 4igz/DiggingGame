@@ -5,12 +5,14 @@ import { ProfileService } from "../backend/profileService";
 import Signal from "@rbxts/goodsignal";
 import { GamepassService } from "../backend/gamepassService";
 import { gameConstants } from "shared/gameConstants";
+import { FriendCountService } from "../backend/friendCountService";
 
 @Service({})
 export class LevelService implements OnStart {
 	constructor(
 		private readonly playerDataService: ProfileService,
 		private readonly gamepassService: GamepassService,
+		private readonly friendCountService: FriendCountService,
 	) {}
 
 	public leveledUp = new Signal<(player: Player, level: number) => void>();
@@ -63,7 +65,7 @@ export class LevelService implements OnStart {
 		const BASE_EXP = 100;
 		const LEVEL_FORMULA_TRANSITION = 50;
 		const TRANSITION_MODIFIER = 13;
-		const LEVEL_EXPONENT = 1.5;
+		const LEVEL_EXPONENT = 1.15;
 
 		if (level < LEVEL_FORMULA_TRANSITION) {
 			return math.floor(BASE_EXP * (level / TRANSITION_MODIFIER));
@@ -94,6 +96,10 @@ export class LevelService implements OnStart {
 		if (player.IsInGroup(game.CreatorId)) {
 			amt *= 1.1;
 		}
+
+		const friendMult = this.friendCountService.getMultiplier(player);
+
+		amt *= friendMult;
 
 		const data = playerProfile.Data;
 		data.experience += amt;
