@@ -29,7 +29,6 @@ interface SellTargetProps {
 
 const SellTargetComponent: React.FC<SellTargetProps> = (props) => {
 	const cfg = fullTargetConfig[props.target.name];
-	const rarity = cfg.rarityType;
 
 	const px = usePx();
 
@@ -42,7 +41,7 @@ const SellTargetComponent: React.FC<SellTargetProps> = (props) => {
 			key={"Item"}
 			Position={UDim2.fromScale(0, 0)}
 			Size={UDim2.fromScale(0.18, 0.436)}
-			LayoutOrder={getOrderFromRarity(rarity)}
+			LayoutOrder={-(cfg.indexRarity ?? 0)}
 		>
 			<AnimatedButton
 				size={UDim2.fromScale(0.9, 0.9)}

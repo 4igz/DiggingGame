@@ -21,6 +21,7 @@ import { mLuckPotionsAtom, mStrengthPotionsAtom } from "client/atoms/inventoryAt
 import { Item } from "shared/networkTypes";
 import { potionConfig } from "shared/config/potionConfig";
 import { TooltipStats } from "./tooltips";
+import { SafeThreadCancel } from "@rbxts/thread-utilities";
 
 const MAX_IMAGE_ROTATION = 15;
 
@@ -394,6 +395,8 @@ interface GamepassShopProps {
 	uiController: UiController;
 	visible: boolean;
 	gamepassController: GamepassController;
+	scrollTo?: string;
+	updateTick?: number;
 }
 
 export const GamepassShop = (props: GamepassShopProps) => {
@@ -437,6 +440,12 @@ export const GamepassShop = (props: GamepassShopProps) => {
 			connection.Disconnect();
 		};
 	}, [visible]);
+
+	useEffect(() => {
+		if (props.scrollTo === "currency") {
+			scrollTo(LABEL_REFS.currency, scrollingFrameRef);
+		}
+	}, [LABEL_REFS.currency.current, scrollingFrameRef.current, props.scrollTo, props.updateTick]);
 
 	useEffect(() => {
 		setVisible(props.visible);
@@ -515,6 +524,22 @@ export const GamepassShop = (props: GamepassShopProps) => {
 			task.cancel(rotationThread);
 		};
 	}, []);
+
+	useEffect(() => {
+		const connection = Events.purchaseFailed.connect((_, reason) => {
+			if (reason === `You can't afford this!`) {
+				// props.uiController.closeCurrentOpenMenu();
+				props.uiController.toggleUi(gameConstants.GAMEPASS_SHOP_UI, {
+					scrollTo: "currency",
+					updateTick: tick(),
+				});
+			}
+		});
+
+		return () => {
+			connection.Disconnect();
+		};
+	}, [LABEL_REFS.currency, scrollingFrameRef]);
 
 	return (
 		<frame

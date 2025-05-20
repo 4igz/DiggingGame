@@ -94,7 +94,7 @@ interface ServerToClientEvents {
 		itemType: ItemType,
 		itemConfig: Partial<Shovel | MetalDetector | BoatConfig>,
 	) => void;
-	purchaseFailed: (itemType: ItemType) => void;
+	purchaseFailed: (itemType: ItemType, reason?: string) => void;
 	updateDailyStreak: (streak: number, lastClaimTime: number) => void;
 	updateInventorySize: (size: number) => void;
 	updateTreasureCount: (count: number) => void;

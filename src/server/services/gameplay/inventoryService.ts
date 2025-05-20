@@ -189,7 +189,7 @@ export class InventoryService implements OnStart, OnTick {
 			const cost = cfg.price;
 
 			if (!this.moneyService.hasEnoughMoney(player, cost)) {
-				Events.purchaseFailed(player, itemType);
+				Events.purchaseFailed(player, itemType, `You can't afford this!`);
 				Events.sendInvalidActionPopup(player, `You can't afford this!`);
 				return;
 			}
@@ -211,7 +211,7 @@ export class InventoryService implements OnStart, OnTick {
 			const cost = cfg.price;
 
 			if (!cost || !this.moneyService.hasEnoughMoney(player, cost)) {
-				Events.purchaseFailed(player, "Boats");
+				Events.purchaseFailed(player, "Boats", `You can't afford this!`);
 				Events.sendInvalidActionPopup(player, `You can't afford this!`);
 				return;
 			}

@@ -223,8 +223,10 @@ export class ShopController implements OnStart, OnRender {
 			if (!character) return;
 			const [nearestNPC, distance] = this.getNearestNPC(character.GetPivot().Position);
 			if (nearestNPC && distance > gameConstants.SHOP_PROMPT_RANGE * 1.2) {
-				this.uiController.closeUi(currentOpenMenu);
-				currentOpenMenu = undefined;
+				if (this.uiController.currentOpenUi === currentOpenMenu) {
+					this.uiController.closeUi(currentOpenMenu);
+					currentOpenMenu = undefined;
+				}
 			}
 		}
 	}
