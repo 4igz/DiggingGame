@@ -353,6 +353,9 @@ export class DetectorController implements OnStart {
 			awaitingResponse = false;
 			this.targetActive = false;
 			this.hideWaypointArrow();
+			if (activeCross !== undefined) {
+				(activeCross as BasePart).Parent = undefined;
+			}
 			if (areaIndicator) {
 				areaIndicatorPool.release(areaIndicator);
 				areaIndicator = undefined;
@@ -372,6 +375,9 @@ export class DetectorController implements OnStart {
 
 		Events.beginDigging.connect(() => {
 			this.hideWaypointArrow();
+			if (activeCross !== undefined) {
+				(activeCross as BasePart).Parent = undefined;
+			}
 		});
 
 		Events.createWaypointVisualization.connect((position: Vector3, detectorName: string) => {
@@ -388,6 +394,7 @@ export class DetectorController implements OnStart {
 			const cross = activeCross ?? (VFX_FOLDER.FindFirstChild("Cross") as BasePart);
 			cross.Parent = Workspace;
 			cross.Position = position;
+			activeCross = cross;
 		});
 	}
 
