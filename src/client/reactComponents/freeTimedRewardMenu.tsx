@@ -10,8 +10,9 @@ import { AnimatedButton } from "./buttons";
 import { Events } from "client/network";
 import { Signals } from "shared/signals";
 import { MarketplaceService, Players } from "@rbxts/services";
+import { canClaimedTimedReward } from "client/atoms/uiAtoms";
 
-const REQUIRED_TIME_MINUTES = 45;
+const REQUIRED_TIME_MINUTES = gameConstants.TIMED_REWARD_WAIT_TIME;
 
 export const FreeTimedRewardMenu = (props: { uiController: UiController; visible: boolean }) => {
 	const [visible, setVisible] = useState(false);
@@ -45,6 +46,9 @@ export const FreeTimedRewardMenu = (props: { uiController: UiController; visible
 			if (minutes < REQUIRED_TIME_MINUTES) {
 				task.wait(60);
 				setMinutes((prev) => ++prev);
+			} else {
+				canClaimedTimedReward(true);
+				Signals.actionPopup.Fire("Pack ready!");
 			}
 		});
 
@@ -358,7 +362,7 @@ export const FreeTimedRewardMenu = (props: { uiController: UiController; visible
 					key={"MenuText"}
 					Position={UDim2.fromScale(0.474761, -0.0514808)}
 					Size={UDim2.fromScale(0.823026, 0.405913)}
-					Text={`1 Task Remaining!`}
+					Text={`${REQUIRED_TIME_MINUTES - minutes} Minutes Remaining!`}
 					TextColor3={new Color3(1, 1, 1)}
 					TextScaled={true}
 					ZIndex={5}
@@ -433,7 +437,7 @@ export const FreeTimedRewardMenu = (props: { uiController: UiController; visible
 						key={"InBar"}
 						Position={UDim2.fromScale(-0.00648686, 0.5)}
 						ScaleType={Enum.ScaleType.Slice}
-						Size={UDim2.fromScale(0, 1)}
+						Size={UDim2.fromScale(0, 1).Lerp(UDim2.fromScale(1, 1), minutes / REQUIRED_TIME_MINUTES)}
 						SliceCenter={new Rect(197, 189, 223, 206)}
 						SliceScale={scaledSlice(0.2)}
 						ZIndex={7}

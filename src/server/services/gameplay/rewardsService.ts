@@ -17,6 +17,7 @@ import { LevelService } from "./levelService";
 import groupReward from "shared/config/groupReward";
 import { limitedOffer } from "shared/config/limitedOffer";
 import { codes } from "server/modules/config/codes";
+import { gameConstants } from "shared/gameConstants";
 
 declare function unpack<T>(arr: Array<T>): T;
 
@@ -189,7 +190,7 @@ export class RewardService implements OnStart {
 			const profile = this.profileService.getProfileLoaded(player).expect();
 			if (profile.Data.claimedTimedReward) return;
 
-			if (tick() - joinTime > 60 * 45) {
+			if (tick() - joinTime > 60 * gameConstants.TIMED_REWARD_WAIT_TIME - 60 * 3) {
 				profile.Data.claimedTimedReward = true;
 				this.profileService.setProfile(player, profile);
 				this.claimReward(player, { rewardType: "Shovels", itemName: "DemonicShovel" });

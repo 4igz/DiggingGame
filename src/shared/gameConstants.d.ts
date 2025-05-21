@@ -73,6 +73,7 @@ export declare const gameConstants: {
 	readonly MAX_DIG_REPLICATE_DISTANCE: number;
 	readonly BIGGER_BACKPACK_SIZE_MODIFIER: number;
 	readonly MIN_DIG_REQ_DIST: number;
+	readonly TIMED_REWARD_WAIT_TIME: number;
 
 	readonly LEVEL_INCREASE_EXPONENT: number;
 

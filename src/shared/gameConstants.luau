@@ -39,6 +39,7 @@ local gameConstants = {
 	HIGH_ROLL_THRESHOLD = 6.5,
 	SUCCESSFUL_DIG_COOLDOWN = 1, -- Prevent player from immediately digging again after just finishing digging
 	MAX_DIG_REPLICATE_DISTANCE = 200,
+	TIMED_REWARD_WAIT_TIME = 45,
 
 	-- Player Stats
 	LEVEL_INCREASE_EXPONENT = 1.01, -- math.floor(BASE_EXP * currentLevel^LEVEL_INCREASE_EXPONENT)

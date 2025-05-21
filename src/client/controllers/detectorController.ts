@@ -69,6 +69,8 @@ export class DetectorController implements OnStart {
 
 		let understandsInput = false;
 
+		let activeCross: BasePart | undefined = undefined;
+
 		const HOLD_LENGTH = 0.25;
 		const DETECTION_KEYBINDS = [Enum.KeyCode.ButtonR2, Enum.UserInputType.MouseButton1];
 
@@ -359,6 +361,9 @@ export class DetectorController implements OnStart {
 
 		Events.endDiggingServer.connect(() => {
 			this.hideWaypointArrow();
+			if (activeCross !== undefined) {
+				(activeCross as BasePart).Parent = undefined;
+			}
 			if (areaIndicator) {
 				areaIndicatorPool.release(areaIndicator);
 				areaIndicator = undefined;
@@ -379,6 +384,10 @@ export class DetectorController implements OnStart {
 
 			// Start tweening the waypoint indicator
 			this.showWaypointArrow(position, detectorCfg.searchRadius);
+
+			const cross = activeCross ?? (VFX_FOLDER.FindFirstChild("Cross") as BasePart);
+			cross.Parent = Workspace;
+			cross.Position = position;
 		});
 	}
 
