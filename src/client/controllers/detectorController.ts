@@ -1,6 +1,14 @@
 //!optimize 2
 import { Controller, OnStart, OnTick } from "@flamework/core";
-import { ContextActionService, Players, ReplicatedStorage, RunService, SoundService, Workspace } from "@rbxts/services";
+import {
+	CollectionService,
+	ContextActionService,
+	Players,
+	ReplicatedStorage,
+	RunService,
+	SoundService,
+	Workspace,
+} from "@rbxts/services";
 import { Events } from "client/network";
 import { BASE_DETECTOR_STRENGTH, MetalDetector, metalDetectorConfig } from "shared/config/metalDetectorConfig";
 import { Trove } from "@rbxts/trove";
@@ -13,6 +21,7 @@ import { allowDigging } from "client/atoms/detectorAtoms";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 import { TutorialController } from "./tutorialController";
 import { DETECT_STEP, DIG_STEP, QUEST_STEP, SELL_STEP, TREASURE_STEP } from "shared/config/tutorialConfig";
+import { getTopmostPartAtPosition } from "shared/util/castingUtil";
 
 const DING_SOUND_INTERVAL = interval(1);
 const RENDER_STEP_ID = "WaypointArrow";
@@ -393,7 +402,18 @@ export class DetectorController implements OnStart {
 
 			const cross = activeCross ?? (VFX_FOLDER.FindFirstChild("Cross") as BasePart);
 			cross.Parent = Workspace;
-			cross.Position = position;
+			const params = new RaycastParams();
+			params.FilterType = Enum.RaycastFilterType.Exclude;
+			params.FilterDescendantsInstances = [
+				...(Players.GetPlayers().map((p) => {
+					return p.Character;
+				}) as Model[]),
+				...CollectionService.GetTagged("Treasure"),
+				...CollectionService.GetTagged("DigCrater"),
+			];
+			// const raycast = Workspace.Raycast(origin, new Vector3(0, -5, 0), params);
+			const [_, hit] = getTopmostPartAtPosition(position, params, 2, 5);
+			cross.Position = hit ?? position;
 			activeCross = cross;
 		});
 	}

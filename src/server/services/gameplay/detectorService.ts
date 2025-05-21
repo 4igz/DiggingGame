@@ -120,9 +120,7 @@ export class DetectorService implements OnStart, OnTick {
 		});
 
 		// Delay by the player's trip ping so we can mostly accurately measure when they started digging by the time the message to start reaches their client.
-		task.delay(player.GetNetworkPing() / 2, () => {
-			target.activelyDigging = true;
-		});
+		target.activelyDigging = true;
 
 		// Now equip the shovel for the player also.
 		const backpack = player.WaitForChild("Backpack");
