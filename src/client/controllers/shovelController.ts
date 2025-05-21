@@ -1084,7 +1084,7 @@ export class ShovelController implements OnStart {
 
 			const diggingVfx = (existingModel.FindFirstChild(digVfx.Name) ?? digVfx.Clone()) as PVInstance;
 			diggingVfx.PivotTo(new CFrame(digTarget.position));
-			diggingVfx.Parent = existingModel;
+			diggingVfx.Parent = Workspace;
 
 			// Set dig models to not collide with characters.
 			for (const descendant of existingModel.GetDescendants()) {
@@ -1177,6 +1177,7 @@ export class ShovelController implements OnStart {
 
 				if (primaryPart && target.successful) {
 					CollectionService.AddTag(model, "Treasure");
+					model.SetAttribute("DiggingComplete", true);
 					// Compute the direction from the object to the player
 					const directionToPlayer = character.GetPivot().Position.sub(primaryPart.Position).Unit;
 

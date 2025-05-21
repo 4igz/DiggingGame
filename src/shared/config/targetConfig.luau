@@ -11,7 +11,7 @@ type TargetConfig = {
 	basePrice: number,
 	rarityType: Rarity,
 	itemImage: string,
-	animationName: string?,
+	animationName: "OverheadHold" | "Hold" | nil,
 	description: string?,
 	indexRarity: number?, -- Displayed 1 in x chance.
 }
@@ -48,6 +48,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		basePrice = 350,
 		itemImage = "rbxassetid://73363406884733",
 		description = "Despite its appearance, it cannot swim.",
+		animationName = "Hold",
 
 		indexRarity = 10,
 	},
@@ -127,6 +128,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		description = "Makes people jewel-ous.",
 
 		indexRarity = 256,
+		animationName = "Hold",
 	},
 
 	Diamond = {
@@ -148,6 +150,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		basePrice = 4500,
 		itemImage = "rbxassetid://104605374928382",
 		description = "It's oddly heavy.",
+		animationName = "OverheadHold",
 
 		indexRarity = 2048,
 	},
@@ -202,6 +205,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://84979377926433",
 		description = "A rock that's warm to the touch.",
 		indexRarity = 1000,
+		animationName = "Hold",
 	},
 
 	["Lava Bucket"] = {
@@ -212,6 +216,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://81391518039132",
 		description = "I wonder how a bucket can hold lava.",
 		indexRarity = 2000,
+		animationName = "Hold",
 	},
 	["Obsidian Shard"] = {
 		rarity = 3500,
@@ -230,6 +235,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		basePrice = 450,
 		itemImage = "rbxassetid://129994688332470",
 		description = "An artifact. Made out of coal. For some reason.",
+		animationName = "Hold",
 	},
 	["Jade Statue"] = {
 		rarity = 7500,
@@ -239,6 +245,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		basePrice = 550,
 		itemImage = "rbxassetid://138452528957421",
 		description = "A good centerpiece.",
+		animationName = "OverheadHold",
 	},
 	["T-Rex Skull"] = {
 		rarity = 15000,
@@ -248,6 +255,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		basePrice = 725,
 		itemImage = "rbxassetid://122748003577046",
 		description = "I wonder if they are missing this.",
+		animationName = "OverheadHold",
 	},
 	["T-Rex Tooth"] = {
 		rarity = 50000,
@@ -257,6 +265,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		basePrice = 1250,
 		itemImage = "rbxassetid://98431662126693",
 		description = "How does the dentist put braces on this?",
+		animationName = "OverheadHold",
 	},
 	["Obsidian Crown"] = {
 		rarity = 100000,
@@ -266,6 +275,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		basePrice = 5000,
 		itemImage = "rbxassetid://127124055698540",
 		description = "Probably belonged to a very powerful leader.",
+		animationName = "OverheadHold",
 	},
 
 	-- Frozen
@@ -327,6 +337,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		basePrice = 300,
 		itemImage = "rbxassetid://110019113674699",
 		description = "How did it end up in this predicament?",
+		animationName = "OverheadHold",
 	},
 
 	["Frozen Ring"] = {
@@ -337,6 +348,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		basePrice = 400,
 		itemImage = "rbxassetid://118242108570774",
 		description = "It will probably melt out on its own.",
+		animationName = "OverheadHold",
 	},
 
 	["Topaz Amulet"] = {
@@ -347,6 +359,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		basePrice = 450,
 		itemImage = "rbxassetid://112949825522969",
 		description = "Some say topaz is a symbol of love.",
+		animationName = "Hold",
 	},
 
 	["Small Gift"] = {
@@ -357,6 +370,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		basePrice = 3025,
 		itemImage = "rbxassetid://85734447473447",
 		description = "I wonder who this belonged to.",
+		animationName = "Hold",
 	},
 
 	["Gift"] = {
@@ -367,6 +381,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		basePrice = 3025,
 		itemImage = "rbxassetid://85734447473447",
 		description = "I wonder who this belonged to.",
+		animationName = "OverheadHold",
 	},
 
 	["Mammoth Tusk"] = {
@@ -377,6 +392,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		basePrice = 1250,
 		itemImage = "rbxassetid://81388213251759",
 		description = "Contains valuable ivory.",
+		animationName = "OverheadHold",
 	},
 
 	["Diamond Yeti"] = {
@@ -387,6 +403,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		basePrice = 5000,
 		itemImage = "rbxassetid://98688622480490",
 		description = "Abominably ICED out.",
+		animationName = "OverheadHold",
 	},
 }
 

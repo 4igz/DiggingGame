@@ -13,19 +13,19 @@ type Shovel = {
 local BASE_SHOVEL_STRENGTH = 1
 local shovelConfig: { [string]: Shovel } = {
 	StarterShovel = {
-		strengthMult = 1.5,
+		strengthMult = 2.2,
 		rarityType = "Common",
 		itemImage = "rbxassetid://86157037222201",
 		price = 0,
 	},
 	CommonShovel = {
-		strengthMult = 1.75,
+		strengthMult = 2.5,
 		rarityType = "Common",
 		itemImage = "rbxassetid://94770951918498",
 		price = 750,
 	},
 	SilverShovel = {
-		strengthMult = 2.50,
+		strengthMult = 3,
 		rarityType = "Common",
 		itemImage = "rbxassetid://84978234143786",
 		price = 2000,

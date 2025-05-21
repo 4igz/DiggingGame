@@ -131,6 +131,35 @@ export class TargetService implements OnStart {
 			}
 		});
 
+		// this.profileService.onProfileLoaded.Connect((player, profile) => {
+		// 	if (RunService.IsStudio()) {
+		// 		// !Temporary: Give player all treasures in the game.
+
+		// 		for (const [treasure, cfg] of pairs(fullTargetConfig)) {
+		// 			const targetInstance: Target = {
+		// 				...cfg,
+		// 				name: treasure,
+		// 				position: new Vector3(),
+		// 				weight: 1,
+		// 				digProgress: 2,
+		// 				maxProgress: 2,
+		// 				activelyDigging: false,
+		// 				itemId: HttpService.GenerateGUID(),
+
+		// 				mapName: "",
+
+		// 				base: undefined,
+
+		// 				usedLuckMult: 1,
+		// 				owner: player,
+		// 				usingDigEverywhere: false,
+		// 			};
+
+		// 			this.inventoryService.addItemToTargetInventory(player, targetInstance);
+		// 		}
+		// 	}
+		// });
+
 		this.zoneService.changedMap.Connect((player, zoneName) => {
 			const target = this.getPlayerTarget(player);
 			if (target && target.mapName !== zoneName) {
