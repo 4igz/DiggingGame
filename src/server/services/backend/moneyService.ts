@@ -7,7 +7,6 @@ import { GamepassService } from "./gamepassService";
 import { gameConstants } from "shared/gameConstants";
 import Signal from "@rbxts/goodsignal";
 import { EN } from "shared/networkTypes";
-import { MarketplaceService } from "@rbxts/services";
 import { FriendCountService } from "./friendCountService";
 
 @Service({})
@@ -27,6 +26,10 @@ export class MoneyService implements OnStart {
 
 		this.profileService.onProfileLoaded.Connect((player, profile) => {
 			Events.updateMoney.fire(player, profile.Data.money);
+
+			if (profile.Data.allTimeMoney === 0) {
+				profile.Data.allTimeMoney = EternityNum.toNumber(EternityNum.fromString(profile.Data.money));
+			}
 		});
 	}
 
@@ -58,6 +61,7 @@ export class MoneyService implements OnStart {
 
 		const moneyEN = EternityNum.add(EternityNum.fromString(profile.Data.money), EternityNum.fromNumber(amount));
 
+		profile.Data.allTimeMoney += amount; // For leaderboards
 		profile.Data.money = EternityNum.toString(moneyEN);
 		this.profileService.setProfile(player, profile);
 		Events.updateMoney.fire(player, profile.Data.money);

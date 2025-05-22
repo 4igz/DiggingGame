@@ -1,4 +1,4 @@
-import { Service, OnStart} from "@flamework/core";
+import { Service, OnStart } from "@flamework/core";
 import Object from "@rbxts/object-utils";
 import { MarketplaceService } from "@rbxts/services";
 import { gameConstants } from "shared/gameConstants";
@@ -65,22 +65,22 @@ export class GamepassService implements OnStart {
 			return profile.Data.ownedGamepasses;
 		});
 
-// Valiate all gamepasses in gameConstants.GAMEPASS_IDS are valid and owned by the game 😃
-for (const [id, name] of this.gamepassIdToName) {
-	task.defer(() => {
-		try {
-			const info = MarketplaceService.GetProductInfo(id, Enum.InfoType.GamePass);
+		// Valiate all gamepasses in gameConstants.GAMEPASS_IDS are valid and owned by the game 😃
+		for (const [id, name] of this.gamepassIdToName) {
+			task.defer(() => {
+				try {
+					const info = MarketplaceService.GetProductInfo(id, Enum.InfoType.GamePass);
 
-			// Furthermore, validate that the owner of the gamepass is the creator of the game
-			if (info.Creator.CreatorTargetId !== GAME_CREATOR_ID) {
-				error(`Gamepass ${name} is not owned by the game creator`);
-			}
-		} catch (error) {
-			warn(`Failed to validate gamepass ${name} :: ${id} for:`, error);
+					// Furthermore, validate that the owner of the gamepass is the creator of the game
+					if (info.Creator.CreatorTargetId !== GAME_CREATOR_ID) {
+						error(`Gamepass ${name} is not owned by the game creator`);
+					}
+				} catch (error) {
+					warn(`Failed to validate gamepass ${name} :: ${id} for:`, error);
+				}
+			});
 		}
-	});
-}
-}
+	}
 
 	public ownsGamepass(player: Player, gamepassId: number) {
 		assert(this.gamepassIdToName.has(gamepassId), "Invalid gamepass ID (use gameConstants.GAMEPASS_IDS)");

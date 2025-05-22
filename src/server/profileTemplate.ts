@@ -22,22 +22,24 @@ if (game.PlaceId === 91664813726836) {
 ReplicatedStorage.SetAttribute("CurrentStore", PROFILE_STORE_NAME);
 
 export const profileTemplate = {
+	// Data
 	equippedShovel: "StarterShovel" as keyof typeof shovelConfig,
 	equippedDetector: "StarterDetector" as keyof typeof metalDetectorConfig,
 	equippedTreasure: "" as keyof typeof targetConfig,
 	currentMap: "Grasslands" as keyof typeof mapConfig,
 	money: "0;0",
+	// Level data
+	level: 1,
+	experience: 0,
 
+	// Stats
 	treasuresDug: 0,
 	playtime: 0,
+	allTimeMoney: 0,
 
 	// Dailies
 	lastDailyClaimed: 0,
 	dailyStreak: 0,
-
-	// Level data
-	level: 1,
-	experience: 0,
 
 	// Skills
 	skillPoints: 0,

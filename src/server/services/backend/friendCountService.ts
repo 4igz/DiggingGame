@@ -43,7 +43,7 @@ export class FriendCountService implements OnStart {
 		});
 	}
 
-	getMultiplier(player: Player) {
+	public getMultiplier(player: Player) {
 		return 1 + math.min(0.15, (this.ingameFriendCount.get(player) ?? 0) * 0.05);
 	}
 }
