@@ -1,5 +1,5 @@
 import { Service, OnStart } from "@flamework/core";
-import { ProfileService } from "./profileService";
+import { LoadedProfile, ProfileService } from "./profileService";
 import Signal from "@rbxts/goodsignal";
 
 @Service({})
@@ -18,15 +18,12 @@ export class PlaytimeService implements OnStart {
 	}
 
 	private updateAllPlaytimes() {
-		for (const [player] of this.profileService.getLoadedProfiles()) {
-			this.incrementPlaytime(player);
+		for (const [player, profile] of this.profileService.getLoadedProfiles()) {
+			this.incrementPlaytime(player, profile);
 		}
 	}
 
-	private incrementPlaytime(player: Player) {
-		const profile = this.profileService.getProfile(player);
-		if (!profile) return;
-
+	private incrementPlaytime(player: Player, profile: LoadedProfile) {
 		// Fire signal for leaderstat update only
 		profile.Data.playtime += this.playtimeUpdateInterval;
 		this.playtimeUpdated.Fire(player, profile.Data.playtime);
