@@ -14,6 +14,7 @@ type TargetConfig = {
 	animationName: "OverheadHold" | "Hold" | nil,
 	description: string?,
 	indexRarity: number?, -- Displayed 1 in x chance.
+	hasCutscene: boolean?,
 }
 
 local targetConfig: { [string]: TargetConfig } = {
@@ -151,6 +152,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://104605374928382",
 		description = "It's oddly heavy.",
 		animationName = "OverheadHold",
+		hasCutscene = true,
 
 		indexRarity = 2048,
 	},
@@ -276,6 +278,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://127124055698540",
 		description = "Probably belonged to a very powerful leader.",
 		animationName = "OverheadHold",
+		hasCutscene = true,
 	},
 
 	-- Frozen
@@ -404,6 +407,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://98688622480490",
 		description = "Abominably ICED out.",
 		animationName = "OverheadHold",
+		hasCutscene = true,
 	},
 }
 
@@ -415,6 +419,7 @@ local trashConfig = {
 		basePrice = 2,
 		itemImage = "rbxassetid://80374057285043",
 		indexRarity = 2,
+		hasCutscene = true,
 	},
 	Scrap = {
 		rarity = 1,
@@ -423,6 +428,7 @@ local trashConfig = {
 		basePrice = 2,
 		itemImage = "rbxassetid://110934630212562",
 		indexRarity = 2,
+		hasCutscene = true,
 	},
 	["Old T-Shirt"] = {
 		rarity = 1,
@@ -431,6 +437,7 @@ local trashConfig = {
 		basePrice = 2,
 		itemImage = "rbxassetid://134314922415893",
 		indexRarity = 2,
+		hasCutscene = true,
 	},
 	["Old Boot"] = {
 		rarity = 1,
@@ -439,6 +446,7 @@ local trashConfig = {
 		basePrice = 2,
 		itemImage = "rbxassetid://91884190576086",
 		indexRarity = 2,
+		hasCutscene = true,
 	},
 	["Old Ring"] = {
 		rarity = 1,
@@ -447,6 +455,7 @@ local trashConfig = {
 		basePrice = 2,
 		itemImage = "rbxassetid://87736149466419",
 		indexRarity = 2,
+		hasCutscene = true,
 	},
 	["Old Coin"] = {
 		rarity = 1,
@@ -455,6 +464,7 @@ local trashConfig = {
 		basePrice = 2,
 		itemImage = "rbxassetid://111334825894769",
 		indexRarity = 2,
+		hasCutscene = true,
 	},
 	["Old Mitten"] = {
 		rarity = 1,
@@ -464,6 +474,7 @@ local trashConfig = {
 		itemImage = "rbxassetid://114451456116905",
 		description = "An old mitten.",
 		indexRarity = 2,
+		hasCutscene = true,
 	},
 }
 local fullTargetConfig = Sift.Dictionary.merge(targetConfig, trashConfig)

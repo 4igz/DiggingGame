@@ -9,6 +9,7 @@ export interface TargetConfig {
 	animationName?: string; // If not specified, will just be default tool animation.
 	description?: string; // Optional description of the item
 	indexRarity?: number; // Optional index rarity of the item
+	hasCutscene?: boolean;
 }
 
 export type TargetModule = Readonly<Record<string, TargetConfig>>;

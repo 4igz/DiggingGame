@@ -6,8 +6,6 @@ import { MoneyService } from "./moneyService";
 import { EN } from "shared/networkTypes";
 import { LevelService } from "../gameplay/levelService";
 import { TargetService } from "../gameplay/targetService";
-import { PlaytimeService } from "./playtimeService";
-import { formatShortTime } from "shared/util/nameUtil";
 
 @Service({})
 export class LeaderstatService implements OnStart {
@@ -16,7 +14,6 @@ export class LeaderstatService implements OnStart {
 		private readonly moneyService: MoneyService,
 		private readonly levelService: LevelService,
 		private readonly targetService: TargetService,
-		private readonly playtimeService: PlaytimeService,
 	) {}
 
 	onStart() {
@@ -62,18 +59,6 @@ export class LeaderstatService implements OnStart {
 				}
 			}
 		});
-
-		// Connect to playtime changes
-		this.playtimeService.playtimeUpdated.Connect((player, totalTime) => {
-			const leaderstats = player.FindFirstChild("leaderstats");
-			if (leaderstats) {
-				const playtimeValue = leaderstats.FindFirstChild("Playtime") as StringValue | undefined;
-				if (playtimeValue) {
-					playtimeValue.Value = formatShortTime(totalTime);
-				}
-			}
-		});
-
 		Functions.getMoneyShortString.setCallback((player) => {
 			const profile = this.profileService.getProfileLoaded(player).expect();
 			return profile.Data.money;
@@ -99,10 +84,5 @@ export class LeaderstatService implements OnStart {
 		money.Name = "Money";
 		money.Value = EternityNum.short(EternityNum.fromString(profile.Data.money));
 		money.Parent = leaderstats;
-
-		const playtime = new Instance("StringValue");
-		playtime.Name = "Playtime";
-		playtime.Value = formatShortTime(this.playtimeService.getCurrentPlaytime(player));
-		playtime.Parent = leaderstats;
 	}
 }

@@ -31,6 +31,7 @@ import PartCacheModule from "@rbxts/partcache";
 import { TutorialController } from "./tutorialController";
 import { DETECT_STEP, DIG_STEP, QUEST_STEP, SELL_STEP, TREASURE_STEP } from "shared/config/tutorialConfig";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
+import { fullTargetConfig } from "shared/config/targetConfig";
 
 const camera = Workspace.CurrentCamera;
 const holeTroveMap = new Map<Trove, [Signal<(size: number) => void>, Sound, BasePart]>();
@@ -910,10 +911,12 @@ export class ShovelController implements OnStart {
 							return;
 						}
 
+						const treasureCfg = fullTargetConfig[existingModel.Name];
+						const hasCutscene = treasureCfg.hasCutscene ?? false;
 						const primaryPart =
 							existingModel.PrimaryPart ?? existingModel.FindFirstChildWhichIsA("BasePart");
 						const THROW_FORCE = observeAttribute("DigThrowForce", 20) as number;
-						const UP_FORCE = observeAttribute("DigUpForce", 5) as number;
+						const UP_FORCE = hasCutscene ? 5 : (observeAttribute("DigUpForce", 5) as number);
 
 						// Compute the direction from the object to the player
 						const directionToPlayer = character
@@ -940,7 +943,7 @@ export class ShovelController implements OnStart {
 
 						// Adjust the object's position to ensure it's above ground
 						// Calculate the offset to ensure the model is above ground, with a minimum Y offset for small items
-						const minYOffset = 4; // Minimum Y offset to ensure it's out of the ground
+						const minYOffset = 6; // Minimum Y offset to ensure it's out of the ground
 						const extentsY = existingModel.GetExtentsSize().Y;
 						const yOffset = math.max(extentsY, minYOffset);
 
@@ -957,16 +960,47 @@ export class ShovelController implements OnStart {
 							}
 						}
 
-						RunService.Heartbeat.Once(() => {
-							primaryPart.AssemblyLinearVelocity = randomForce;
-							task.delay(0.1, () => {
-								for (const descendant of existingModel.GetDescendants()) {
-									if (descendant.IsA("BasePart")) {
-										descendant.CanCollide = true;
+						if (!hasCutscene || camera === undefined) {
+							RunService.Heartbeat.Once(() => {
+								primaryPart.AssemblyLinearVelocity = randomForce;
+								task.delay(0.1, () => {
+									for (const descendant of existingModel.GetDescendants()) {
+										if (descendant.IsA("BasePart")) {
+											descendant.CanCollide = true;
+										}
 									}
-								}
+								});
 							});
-						});
+						} else if (hasCutscene && camera !== undefined) {
+							// Makeshift cutscene. Basically just throws higher and sets camera subject to the treasure.
+							RunService.Heartbeat.Once(() => {
+								primaryPart.AssemblyLinearVelocity = randomForce;
+								camera.CameraSubject = primaryPart;
+								camera.CameraType = Enum.CameraType.Scriptable;
+								// Make the camera look straight down from above
+								camera.CFrame = CFrame.lookAt(
+									primaryPart.Position.add(new Vector3(0, 15, 0)),
+									primaryPart.Position,
+									Vector3.xAxis,
+								);
+								task.delay(0.1, () => {
+									for (const descendant of existingModel.GetDescendants()) {
+										if (descendant.IsA("BasePart")) {
+											descendant.CanCollide = true;
+										}
+									}
+								});
+								task.delay(2, () => {
+									if (camera) {
+										const myCharacter = Players.LocalPlayer.Character;
+										if (!myCharacter) return;
+										const myHuman = myCharacter.WaitForChild("Humanoid") as Humanoid;
+										camera.CameraSubject = myHuman;
+										camera.CameraType = Enum.CameraType.Custom;
+									}
+								});
+							});
+						}
 
 						// task.delay(2, () => {
 						// 	if (primaryPart && primaryPart.Parent) {

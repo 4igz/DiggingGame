@@ -3,7 +3,6 @@ import { Service, OnStart } from "@flamework/core";
 import Object from "@rbxts/object-utils";
 import { ProfileService } from "../backend/profileService";
 import { formatShortTime, shortenNumber } from "shared/util/nameUtil";
-import EternityNum from "shared/util/eternityNum";
 
 interface LeaderboardEntry {
 	playerName: string;
@@ -94,6 +93,8 @@ export class LeaderboardService implements OnStart {
 						const scoreShadow = playerFrame.WaitForChild("Value") as TextLabel;
 						const score = scoreShadow.WaitForChild("Value") as TextLabel;
 
+						const gradient = score
+
 						playerFrame.LayoutOrder = i;
 
 						const rank = list.indexOf(listEntry) + 1;
@@ -131,7 +132,7 @@ export class LeaderboardService implements OnStart {
 				task.spawn(() => {
 					while (true) {
 						updateLeaderboard();
-						task.wait(300);
+						task.wait(30);
 					}
 				});
 			});
