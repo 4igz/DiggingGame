@@ -128,7 +128,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		description = "Makes people jewel-ous.",
 
 		indexRarity = 256,
-		animationName = "Hold",
+		animationName = "OverheadHold",
 	},
 
 	Diamond = {
@@ -137,7 +137,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		baseWeight = NumberRange.new(8, 10),
 		basePrice = 1250,
 		itemImage = "rbxassetid://77396148774213",
-		animationName = "Hold",
+		animationName = "OverheadHold",
 		description = "A clear rock that's highly sought after for some reason.",
 
 		indexRarity = 512,

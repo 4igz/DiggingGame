@@ -124,7 +124,7 @@ const ToolbarItemComponent: React.FC<ToolbarItemProps> = (props) => {
 				TextScaled={true}
 				TextWrapped={true}
 				ZIndex={100}
-		>
+			>
 				<uistroke key={"UIStroke"} Thickness={px(3)} />
 			</textlabel>
 
@@ -132,11 +132,11 @@ const ToolbarItemComponent: React.FC<ToolbarItemProps> = (props) => {
 				<textlabel
 					Text={`1 in <font color="${color}"><b>${shortenNumber(chance as number, false)}</b></font>`}
 					RichText={true}
-					Size={UDim2.fromScale(1, 0.3)}
+					Size={UDim2.fromScale(0.8, 0.3)}
 					BackgroundTransparency={1}
 					TextColor3={new Color3(1, 1, 1)}
-					Position={UDim2.fromScale(0, 0.9)}
-					AnchorPoint={new Vector2(0, 1)}
+					Position={UDim2.fromScale(0.5, 0.9)}
+					AnchorPoint={new Vector2(0.5, 1)}
 					FontFace={Font.fromEnum(Enum.Font.BuilderSansBold)}
 					TextScaled={true}
 					ZIndex={100}

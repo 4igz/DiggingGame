@@ -232,7 +232,6 @@ export class ZoneController implements OnStart, OnRender {
 		for (const [name, zone] of this.isleZoneMap) {
 			if (zone.findLocalPlayer() === true) {
 				this.onZoneEnter(name);
-				debugWarn("Already in zone");
 				return;
 			}
 		}

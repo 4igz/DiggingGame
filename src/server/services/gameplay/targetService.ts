@@ -344,7 +344,6 @@ export class TargetService implements OnStart {
 		Functions.requestNextTarget.setCallback((player) => {
 			const target = this.getPlayerTarget(player) ?? this.spawnTarget(player, 10);
 			if (!target) {
-				print("Failed to spawn");
 				Events.targetSpawnFailure.fire(player);
 				return;
 			}
