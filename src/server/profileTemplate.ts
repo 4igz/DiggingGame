@@ -29,6 +29,7 @@ export const profileTemplate = {
 	money: "0;0",
 
 	treasuresDug: 0,
+	playtime: 0,
 
 	// Dailies
 	lastDailyClaimed: 0,

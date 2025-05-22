@@ -84,11 +84,17 @@ export function formatTime(timeLeft: number, format: string = "%02d:%02d:%02d"):
 }
 
 export function formatShortTime(timeLeft: number): string {
-	const hours = math.floor(timeLeft / 3600);
+	const weeks = math.floor(timeLeft / 604800);
+	const days = math.floor((timeLeft % 604800) / 86400);
+	const hours = math.floor((timeLeft % 86400) / 3600);
 	const minutes = math.floor((timeLeft % 3600) / 60);
 	const seconds = math.floor(timeLeft % 60);
 
-	if (hours > 0) {
+	if (weeks > 0) {
+		return `${weeks}w ${days}d`;
+	} else if (days > 0) {
+		return `${days}d ${hours}h`;
+	} else if (hours > 0) {
 		return `${hours}h ${minutes}m`;
 	} else if (minutes > 0) {
 		return `${minutes}m ${seconds}s`;
