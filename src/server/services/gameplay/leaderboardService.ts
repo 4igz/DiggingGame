@@ -33,13 +33,12 @@ export class LeaderboardService implements OnStart {
 				const activeEntries: Array<Frame> = [];
 
 				const updateLeaderboard = () => {
-					for (const player of Players.GetPlayers()) {
+					for (const [player, profile] of this.profileService.getLoadedProfiles()) {
 						if (player.UserId < 1) {
 							continue;
 						}
 						task.spawn(() => {
 							const [success, err] = pcall(() => {
-								const profile = this.profileService.getProfileLoaded(player).expect();
 								const data = profile.Data as unknown as Record<string, number>;
 
 								dataStore.UpdateAsync(tostring(player.UserId), () => {
@@ -93,7 +92,7 @@ export class LeaderboardService implements OnStart {
 						const scoreShadow = playerFrame.WaitForChild("Value") as TextLabel;
 						const score = scoreShadow.WaitForChild("Value") as TextLabel;
 
-						const gradient = score
+						const gradient = score;
 
 						playerFrame.LayoutOrder = i;
 
@@ -131,8 +130,9 @@ export class LeaderboardService implements OnStart {
 				// Start periodic updates
 				task.spawn(() => {
 					while (true) {
+						task.wait(5);
 						updateLeaderboard();
-						task.wait(30);
+						task.wait(290);
 					}
 				});
 			});

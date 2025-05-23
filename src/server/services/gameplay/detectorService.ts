@@ -131,6 +131,8 @@ export class DetectorService implements OnStart, OnTick {
 			detector.Parent = backpack;
 		}
 
+		humanoid.UnequipTools();
+
 		const shovel = backpack.FindFirstChild(profile.Data.equippedShovel) as Tool;
 		if (shovel) {
 			shovel.Parent = character;

@@ -163,7 +163,7 @@ export class ZoneController implements OnStart, OnRender {
 					const hrp = character.WaitForChild("HumanoidRootPart") as BasePart;
 					hrp.Anchored = false;
 					const humanoid = character.WaitForChild("Humanoid") as Humanoid;
-					humanoid.WalkSpeed = 19;
+					humanoid.WalkSpeed = 20;
 					spawned = true;
 					task.delay(0.1, () => {
 						character.PivotTo(goal);

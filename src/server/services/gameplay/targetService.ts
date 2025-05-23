@@ -518,7 +518,7 @@ export class TargetService implements OnStart {
 		const character = player.Character;
 		if (!character || !character.Parent) return;
 		const humanoid = character.WaitForChild("Humanoid") as Humanoid;
-		humanoid.WalkSpeed = 19;
+		humanoid.WalkSpeed = 20;
 
 		// Equip the metal detector back from their backpack and unequip the shovel
 		const backpack = player.WaitForChild("Backpack");

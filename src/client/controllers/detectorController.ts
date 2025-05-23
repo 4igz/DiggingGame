@@ -445,12 +445,6 @@ export class DetectorController implements OnStart {
 	}
 
 	public showWaypointArrow(targetPos: Vector3, detectorSearchRadius: number, doEffects: boolean = true) {
-		const playerRootPart = this.getLocalPlayerRootPart();
-		if (!playerRootPart) {
-			warn("No player root part found, cannot show arrow");
-			return;
-		}
-
 		// If we haven't cloned our arrow yet, do so
 		if (!arrowIndicator) {
 			// This should be your old arrow part with a BillboardGui inside
@@ -524,6 +518,12 @@ export class DetectorController implements OnStart {
 			}
 			let detector = character.FindFirstChildOfClass("Tool");
 			detector = detector && metalDetectorConfig[detector.Name] ? detector : undefined;
+
+			const playerRootPart = this.getLocalPlayerRootPart();
+			if (!playerRootPart) {
+				warn("No player root part found, cannot show arrow");
+				return;
+			}
 
 			// Current distance from player to the waypoint
 			const offset = targetPos.sub(playerRootPart.Position);
