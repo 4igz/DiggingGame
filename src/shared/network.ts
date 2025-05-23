@@ -119,6 +119,7 @@ interface ServerToClientEvents {
 	drankPotion: (potionName: keyof typeof potionConfig) => void;
 	endTutorial: () => void;
 	claimedTimedReward: () => void;
+	claimedSpontaneousReward: () => void;
 }
 
 interface ClientToServerFunctions {

@@ -246,7 +246,7 @@ export const Popups = () => {
 		// Check if this popup already exists in active popups
 		const existingPopup = activePopups.find((popup) => popup.key === popupKey);
 
-		if (existingPopup) {
+		if (popupType !== "ItemAdded" && popupType !== "Claimed" && existingPopup) {
 			// Cancel the existing timer
 			if (existingPopup.timer !== undefined) {
 				task.cancel(existingPopup.timer);
@@ -277,7 +277,7 @@ export const Popups = () => {
 		Events.targetAdded.connect((itemName, itemWeight, mapName) => {
 			const item = fullTargetConfig[itemName];
 			if (item) {
-				queuePopup("ItemAdded", itemName, {
+				queuePopup("ItemAdded", `${itemName}-${itemWeight}`, {
 					itemName,
 					itemImage: item.itemImage,
 					itemRarity: item.rarityType,
@@ -314,7 +314,7 @@ export const Popups = () => {
 		});
 
 		Events.sendClaimedPopup.connect((kind, reward) => {
-			queuePopup("Claimed", `claimed-${kind}`, {
+			queuePopup("Claimed", `claimed-${kind}-${reward}`, {
 				itemRarity:
 					typeOf(kind) === "string" && kind in gameConstants.SHOP_CONFIGS
 						? gameConstants.SHOP_CONFIGS[kind as ItemType]?.[reward as ItemName]?.rarityType

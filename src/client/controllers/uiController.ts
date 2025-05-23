@@ -13,7 +13,7 @@ import {
 	TweenService,
 	Workspace,
 } from "@rbxts/services";
-import { Events } from "client/network";
+import { Events, Functions } from "client/network";
 import { DiggingBar } from "client/reactComponents/diggingBar";
 import { GamepassShop } from "client/reactComponents/gamepassShop";
 import LuckBar from "client/reactComponents/luckBar";
@@ -55,6 +55,7 @@ import { TutorialController } from "./tutorialController";
 import { freeTimedRewardButton } from "client/reactComponents/freeTimedRewardButton";
 import { FreeTimedRewardMenu } from "client/reactComponents/freeTimedRewardMenu";
 import { SpontaneousOffer } from "client/reactComponents/spontaneousOffer";
+import { MAX_TIME, MIN_TIME } from "shared/config/spontaneousOfferConfig";
 
 const LOW_LAYER = 0;
 const MENU_LAYER = 1;
@@ -300,11 +301,27 @@ export default class UiController implements OnStart, OnInit {
 			effectsActive = isOpen;
 		});
 
+		let canClaimSpontaneous = false;
+		let claimedSpontaneous = false;
+
+		Functions.getClaimedSpontaneousOffer.invoke().then((v) => {
+			canClaimSpontaneous = !v;
+		});
+
+		Events.claimedSpontaneousReward.connect(() => {
+			claimedSpontaneous = true;
+		});
+
 		GuiService.MenuOpened.Connect(() => {
 			this.closeCurrentOpenMenu();
-			task.defer(() => {
-				this.toggleUi(gameConstants.SPONTANEOUS_OFFER_MENU);
-			});
+			if (!claimedSpontaneous && canClaimSpontaneous) {
+				const timeInServer = time();
+				if (timeInServer > MIN_TIME && timeInServer < MAX_TIME) {
+					task.defer(() => {
+						this.toggleUi(gameConstants.SPONTANEOUS_OFFER_MENU);
+					});
+				}
+			}
 		});
 	}
 

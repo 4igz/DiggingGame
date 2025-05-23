@@ -18,6 +18,7 @@ import groupReward from "shared/config/groupReward";
 import { limitedOffer } from "shared/config/limitedOffer";
 import { codes } from "server/modules/config/codes";
 import { gameConstants } from "shared/gameConstants";
+import { spontaneousOfferConfig } from "shared/config/spontaneousOfferConfig";
 
 declare function unpack<T>(arr: Array<T>): T;
 
@@ -201,13 +202,20 @@ export class RewardService implements OnStart {
 		});
 
 		Events.claimSpontaneousOffer.connect((player, key) => {
+			if (key !== 42) return; // So people dont get it by randomly firing remotes
 			const profile = this.profileService.getProfileLoaded(player).expect();
 
 			if (profile.Data.claimedSpontaneousOffer) return;
 
-			this.claimReward(player, { rewardType: "Shovels", itemName: "" });
-			this.claimReward(player, { rewardType: "Potions", itemName: "L.Luck Potion" });
-			this.claimReward(player, { rewardType: "Potions", itemName: "L.Luck Potion" });
+			task.spawn(() => {
+				for (const reward of spontaneousOfferConfig) {
+					this.claimReward(player, reward);
+					task.wait(0.1);
+				}
+			});
+
+			Events.claimedSpontaneousReward(player);
+
 			profile.Data.claimedSpontaneousOffer = true;
 			this.profileService.setProfile(player, profile);
 		});

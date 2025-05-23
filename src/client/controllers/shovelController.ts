@@ -912,7 +912,7 @@ export class ShovelController implements OnStart {
 						}
 
 						const treasureCfg = fullTargetConfig[existingModel.Name];
-						const hasCutscene = false; //treasureCfg.hasCutscene ?? false;
+						const hasCutscene = treasureCfg.hasCutscene ?? false;
 						const primaryPart =
 							existingModel.PrimaryPart ?? existingModel.FindFirstChildWhichIsA("BasePart");
 						const THROW_FORCE = observeAttribute("DigThrowForce", 20) as number;
@@ -956,33 +956,89 @@ export class ShovelController implements OnStart {
 							});
 						} else if (hasCutscene && camera !== undefined) {
 							// Makeshift cutscene. Basically just throws higher and sets camera subject to the treasure.
-							// RunService.Heartbeat.Once(() => {
-							// 	// camera.CameraSubject = primaryPart;
-							// 	camera.CameraType = Enum.CameraType.Scriptable;
-							// 	// primaryPart.CFrame = primaryPart.CFrame.add(new Vector3(0, 0.2, 0));
-							// 	TweenService.Create(
-							// 		primaryPart,
-							// 		new TweenInfo(3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-							// 		{ Position: origin.add(new Vector3(0, 50, 0)) },
-							// 	).Play();
-							// 	camera.CFrame = CFrame.lookAt(
-							// 		primaryPart.Position.add(new Vector3(0, 50, 0)),
-							// 		primaryPart.Position,
-							// 		Vector3.xAxis,
-							// 	);
-							// 	task.delay(0.1, () => {
-							// 		for (const descendant of existingModel.GetDescendants()) {
-							// 			if (descendant.IsA("BasePart")) {
-							// 				descendant.CanCollide = true;
-							// 			}
-							// 		}
-							// 	});
-							// 	task.delay(3, () => {
-							// 		// If we don't have a camera then there's a bigger issue but just check to shut the type checker up
-							// 		if (!camera) return;
-							// 		camera.CameraType = Enum.CameraType.Custom;
-							// 	});
-							// });
+							RunService.Heartbeat.Once(() => {
+								const originalCameraType = camera.CameraType;
+								const originalCameraSubject = camera.CameraSubject;
+								camera.CameraType = Enum.CameraType.Scriptable;
+
+								// Prepare the treasure for the cutscene
+								const minYOffset = 6;
+								const extentsY = existingModel.GetExtentsSize().Y;
+								const yOffset = math.max(extentsY, minYOffset);
+								existingModel.PivotTo(new CFrame(origin).add(new Vector3(0, yOffset, 0)));
+
+								for (const descendant of existingModel.GetDescendants()) {
+									if (descendant.IsA("BasePart")) {
+										descendant.Anchored = true;
+										descendant.CanCollide = false;
+									}
+								}
+
+								const cameraDistance = 15; // Distance from treasure
+								const cameraAngle = 30; // Angle in degrees looking down at treasure
+								const cameraHeight = 10; // Additional height offset
+
+								const treasureTween = TweenService.Create(
+									primaryPart,
+									new TweenInfo(3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+									{ Position: origin.add(new Vector3(0, 50, 0)) },
+								);
+
+								let cameraConnection: RBXScriptConnection;
+								cameraConnection = RunService.RenderStepped.Connect(() => {
+									if (!primaryPart || !primaryPart.Parent) {
+										cameraConnection.Disconnect();
+										return;
+									}
+
+									const treasurePos = primaryPart.Position;
+									const angleRad = math.rad(cameraAngle);
+
+									const cameraOffset = new Vector3(
+										0,
+										cameraHeight + math.sin(angleRad) * cameraDistance,
+										math.cos(angleRad) * cameraDistance,
+									);
+
+									const cameraPos = treasurePos.add(cameraOffset);
+
+									// Look at the treasure with a slight upward bias
+									camera.CFrame = CFrame.lookAt(cameraPos, treasurePos, Vector3.yAxis);
+								});
+
+								treasureTween.Play();
+
+								treasureTween.Completed.Once(() => {
+									cameraConnection.Disconnect();
+
+									// Reset camera
+									if (camera) {
+										camera.CameraType = originalCameraType;
+										if (originalCameraSubject) {
+											camera.CameraSubject = originalCameraSubject;
+										}
+									}
+
+									for (const descendant of existingModel.GetDescendants()) {
+										if (descendant.IsA("BasePart")) {
+											descendant.Anchored = false;
+											descendant.CanCollide = true;
+										}
+									}
+
+									RunService.Heartbeat.Once(() => {
+										primaryPart.AssemblyLinearVelocity = randomForce;
+									});
+								});
+
+								task.delay(0.1, () => {
+									for (const descendant of existingModel.GetDescendants()) {
+										if (descendant.IsA("BasePart")) {
+											descendant.CanCollide = true;
+										}
+									}
+								});
+							});
 						}
 					} else {
 						existingModel.Destroy();

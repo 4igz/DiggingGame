@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "@rbxts/react";
 import { ExitButton } from "./inventory";
 import { gameConstants } from "shared/gameConstants";
 import UiController from "client/controllers/uiController";
-import { Players, RunService } from "@rbxts/services";
+import { Players, RunService, SoundService } from "@rbxts/services";
 import { AnimatedButton } from "./buttons";
 import { useMotion } from "client/hooks/useMotion";
 import { springs } from "client/utils/springs";
@@ -24,8 +24,13 @@ export const SpontaneousOffer = (props: { uiController: UiController; visible: b
 		if (visible && !hasClaimed) {
 			menuPosMotion.spring(UDim2.fromScale(0.5, 0.5), springs.wobbly);
 
-			const RAINBOW_SPEED = 0.5;
+			const claimedReward = Events.claimedSpontaneousReward.connect(() => {
+				if (props.uiController.currentOpenUi === gameConstants.SPONTANEOUS_OFFER_MENU) {
+					props.uiController.closeCurrentOpenMenu();
+				}
+			});
 
+			const RAINBOW_SPEED = 0.5;
 			const gradientRotationConnection = RunService.RenderStepped.Connect(() => {
 				if (!gradientRef.current) {
 					gradientRotationConnection.Disconnect();
@@ -38,8 +43,13 @@ export const SpontaneousOffer = (props: { uiController: UiController; visible: b
 				gradientRef.current.Rotation += RAINBOW_SPEED;
 			});
 
+			task.spawn(() => {
+				SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("Alert") as Sound);
+			});
+
 			return () => {
 				gradientRotationConnection.Disconnect();
+				claimedReward.Disconnect();
 			};
 		} else {
 			menuPosMotion.immediate(UDim2.fromScale(0.5, 0.6));
