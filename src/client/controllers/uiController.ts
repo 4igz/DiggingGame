@@ -54,6 +54,7 @@ import { TutorialMessage } from "client/reactComponents/tutorialMessage";
 import { TutorialController } from "./tutorialController";
 import { freeTimedRewardButton } from "client/reactComponents/freeTimedRewardButton";
 import { FreeTimedRewardMenu } from "client/reactComponents/freeTimedRewardMenu";
+import { SpontaneousOffer } from "client/reactComponents/spontaneousOffer";
 
 const LOW_LAYER = 0;
 const MENU_LAYER = 1;
@@ -301,6 +302,9 @@ export default class UiController implements OnStart, OnInit {
 
 		GuiService.MenuOpened.Connect(() => {
 			this.closeCurrentOpenMenu();
+			task.defer(() => {
+				this.toggleUi(gameConstants.SPONTANEOUS_OFFER_MENU);
+			});
 		});
 	}
 
@@ -539,7 +543,6 @@ export default class UiController implements OnStart, OnInit {
 			undefined,
 			MENU_LAYER,
 		);
-
 		this.registerUi(
 			gameConstants.BOTTOM_RIGHT_HUD,
 			React.createElement(BottomRightButtons),
@@ -571,6 +574,14 @@ export default class UiController implements OnStart, OnInit {
 			{ uiController: this, visible: false },
 			undefined,
 			undefined,
+			MENU_LAYER,
+		);
+		this.registerUi(
+			gameConstants.SPONTANEOUS_OFFER_MENU,
+			React.createElement(SpontaneousOffer),
+			{ uiController: this, visible: false },
+			true,
+			true,
 			MENU_LAYER,
 		);
 

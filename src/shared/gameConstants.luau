@@ -166,6 +166,7 @@ local gameConstants = {
 	UPDATE_LOG_UI = "UpdateLogUi",
 	BOTTOM_RIGHT_HUD = "BottomRightHud",
 	FREE_TIMED_REWARD_MENU = "FREE_TIMED_REWARD_MENU",
+	SPONTANEOUS_OFFER_MENU = "SpontaneousOfferMenu",
 
 	-- Attributes
 	BOAT_DRIVER_SITTING = "SittingInBoatDriverSeat",

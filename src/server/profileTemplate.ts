@@ -74,6 +74,7 @@ export const profileTemplate = {
 
 	banTimes: 0,
 
+	claimedSpontaneousOffer: false,
 	claimedTimedReward: false,
 	claimedTutorialRewards: false,
 	isFirstJoin: true,

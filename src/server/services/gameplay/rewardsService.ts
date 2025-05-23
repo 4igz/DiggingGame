@@ -200,6 +200,23 @@ export class RewardService implements OnStart {
 			}
 		});
 
+		Events.claimSpontaneousOffer.connect((player, key) => {
+			const profile = this.profileService.getProfileLoaded(player).expect();
+
+			if (profile.Data.claimedSpontaneousOffer) return;
+
+			this.claimReward(player, { rewardType: "Shovels", itemName: "" });
+			this.claimReward(player, { rewardType: "Potions", itemName: "L.Luck Potion" });
+			this.claimReward(player, { rewardType: "Potions", itemName: "L.Luck Potion" });
+			profile.Data.claimedSpontaneousOffer = true;
+			this.profileService.setProfile(player, profile);
+		});
+
+		Functions.getClaimedSpontaneousOffer.setCallback((player) => {
+			const profile = this.profileService.getProfileLoaded(player).expect();
+			return profile.Data.claimedSpontaneousOffer;
+		});
+
 		Signals.completeTimedReward.Connect((player) => {
 			const profile = this.profileService.getProfileLoaded(player).expect();
 

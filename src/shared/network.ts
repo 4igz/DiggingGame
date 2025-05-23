@@ -52,6 +52,7 @@ interface ClientToServerEvents {
 	verifyCode: (code: string) => void;
 	completedTutorial: () => void;
 	claimTimedReward: () => void;
+	claimSpontaneousOffer: (key: number) => void;
 
 	// Anti exploit event
 	selfReport: (flag: string) => void;
@@ -156,6 +157,7 @@ interface ClientToServerFunctions {
 	requestSpawn: () => keyof typeof mapConfig;
 	getTutorial: () => boolean;
 	getClaimedTimedReward: () => boolean;
+	getClaimedSpontaneousOffer: () => boolean;
 }
 
 interface ServerToClientFunctions {}

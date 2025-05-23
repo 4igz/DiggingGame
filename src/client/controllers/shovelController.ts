@@ -912,7 +912,7 @@ export class ShovelController implements OnStart {
 						}
 
 						const treasureCfg = fullTargetConfig[existingModel.Name];
-						const hasCutscene = treasureCfg.hasCutscene ?? false;
+						const hasCutscene = false; //treasureCfg.hasCutscene ?? false;
 						const primaryPart =
 							existingModel.PrimaryPart ?? existingModel.FindFirstChildWhichIsA("BasePart");
 						const THROW_FORCE = observeAttribute("DigThrowForce", 20) as number;
@@ -928,39 +928,22 @@ export class ShovelController implements OnStart {
 
 						// Combine the backward direction and the deviation, scaling the force
 						const randomForce = directionToThrow.mul(THROW_FORCE).add(Vector3.one);
-
-						// Get the floor position of the object
-						const params = new RaycastParams();
-						params.FilterType = Enum.RaycastFilterType.Exclude;
-						params.FilterDescendantsInstances = [
-							...(Players.GetPlayers().map((p) => {
-								return p.Character;
-							}) as Model[]),
-							...CollectionService.GetTagged("Treasure"),
-							existingModel,
-							...CollectionService.GetTagged("DigCrater"),
-						];
-
 						// Adjust the object's position to ensure it's above ground
 						// Calculate the offset to ensure the model is above ground, with a minimum Y offset for small items
-						const minYOffset = 6; // Minimum Y offset to ensure it's out of the ground
-						const extentsY = existingModel.GetExtentsSize().Y;
-						const yOffset = math.max(extentsY, minYOffset);
-
-						existingModel.PivotTo(
-							new CFrame(existingModel.GetAttribute(gameConstants.TREASURE_MODEL_ORIGIN) as Vector3).add(
-								new Vector3(0, yOffset, 0),
-							),
-						);
-
-						for (const descendant of existingModel.GetDescendants()) {
-							if (descendant.IsA("BasePart")) {
-								descendant.Anchored = false;
-								descendant.CanCollide = false;
-							}
-						}
+						const origin = existingModel.GetAttribute(gameConstants.TREASURE_MODEL_ORIGIN) as Vector3;
 
 						if (!hasCutscene || camera === undefined) {
+							const minYOffset = 6; // Minimum Y offset to ensure it's out of the ground
+							const extentsY = existingModel.GetExtentsSize().Y;
+							const yOffset = math.max(extentsY, minYOffset);
+							existingModel.PivotTo(new CFrame(origin).add(new Vector3(0, yOffset, 0)));
+							for (const descendant of existingModel.GetDescendants()) {
+								if (descendant.IsA("BasePart")) {
+									descendant.Anchored = false;
+									descendant.CanCollide = false;
+								}
+							}
+
 							RunService.Heartbeat.Once(() => {
 								primaryPart.AssemblyLinearVelocity = randomForce;
 								task.delay(0.1, () => {
@@ -973,50 +956,34 @@ export class ShovelController implements OnStart {
 							});
 						} else if (hasCutscene && camera !== undefined) {
 							// Makeshift cutscene. Basically just throws higher and sets camera subject to the treasure.
-							RunService.Heartbeat.Once(() => {
-								primaryPart.AssemblyLinearVelocity = randomForce;
-								camera.CameraSubject = primaryPart;
-								camera.CameraType = Enum.CameraType.Scriptable;
-								// Make the camera look straight down from above
-								camera.CFrame = CFrame.lookAt(
-									primaryPart.Position.add(new Vector3(0, 15, 0)),
-									primaryPart.Position,
-									Vector3.xAxis,
-								);
-								task.delay(0.1, () => {
-									for (const descendant of existingModel.GetDescendants()) {
-										if (descendant.IsA("BasePart")) {
-											descendant.CanCollide = true;
-										}
-									}
-								});
-								task.delay(2, () => {
-									if (camera) {
-										const myCharacter = Players.LocalPlayer.Character;
-										if (!myCharacter) return;
-										const myHuman = myCharacter.WaitForChild("Humanoid") as Humanoid;
-										camera.CameraSubject = myHuman;
-										camera.CameraType = Enum.CameraType.Custom;
-									}
-								});
-							});
+							// RunService.Heartbeat.Once(() => {
+							// 	// camera.CameraSubject = primaryPart;
+							// 	camera.CameraType = Enum.CameraType.Scriptable;
+							// 	// primaryPart.CFrame = primaryPart.CFrame.add(new Vector3(0, 0.2, 0));
+							// 	TweenService.Create(
+							// 		primaryPart,
+							// 		new TweenInfo(3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+							// 		{ Position: origin.add(new Vector3(0, 50, 0)) },
+							// 	).Play();
+							// 	camera.CFrame = CFrame.lookAt(
+							// 		primaryPart.Position.add(new Vector3(0, 50, 0)),
+							// 		primaryPart.Position,
+							// 		Vector3.xAxis,
+							// 	);
+							// 	task.delay(0.1, () => {
+							// 		for (const descendant of existingModel.GetDescendants()) {
+							// 			if (descendant.IsA("BasePart")) {
+							// 				descendant.CanCollide = true;
+							// 			}
+							// 		}
+							// 	});
+							// 	task.delay(3, () => {
+							// 		// If we don't have a camera then there's a bigger issue but just check to shut the type checker up
+							// 		if (!camera) return;
+							// 		camera.CameraType = Enum.CameraType.Custom;
+							// 	});
+							// });
 						}
-
-						// task.delay(2, () => {
-						// 	if (primaryPart && primaryPart.Parent) {
-						// 		const tween = TweenService.Create(
-						// 			primaryPart,
-						// 			new TweenInfo(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-						// 			{
-						// 				AssemblyLinearVelocity: Vector3.zero,
-						// 			},
-						// 		);
-						// 		tween.Play();
-						// 		tween.Completed.Once(() => {
-						// 			primaryPart.AssemblyLinearVelocity = Vector3.zero;
-						// 		});
-						// 	}
-						// });
 					} else {
 						existingModel.Destroy();
 					}
