@@ -274,7 +274,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 							Position={UDim2.fromScale(0.508, 0.26)}
 							Size={UDim2.fromScale(1.02, 0.438)}
 							Text={props.rarity}
-							TextColor3={gameConstants.RARITY_COLORS[props.rarity]}
+							TextColor3={new Color3()}
 							// TextScaled={true}
 							// TextWrapped={true}
 							TextSize={px(25)}
@@ -633,11 +633,7 @@ export const ShopComponent: React.FC<ShopProps> = (props) => {
 				Position={UDim2.fromScale(0.5, 0.5)}
 				Size={UDim2.fromScale(1, 1)}
 			/>
-			<ExitButton
-				uiController={props.uiController}
-				uiName={gameConstants.SHOP_UI}
-				isMenuVisible={visible}
-			/>
+			<ExitButton uiController={props.uiController} uiName={gameConstants.SHOP_UI} isMenuVisible={visible} />
 			<frame
 				BackgroundTransparency={1}
 				key={"Select Menu Frame"}

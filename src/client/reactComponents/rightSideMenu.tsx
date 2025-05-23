@@ -140,6 +140,8 @@ export const RightSideMenu = (props: MenuProps) => {
 	const [hasDaily, setHasDaily] = useState(hasDailyAtom());
 	const [menuPos, setMenuPos] = useMotion(DEFAULT_POS);
 	const [nextClaimTime, setNextClaimTime] = useState(nextClaimTimeAtom());
+	const [giftRotation, giftRotationMotion] = useMotion(0);
+	const [dailyRotation, dailyRotationMotion] = useMotion(0);
 
 	const px = usePx();
 
@@ -202,6 +204,50 @@ export const RightSideMenu = (props: MenuProps) => {
 		subscribe(hasDailyAtom, setHasDaily);
 		subscribe(nextClaimTimeAtom, setNextClaimTime);
 	}, []);
+
+	useEffect(() => {
+		if (hasGift) {
+			let running = true;
+			const thread = task.spawn(() => {
+				while (running) {
+					giftRotationMotion.spring(30, springs.responsive);
+					task.wait(0.1);
+					giftRotationMotion.spring(-30, springs.responsive);
+					task.wait(0.1);
+					giftRotationMotion.spring(0, springs.bubbly);
+					task.wait(1);
+				}
+			});
+			return () => {
+				running = false;
+				task.cancel(thread);
+			};
+		} else {
+			giftRotationMotion.spring(0, springs.responsive);
+		}
+	}, [hasGift]);
+
+	useEffect(() => {
+		if (hasDaily) {
+			let running = true;
+			const thread = task.spawn(() => {
+				while (running) {
+					dailyRotationMotion.spring(30, springs.responsive);
+					task.wait(0.1);
+					dailyRotationMotion.spring(-30, springs.responsive);
+					task.wait(0.1);
+					dailyRotationMotion.spring(0, springs.bubbly);
+					task.wait(1);
+				}
+			});
+			return () => {
+				running = false;
+				task.cancel(thread);
+			};
+		} else {
+			dailyRotationMotion.spring(0, springs.responsive);
+		}
+	}, [hasDaily]);
 
 	const MENU_MOBILE_SCALE = 1.25;
 
@@ -342,6 +388,7 @@ export const RightSideMenu = (props: MenuProps) => {
 								Position={UDim2.fromScale(0.5, 0.5)}
 								ScaleType={Enum.ScaleType.Fit}
 								Size={UDim2.fromScale(1, 1)}
+								Rotation={giftRotation}
 							/>
 
 							<textlabel
@@ -541,6 +588,7 @@ export const RightSideMenu = (props: MenuProps) => {
 								Position={UDim2.fromScale(0.5, 0.6)}
 								ScaleType={Enum.ScaleType.Fit}
 								Size={UDim2.fromScale(1, 1)}
+								Rotation={dailyRotation}
 							/>
 							<imagelabel
 								Image={UserInputService.GetImageForKeyCode(Enum.KeyCode.DPadLeft)}

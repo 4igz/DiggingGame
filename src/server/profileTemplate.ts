@@ -66,6 +66,9 @@ export const profileTemplate = {
 
 	lastQuestReset: 0,
 
+	// Version flags
+	questResetVersion: 2, // incrementing this will migrate all quest to be reset
+
 	// This being marked means that the player is an exploiter, and is either going to be marked for future ban waves, or will not show up on leaderboards.
 	// We might also use this flag to be more strict on them when it comes to serverside checks.
 	isExploiter: false,

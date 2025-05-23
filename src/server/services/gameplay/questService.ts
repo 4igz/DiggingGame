@@ -9,6 +9,7 @@ import { InventoryService } from "./inventoryService";
 import { QuestProgress } from "shared/networkTypes";
 import { Players } from "@rbxts/services";
 import { debugWarn } from "shared/util/logUtil";
+import profileTemplate from "server/profileTemplate";
 
 @Service({})
 export class QuestService implements OnStart {
@@ -127,6 +128,14 @@ export class QuestService implements OnStart {
 		});
 
 		this.profileService.onProfileLoaded.Connect((player, profile) => {
+			if (
+				profile.Data.questResetVersion === undefined ||
+				profile.Data.questResetVersion < profileTemplate.questResetVersion
+			) {
+				profile.Data.lastQuestReset = 0;
+				this.profileService.setProfile(player, profile);
+			}
+
 			this.checkAndReadyQuestProgress(player, profile);
 
 			Events.updateQuestProgress.fire(player, profile.Data.questProgress);
@@ -151,9 +160,9 @@ export class QuestService implements OnStart {
 				}
 			}
 
-			if (tick() - lastReset > this.QUEST_RESET_TIME || !keysMatch) {
+			if (os.time() - lastReset > this.QUEST_RESET_TIME || !keysMatch) {
 				profile.Data.questProgress = table.clone(this.DEFAULT_QUEST_PROGRESS);
-				profile.Data.lastQuestReset = tick();
+				profile.Data.lastQuestReset = os.time();
 			}
 
 			// Ensure only one quest is active
