@@ -64,7 +64,7 @@ const enableDebugWarnings = true;
 
 const logWarn = (message: string) => {
 	if (enableDebugWarnings) {
-		debugWarn(message, "AutoDigging");
+		debugWarn(message, "AutoDigging", true);
 	}
 };
 
@@ -143,6 +143,10 @@ export class AutoDigging implements OnStart, OnRender {
 
 		// Start a periodic check to see if we might be stuck
 		this.beginStuckCheck();
+
+		Functions.getAutoDigToggled.invoke().then((toggle) => {
+			this.setAutoDiggingEnabled(toggle);
+		});
 	}
 
 	onRender(): void {
@@ -451,6 +455,7 @@ export class AutoDigging implements OnStart, OnRender {
 		}
 
 		Signals.setAutoDiggingEnabled.Fire(enabled);
+		Events.toggleAutoDig(enabled);
 		logWarn(`Auto-digging is now ${enabled ? "enabled" : "disabled"}`);
 	}
 }

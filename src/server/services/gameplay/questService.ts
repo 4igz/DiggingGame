@@ -17,7 +17,7 @@ export class QuestService implements OnStart {
 	private questsReady = new Array<Player>();
 
 	private readonly DEFAULT_QUEST_PROGRESS = new Map<keyof typeof questConfig, QuestProgress>(
-		Object.keys(questConfig).map((questName) => [questName, { stage: 0, active: false, completed: false }]),
+		Object.keys(questConfig).map((questName) => [questName, { stage: 0, active: false }]),
 	);
 
 	constructor(
@@ -55,6 +55,7 @@ export class QuestService implements OnStart {
 				return;
 			}
 			if (questProgress.stage >= questConfig[questline].size()) {
+				questProgress.stage = 0;
 				return;
 			}
 			// If any previous active quest that's not completed, set it to inactive
@@ -93,6 +94,9 @@ export class QuestService implements OnStart {
 				this.completeQuest(player, questName, questProgress.stage);
 				questProgress.active = false;
 				questProgress.stage++;
+				if (questProgress.stage >= questConfig[questName].size()) {
+					questProgress.stage = 0;
+				}
 				profile.Data.questProgress.set(questName, questProgress);
 				Events.updateQuestProgress.fire(player, profile.Data.questProgress);
 				this.profileService.setProfile(player, profile);
@@ -168,6 +172,9 @@ export class QuestService implements OnStart {
 			// Ensure only one quest is active
 			let activeQuest = false;
 			for (const [key, value] of profile.Data.questProgress) {
+				if (value.stage >= questConfig[key].size()) {
+					value.stage = 0;
+				}
 				if (value.active) {
 					if (activeQuest) {
 						value.active = false;

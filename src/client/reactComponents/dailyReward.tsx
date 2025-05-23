@@ -480,8 +480,10 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 			setLastClaimed(lastClaimTime);
 		});
 
-		task.delay(1, () => {
-			props.uiController.toggleUi(gameConstants.DAILY_REWARD_UI);
+		Functions.getAutoDigToggled.invoke().then((toggle) => {
+			if (!toggle) {
+				props.uiController.toggleUi(gameConstants.DAILY_REWARD_UI);
+			}
 		});
 	}, []);
 

@@ -73,12 +73,12 @@ export class DetectorService implements OnStart, OnTick {
 			}
 		});
 
-		Signals.startDigging.Connect((player, target) => {
-			this.startDigging(player, target);
+		Signals.startDigging.Connect((player, target, quitExisting) => {
+			this.startDigging(player, target, quitExisting);
 		});
 	}
 
-	startDigging(player: Player, target: Target) {
+	startDigging(player: Player, target: Target, quitExistingTarget: boolean = true) {
 		const character = player.Character;
 		if (!character) return;
 		const humanoid = character.FindFirstChild("Humanoid") as Humanoid;
@@ -87,11 +87,11 @@ export class DetectorService implements OnStart, OnTick {
 		if (!profile) return;
 		// Cache the target the player is digging so we don't have to search for it again
 		this.targetService.playerDiggingTargets.set(player, target);
+		this.targetService.playerStartedDiggingTimes.set(player, tick());
 		// Begin digging automatically
 		humanoid.WalkSpeed = 0;
 
 		let strength = profile.Data.strength;
-		this.targetService.playerStartedDiggingTimes.set(player, tick() + player.GetNetworkPing());
 		Events.beginDigging(
 			player,
 			{
@@ -105,6 +105,7 @@ export class DetectorService implements OnStart, OnTick {
 				base: target.base,
 			},
 			{ strength, shovel: profile.Data.equippedShovel },
+			!quitExistingTarget,
 		);
 		this.startedDigging.Fire(player, target);
 
@@ -131,11 +132,17 @@ export class DetectorService implements OnStart, OnTick {
 			detector.Parent = backpack;
 		}
 
-		humanoid.UnequipTools();
+		if (quitExistingTarget) {
+			humanoid.UnequipTools();
+		}
 
-		const shovel = backpack.FindFirstChild(profile.Data.equippedShovel) as Tool;
+		const shovel =
+			(backpack.FindFirstChild(profile.Data.equippedShovel) as Tool) ??
+			(character.FindFirstChild(profile.Data.equippedShovel) as Tool);
 		if (shovel) {
-			shovel.Parent = character;
+			if (shovel.Parent !== character) {
+				shovel.Parent = character;
+			}
 
 			// If the shovel changes ancestry while digging, we can end the digging process
 			shovel.AncestryChanged.Once(() => {

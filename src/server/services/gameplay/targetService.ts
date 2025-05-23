@@ -284,13 +284,15 @@ export class TargetService implements OnStart {
 			if (!character) return false;
 
 			if (character.GetPivot().Position.sub(target.position).Magnitude > gameConstants.MIN_DIG_REQ_DIST) return;
-			Signals.startDigging.Fire(player, target);
+			Signals.startDigging.Fire(player, target, true);
 		});
 
 		// "Dig Everywhere" dig request
 		Functions.requestDigging.setCallback((player) => {
 			if (this.playerLastSuccessfulDigCooldown.has(player)) return false;
-			if (this.getPlayerTarget(player)) return false;
+			if (this.getPlayerTarget(player)) {
+				this.endDigging(player, true, false);
+			}
 
 			const profile = this.profileService.getProfileLoaded(player).expect();
 
@@ -336,7 +338,7 @@ export class TargetService implements OnStart {
 			Events.targetSpawnSuccess.fire(player, position);
 
 			// Start digging immediately:
-			Signals.startDigging.Fire(player, target);
+			Signals.startDigging.Fire(player, target, false);
 
 			return true;
 		});
@@ -392,6 +394,17 @@ export class TargetService implements OnStart {
 
 		Functions.getCurrentStrength.setCallback((player) => {
 			return this.getDigStrength(player);
+		});
+
+		Events.toggleAutoDig.connect((player, enabled) => {
+			const profile = this.profileService.getProfileLoaded(player).expect();
+			profile.Data.autoDig = enabled;
+			this.profileService.setProfile(player, profile);
+		});
+
+		Functions.getAutoDigToggled.setCallback((player) => {
+			const profile = this.profileService.getProfileLoaded(player).expect();
+			return profile.Data.autoDig;
 		});
 	}
 

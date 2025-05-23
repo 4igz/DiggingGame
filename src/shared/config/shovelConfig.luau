@@ -43,13 +43,13 @@ local shovelConfig: { [string]: Shovel } = {
 		price = 10000,
 	},
 	AmethystShovel = {
-		strengthMult = 7,
+		strengthMult = 9,
 		rarityType = "Uncommon",
 		itemImage = "rbxassetid://137452283112320",
 		price = 25000,
 	},
 	RubyShovel = {
-		strengthMult = 10,
+		strengthMult = 14,
 		rarityType = "Rare",
 		itemImage = "rbxassetid://128554784882437",
 		price = 100000,
@@ -61,14 +61,14 @@ local shovelConfig: { [string]: Shovel } = {
 		price = 250000,
 	},
 	DemonicShovel = {
-		strengthMult = 25,
+		strengthMult = 30,
 		rarityType = "Epic",
 		itemImage = "rbxassetid://77934386944359",
 		price = 750000,
 	},
 
 	HeavenlyShovel = {
-		strengthMult = 35,
+		strengthMult = 40,
 		rarityType = "Epic",
 		itemImage = "rbxassetid://115558690172113",
 		price = 2000000,
@@ -104,7 +104,7 @@ local shovelConfig: { [string]: Shovel } = {
 	--
 
 	CyberShovel = {
-		strengthMult = 50,
+		strengthMult = 55,
 		rarityType = "Legendary",
 		itemImage = "rbxassetid://129273316911656",
 		price = 10000000,

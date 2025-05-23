@@ -79,6 +79,9 @@ const DigProduct = (props: MoreDiggingProduct) => {
 			productId={gameConstants.DEVPRODUCT_IDS["MoreDigging"]}
 			productType={Enum.InfoType.Product}
 			size={UDim2.fromScale(0.958192, 0.856338)}
+			predicate={() => {
+				return digLevel < gameConstants.MAX_MULTIDIG_LEVEL;
+			}}
 			layoutOrder={6}
 		>
 			<imagelabel
@@ -410,6 +413,7 @@ export const GamepassShop = (props: GamepassShopProps) => {
 	const [enteredCode, setEnteredCode] = useState("");
 	const [packNum, setPackNum] = useState(0);
 	const [packHoverState, setPackHoverState] = useState(0);
+	const [activeLimitedOffer, setActiveLimitedOffer] = useState(highestLimitedOfferPack());
 
 	const px = usePx();
 
@@ -540,6 +544,19 @@ export const GamepassShop = (props: GamepassShopProps) => {
 			connection.Disconnect();
 		};
 	}, [LABEL_REFS.currency, scrollingFrameRef]);
+
+	useEffect(() => {
+		if (limitedTimeLeft === 0) {
+			setLimitedTimeLeft(3600);
+			setPackNum((prev) => {
+				let newNum = math.min(++prev, 1);
+				if (newNum === 2) {
+					newNum = 0;
+				}
+				return newNum;
+			});
+		}
+	}, [limitedTimeLeft]);
 
 	return (
 		<frame
@@ -1311,10 +1328,7 @@ export const GamepassShop = (props: GamepassShopProps) => {
 								<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
 
 								<TooltipStats
-									reward={
-										limitedOffer[math.min(highestLimitedOfferPack(), limitedOffer.size() - 1)][0] ??
-										""
-									}
+									reward={limitedOffer[math.min(packNum, limitedOffer.size() - 1)][0] ?? ""}
 									visible={packHoverState === 1}
 								/>
 
@@ -1401,11 +1415,8 @@ export const GamepassShop = (props: GamepassShopProps) => {
 									Position={UDim2.fromScale(0.5, 0.5)}
 									Size={UDim2.fromScale(1, 1)}
 									Image={
-										getRewardImage(
-											limitedOffer[
-												math.min(highestLimitedOfferPack(), limitedOffer.size() - 1)
-											][0],
-										) ?? ""
+										getRewardImage(limitedOffer[math.min(packNum, limitedOffer.size() - 1)][0]) ??
+										""
 									}
 								>
 									<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
@@ -1435,10 +1446,7 @@ export const GamepassShop = (props: GamepassShopProps) => {
 								/>
 
 								<TooltipStats
-									reward={
-										limitedOffer[math.min(highestLimitedOfferPack(), limitedOffer.size() - 1)][1] ??
-										""
-									}
+									reward={limitedOffer[math.min(packNum, limitedOffer.size() - 1)][1] ?? ""}
 									visible={packHoverState === 2}
 								/>
 
@@ -1515,11 +1523,8 @@ export const GamepassShop = (props: GamepassShopProps) => {
 									BackgroundTransparency={1}
 									Position={UDim2.fromScale(0.5, 0.5)}
 									Image={
-										getRewardImage(
-											limitedOffer[
-												math.min(highestLimitedOfferPack(), limitedOffer.size() - 1)
-											][1],
-										) ?? ""
+										getRewardImage(limitedOffer[math.min(packNum, limitedOffer.size() - 1)][1]) ??
+										""
 									}
 									Size={UDim2.fromScale(1, 1)}
 								>
@@ -1549,11 +1554,8 @@ export const GamepassShop = (props: GamepassShopProps) => {
 									BackgroundTransparency={1}
 									Position={UDim2.fromScale(0.5, 0.5)}
 									Image={
-										getRewardImage(
-											limitedOffer[
-												math.min(highestLimitedOfferPack(), limitedOffer.size() - 1)
-											][2],
-										) ?? ""
+										getRewardImage(limitedOffer[math.min(packNum, limitedOffer.size() - 1)][2]) ??
+										""
 									}
 									Size={UDim2.fromScale(1, 1)}
 								>
@@ -1598,7 +1600,7 @@ export const GamepassShop = (props: GamepassShopProps) => {
 				<frame
 					BackgroundTransparency={1}
 					LayoutOrder={3}
-					Visible={limitedTimeLeft > 0 && limitedOffer[highestLimitedOfferPack()] !== undefined}
+					Visible={limitedTimeLeft > 0 && limitedOffer[packNum] !== undefined}
 					key={"SpaceAfterLimitedOffer"}
 					Size={UDim2.fromScale(1, 0.0225352)}
 				/>

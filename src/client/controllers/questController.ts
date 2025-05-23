@@ -153,12 +153,12 @@ export class QuestController implements OnStart {
 					debugWarn(`No quest progress found for ${npcName}`);
 					return;
 				}
-				if (currentProgress.stage >= questline.size()) {
-					// Questline is complete
-					debugWarn(`Questline for ${npcName} is complete`);
-					Signals.actionPopup.Fire(`${npcName} questline is complete.`);
-					return;
-				}
+				// if (currentProgress.stage >= questline.size()) {
+				// 	// Questline is complete
+				// 	debugWarn(`Questline for ${npcName} is complete`);
+				// 	Signals.actionPopup.Fire(`${npcName} questline is complete.`);
+				// 	return;
+				// }
 				const quest = questline[currentProgress.stage];
 				if (!quest) {
 					warn(`Using invalid index (${currentProgress.stage}) for questline ${npcName}`);

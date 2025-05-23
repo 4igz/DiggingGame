@@ -53,13 +53,14 @@ interface ClientToServerEvents {
 	completedTutorial: () => void;
 	claimTimedReward: () => void;
 	claimSpontaneousOffer: (key: number) => void;
+	toggleAutoDig: (enabled: boolean) => void;
 
 	// Anti exploit event
 	selfReport: (flag: string) => void;
 }
 
 interface ServerToClientEvents {
-	beginDigging: (target: NetworkedTarget, digInfo: PlayerDigInfo) => void;
+	beginDigging: (target: NetworkedTarget, digInfo: PlayerDigInfo, usingDigEverywhere: boolean) => void;
 	endDiggingServer: (diggingComplete: boolean, itemId?: string) => void;
 	targetAdded: (itemName: keyof typeof fullTargetConfig, weight: number, mapName: keyof typeof mapConfig) => void;
 	updateLuckRoll: (roll: number, serverTime: number) => void;
@@ -159,6 +160,7 @@ interface ClientToServerFunctions {
 	getTutorial: () => boolean;
 	getClaimedTimedReward: () => boolean;
 	getClaimedSpontaneousOffer: () => boolean;
+	getAutoDigToggled: () => boolean;
 }
 
 interface ServerToClientFunctions {}

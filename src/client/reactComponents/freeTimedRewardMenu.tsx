@@ -400,14 +400,14 @@ export const FreeTimedRewardMenu = (props: { uiController: UiController; visible
 
 				<imagelabel
 					BackgroundTransparency={1}
-					Image={"rbxassetid://14530877101"}
+					Image={"rbxassetid://100601270697881"}
 					ImageColor3={Color3.fromRGB(132, 123, 123)}
 					key={"Bar"}
 					Position={UDim2.fromScale(0.613596, 0.309143)}
 					ScaleType={Enum.ScaleType.Slice}
 					Size={UDim2.fromScale(0.362, 0.384)}
-					SliceCenter={new Rect(197, 189, 223, 206)}
-					SliceScale={scaledSlice(0.2)}
+					SliceCenter={new Rect(73, 137, 523, 562)}
+					SliceScale={0.2}
 					ZIndex={5}
 				>
 					<frame BackgroundTransparency={1} key={"M"} Size={UDim2.fromScale(1, 1)} ZIndex={10}>
@@ -417,7 +417,13 @@ export const FreeTimedRewardMenu = (props: { uiController: UiController; visible
 					<textlabel
 						AnchorPoint={new Vector2(0.5, 0.5)}
 						BackgroundTransparency={1}
-						FontFace={Font.fromEnum(Enum.Font.GothamBlack)}
+						FontFace={
+							new Font(
+								"rbxasset://fonts/families/GothamSSm.json",
+								Enum.FontWeight.Heavy,
+								Enum.FontStyle.Normal,
+							)
+						}
 						key={"Amount"}
 						Position={UDim2.fromScale(0.5, 0.5)}
 						Size={UDim2.fromScale(1, 0.802)}
@@ -432,13 +438,12 @@ export const FreeTimedRewardMenu = (props: { uiController: UiController; visible
 					<imagelabel
 						AnchorPoint={new Vector2(0, 0.5)}
 						BackgroundTransparency={1}
-						Image={"rbxassetid://14530877101"}
-						ImageColor3={Color3.fromRGB(255, 238, 238)}
+						Image={"rbxassetid://100601270697881"}
 						key={"InBar"}
 						Position={UDim2.fromScale(-0.00648686, 0.5)}
 						ScaleType={Enum.ScaleType.Slice}
-						Size={UDim2.fromScale(0.15, 1).Lerp(UDim2.fromScale(1, 1), minutes / REQUIRED_TIME_MINUTES)}
-						SliceCenter={new Rect(197, 189, 223, 206)}
+						Size={UDim2.fromScale(0.1, 1).Lerp(UDim2.fromScale(1, 1), minutes / REQUIRED_TIME_MINUTES)}
+						SliceCenter={new Rect(73, 137, 523, 562)}
 						SliceScale={scaledSlice(0.2)}
 						ZIndex={7}
 					>
@@ -455,18 +460,6 @@ export const FreeTimedRewardMenu = (props: { uiController: UiController; visible
 						/>
 					</imagelabel>
 				</imagelabel>
-
-				<uigradient
-					key={"UIGradient"}
-					Color={
-						new ColorSequence([
-							new ColorSequenceKeypoint(0, Color3.fromRGB(11, 88, 204)),
-							new ColorSequenceKeypoint(0.0415225, Color3.fromRGB(11, 90, 205)),
-							new ColorSequenceKeypoint(1, Color3.fromRGB(42, 221, 234)),
-						])
-					}
-					Rotation={180}
-				/>
 			</imagelabel>
 
 			<AnimatedButton

@@ -32,6 +32,8 @@ export const profileTemplate = {
 	level: 1,
 	experience: 0,
 
+	autoDig: false,
+
 	// Stats
 	treasuresDug: 0,
 	playtime: 0,

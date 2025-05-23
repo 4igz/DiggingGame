@@ -419,7 +419,7 @@ local trashConfig = {
 		basePrice = 2,
 		itemImage = "rbxassetid://80374057285043",
 		indexRarity = 2,
-		-- hasCutscene = true,
+		hasCutscene = true,
 	},
 	Scrap = {
 		rarity = 1,
@@ -428,7 +428,7 @@ local trashConfig = {
 		basePrice = 2,
 		itemImage = "rbxassetid://110934630212562",
 		indexRarity = 2,
-		-- hasCutscene = true,
+		hasCutscene = true,
 	},
 	["Old T-Shirt"] = {
 		rarity = 1,
@@ -437,7 +437,7 @@ local trashConfig = {
 		basePrice = 2,
 		itemImage = "rbxassetid://134314922415893",
 		indexRarity = 2,
-		-- hasCutscene = true,
+		hasCutscene = true,
 	},
 	["Old Boot"] = {
 		rarity = 1,
@@ -446,7 +446,7 @@ local trashConfig = {
 		basePrice = 2,
 		itemImage = "rbxassetid://91884190576086",
 		indexRarity = 2,
-		-- hasCutscene = true,
+		hasCutscene = true,
 	},
 	["Old Ring"] = {
 		rarity = 1,
@@ -455,7 +455,7 @@ local trashConfig = {
 		basePrice = 2,
 		itemImage = "rbxassetid://87736149466419",
 		indexRarity = 2,
-		-- hasCutscene = true,
+		hasCutscene = true,
 	},
 	["Old Coin"] = {
 		rarity = 1,
@@ -464,7 +464,7 @@ local trashConfig = {
 		basePrice = 2,
 		itemImage = "rbxassetid://111334825894769",
 		indexRarity = 2,
-		-- hasCutscene = true,
+		hasCutscene = true,
 	},
 	["Old Mitten"] = {
 		rarity = 1,
@@ -474,7 +474,7 @@ local trashConfig = {
 		itemImage = "rbxassetid://114451456116905",
 		description = "An old mitten.",
 		indexRarity = 2,
-		-- hasCutscene = true,
+		hasCutscene = true,
 	},
 }
 local fullTargetConfig = Sift.Dictionary.merge(targetConfig, trashConfig)

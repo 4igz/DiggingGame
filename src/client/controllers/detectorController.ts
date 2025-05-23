@@ -80,6 +80,8 @@ export class DetectorController implements OnStart {
 
 		let activeCross: BasePart | undefined = undefined;
 
+		const usingDigEverywhere = false;
+
 		const HOLD_LENGTH = 0.25;
 		const DETECTION_KEYBINDS = [Enum.KeyCode.ButtonR2, Enum.UserInputType.MouseButton1];
 
@@ -193,10 +195,6 @@ export class DetectorController implements OnStart {
 							(isAutoDigging && autoDigRunning) // And we aren't autodigging
 						)
 							return;
-						if (isInventoryFull) {
-							Signals.inventoryFull.Fire();
-							return;
-						}
 						holding = true;
 						holdStart = tick();
 					} else if (inputState === Enum.UserInputState.End) {
@@ -361,9 +359,11 @@ export class DetectorController implements OnStart {
 		Events.targetDespawned.connect(() => {
 			awaitingResponse = false;
 			this.targetActive = false;
-			this.hideWaypointArrow();
-			if (activeCross !== undefined) {
-				(activeCross as BasePart).Parent = undefined;
+			if (!usingDigEverywhere) {
+				this.hideWaypointArrow();
+				if (activeCross !== undefined) {
+					(activeCross as BasePart).Parent = undefined;
+				}
 			}
 			if (areaIndicator) {
 				areaIndicatorPool.release(areaIndicator);
@@ -372,20 +372,26 @@ export class DetectorController implements OnStart {
 		});
 
 		Events.endDiggingServer.connect(() => {
-			this.hideWaypointArrow();
-			if (activeCross !== undefined) {
-				(activeCross as BasePart).Parent = undefined;
+			if (!usingDigEverywhere) {
+				this.hideWaypointArrow();
+				if (activeCross !== undefined) {
+					(activeCross as BasePart).Parent = undefined;
+				}
 			}
+			// usingDigEverywhere = false;
 			if (areaIndicator) {
 				areaIndicatorPool.release(areaIndicator);
 				areaIndicator = undefined;
 			}
 		});
 
-		Events.beginDigging.connect(() => {
-			this.hideWaypointArrow();
-			if (activeCross !== undefined) {
-				(activeCross as BasePart).Parent = undefined;
+		Events.beginDigging.connect((_t, _d, isDigEverywhere) => {
+			// usingDigEverywhere = isDigEverywhere;
+			if (!isDigEverywhere) {
+				this.hideWaypointArrow();
+				if (activeCross !== undefined) {
+					(activeCross as BasePart).Parent = undefined;
+				}
 			}
 		});
 
