@@ -29,12 +29,15 @@ import { allowDigging } from "client/atoms/detectorAtoms";
 import { ObjectPool } from "shared/util/objectPool";
 import PartCacheModule from "@rbxts/partcache";
 import { TutorialController } from "./tutorialController";
-import { DETECT_STEP, DIG_STEP, QUEST_STEP, SELL_STEP, TREASURE_STEP } from "shared/config/tutorialConfig";
+import { DIG_STEP, QUEST_STEP, SELL_STEP, TREASURE_STEP } from "shared/config/tutorialConfig";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 import { fullTargetConfig } from "shared/config/targetConfig";
+import { createMotion } from "@rbxts/ripple";
 
 const camera = Workspace.CurrentCamera;
 const holeTroveMap = new Map<Trove, [Signal<(size: number) => void>, Sound, BasePart]>();
+
+const cutsceneCameraMotion = createMotion(new CFrame());
 
 const camShake = new CameraShaker(
 	Enum.RenderPriority.Camera.Value,
@@ -48,6 +51,7 @@ const DIG_KEYBINDS = [Enum.KeyCode.ButtonR2, Enum.KeyCode.ButtonL2, Enum.UserInp
 export class ShovelController implements OnStart {
 	public diggingActive = false;
 	public lastDiggingTime = 0;
+	public cutsceneActive = false;
 
 	public onDiggingComplete = new Signal<() => void>();
 	public canStartDigging = false;
@@ -127,6 +131,8 @@ export class ShovelController implements OnStart {
 		const digVfx = VfxFolder.WaitForChild("DiggingVfx") as BasePart;
 		const rewardVfx = VfxFolder.WaitForChild("Reward") as BasePart;
 		const digCompleteVfx = VfxFolder.WaitForChild("DigCompletionVfx") as BasePart;
+		const suspenseCutsceneVfx = VfxFolder.WaitForChild("DigCutsceneSuspenseVFX");
+		const endCutsceneVfx = VfxFolder.WaitForChild("DigCutsceneEndVFX");
 		const digModels = new Map<string, Model>();
 		const digTroves = new Map<string, Trove>();
 		const digOutSound = SoundService.WaitForChild("Tools").WaitForChild("Dig out") as Sound;
@@ -144,6 +150,8 @@ export class ShovelController implements OnStart {
 		let digGoal = 0;
 
 		let digRequestInProgress = false;
+
+		let currentDigTrack: AnimationTrack | undefined = undefined;
 
 		let autoSendDigCD = interval(math.max(gameConstants.AUTO_DIG_CLICK_INTERVAL, gameConstants.DIG_TIME_SEC));
 		let nearbySpawnCheckCD = interval(0.1);
@@ -166,6 +174,8 @@ export class ShovelController implements OnStart {
 			const digTrack = animator.LoadAnimation(shovelDiggingAnimation as Animation);
 			digTrack.Priority = Enum.AnimationPriority.Action;
 			digTrack.Looped = true;
+
+			currentDigTrack = digTrack;
 
 			const fullIdle = animator.LoadAnimation(CANDIG_shovelFullbodyAnimation as Animation);
 			fullIdle.Priority = Enum.AnimationPriority.Idle;
@@ -906,8 +916,8 @@ export class ShovelController implements OnStart {
 							return;
 						}
 
-						const treasureCfg = fullTargetConfig[existingModel.Name];
-						const hasCutscene = treasureCfg.hasCutscene ?? false;
+						// const treasureCfg = fullTargetConfig[existingModel.Name];
+						const hasCutscene = false; //treasureCfg.hasCutscene ?? false;
 						const primaryPart =
 							existingModel.PrimaryPart ?? existingModel.FindFirstChildWhichIsA("BasePart");
 						const THROW_FORCE = observeAttribute("DigThrowForce", 20) as number;
@@ -951,65 +961,126 @@ export class ShovelController implements OnStart {
 							});
 						} else if (hasCutscene && camera !== undefined) {
 							// Makeshift cutscene. Basically just throws higher and sets camera subject to the treasure.
-							RunService.Heartbeat.Once(() => {
-								const originalCameraType = camera.CameraType;
-								const originalCameraSubject = camera.CameraSubject;
-								camera.CameraType = Enum.CameraType.Scriptable;
-								// Prepare the treasure for the cutscene
-								const minYOffset = 6;
-								const extentsY = existingModel.GetExtentsSize().Y;
-								const yOffset = math.max(extentsY, minYOffset);
-								existingModel.PivotTo(new CFrame(origin).add(new Vector3(0, yOffset, 0)));
-								for (const descendant of existingModel.GetDescendants()) {
-									if (descendant.IsA("BasePart")) {
-										descendant.Anchored = true;
-										descendant.CanCollide = false;
-									}
+							this.cutsceneActive = true;
+
+							// Prepare the treasure for the cutscene
+							const minYOffset = 4;
+							const extentsY = existingModel.GetExtentsSize().Y;
+							// Ensure the treasure is below ground by using the negative of the offset
+							const yOffset = -math.max(extentsY, minYOffset);
+							existingModel.PivotTo(new CFrame(origin).add(new Vector3(0, yOffset, 0)));
+							for (const descendant of existingModel.GetDescendants()) {
+								if (descendant.IsA("BasePart")) {
+									descendant.Anchored = true;
+									descendant.CanCollide = false;
 								}
-								const cameraDistance = 15; // Distance from treasure
-								const cameraAngle = 30; // Angle in degrees looking down at treasure
-								const cameraHeight = 10; // Additional height offset
-								const treasureTween = TweenService.Create(
-									primaryPart,
-									new TweenInfo(3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-									{ Position: origin.add(new Vector3(0, 50, 0)) },
-								);
-								let cameraConnection: RBXScriptConnection;
-								cameraConnection = RunService.RenderStepped.Connect(() => {
-									if (!primaryPart || !primaryPart.Parent) {
-										cameraConnection.Disconnect();
-										return;
-									}
-									const treasurePos = primaryPart.Position;
-									const angleRad = math.rad(cameraAngle);
-									const cameraOffset = new Vector3(
+							}
+							// Distance from treasure
+							const modelSize = existingModel.GetExtentsSize();
+							const cameraDistance = math.max(4.5, modelSize.Magnitude / 2 + 4.5);
+							const cameraAngle = 30; // Angle in degrees looking down at treasure
+							const cameraHeight = 10; // Additional height offset
+							const treasureTween = TweenService.Create(
+								primaryPart,
+								new TweenInfo(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+								{ Position: origin.add(new Vector3(0, 40, 0)) },
+							);
+							let angledPov = false;
+							const angleRad = math.rad(cameraAngle);
+							const cameraOffset = angledPov
+								? new Vector3(
 										0,
 										cameraHeight + math.sin(angleRad) * cameraDistance,
 										math.cos(angleRad) * cameraDistance,
-									);
-									const cameraPos = treasurePos.add(cameraOffset);
-									// Look at the treasure with a slight upward bias
-									camera.CFrame = CFrame.lookAt(cameraPos, treasurePos, Vector3.yAxis);
+								  )
+								: new Vector3(0, cameraHeight + cameraDistance, 0);
+							let pos = primaryPart.Position.add(cameraOffset);
+							const cleanMotion = cutsceneCameraMotion.start();
+							cutsceneCameraMotion.immediate(new CFrame(pos));
+							const RENDERSTEP_ID = "CUTSCENE_ID";
+							const originalCameraType = camera.CameraType;
+							// const originalCameraSubject = camera.CameraSubject;
+							camera.CameraType = Enum.CameraType.Scriptable;
+							camera.CFrame = character.GetPivot(); // Temp pos to not stream out pos
+							camera.Focus = character.GetPivot(); // Temp pos to not stream out pos
+							camera.HeadLocked = false;
+							RunService.BindToRenderStep(RENDERSTEP_ID, Enum.RenderPriority.Camera.Value, () => {
+								camera.Focus = character.GetPivot(); // Temp pos to not stream out pos
+								if (!primaryPart || !primaryPart.Parent) {
+									RunService.UnbindFromRenderStep(RENDERSTEP_ID);
+									return;
+								}
+								const treasurePos = primaryPart.Position;
+
+								const cameraOffset = angledPov
+									? new Vector3(
+											0,
+											cameraHeight + math.sin(angleRad) * cameraDistance,
+											math.cos(angleRad) * cameraDistance,
+									  )
+									: new Vector3(0, cameraHeight + cameraDistance, 0);
+								const cameraPos = treasurePos.add(cameraOffset);
+								// Look at the treasure with a slight upward bias
+								camera.CFrame = CFrame.lookAt(cameraPos, treasurePos, Vector3.yAxis);
+
+								// cutsceneCameraMotion.spring(
+								// 	CFrame.lookAt(cameraPos, treasurePos, Vector3.yAxis),
+								// 	springs.responsive,
+								// );
+							});
+
+							// const cameraStepCleanup = cutsceneCameraMotion.onStep((v) => {
+							// 	camera.CFrame = v;
+							// });
+
+							digTrove.add(cleanMotion);
+							// digTrove.add(cameraStepCleanup);
+
+							const sVfx = suspenseCutsceneVfx.Clone() as PVInstance;
+							digTrove.add(sVfx);
+							sVfx.PivotTo(new CFrame(origin));
+							currentDigTrack?.Play();
+							// Signals.dig.Fire();
+							sVfx.Parent = Workspace;
+							task.wait(1.5);
+
+							currentDigTrack?.Play();
+							if (currentDigTrack) {
+								currentDigTrack.GetMarkerReachedSignal(DIG_ANIMATION_MARKER).Once(() => {
+									camera.Focus = character.GetPivot(); // Temp pos to not stream out pos
+									const endVfx = endCutsceneVfx.Clone() as PVInstance;
+									endVfx.PivotTo(new CFrame(origin));
+									endVfx.Parent = Workspace;
+									digTrove.add(endVfx);
+									Signals.dig.Fire();
+									angledPov = true;
+									treasureTween.Play();
 								});
+								currentDigTrack.DidLoop.Connect(() => {
+									currentDigTrack?.Stop();
+								});
+							} else {
+								const endVfx = endCutsceneVfx.Clone() as PVInstance;
+								endVfx.PivotTo(new CFrame(origin));
+								endVfx.Parent = Workspace;
+								digTrove.add(endVfx);
+								angledPov = true;
 								treasureTween.Play();
-								treasureTween.Completed.Once(() => {
-									cameraConnection.Disconnect();
-									// Reset camera
-									if (camera) {
-										camera.CameraType = originalCameraType;
-										if (originalCameraSubject) {
-											camera.CameraSubject = originalCameraSubject;
-										}
-									}
-									existingModel.Destroy();
-								});
-								task.delay(0.1, () => {
-									for (const descendant of existingModel.GetDescendants()) {
-										if (descendant.IsA("BasePart")) {
-											descendant.CanCollide = true;
-										}
-									}
-								});
+							}
+
+							treasureTween.Completed.Once(() => {
+								// Reset camera
+								if (camera) {
+									camera.CameraType = originalCameraType;
+									camera.HeadLocked = true;
+									// if (originalCameraSubject) {
+									// 	camera.CameraSubject = originalCameraSubject;
+									// }
+								}
+								RunService.UnbindFromRenderStep(RENDERSTEP_ID);
+								cutsceneCameraMotion.stop();
+								existingModel.Destroy();
+								this.cutsceneActive = false;
 							});
 						}
 					} else {
@@ -1018,7 +1089,7 @@ export class ShovelController implements OnStart {
 				}
 
 				// Allow the model to linger for a bit for visual effect
-				task.delay(3, () => {
+				task.delay(4.5, () => {
 					if (existingModel) {
 						const tweenInfo = new TweenInfo(1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out);
 						const tweens = new Array<Promise<void>>();
