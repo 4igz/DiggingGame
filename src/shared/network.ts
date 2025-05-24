@@ -54,6 +54,7 @@ interface ClientToServerEvents {
 	claimTimedReward: () => void;
 	claimSpontaneousOffer: (key: number) => void;
 	toggleAutoDig: (enabled: boolean) => void;
+	claimTutorialRewards: (key: number) => void;
 
 	// Anti exploit event
 	selfReport: (flag: string) => void;

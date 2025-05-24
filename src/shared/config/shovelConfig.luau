@@ -13,37 +13,37 @@ type Shovel = {
 local BASE_SHOVEL_STRENGTH = 1
 local shovelConfig: { [string]: Shovel } = {
 	StarterShovel = {
-		strengthMult = 2.2,
+		strengthMult = 3,
 		rarityType = "Common",
 		itemImage = "rbxassetid://86157037222201",
 		price = 0,
 	},
 	CommonShovel = {
-		strengthMult = 2.5,
+		strengthMult = 3.5,
 		rarityType = "Common",
 		itemImage = "rbxassetid://94770951918498",
 		price = 750,
 	},
 	SilverShovel = {
-		strengthMult = 3,
+		strengthMult = 4,
 		rarityType = "Common",
 		itemImage = "rbxassetid://84978234143786",
 		price = 2000,
 	},
 	GoldShovel = {
-		strengthMult = 3.50,
+		strengthMult = 6,
 		rarityType = "Uncommon",
 		itemImage = "rbxassetid://133385114213421",
 		price = 5000,
 	},
 	DiamondShovel = {
-		strengthMult = 4.50,
+		strengthMult = 8,
 		rarityType = "Uncommon",
 		itemImage = "rbxassetid://80305961963756",
 		price = 10000,
 	},
 	AmethystShovel = {
-		strengthMult = 9,
+		strengthMult = 12,
 		rarityType = "Uncommon",
 		itemImage = "rbxassetid://137452283112320",
 		price = 25000,
@@ -76,7 +76,7 @@ local shovelConfig: { [string]: Shovel } = {
 
 	-- New additions:
 	NatureShovel = {
-		strengthMult = 3,
+		strengthMult = 9,
 		rarityType = "Epic",
 		itemImage = "rbxassetid://139803613068379",
 		price = 200,
@@ -86,7 +86,7 @@ local shovelConfig: { [string]: Shovel } = {
 		-- obtainLocation = "Limited Offer!",
 	},
 	RetroShovel = {
-		strengthMult = 12,
+		strengthMult = 32.5,
 		rarityType = "Epic",
 		itemImage = "rbxassetid://112571376118059",
 		price = 200,
@@ -94,8 +94,8 @@ local shovelConfig: { [string]: Shovel } = {
 		notForSale = true,
 	},
 	SteampunkShovel = {
-		strengthMult = 35,
-		rarityType = "Epic",
+		strengthMult = 13,
+		rarityType = "Rare",
 		itemImage = "rbxassetid://82871848306408",
 		price = 200,
 

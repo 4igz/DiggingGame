@@ -2,10 +2,15 @@ import { Service, OnStart } from "@flamework/core";
 import { ProfileService } from "../backend/profileService";
 import { RewardService } from "./rewardsService";
 import { Events, Functions } from "server/network";
+import { LevelService } from "./levelService";
 
 @Service({})
 export class TutorialService implements OnStart {
-	constructor(private readonly profileService: ProfileService, private readonly rewardService: RewardService) {}
+	constructor(
+		private readonly profileService: ProfileService,
+		private readonly rewardService: RewardService,
+		private readonly levelService: LevelService,
+	) {}
 
 	onStart() {
 		Functions.getTutorial.setCallback((player) => {
@@ -33,6 +38,7 @@ export class TutorialService implements OnStart {
 	endTutorial(player: Player) {
 		this.rewardService.claimReward(player, { rewardType: "Money", rewardAmount: 500 });
 		this.rewardService.claimReward(player, { rewardType: "Potions", itemName: "M.Luck Potion" });
+		this.levelService.giveLevels(player, 1);
 		Events.endTutorial(player);
 	}
 }

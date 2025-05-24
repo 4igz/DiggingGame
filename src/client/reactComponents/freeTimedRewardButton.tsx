@@ -186,7 +186,7 @@ export const freeTimedRewardButton = (props: { uiController: UiController }) => 
 
 				<imagelabel
 					BackgroundTransparency={1}
-					Image={"rbxassetid://77934386944359"}
+					Image={"rbxassetid://82871848306408"}
 					key={".6"}
 					Position={UDim2.fromScale(-0.14612, 0.0114329)}
 					ScaleType={Enum.ScaleType.Fit}

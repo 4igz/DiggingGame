@@ -97,9 +97,9 @@ local metalDetectorConfig: { [string]: MetalDetector } = {
 
 	-- New additions:
 	NatureDetector = {
-		strength = 1.5,
-		luck = 5,
-		searchRadius = 40,
+		strength = 2,
+		luck = 10,
+		searchRadius = 35,
 		rarityType = "Epic",
 		itemImage = "rbxassetid://83905633434794",
 		price = 200,
@@ -110,9 +110,9 @@ local metalDetectorConfig: { [string]: MetalDetector } = {
 		-- obtainLocation = "Limited Offer!",
 	},
 	RetroDetector = {
-		strength = 2,
-		luck = 20,
-		searchRadius = 30,
+		strength = 2.85,
+		luck = 27.5,
+		searchRadius = 27.5,
 		rarityType = "Epic",
 		itemImage = "rbxassetid://82188544537251",
 		price = 200,
@@ -120,9 +120,9 @@ local metalDetectorConfig: { [string]: MetalDetector } = {
 		notForSale = true,
 	},
 	SteampunkDetector = {
-		strength = 3,
-		luck = 40,
-		searchRadius = 25,
+		strength = 2,
+		luck = 15,
+		searchRadius = 33.5,
 		rarityType = "Epic",
 		itemImage = "rbxassetid://99214897672719",
 		price = 200,

@@ -33,6 +33,7 @@ import { DIG_STEP, QUEST_STEP, SELL_STEP, TREASURE_STEP } from "shared/config/tu
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 import { fullTargetConfig } from "shared/config/targetConfig";
 import { createMotion } from "@rbxts/ripple";
+import { isCframeValid, isVector3Valid } from "shared/util/cfUtil";
 
 const camera = Workspace.CurrentCamera;
 const holeTroveMap = new Map<Trove, [Signal<(size: number) => void>, Sound, BasePart]>();
@@ -916,8 +917,8 @@ export class ShovelController implements OnStart {
 							return;
 						}
 
-						// const treasureCfg = fullTargetConfig[existingModel.Name];
-						const hasCutscene = false; //treasureCfg.hasCutscene ?? false;
+						const treasureCfg = fullTargetConfig[existingModel.Name];
+						const hasCutscene = true; // treasureCfg.hasCutscene ?? false;
 						const primaryPart =
 							existingModel.PrimaryPart ?? existingModel.FindFirstChildWhichIsA("BasePart");
 						const THROW_FORCE = observeAttribute("DigThrowForce", 20) as number;
@@ -999,14 +1000,23 @@ export class ShovelController implements OnStart {
 							cutsceneCameraMotion.immediate(new CFrame(pos));
 							const RENDERSTEP_ID = "CUTSCENE_ID";
 							const originalCameraType = camera.CameraType;
+							// Set last pos to prevent nan's
+							let focusCf: CFrame = primaryPart.CFrame;
+							let lastCameraCf: CFrame = camera.CFrame;
 							// const originalCameraSubject = camera.CameraSubject;
+							// camera.CFrame = character.GetPivot(); // Temp pos to not stream out pos
+							// camera.Focus = character.GetPivot(); // Temp pos to not stream out pos
 							camera.CameraType = Enum.CameraType.Scriptable;
-							camera.CFrame = character.GetPivot(); // Temp pos to not stream out pos
-							camera.Focus = character.GetPivot(); // Temp pos to not stream out pos
-							camera.HeadLocked = false;
 							RunService.BindToRenderStep(RENDERSTEP_ID, Enum.RenderPriority.Camera.Value, () => {
-								camera.Focus = character.GetPivot(); // Temp pos to not stream out pos
-								if (!primaryPart || !primaryPart.Parent) {
+								const cPrimaryPart =
+									character.PrimaryPart ??
+									(character.FindFirstChild("HumanoidRootPart") as BasePart | undefined);
+								const characterCf = cPrimaryPart?.CFrame;
+								let isNan = !isCframeValid(characterCf ?? focusCf);
+								focusCf = (isNan ? focusCf : characterCf) ?? focusCf;
+								camera.Focus = focusCf; // Temp pos to not stream out character
+								if (!primaryPart || !primaryPart.Parent || !cPrimaryPart) {
+									camera.CameraType = Enum.CameraType.Custom;
 									RunService.UnbindFromRenderStep(RENDERSTEP_ID);
 									return;
 								}
@@ -1021,7 +1031,19 @@ export class ShovelController implements OnStart {
 									: new Vector3(0, cameraHeight + cameraDistance, 0);
 								const cameraPos = treasurePos.add(cameraOffset);
 								// Look at the treasure with a slight upward bias
-								camera.CFrame = CFrame.lookAt(cameraPos, treasurePos, Vector3.yAxis);
+								if (
+									!isVector3Valid(cameraOffset) ||
+									!isVector3Valid(treasurePos) ||
+									!isVector3Valid(cameraPos)
+								)
+									return;
+								const newCf = CFrame.lookAt(cameraPos, treasurePos, Vector3.yAxis);
+								if (!isCframeValid(newCf)) {
+									camera.CFrame = lastCameraCf;
+									return;
+								}
+								camera.CFrame = newCf;
+								lastCameraCf = newCf;
 
 								// cutsceneCameraMotion.spring(
 								// 	CFrame.lookAt(cameraPos, treasurePos, Vector3.yAxis),
@@ -1039,20 +1061,17 @@ export class ShovelController implements OnStart {
 							const sVfx = suspenseCutsceneVfx.Clone() as PVInstance;
 							digTrove.add(sVfx);
 							sVfx.PivotTo(new CFrame(origin));
-							currentDigTrack?.Play();
-							// Signals.dig.Fire();
 							sVfx.Parent = Workspace;
 							task.wait(1.5);
 
-							currentDigTrack?.Play();
 							if (currentDigTrack) {
+								currentDigTrack.Play();
 								currentDigTrack.GetMarkerReachedSignal(DIG_ANIMATION_MARKER).Once(() => {
-									camera.Focus = character.GetPivot(); // Temp pos to not stream out pos
 									const endVfx = endCutsceneVfx.Clone() as PVInstance;
 									endVfx.PivotTo(new CFrame(origin));
 									endVfx.Parent = Workspace;
 									digTrove.add(endVfx);
-									Signals.dig.Fire();
+									// Signals.dig.Fire();
 									angledPov = true;
 									treasureTween.Play();
 								});
@@ -1070,14 +1089,13 @@ export class ShovelController implements OnStart {
 
 							treasureTween.Completed.Once(() => {
 								// Reset camera
+								RunService.UnbindFromRenderStep(RENDERSTEP_ID);
 								if (camera) {
 									camera.CameraType = originalCameraType;
-									camera.HeadLocked = true;
 									// if (originalCameraSubject) {
 									// 	camera.CameraSubject = originalCameraSubject;
 									// }
 								}
-								RunService.UnbindFromRenderStep(RENDERSTEP_ID);
 								cutsceneCameraMotion.stop();
 								existingModel.Destroy();
 								this.cutsceneActive = false;

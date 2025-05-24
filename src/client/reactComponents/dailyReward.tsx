@@ -28,6 +28,7 @@ interface DailyRewardTileProps {
 	onClaim: () => void;
 	size: UDim2;
 	timeLeft: number;
+	hasOp: boolean;
 }
 
 // This component represents a single daily reward tile
@@ -41,6 +42,7 @@ const DailyRewardTile = ({
 	timeLeft,
 	rewardName,
 	size,
+	hasOp,
 }: DailyRewardTileProps) => {
 	// Calculate visual states based on streak and day
 	const [rewardImage] = useState(
@@ -194,14 +196,14 @@ const DailyRewardTile = ({
 					BackgroundTransparency={1}
 					FontFace={Font.fromEnum(Enum.Font.FredokaOne)}
 					key={"PetName"}
-					Position={UDim2.fromScale(0.17, 0.2)}
+					Position={UDim2.fromScale(0.24, 0.2)}
 					Size={UDim2.fromScale(0.39149, 0.192151)}
 					Text={"OP!"}
 					TextColor3={Color3.fromRGB(109, 97, 27)}
 					TextScaled={true}
 					TextXAlignment={Enum.TextXAlignment.Left}
 					ZIndex={10}
-					Visible={day === 7}
+					Visible={(hasOp || day === 7) && !isCompleted}
 				>
 					<uistroke key={"UIStroke"} Color={Color3.fromRGB(109, 97, 27)} Thickness={px(3.5)} />
 
@@ -269,7 +271,7 @@ const DailyRewardTile = ({
 					key={"Amount"}
 					Position={UDim2.fromScale(0.437, 0.566)}
 					Size={UDim2.fromScale(0.515, 0.25)}
-					Text={`x${reward}` || "x2k"}
+					Text={((tonumber(reward) ?? 0) > 1 && `x${reward}`) || ""}
 					TextColor3={Color3.fromRGB(255, 255, 255)}
 					TextScaled={true}
 					ZIndex={21}
@@ -660,6 +662,7 @@ export const DailyRewards = (props: DailyRewardsProps) => {
 							rewardType={reward.rewardType}
 							rewardName={reward.itemName}
 							size={index !== 6 ? UDim2.fromScale(0.179, 0.377) : UDim2.fromScale(0.3, 0.845)}
+							hasOp={reward.hasOp ?? false}
 						/>
 					);
 				})}

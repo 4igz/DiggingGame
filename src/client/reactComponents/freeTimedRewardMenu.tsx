@@ -145,7 +145,7 @@ export const FreeTimedRewardMenu = (props: { uiController: UiController; visible
 
 			<imagelabel
 				BackgroundTransparency={1}
-				Image={"rbxassetid://77934386944359"}
+				Image={"rbxassetid://82871848306408"}
 				key={".6"}
 				Position={UDim2.fromScale(0.0607565, 0.171885)}
 				ScaleType={Enum.ScaleType.Fit}

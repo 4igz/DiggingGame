@@ -13,6 +13,7 @@ type Reward = {
 	itemName: string?, -- Only used if rewardType is Boat, MetalDetectors, or Shovels, must be the exact *name of the item (*index in the respective config).
 	rewardAmount: number?, -- Ignored if rewardType is MetalDetectors, Shovels, or Boats.
 	rewardLength: number?,
+	hasOp: boolean?,
 }
 
 -- 18 hours
@@ -21,15 +22,16 @@ local DAILY_REWARD_COOLDOWN = 60 * 60 * 18
 local dailyRewards: { Reward } = {
 	{ -- Index corresponds to day, so this first one is day 1, and the last one is day 7.
 		rewardType = "Money",
-		rewardAmount = 100,
+		rewardAmount = 500,
+	},
+	{
+		rewardType = "MetalDetectors",
+		itemName = "SteampunkDetector",
+		hasOp = true,
 	},
 	{
 		rewardType = "Boats",
 		itemName = "Jetski",
-	},
-	{
-		rewardType = "Potions",
-		itemName = "M.Luck Potion",
 	},
 	{
 		rewardType = "Potions",
