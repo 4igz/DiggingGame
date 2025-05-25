@@ -195,7 +195,14 @@ export const RightSideMenu = (props: MenuProps) => {
 
 		Signals.menuOpened.Connect((isOpen, menuName) => {
 			setMenuPos.spring(
-				isOpen && menuName === gameConstants.SHOP_UI ? DEFAULT_POS : isOpen ? CLOSED_POS : DEFAULT_POS,
+				isOpen &&
+					(menuName === gameConstants.SHOP_UI ||
+						menuName === gameConstants.SELL_UI ||
+						menuName === gameConstants.BOAT_SHOP_UI)
+					? DEFAULT_POS
+					: isOpen
+					? CLOSED_POS
+					: DEFAULT_POS,
 				springs.responsive,
 			);
 		});

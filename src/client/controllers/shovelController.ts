@@ -918,7 +918,7 @@ export class ShovelController implements OnStart {
 						}
 
 						// const treasureCfg = fullTargetConfig[existingModel.Name];
-						const hasCutscene = false; // treasureCfg.hasCutscene ?? false;
+						const hasCutscene = true; // treasureCfg.hasCutscene ?? false;
 						const primaryPart =
 							existingModel.PrimaryPart ?? existingModel.FindFirstChildWhichIsA("BasePart");
 						const THROW_FORCE = observeAttribute("DigThrowForce", 23) as number;
@@ -946,21 +946,12 @@ export class ShovelController implements OnStart {
 							for (const descendant of existingModel.GetDescendants()) {
 								if (descendant.IsA("BasePart")) {
 									descendant.Anchored = false;
-									descendant.CanCollide = false;
+									descendant.CanCollide = true;
 								}
 							}
 
-							RunService.Heartbeat.Once(() => {
-								RunService.Heartbeat.Wait();
-								primaryPart.AssemblyLinearVelocity = randomForce;
-								task.delay(0.1, () => {
-									for (const descendant of existingModel.GetDescendants()) {
-										if (descendant.IsA("BasePart")) {
-											descendant.CanCollide = true;
-										}
-									}
-								});
-							});
+							RunService.Heartbeat.Wait();
+							primaryPart.AssemblyLinearVelocity = randomForce;
 						} else if (hasCutscene && camera !== undefined) {
 							// Makeshift cutscene. Basically just throws higher and sets camera subject to the treasure.
 							this.cutsceneActive = true;
@@ -1002,7 +993,7 @@ export class ShovelController implements OnStart {
 							const RENDERSTEP_ID = "CUTSCENE_ID";
 							const originalCameraType = camera.CameraType;
 							// Set last pos to prevent nan's
-							let focusCf: CFrame = primaryPart.CFrame;
+							let focusCf: CFrame = primaryPart.CFrame ?? character.GetPivot();
 							let lastCameraCf: CFrame = camera.CFrame;
 							// const originalCameraSubject = camera.CameraSubject;
 							// camera.CFrame = character.GetPivot(); // Temp pos to not stream out pos
@@ -1016,12 +1007,18 @@ export class ShovelController implements OnStart {
 								let isNan = !isCframeValid(characterCf ?? focusCf);
 								focusCf = (isNan ? focusCf : characterCf) ?? focusCf;
 								camera.Focus = focusCf; // Temp pos to not stream out character
-								if (!primaryPart || !primaryPart.Parent || !cPrimaryPart) {
+								const treasurePos = primaryPart.Position;
+								if (
+									!primaryPart ||
+									!primaryPart.Parent ||
+									!cPrimaryPart ||
+									!treasurePos ||
+									!isVector3Valid(treasurePos)
+								) {
 									camera.CameraType = Enum.CameraType.Custom;
 									RunService.UnbindFromRenderStep(RENDERSTEP_ID);
 									return;
 								}
-								const treasurePos = primaryPart.Position;
 
 								const cameraOffset = angledPov
 									? new Vector3(
@@ -1032,18 +1029,16 @@ export class ShovelController implements OnStart {
 									: new Vector3(0, cameraHeight + cameraDistance, 0);
 								const cameraPos = treasurePos.add(cameraOffset);
 								// Look at the treasure with a slight upward bias
-								if (
-									!isVector3Valid(cameraOffset) ||
-									!isVector3Valid(treasurePos) ||
-									!isVector3Valid(cameraPos)
-								)
-									return;
+								if (!isVector3Valid(cameraOffset) || !isVector3Valid(cameraPos)) return;
 								const newCf = CFrame.lookAt(cameraPos, treasurePos, Vector3.yAxis);
+								print(treasurePos.sub(focusCf.Position).Magnitude);
 								if (!isCframeValid(newCf)) {
 									camera.CFrame = lastCameraCf;
+									print("CAMERA CF:", lastCameraCf);
 									return;
 								}
 								camera.CFrame = newCf;
+								print("CAMERA CF:", newCf);
 								lastCameraCf = newCf;
 
 								// cutsceneCameraMotion.spring(
