@@ -34,6 +34,7 @@ import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 import { fullTargetConfig } from "shared/config/targetConfig";
 import { createMotion } from "@rbxts/ripple";
 import { isCframeValid, isVector3Valid } from "shared/util/cfUtil";
+import { springs } from "client/utils/springs";
 
 const camera = Workspace.CurrentCamera;
 const holeTroveMap = new Map<Trove, [Signal<(size: number) => void>, Sound, BasePart]>();
@@ -329,7 +330,11 @@ export class ShovelController implements OnStart {
 					let steppedConnection: RBXScriptConnection | undefined;
 					toolTrove.add(
 						RunService.RenderStepped.Connect(() => {
-							if ((humanoid && humanoid.Parent && this.diggingActive) || digRequestInProgress) {
+							if (
+								(humanoid && humanoid.Parent && this.diggingActive) ||
+								digRequestInProgress ||
+								this.cutsceneActive
+							) {
 								humanoid.WalkSpeed = 0;
 							} else {
 								humanoid.WalkSpeed = 20;
@@ -342,7 +347,7 @@ export class ShovelController implements OnStart {
 							const currentTime = tick();
 
 							// If we're auto-digging, try to start dig
-							if (this.diggingActive && isAutoDigging && autoSendDigCD()) {
+							if (this.diggingActive && isAutoDigging && autoSendDigCD() && !this.cutsceneActive) {
 								if (isInventoryFull) {
 									Signals.setAutoDiggingEnabled.Fire(false);
 									return;
@@ -387,6 +392,7 @@ export class ShovelController implements OnStart {
 							if (button) {
 								button.Image = "rbxassetid://5713982324";
 							}
+							if (this.cutsceneActive) return;
 							if (
 								this.tutorialController.currentStage === SELL_STEP ||
 								this.tutorialController.currentStage === QUEST_STEP ||
@@ -956,6 +962,12 @@ export class ShovelController implements OnStart {
 							// Makeshift cutscene. Basically just throws higher and sets camera subject to the treasure.
 							this.cutsceneActive = true;
 
+							const humanoid = character.FindFirstChildWhichIsA("Humanoid") as Humanoid;
+
+							if (!humanoid) return;
+
+							humanoid.WalkSpeed = 0;
+
 							// Prepare the treasure for the cutscene
 							const minYOffset = 4;
 							const extentsY = existingModel.GetExtentsSize().Y;
@@ -978,6 +990,7 @@ export class ShovelController implements OnStart {
 								new TweenInfo(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 								{ Position: origin.add(new Vector3(0, 40, 0)) },
 							);
+							digTrove.add(treasureTween);
 							let angledPov = false;
 							const angleRad = math.rad(cameraAngle);
 							const cameraOffset = angledPov
@@ -992,19 +1005,15 @@ export class ShovelController implements OnStart {
 							cutsceneCameraMotion.immediate(new CFrame(pos));
 							const RENDERSTEP_ID = "CUTSCENE_ID";
 							const originalCameraType = camera.CameraType;
-							// Set last pos to prevent nan's
 							let focusCf: CFrame = primaryPart.CFrame ?? character.GetPivot();
 							let lastCameraCf: CFrame = camera.CFrame;
-							// const originalCameraSubject = camera.CameraSubject;
-							// camera.CFrame = character.GetPivot(); // Temp pos to not stream out pos
-							// camera.Focus = character.GetPivot(); // Temp pos to not stream out pos
 							camera.CameraType = Enum.CameraType.Scriptable;
 							RunService.BindToRenderStep(RENDERSTEP_ID, Enum.RenderPriority.Camera.Value, () => {
 								const cPrimaryPart =
 									character.PrimaryPart ??
 									(character.FindFirstChild("HumanoidRootPart") as BasePart | undefined);
 								const characterCf = cPrimaryPart?.CFrame;
-								let isNan = !isCframeValid(characterCf ?? focusCf);
+								let isNan = characterCf ? !isCframeValid(characterCf) : true;
 								focusCf = (isNan ? focusCf : characterCf) ?? focusCf;
 								camera.Focus = focusCf; // Temp pos to not stream out character
 								const treasurePos = primaryPart.Position;
@@ -1013,10 +1022,15 @@ export class ShovelController implements OnStart {
 									!primaryPart.Parent ||
 									!cPrimaryPart ||
 									!treasurePos ||
-									!isVector3Valid(treasurePos)
+									!isVector3Valid(treasurePos) ||
+									!characterCf ||
+									isNan
 								) {
 									camera.CameraType = Enum.CameraType.Custom;
 									RunService.UnbindFromRenderStep(RENDERSTEP_ID);
+									this.cutsceneActive = false;
+									humanoid.WalkSpeed = 20;
+
 									return;
 								}
 
@@ -1031,71 +1045,79 @@ export class ShovelController implements OnStart {
 								// Look at the treasure with a slight upward bias
 								if (!isVector3Valid(cameraOffset) || !isVector3Valid(cameraPos)) return;
 								const newCf = CFrame.lookAt(cameraPos, treasurePos, Vector3.yAxis);
-								print(treasurePos.sub(focusCf.Position).Magnitude);
 								if (!isCframeValid(newCf)) {
+									// cutsceneCameraMotion.spring(lastCameraCf, springs.responsive);
 									camera.CFrame = lastCameraCf;
-									print("CAMERA CF:", lastCameraCf);
 									return;
 								}
-								camera.CFrame = newCf;
-								print("CAMERA CF:", newCf);
-								lastCameraCf = newCf;
 
-								// cutsceneCameraMotion.spring(
-								// 	CFrame.lookAt(cameraPos, treasurePos, Vector3.yAxis),
-								// 	springs.responsive,
-								// );
+								// cutsceneCameraMotion.spring(newCf, springs.responsive);
+								camera.CFrame = newCf;
+								lastCameraCf = newCf;
 							});
 
-							// const cameraStepCleanup = cutsceneCameraMotion.onStep((v) => {
-							// 	camera.CFrame = v;
-							// });
+							let lastCharPv = character.GetPivot();
+
+							const cameraStepCleanup = cutsceneCameraMotion.onStep((v) => {
+								if (!isCframeValid(v)) return;
+								const currentCharPv = character.GetPivot();
+								if (v.Position.sub(currentCharPv.Position ?? lastCharPv.Position).Magnitude > 128)
+									return;
+								lastCharPv = currentCharPv;
+								camera.CFrame = v;
+							});
 
 							digTrove.add(cleanMotion);
-							// digTrove.add(cameraStepCleanup);
+							digTrove.add(cameraStepCleanup);
 
 							const sVfx = suspenseCutsceneVfx.Clone() as PVInstance;
 							digTrove.add(sVfx);
 							sVfx.PivotTo(new CFrame(origin));
 							sVfx.Parent = Workspace;
-							task.wait(1.5);
 
-							if (currentDigTrack) {
-								currentDigTrack.Play();
-								currentDigTrack.GetMarkerReachedSignal(DIG_ANIMATION_MARKER).Once(() => {
+							task.delay(1.5, () => {
+								if (currentDigTrack && this.cutsceneActive) {
+									currentDigTrack.Play();
+									currentDigTrack.GetMarkerReachedSignal(DIG_ANIMATION_MARKER).Once(() => {
+										if (!this.cutsceneActive) return;
+										const endVfx = endCutsceneVfx.Clone() as PVInstance;
+										endVfx.PivotTo(new CFrame(origin));
+										endVfx.Parent = Workspace;
+										digTrove.add(endVfx);
+										// Signals.dig.Fire();
+										angledPov = true;
+										treasureTween.Play();
+									});
+									currentDigTrack.DidLoop.Connect(() => {
+										currentDigTrack?.Stop();
+									});
+								} else if (this.cutsceneActive) {
 									const endVfx = endCutsceneVfx.Clone() as PVInstance;
 									endVfx.PivotTo(new CFrame(origin));
 									endVfx.Parent = Workspace;
 									digTrove.add(endVfx);
-									// Signals.dig.Fire();
 									angledPov = true;
 									treasureTween.Play();
-								});
-								currentDigTrack.DidLoop.Connect(() => {
-									currentDigTrack?.Stop();
-								});
-							} else {
-								const endVfx = endCutsceneVfx.Clone() as PVInstance;
-								endVfx.PivotTo(new CFrame(origin));
-								endVfx.Parent = Workspace;
-								digTrove.add(endVfx);
-								angledPov = true;
-								treasureTween.Play();
-							}
-
-							treasureTween.Completed.Once(() => {
-								// Reset camera
-								RunService.UnbindFromRenderStep(RENDERSTEP_ID);
-								if (camera) {
-									camera.CameraType = originalCameraType;
-									// if (originalCameraSubject) {
-									// 	camera.CameraSubject = originalCameraSubject;
-									// }
 								}
-								cutsceneCameraMotion.stop();
-								existingModel.Destroy();
-								this.cutsceneActive = false;
 							});
+
+							digTrove.add(
+								treasureTween.Completed.Once(() => {
+									if (!this.cutsceneActive) return;
+									// Reset camera
+									RunService.UnbindFromRenderStep(RENDERSTEP_ID);
+									if (camera) {
+										camera.CameraType = originalCameraType;
+										// if (originalCameraSubject) {
+										// 	camera.CameraSubject = originalCameraSubject;
+										// }
+									}
+									cutsceneCameraMotion.stop();
+									// existingModel.Destroy();
+									this.cutsceneActive = false;
+									humanoid.WalkSpeed = 20;
+								}),
+							);
 						}
 					} else {
 						existingModel.Destroy();
