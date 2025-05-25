@@ -917,12 +917,12 @@ export class ShovelController implements OnStart {
 							return;
 						}
 
-						const treasureCfg = fullTargetConfig[existingModel.Name];
+						// const treasureCfg = fullTargetConfig[existingModel.Name];
 						const hasCutscene = false; // treasureCfg.hasCutscene ?? false;
 						const primaryPart =
 							existingModel.PrimaryPart ?? existingModel.FindFirstChildWhichIsA("BasePart");
-						const THROW_FORCE = observeAttribute("DigThrowForce", 20) as number;
-						const UP_FORCE = hasCutscene ? 5 : (observeAttribute("DigUpForce", 5) as number);
+						const THROW_FORCE = observeAttribute("DigThrowForce", 23) as number;
+						const UP_FORCE = hasCutscene ? 5 : (observeAttribute("DigUpForce", 6) as number);
 
 						// Compute the direction from the object to the player
 						const directionToPlayer = character
@@ -940,7 +940,7 @@ export class ShovelController implements OnStart {
 
 						if (!hasCutscene) {
 							const minYOffset = 6; // Minimum Y offset to ensure it's out of the ground
-							const extentsY = existingModel.GetExtentsSize().Y;
+							const extentsY = existingModel.GetExtentsSize().Magnitude / 2;
 							const yOffset = math.max(extentsY, minYOffset);
 							existingModel.PivotTo(new CFrame(origin).add(new Vector3(0, yOffset, 0)));
 							for (const descendant of existingModel.GetDescendants()) {
