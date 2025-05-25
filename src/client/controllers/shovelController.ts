@@ -918,7 +918,7 @@ export class ShovelController implements OnStart {
 						}
 
 						const treasureCfg = fullTargetConfig[existingModel.Name];
-						const hasCutscene = true; // treasureCfg.hasCutscene ?? false;
+						const hasCutscene = false; // treasureCfg.hasCutscene ?? false;
 						const primaryPart =
 							existingModel.PrimaryPart ?? existingModel.FindFirstChildWhichIsA("BasePart");
 						const THROW_FORCE = observeAttribute("DigThrowForce", 20) as number;
@@ -951,6 +951,7 @@ export class ShovelController implements OnStart {
 							}
 
 							RunService.Heartbeat.Once(() => {
+								RunService.Heartbeat.Wait();
 								primaryPart.AssemblyLinearVelocity = randomForce;
 								task.delay(0.1, () => {
 									for (const descendant of existingModel.GetDescendants()) {

@@ -205,7 +205,7 @@ const DailyRewardTile = ({
 					ZIndex={10}
 					Visible={(hasOp || day === 7) && !isCompleted}
 				>
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(109, 97, 27)} Thickness={px(3.5)} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(109, 97, 27)} Thickness={px(2.5)} />
 
 					<textlabel
 						AnchorPoint={new Vector2(0.5, 0.5)}
@@ -220,7 +220,7 @@ const DailyRewardTile = ({
 						TextXAlignment={Enum.TextXAlignment.Left}
 						ZIndex={12}
 					>
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(109, 97, 27)} Thickness={px(3.5)} />
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(109, 97, 27)} Thickness={px(2.5)} />
 
 						<uigradient
 							key={"UIGradient"}
