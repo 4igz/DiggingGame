@@ -290,10 +290,10 @@ export class Boat extends BaseComponent<Attributes, BoatComponent> implements On
 		// Only apply angular velocity damping if the turning magnitude (X axis) is 0
 		if (math.abs(moveVector.X) === 0) {
 			this.currentAngularVelocity = Vector3.zero;
-			Af.MaxTorque = 6500;
+			Af.MaxTorque = this.maxTurnSpeed * 4; // Which will make it stop turning faster
 		} else {
 			this.currentAngularVelocity = targetAngularVelocity;
-			Af.MaxTorque = 2000;
+			Af.MaxTorque = this.maxTurnSpeed;
 		}
 
 		Af.AngularVelocity = this.currentAngularVelocity;

@@ -65,8 +65,8 @@ local boatConfig: { [string]: BoatConfig } = {
 		price = 100000000,
 		itemImage = "rbxassetid://84685643148288",
 		rarityType = "Mythical",
-		turnSpeed = 60,
-		speed = 20,
+		turnSpeed = 20,
+		speed = 40,
 
 		notForSale = true,
 		obtainLocation = "Daily Reward",

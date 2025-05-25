@@ -194,7 +194,7 @@ export class RewardService implements OnStart {
 			if (tick() - joinTime > 60 * gameConstants.TIMED_REWARD_WAIT_TIME - 60 * 3) {
 				profile.Data.claimedTimedReward = true;
 				this.profileService.setProfile(player, profile);
-				this.claimReward(player, { rewardType: "Shovels", itemName: "DemonicShovel" });
+				this.claimReward(player, { rewardType: "Shovels", itemName: "SteampunkShovel" });
 				this.claimReward(player, { rewardType: "Potions", itemName: "L.Luck Potion" });
 				this.claimReward(player, { rewardType: "Potions", itemName: "L.Luck Potion" });
 				Events.claimedTimedReward(player);

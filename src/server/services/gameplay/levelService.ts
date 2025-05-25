@@ -85,6 +85,28 @@ export class LevelService implements OnStart {
 	// 	}
 	// }
 
+	public giveLevels(player: Player, levels: number): void {
+		const playerProfile = this.playerDataService.getProfile(player);
+		if (!playerProfile) return;
+
+		const data = playerProfile.Data;
+		for (let i = 0; i < levels; i++) {
+			data.level += 1;
+			data.skillPoints += 1;
+			Events.levelUp.fire(player, data.level);
+			this.leveledUp.Fire(player, data.level);
+		}
+
+		Events.updateLevelUi.fire(
+			player,
+			data.level,
+			data.experience,
+			this.xpForLevel(data.level + 1),
+			data.skillPoints,
+		);
+		this.playerDataService.setProfile(player, playerProfile);
+	}
+
 	public addExperience(player: Player, amt: number): void {
 		const playerProfile = this.playerDataService.getProfile(player);
 		if (!playerProfile) return;
