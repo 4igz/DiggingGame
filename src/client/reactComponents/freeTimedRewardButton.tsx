@@ -10,17 +10,18 @@ import { Events, Functions } from "client/network";
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 import { subscribe } from "@rbxts/charm";
 import { canClaimedTimedReward } from "client/atoms/uiAtoms";
-import { TweenService } from "@rbxts/services";
+import { TweenService, UserInputService } from "@rbxts/services";
 
-const platform = getPlayerPlatform();
+const currentPlatform = getPlayerPlatform();
 
-const DEFAULT_POS = UDim2.fromScale(0.075, platform === "Mobile" ? 0.04 : 0.1);
-const CLOSED_POS = UDim2.fromScale(-0.2, platform === "Mobile" ? 0.04 : 0.1);
+const DEFAULT_POS = UDim2.fromScale(0.075, currentPlatform === "Mobile" ? 0.04 : 0.125);
+const CLOSED_POS = UDim2.fromScale(-0.2, currentPlatform === "Mobile" ? 0.04 : 0.125);
 
 export const freeTimedRewardButton = (props: { uiController: UiController }) => {
 	const [buttonPos, buttonPosMotion] = useMotion(DEFAULT_POS);
 	const [visible, setVisible] = useState(false);
 	const [claimable, setClaimable] = useState(false);
+	const [platform, setPlatform] = useState(getPlayerPlatform());
 	const px = usePx();
 	const arrowRef = useRef<ImageLabel>();
 
@@ -35,6 +36,10 @@ export const freeTimedRewardButton = (props: { uiController: UiController }) => 
 
 		Events.claimedTimedReward.connect(() => {
 			setVisible(false);
+		});
+
+		UserInputService.InputChanged.Connect(() => {
+			setPlatform(getPlayerPlatform());
 		});
 
 		subscribe(canClaimedTimedReward, setClaimable);
@@ -71,7 +76,7 @@ export const freeTimedRewardButton = (props: { uiController: UiController }) => 
 		<AnimatedButton
 			anchorPoint={new Vector2(0.5, 0.5)}
 			position={buttonPos}
-			size={UDim2.fromScale(0.104, 0.16)}
+			size={platform !== "Mobile" ? UDim2.fromScale(0.09, 0.18) : UDim2.fromScale(0.104, 0.16)}
 			onClick={() => {
 				props.uiController.toggleUi(gameConstants.FREE_TIMED_REWARD_MENU);
 			}}
@@ -81,7 +86,6 @@ export const freeTimedRewardButton = (props: { uiController: UiController }) => 
 				<uicorner key={"UICorner"} CornerRadius={new UDim(1, 0)} />
 				<uistroke key={"UIStroke"} Thickness={px(3)} />
 				<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
-
 				<imagelabel
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundTransparency={1}
@@ -95,7 +99,6 @@ export const freeTimedRewardButton = (props: { uiController: UiController }) => 
 					Visible={claimable}
 					ref={arrowRef}
 				/>
-
 				<frame
 					BackgroundColor3={Color3.fromRGB(255, 0, 0)}
 					key={".$Notification"}
@@ -133,7 +136,6 @@ export const freeTimedRewardButton = (props: { uiController: UiController }) => 
 
 					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 				</frame>
-
 				<imagelabel
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundTransparency={1}
@@ -183,16 +185,26 @@ export const freeTimedRewardButton = (props: { uiController: UiController }) => 
 						<uiaspectratioconstraint key={"UIAspectRatioConstraint"} />
 					</imagelabel>
 				</imagelabel>
-
 				<imagelabel
 					BackgroundTransparency={1}
 					Image={"rbxassetid://82871848306408"}
 					key={".6"}
 					Position={UDim2.fromScale(-0.14612, 0.0114329)}
 					ScaleType={Enum.ScaleType.Fit}
+					Rotation={-15}
 					Size={UDim2.fromScale(1.49893, 0.988567)}
 					ZIndex={5}
 				/>
+
+				<imagelabel
+					BackgroundTransparency={1}
+					Image={"rbxassetid://89099653396204"}
+					ImageTransparency={0.8}
+					key={"Sunburst"}
+					Size={UDim2.fromScale(1, 1)}
+				>
+					<uicorner key={"UICorner"} CornerRadius={new UDim(1, 8)} />
+				</imagelabel>
 
 				<uigradient
 					key={"UIGradient"}
@@ -205,7 +217,6 @@ export const freeTimedRewardButton = (props: { uiController: UiController }) => 
 					}
 					Rotation={26}
 				/>
-
 				<textlabel
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundTransparency={1}
@@ -230,7 +241,6 @@ export const freeTimedRewardButton = (props: { uiController: UiController }) => 
 						}
 					/>
 				</textlabel>
-
 				<textlabel
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundTransparency={1}
