@@ -316,6 +316,10 @@ export class InventoryService implements OnStart, OnTick {
 			}
 		});
 
+		Events.equipBestItemOfType.connect((player, itemType) => {
+			this.equipBestItemOfType(player, itemType);
+		});
+
 		Functions.getInventory.setCallback((player, inventoryType) => {
 			const profile = this.profileService.getProfileLoaded(player).expect();
 			const selected = inventoryConfigMap[inventoryType] ?? error("Invalid inventory type requested");
@@ -414,17 +418,45 @@ export class InventoryService implements OnStart, OnTick {
 			return;
 		}
 
-		const cost = config[item].price;
-
 		const inventory = profile.Data[inventoryKey];
 		inventory.push(item as string & TargetItem);
-		const equippedItemKey = itemType === "MetalDetectors" ? "equippedDetector" : "equippedShovel";
-		const equippedItem = profile.Data[equippedItemKey];
-		const equippedItemPrice = "price" in config[equippedItem] ? config[equippedItem].price : 0;
-		if (!equippedItem || cost > equippedItemPrice) {
-			profile.Data[equippedItemKey] = item;
+		this.equipBestItemOfType(player, itemType);
+		this.profileService.setProfile(player, profile);
+
+		Events.boughtItem(player, item, itemType, config[item]);
+	}
+
+	equipBestItemOfType(player: Player, itemType: ItemType) {
+		const profile = this.profileService.getProfile(player);
+		if (!profile) return;
+
+		const selected = inventoryConfigMap[itemType];
+		if (!selected) {
+			warn("Invalid inventory type requested");
+			return;
+		}
+
+		const { inventoryKey, config } = selected;
+		if (inventoryKey === "targetInventory") return;
+
+		const inventory = profile.Data[inventoryKey];
+
+		// Find the highest cost item in the player's inventory of this type
+		let highestCost = -1;
+		let bestItem: string | undefined = undefined;
+		for (const itemName of profile.Data[inventoryKey]) {
+			const itemCfg = config[itemName];
+			if (itemCfg && "price" in itemCfg && itemCfg.price > highestCost) {
+				highestCost = itemCfg.price;
+				bestItem = itemName;
+			}
+		}
+		if (bestItem) {
+			const equippedItemKey = itemType === "MetalDetectors" ? "equippedDetector" : "equippedShovel";
+			profile.Data[equippedItemKey] = bestItem;
 			this.giveTools(player, profile);
 		}
+
 		Events.updateInventory(player, itemType, [
 			{
 				equippedShovel: profile.Data.equippedShovel,
@@ -433,9 +465,6 @@ export class InventoryService implements OnStart, OnTick {
 			},
 			inventory.map((value) => ({ name: value, type: itemType as ItemType, ...config[value as string] } as Item)),
 		]);
-		this.profileService.setProfile(player, profile);
-
-		Events.boughtItem(player, item, itemType, config[item]);
 	}
 
 	onBoatBoughtSuccess(player: Player, boatName: string) {

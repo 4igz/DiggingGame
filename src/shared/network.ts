@@ -55,6 +55,7 @@ interface ClientToServerEvents {
 	claimSpontaneousOffer: (key: number) => void;
 	toggleAutoDig: (enabled: boolean) => void;
 	claimTutorialRewards: (key: number) => void;
+	equipBestItemOfType: (itemType: ItemType) => void;
 
 	// Anti exploit event
 	selfReport: (flag: string) => void;

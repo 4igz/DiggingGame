@@ -1251,6 +1251,54 @@ export const SellAllBtn = (props: SellAllBtnProps) => {
 	);
 };
 
+interface EquipBestProps {
+	itemType: ItemType;
+	visible: boolean;
+}
+
+const EquipBestBtn = (props: EquipBestProps) => {
+	return (
+		<AnimatedButton
+			anchorPoint={new Vector2(0.5, 0.5)}
+			position={UDim2.fromScale(0.68, 0.5)}
+			size={UDim2.fromScale(0.268, 1)}
+			zindex={10}
+			onClick={() => {
+				Events.equipBestItemOfType(props.itemType);
+			}}
+			active={props.visible}
+			clickable={props.visible}
+			visible={props.visible}
+		>
+			<imagelabel
+				AnchorPoint={new Vector2(0.5, 0.5)}
+				BackgroundTransparency={1}
+				Image={"rbxassetid://92239062767450"}
+				key={"Equip Best"}
+				Position={UDim2.fromScale(0.5, 0.5)}
+				ScaleType={Enum.ScaleType.Slice}
+				Size={UDim2.fromScale(1, 1)}
+				SliceCenter={new Rect(40, 39, 533, 57)}
+				SliceScale={0.3}
+			>
+				<textlabel
+					AnchorPoint={new Vector2(0.5, 0.5)}
+					BackgroundTransparency={1}
+					FontFace={new Font("rbxassetid://16658221428", Enum.FontWeight.Bold, Enum.FontStyle.Normal)}
+					key={"Label"}
+					Position={UDim2.fromScale(0.5, 0.45)}
+					Size={UDim2.fromScale(0.6, 0.6)}
+					Text={"Equip Best"}
+					TextColor3={new Color3(1, 1, 1)}
+					TextScaled={true}
+				>
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(1, 75, 33)} Thickness={3} />
+				</textlabel>
+			</imagelabel>
+		</AnimatedButton>
+	);
+};
+
 interface ExitButtonProps {
 	uiController: UiController;
 	uiName: string;
@@ -2215,6 +2263,11 @@ export const InventoryComponent = (props: MainUiProps) => {
 							setSelectedInventoryType={setSelectedInventoryType}
 							icon={"rbxassetid://129013287605588"}
 							position={UDim2.fromScale(0.395, 0.5)}
+						/>
+
+						<EquipBestBtn
+							itemType={selectedInventoryType}
+							visible={selectedInventoryType === "MetalDetectors" || selectedInventoryType === "Shovels"}
 						/>
 
 						{/* Sell All Btn */}
