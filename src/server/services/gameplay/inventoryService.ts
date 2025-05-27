@@ -453,7 +453,13 @@ export class InventoryService implements OnStart, OnTick {
 		}
 		if (bestItem) {
 			const equippedItemKey = itemType === "MetalDetectors" ? "equippedDetector" : "equippedShovel";
+			let currentEquipped = profile.Data[equippedItemKey];
+			if (currentEquipped === bestItem) {
+				Events.sendActionPopup(player, "Best already equipped!");
+				return;
+			}
 			profile.Data[equippedItemKey] = bestItem;
+			Events.sendActionPopup(player, `Equipped ${bestItem}!`);
 			this.giveTools(player, profile);
 		}
 
