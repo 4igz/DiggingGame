@@ -42,6 +42,7 @@ local gameConstants = {
 	TIMED_REWARD_WAIT_TIME = 45,
 
 	CUTSCENE_SUSPENSE_TIME = 1.5,
+	CUTSCENE_LEN = 1.5,
 
 	-- Player Stats
 	LEVEL_INCREASE_EXPONENT = 1.01, -- math.floor(BASE_EXP * currentLevel^LEVEL_INCREASE_EXPONENT)

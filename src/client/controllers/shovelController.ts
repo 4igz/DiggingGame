@@ -138,6 +138,7 @@ export class ShovelController implements OnStart {
 		const digModels = new Map<string, Model>();
 		const digTroves = new Map<string, Trove>();
 		const digOutSound = SoundService.WaitForChild("Tools").WaitForChild("Dig out") as Sound;
+		const digCutsceneSfx = SoundService.WaitForChild("Tools").WaitForChild("DigCutscene") as Sound;
 		let isInventoryFull = false;
 		let noPositionFound = false;
 		let targetActive = false;
@@ -736,13 +737,10 @@ export class ShovelController implements OnStart {
 						if (cfg.hasCutscene !== true) {
 							// Move the model so that after finishing digging, it's only barely above ground.
 							const targetYOffset = model.GetBoundingBox()[1].Y * 0.08; // 8% of height above ground
-							const targetCFrame = new CFrame(target.position).add(new Vector3(0, targetYOffset, 0)).mul(randomRotation);
-							model.PivotTo(
-								startPos.Lerp(
-									targetCFrame,
-									progress / maxProgress,
-								),
-							);
+							const targetCFrame = new CFrame(target.position)
+								.add(new Vector3(0, targetYOffset, 0))
+								.mul(randomRotation);
+							model.PivotTo(startPos.Lerp(targetCFrame, progress / maxProgress));
 						}
 					}
 				}),
@@ -928,7 +926,7 @@ export class ShovelController implements OnStart {
 						}
 
 						// const treasureCfg = fullTargetConfig[existingModel.Name];
-						const hasCutscene = false; // treasureCfg.hasCutscene ?? false;
+						const hasCutscene = true; // treasureCfg.hasCutscene ?? false;
 						const primaryPart =
 							existingModel.PrimaryPart ?? existingModel.FindFirstChildWhichIsA("BasePart");
 						const THROW_FORCE = observeAttribute("DigThrowForce", 23) as number;
@@ -1004,7 +1002,7 @@ export class ShovelController implements OnStart {
 							const cameraDistance = math.max(4.5, modelSize.Magnitude / 2 + 4.5);
 							const cameraAngle = 30; // Angle in degrees looking down at treasure
 							const cameraHeight = 10; // Additional height offset
-							const TWEEN_SPEED = 1.5;
+							const TWEEN_SPEED = gameConstants.CUTSCENE_LEN;
 							const treasureTween = TweenService.Create(
 								primaryPart,
 								new TweenInfo(TWEEN_SPEED, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
@@ -1053,24 +1051,13 @@ export class ShovelController implements OnStart {
 								camera.CFrame = CFrame.lookAt(camPos, targetPos, Vector3.yAxis);
 							});
 
-							// let lastCharPv = character.GetPivot();
-
-							// const cameraStepCleanup = cutsceneCameraMotion.onStep((v) => {
-							// 	if (!isCframeValid(v)) return;
-							// 	const currentCharPv = character.GetPivot();
-							// 	if (v.Position.sub(currentCharPv.Position ?? lastCharPv.Position).Magnitude > 128)
-							// 		return;
-							// 	lastCharPv = currentCharPv;
-							// 	camera.CFrame = v;
-							// });
-
-							// digTrove.add(cameraStepCleanup);
-
 							digTrove.add(cleanMotion);
 							const sVfx = suspenseCutsceneVfx.Clone() as PVInstance;
 							digTrove.add(sVfx);
-							sVfx.PivotTo(new CFrame(origin));
+							sVfx.PivotTo(new CFrame(origin).add(new Vector3(0, 2, 0)));
 							sVfx.Parent = Workspace;
+
+							SoundService.PlayLocalSound(digCutsceneSfx);
 
 							task.delay(gameConstants.CUTSCENE_SUSPENSE_TIME, () => {
 								if (currentDigTrack && this.cutsceneActive) {
@@ -1088,6 +1075,9 @@ export class ShovelController implements OnStart {
 										CollectionService.AddTag(existingModel, "Treasure");
 									});
 									currentDigTrack.DidLoop.Connect(() => {
+										currentDigTrack?.Stop();
+									});
+									currentDigTrack.Ended.Connect(() => {
 										currentDigTrack?.Stop();
 									});
 								} else if (this.cutsceneActive) {
