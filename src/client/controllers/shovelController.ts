@@ -925,8 +925,8 @@ export class ShovelController implements OnStart {
 							return;
 						}
 
-						// const treasureCfg = fullTargetConfig[existingModel.Name];
-						const hasCutscene = true; // treasureCfg.hasCutscene ?? false;
+						const treasureCfg = fullTargetConfig[existingModel.Name];
+						const hasCutscene = treasureCfg.hasCutscene ?? false;
 						const primaryPart =
 							existingModel.PrimaryPart ?? existingModel.FindFirstChildWhichIsA("BasePart");
 						const THROW_FORCE = observeAttribute("DigThrowForce", 23) as number;
