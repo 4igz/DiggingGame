@@ -541,6 +541,14 @@ export class TargetService implements OnStart {
 			const detector = backpack.FindFirstChild(profile.Data.equippedDetector) as Tool;
 			if (detector) {
 				// We use attributes to reliably replicate the last dig time in time for the client to see the parented
+				if (target?.hasCutscene) {
+					task.delay(gameConstants.CUTSCENE_LEN + gameConstants.CUTSCENE_SUSPENSE_TIME, () => {
+						detector.SetAttribute("LastSuccessfulDigTime", tick()); // For the client to know when they last successfully dug
+						detector.Parent = character;
+					});
+					return;
+				}
+
 				detector.SetAttribute("LastSuccessfulDigTime", tick()); // For the client to know when they last successfully dug
 				detector.Parent = character;
 			}
