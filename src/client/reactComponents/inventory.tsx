@@ -1257,6 +1257,8 @@ interface EquipBestProps {
 }
 
 const EquipBestBtn = (props: EquipBestProps) => {
+	const px = usePx();
+
 	return (
 		<AnimatedButton
 			anchorPoint={new Vector2(0.5, 0.5)}
@@ -1292,7 +1294,7 @@ const EquipBestBtn = (props: EquipBestProps) => {
 					TextColor3={new Color3(1, 1, 1)}
 					TextScaled={true}
 				>
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(1, 75, 33)} Thickness={3} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(1, 75, 33)} Thickness={px(3)} />
 				</textlabel>
 			</imagelabel>
 		</AnimatedButton>
