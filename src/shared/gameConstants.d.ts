@@ -75,6 +75,7 @@ export declare const gameConstants: {
 	readonly BIGGER_BACKPACK_SIZE_MODIFIER: number;
 	readonly MIN_DIG_REQ_DIST: number;
 	readonly TIMED_REWARD_WAIT_TIME: number;
+	readonly CUTSCENE_SUSPENSE_TIME: number;
 
 	readonly LEVEL_INCREASE_EXPONENT: number;
 

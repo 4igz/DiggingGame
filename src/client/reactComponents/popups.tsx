@@ -277,6 +277,9 @@ export const Popups = () => {
 		Events.targetAdded.connect((itemName, itemWeight, mapName) => {
 			const item = fullTargetConfig[itemName];
 			if (item) {
+				if (item.hasCutscene) {
+					task.wait(gameConstants.CUTSCENE_SUSPENSE_TIME + 1);
+				}
 				queuePopup("ItemAdded", `${itemName}-${itemWeight}`, {
 					itemName,
 					itemImage: item.itemImage,

@@ -16,6 +16,12 @@ interface TreasureComponent extends Instance {}
 	tag: "Treasure",
 })
 export class Treasure extends BaseComponent<Attributes, TreasureComponent> {
+	private root: ReactRoblox.Root | undefined;
+	destroy(): void {
+		this.root?.unmount();
+		this.root = undefined;
+	}
+
 	constructor() {
 		super();
 		const name = this.instance.Name;
@@ -26,8 +32,11 @@ export class Treasure extends BaseComponent<Attributes, TreasureComponent> {
 
 		const container = new Instance("Folder");
 		const root = ReactRoblox.createRoot(container);
+		this.root = root;
 		const Billboard: React.FC<{}> = (_) => {
 			const [enabled, setEnabled] = React.useState(true);
+
+			let adornee = undefined;
 
 			useEffect(() => {
 				if (this.instance.IsA("PVInstance")) {
@@ -41,9 +50,15 @@ export class Treasure extends BaseComponent<Attributes, TreasureComponent> {
 				}
 			}, []);
 
-			const adornee = this.instance.IsA("PVInstance")
-				? this.instance
-				: this.instance.FindFirstChildWhichIsA("PVInstance");
+			const parentModel = this.instance?.IsA("Model") ? (this.instance as Model) : undefined;
+
+			if (parentModel) {
+				adornee = parentModel.PrimaryPart ?? parentModel.FindFirstChildWhichIsA("BasePart");
+			} else {
+				adornee = this.instance.IsA("PVInstance")
+					? this.instance
+					: this.instance.FindFirstChildWhichIsA("PVInstance");
+			}
 
 			if (!adornee) {
 				error("No adornee found for treasure display.");
