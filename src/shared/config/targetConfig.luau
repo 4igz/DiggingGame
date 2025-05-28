@@ -27,8 +27,8 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://82293616105219",
 		animationName = "Hold",
 		description = "A small bag filled with shiny coins. It's not worth much, but it's a nice find.",
-
 		indexRarity = 3,
+		hasCutscene = true,
 	},
 
 	["Cool Shell"] = {

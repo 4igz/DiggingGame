@@ -528,27 +528,23 @@ export class TargetService implements OnStart {
 		if (target) {
 			Events.endDiggingServer.fire(player, !failed, target?.itemId);
 		}
+
 		const character = player.Character;
 		if (!character || !character.Parent) return;
 		const humanoid = character.WaitForChild("Humanoid") as Humanoid;
-		humanoid.WalkSpeed = 20;
+		if (!target?.hasCutscene) {
+			humanoid.WalkSpeed = 20;
+		}
 
 		// Equip the metal detector back from their backpack and unequip the shovel
 		const backpack = player.WaitForChild("Backpack");
 		const shovel = character.FindFirstChild(profile.Data.equippedShovel);
 		if (shovel && shovel.IsA("Tool") && !target?.usingDigEverywhere && reparentDetector) {
-			shovel.Parent = backpack;
 			const detector = backpack.FindFirstChild(profile.Data.equippedDetector) as Tool;
 			if (detector) {
+				if (target?.hasCutscene) return;
 				// We use attributes to reliably replicate the last dig time in time for the client to see the parented
-				if (target?.hasCutscene) {
-					task.delay(gameConstants.CUTSCENE_LEN + gameConstants.CUTSCENE_SUSPENSE_TIME, () => {
-						detector.SetAttribute("LastSuccessfulDigTime", tick()); // For the client to know when they last successfully dug
-						detector.Parent = character;
-					});
-					return;
-				}
-
+				humanoid.UnequipTools();
 				detector.SetAttribute("LastSuccessfulDigTime", tick()); // For the client to know when they last successfully dug
 				detector.Parent = character;
 			}

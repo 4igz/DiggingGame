@@ -35,6 +35,7 @@ import { fullTargetConfig } from "shared/config/targetConfig";
 import { createMotion } from "@rbxts/ripple";
 import { isCframeValid, isVector3Valid } from "shared/util/cfUtil";
 import { springs } from "client/utils/springs";
+import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
 
 const camera = Workspace.CurrentCamera;
 const holeTroveMap = new Map<Trove, [Signal<(size: number) => void>, Sound, BasePart]>();
@@ -947,7 +948,7 @@ export class ShovelController implements OnStart {
 						const origin = existingModel.GetAttribute(gameConstants.TREASURE_MODEL_ORIGIN) as Vector3;
 
 						if (!hasCutscene) {
-							const minYOffset = 6; // Minimum Y offset to ensure it's out of the ground
+							const minYOffset = 2; // Minimum Y offset to ensure it's out of the ground
 							const extentsY = existingModel.GetExtentsSize().Magnitude / 2;
 							const yOffset = math.max(extentsY, minYOffset);
 							existingModel.PivotTo(new CFrame(origin).add(new Vector3(0, yOffset, 0)));
@@ -970,6 +971,8 @@ export class ShovelController implements OnStart {
 							const humanoid = character.FindFirstChildWhichIsA("Humanoid") as Humanoid;
 
 							if (!humanoid) return;
+
+							let wasAutoDigging = isAutoDigging;
 
 							const ORIGINAL_WALKSPEED = humanoid.WalkSpeed;
 
@@ -998,10 +1001,10 @@ export class ShovelController implements OnStart {
 								}
 							}
 							// Distance from treasure
-							const modelSize = existingModel.GetExtentsSize();
-							const cameraDistance = math.max(4.5, modelSize.Magnitude / 2 + 4.5);
-							const cameraAngle = 30; // Angle in degrees looking down at treasure
-							const cameraHeight = 10; // Additional height offset
+							// const modelSize = existingModel.GetExtentsSize();
+							// const cameraDistance = math.max(4.5, modelSize.Magnitude / 2 + 4.5);
+							// const cameraAngle = 30; // Angle in degrees looking down at treasure
+							// const cameraHeight = 10; // Additional height offset
 							const TWEEN_SPEED = gameConstants.CUTSCENE_LEN;
 							const treasureTween = TweenService.Create(
 								primaryPart,
@@ -1016,17 +1019,17 @@ export class ShovelController implements OnStart {
 							digTrove.add(treasureTween);
 							digTrove.add(followedTween);
 							let angledPov = false;
-							const angleRad = math.rad(cameraAngle);
-							const cameraOffset = angledPov
-								? new Vector3(
-										0,
-										cameraHeight + math.sin(angleRad) * cameraDistance,
-										math.cos(angleRad) * cameraDistance,
-								  )
-								: new Vector3(0, cameraHeight + cameraDistance, 0);
-							let pos = primaryPart.Position.add(cameraOffset);
+							// const angleRad = math.rad(cameraAngle);
+							// const cameraOffset = angledPov
+							// 	? new Vector3(
+							// 			0,
+							// 			cameraHeight + math.sin(angleRad) * cameraDistance,
+							// 			math.cos(angleRad) * cameraDistance,
+							// 	  )
+							// 	: new Vector3(0, cameraHeight + cameraDistance, 0);
 							const cleanMotion = cutsceneCameraMotion.start();
-							cutsceneCameraMotion.immediate(new CFrame(pos));
+							// let pos = primaryPart.Position.add(cameraOffset);
+							// cutsceneCameraMotion.immediate(new CFrame(pos));
 							const originalCameraType = camera.CameraType;
 							camera.CameraType = Enum.CameraType.Scriptable;
 
@@ -1105,8 +1108,21 @@ export class ShovelController implements OnStart {
 									}
 									cutsceneCameraMotion.stop();
 									// existingModel.Destroy();
-									this.cutsceneActive = false;
 									humanoid.WalkSpeed = 20;
+									this.cutsceneActive = false;
+
+									if (wasAutoDigging) {
+										// Equip the metal detector back from their backpack and unequip the shovel
+										const backpack = Players.LocalPlayer.WaitForChild("Backpack");
+										for (const tool of backpack.GetChildren()) {
+											if (metalDetectorConfig[tool.Name]) {
+												humanoid.UnequipTools();
+												tool.SetAttribute("LastSuccessfulDigTime", tick()); // For the client to know when they last successfully dug
+												tool.Parent = character;
+												break;
+											}
+										}
+									}
 								}),
 							);
 						}

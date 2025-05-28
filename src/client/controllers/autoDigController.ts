@@ -396,7 +396,7 @@ export class AutoDigging implements OnStart, OnRender {
 
 				trackedSpawnPosition = target.position;
 
-				if (!this.detector.detectorActive) {
+				if (!this.detector.detectorActive && !this.shovelController.cutsceneActive) {
 					humanoid.UnequipTools();
 					for (const tool of Players.LocalPlayer.WaitForChild("Backpack").GetChildren()) {
 						if (tool.IsA("Tool") && metalDetectorConfig[tool.Name]) {
