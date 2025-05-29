@@ -44,6 +44,12 @@ export class SellBubbleController implements OnStart {
 
 			const startPos = startPivot.Position.add(offset);
 			const startCFrame = new CFrame(startPos);
+			const bubblePrimary = bubble.PrimaryPart;
+			if (!bubblePrimary) {
+				this.bubblePool.release(bubble);
+				continue;
+			}
+			// bubblePrimary.CFrame = startCFrame;
 			bubble.PivotTo(startCFrame);
 
 			task.delay(0.2, () => {
@@ -60,7 +66,8 @@ export class SellBubbleController implements OnStart {
 					const bobSpeed = 4;
 					const bobOffset = math.sin(tick() * bobSpeed + i) * bobHeight;
 					const bobCFrame = fallenCframe.mul(new CFrame(0, bobOffset, 0));
-					bubble.PivotTo(bobCFrame);
+					bubblePrimary.CFrame = bobCFrame;
+					// bubble.PivotTo(bobCFrame);
 
 					if (floatElapsed >= floatDuration) {
 						// Previous render step is disconnected, so no, its not creating a new
@@ -81,7 +88,8 @@ export class SellBubbleController implements OnStart {
 
 							attractElapsed += dt2;
 							const alpha = math.clamp(attractElapsed / attractDuration, 0, 1);
-							bubble.PivotTo(fallenCframe.Lerp(startPivot, alpha));
+							// bubble.PivotTo(fallenCframe.Lerp(startPivot, alpha));
+							bubblePrimary.CFrame = fallenCframe.Lerp(startPivot, alpha);
 
 							if (alpha >= 1) {
 								attractConnection.Disconnect();
