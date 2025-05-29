@@ -280,7 +280,7 @@ export const Popups = () => {
 				if (item.hasCutscene) {
 					task.wait(gameConstants.CUTSCENE_SUSPENSE_TIME + 1);
 				}
-				queuePopup("ItemAdded", `${itemName}-${itemWeight}`, {
+				queuePopup("ItemAdded", `${itemName}`, {
 					itemName,
 					itemImage: item.itemImage,
 					itemRarity: item.rarityType,

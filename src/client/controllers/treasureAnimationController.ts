@@ -10,7 +10,7 @@ const AnimationFolder = ReplicatedStorage.WaitForChild("Assets").WaitForChild("A
 })
 export class TreasureAnimationController implements OnStart {
 	onStart() {
-		Players.LocalPlayer.CharacterAdded.Connect((character) => {
+		const setupCharacter = (character: Model) => {
 			const humanoid = character.WaitForChild("Humanoid");
 			const animator = humanoid.WaitForChild("Animator") as Animator;
 			const tracks = new Map<string, AnimationTrack>();
@@ -38,6 +38,13 @@ export class TreasureAnimationController implements OnStart {
 					});
 				}
 			});
-		});
+		};
+
+		const character = Players.LocalPlayer.Character;
+		if (character) {
+			setupCharacter(character);
+		}
+
+		Players.LocalPlayer.CharacterAdded.Connect(setupCharacter);
 	}
 }

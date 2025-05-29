@@ -24,6 +24,7 @@ export class SellBubbleController implements OnStart {
 	}
 
 	createCashBubbles(amt: number = 1) {
+		amt = math.min(amt, MAX_BUBBLES);
 		let startPivot = Players.LocalPlayer.Character?.GetPivot();
 		if (!startPivot) return;
 

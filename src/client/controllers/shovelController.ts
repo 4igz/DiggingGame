@@ -130,13 +130,13 @@ export class ShovelController implements OnStart {
 		const DigTargetModelFolder = ReplicatedStorage.WaitForChild("Assets").WaitForChild("TargetModels");
 		const VfxFolder = ReplicatedStorage.WaitForChild("Assets").WaitForChild("VFX");
 		const digVfx = new ObjectPool(() => {
-			return VfxFolder.WaitForChild("DiggingVfx") as BasePart;
+			return VfxFolder.WaitForChild("DiggingVfx").Clone() as BasePart;
 		});
 		const rewardVfx = new ObjectPool(() => {
-			return VfxFolder.WaitForChild("Reward") as BasePart;
+			return VfxFolder.WaitForChild("Reward").Clone() as BasePart;
 		});
 		const digCompleteVfx = new ObjectPool(() => {
-			return VfxFolder.WaitForChild("DigCompletionVfx") as BasePart;
+			return VfxFolder.WaitForChild("DigCompletionVfx").Clone() as BasePart;
 		});
 		const suspenseCutsceneVfx = new ObjectPool(() => {
 			return VfxFolder.WaitForChild("DigCutsceneSuspenseVFX").Clone();

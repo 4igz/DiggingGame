@@ -162,10 +162,14 @@ export const TreasureAddedPopup = (props: TreasurePopupProps) => {
 						  )},${math.round(RC[props.itemRarity].B * 255)})">1 in ${shortenNumber(
 								getOneInXChance(props.itemName, props.mapName),
 								false,
-						  )} ${props.itemName}</font> at <font color="rgb(100,125,255)"><b>${string.format(
-								"%.2f",
-								props.itemWeight,
-						  )}</b></font> kg!`
+						  )} ${props.itemName}</font> ${
+								props.count <= 1
+									? `at <font color="rgb(100,125,255)"><b>${string.format(
+											"%.2f",
+											props.itemWeight,
+									  )}</b></font> kg!`
+									: `<font color="rgb(100,125,255)"><b>x${props.count}</b></font>`
+						  }`
 				}
 				TextColor3={Color3.fromRGB(255, 255, 255)}
 				TextScaled={true}
