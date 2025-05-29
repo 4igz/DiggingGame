@@ -45,7 +45,7 @@ local boatConfig: { [string]: BoatConfig } = {
 		itemImage = "rbxassetid://85149294604733",
 		rarityType = "Uncommon",
 		turnSpeed = 1.5,
-		speed = 12,
+		speed = 8,
 	},
 	["Fishing boat"] = {
 		price = 10000000,

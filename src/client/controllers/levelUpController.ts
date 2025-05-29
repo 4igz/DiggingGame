@@ -2,11 +2,16 @@
 import { Controller, OnStart } from "@flamework/core";
 import { Players, ReplicatedStorage, TweenService, Workspace } from "@rbxts/services";
 import { Events } from "client/network";
+import { ObjectPool } from "shared/util/objectPool";
 import { emitUsingAttributes } from "shared/util/vfxUtil";
 
 const vfx = ReplicatedStorage.WaitForChild("Assets").WaitForChild("VFX") as Folder;
 const detectorEffectTextContainer = vfx.FindFirstChild("DetectorEffectTextVfx") as Part;
 const levelUpVfx = vfx.FindFirstChild("LevelUpVfx")?.FindFirstChild("fx") as Attachment;
+
+const vfxPool = new ObjectPool(() => {
+	return levelUpVfx.Clone();
+});
 
 @Controller({})
 export class LevelUp implements OnStart {
@@ -16,7 +21,7 @@ export class LevelUp implements OnStart {
 			if (!character) return;
 			const rollTextVfxClone = detectorEffectTextContainer.Clone();
 			rollTextVfxClone.PivotTo(character.GetPivot().add(new Vector3(math.random(-3, 3), 1, math.random(-3, 3))));
-			const vfxClone = levelUpVfx.Clone();
+			const vfxClone = vfxPool.acquire();
 			vfxClone.Position = Vector3.zero;
 			vfxClone.Parent = character.PrimaryPart;
 
@@ -40,7 +45,8 @@ export class LevelUp implements OnStart {
 				TweenService.Create(stroke, textPopoutTweenInfo, { Transparency: 1 }).Play();
 				tween.Completed.Connect(() => {
 					rollTextVfxClone.Destroy();
-					vfxClone.Destroy();
+					// vfxClone.Destroy();
+					vfxPool.release(vfxClone);
 				});
 				tween.Play();
 			});

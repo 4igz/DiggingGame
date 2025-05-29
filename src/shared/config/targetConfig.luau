@@ -28,7 +28,6 @@ local targetConfig: { [string]: TargetConfig } = {
 		animationName = "Hold",
 		description = "A small bag filled with shiny coins. It's not worth much, but it's a nice find.",
 		indexRarity = 3,
-		hasCutscene = true,
 	},
 
 	["Cool Shell"] = {

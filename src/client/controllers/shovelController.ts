@@ -33,8 +33,6 @@ import { DIG_STEP, QUEST_STEP, SELL_STEP, TREASURE_STEP } from "shared/config/tu
 import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 import { fullTargetConfig } from "shared/config/targetConfig";
 import { createMotion } from "@rbxts/ripple";
-import { isCframeValid, isVector3Valid } from "shared/util/cfUtil";
-import { springs } from "client/utils/springs";
 import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
 
 const camera = Workspace.CurrentCamera;
@@ -131,11 +129,22 @@ export class ShovelController implements OnStart {
 	onStart() {
 		const DigTargetModelFolder = ReplicatedStorage.WaitForChild("Assets").WaitForChild("TargetModels");
 		const VfxFolder = ReplicatedStorage.WaitForChild("Assets").WaitForChild("VFX");
-		const digVfx = VfxFolder.WaitForChild("DiggingVfx") as BasePart;
-		const rewardVfx = VfxFolder.WaitForChild("Reward") as BasePart;
-		const digCompleteVfx = VfxFolder.WaitForChild("DigCompletionVfx") as BasePart;
-		const suspenseCutsceneVfx = VfxFolder.WaitForChild("DigCutsceneSuspenseVFX");
-		const endCutsceneVfx = VfxFolder.WaitForChild("DigCutsceneEndVFX");
+		const digVfx = new ObjectPool(() => {
+			return VfxFolder.WaitForChild("DiggingVfx") as BasePart;
+		});
+		const rewardVfx = new ObjectPool(() => {
+			return VfxFolder.WaitForChild("Reward") as BasePart;
+		});
+		const digCompleteVfx = new ObjectPool(() => {
+			return VfxFolder.WaitForChild("DigCompletionVfx") as BasePart;
+		});
+		const suspenseCutsceneVfx = new ObjectPool(() => {
+			return VfxFolder.WaitForChild("DigCutsceneSuspenseVFX").Clone();
+		});
+		const endCutsceneVfx = new ObjectPool(() => {
+			return VfxFolder.WaitForChild("DigCutsceneEndVFX").Clone();
+		});
+
 		const digModels = new Map<string, Model>();
 		const digTroves = new Map<string, Trove>();
 		const digOutSound = SoundService.WaitForChild("Tools").WaitForChild("Dig out") as Sound;
@@ -635,7 +644,7 @@ export class ShovelController implements OnStart {
 				model.PrimaryPart = model.FindFirstChildWhichIsA("BasePart");
 			}
 
-			const diggingVfx = digVfx.Clone();
+			const diggingVfx = digVfx.acquire();
 			diggingVfx.PivotTo(new CFrame(target.position));
 			diggingVfx.Parent = Workspace;
 
@@ -717,7 +726,7 @@ export class ShovelController implements OnStart {
 			);
 
 			// For the reward vfx, we want to relocate the particles to the target model.
-			const rewardVfxClone = rewardVfx.Clone() as BasePart;
+			const rewardVfxClone = rewardVfx.acquire() as BasePart;
 			for (const descendant of rewardVfxClone.GetDescendants()) {
 				if (descendant.IsA("ParticleEmitter")) {
 					if (model.PrimaryPart && model.PrimaryPart.Parent) {
@@ -726,8 +735,12 @@ export class ShovelController implements OnStart {
 				}
 			}
 
-			digTrove.add(rewardVfxClone);
-			digTrove.add(diggingVfx);
+			digTrove.add(() => {
+				rewardVfx.release(rewardVfxClone);
+			});
+			digTrove.add(() => {
+				digVfx.release(diggingVfx);
+			});
 			digTrove.add(model);
 			digTrove.add(
 				Signals.updateDiggingProgress.Connect((progress, maxProgress) => {
@@ -910,12 +923,14 @@ export class ShovelController implements OnStart {
 							c.PositionInfluence = new Vector3(2, 2, 2);
 							c.RotationInfluence = new Vector3(5, 5, 0);
 							camShake.Shake(c);
-							const digCompleteVfxClone = digCompleteVfx.Clone();
+							const digCompleteVfxClone = digCompleteVfx.acquire();
 							digCompleteVfxClone.PivotTo(
 								new CFrame(existingModel.GetAttribute(gameConstants.TREASURE_MODEL_ORIGIN) as Vector3),
 							);
 							digCompleteVfxClone.Parent = Workspace;
-							digTrove.add(digCompleteVfxClone);
+							digTrove.add(() => {
+								digCompleteVfx.release(digCompleteVfxClone);
+							});
 							task.defer(function () {
 								emitUsingAttributes(digCompleteVfxClone);
 							});
@@ -1055,8 +1070,10 @@ export class ShovelController implements OnStart {
 							});
 
 							digTrove.add(cleanMotion);
-							const sVfx = suspenseCutsceneVfx.Clone() as PVInstance;
-							digTrove.add(sVfx);
+							const sVfx = suspenseCutsceneVfx.acquire() as PVInstance;
+							digTrove.add(() => {
+								suspenseCutsceneVfx.release(sVfx);
+							});
 							sVfx.PivotTo(new CFrame(origin).add(new Vector3(0, 2, 0)));
 							sVfx.Parent = Workspace;
 
@@ -1067,10 +1084,12 @@ export class ShovelController implements OnStart {
 									currentDigTrack.Play();
 									currentDigTrack.GetMarkerReachedSignal(DIG_ANIMATION_MARKER).Once(() => {
 										if (!this.cutsceneActive) return;
-										const endVfx = endCutsceneVfx.Clone() as PVInstance;
+										const endVfx = endCutsceneVfx.acquire() as PVInstance;
 										endVfx.PivotTo(new CFrame(origin));
 										endVfx.Parent = Workspace;
-										digTrove.add(endVfx);
+										digTrove.add(() => {
+											endCutsceneVfx.release(endVfx);
+										});
 										// Signals.dig.Fire();
 										angledPov = true;
 										treasureTween.Play();
@@ -1084,10 +1103,12 @@ export class ShovelController implements OnStart {
 										currentDigTrack?.Stop();
 									});
 								} else if (this.cutsceneActive) {
-									const endVfx = endCutsceneVfx.Clone() as PVInstance;
+									const endVfx = endCutsceneVfx.acquire() as PVInstance;
 									endVfx.PivotTo(new CFrame(origin));
 									endVfx.Parent = Workspace;
-									digTrove.add(endVfx);
+									digTrove.add(() => {
+										endCutsceneVfx.release(endVfx);
+									});
 									angledPov = true;
 									treasureTween.Play();
 									followedTween.Play();
@@ -1225,7 +1246,7 @@ export class ShovelController implements OnStart {
 				digTroves.set(digTarget.itemId, digTrove);
 			}
 
-			const diggingVfx = (existingModel.FindFirstChild(digVfx.Name) ?? digVfx.Clone()) as PVInstance;
+			const diggingVfx = (existingModel.FindFirstChild("DiggingVfx") ?? digVfx.acquire()) as PVInstance;
 			diggingVfx.PivotTo(new CFrame(digTarget.position));
 			diggingVfx.Parent = Workspace;
 
@@ -1239,7 +1260,9 @@ export class ShovelController implements OnStart {
 
 			emitParticleDescendants(diggingVfx, 7);
 
-			digTrove.add(diggingVfx);
+			digTrove.add(() => {
+				digVfx.release(diggingVfx as BasePart);
+			});
 			digTrove.add(existingModel);
 
 			const currentMapFolder = CollectionService.GetTagged("Map").filter(
@@ -1346,14 +1369,18 @@ export class ShovelController implements OnStart {
 					return;
 				}
 
-				const rewardVfxClone = rewardVfx.Clone();
+				const rewardVfxClone = rewardVfx.acquire();
+
 				for (const descendant of rewardVfxClone.GetDescendants()) {
 					if (descendant.IsA("ParticleEmitter")) {
 						descendant.Parent = model.PrimaryPart;
 						descendant.Enabled = true;
 					}
 				}
-				trove.add(rewardVfxClone);
+
+				trove.add(() => {
+					rewardVfx.release(rewardVfxClone);
+				});
 
 				const tweenInfo = new TweenInfo(4, Enum.EasingStyle.Linear, Enum.EasingDirection.Out);
 				const tweens = new Array<Promise<void>>();

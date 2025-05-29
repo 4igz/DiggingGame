@@ -1160,7 +1160,7 @@ interface SellAllBtnProps {
 	requiresGamepass: boolean;
 	gamepassController?: GamepassController;
 	visible: boolean;
-	after?: () => void;
+	afterUse?: () => void;
 }
 
 export const SellAllBtn = (props: SellAllBtnProps) => {
@@ -1193,7 +1193,7 @@ export const SellAllBtn = (props: SellAllBtnProps) => {
 				}
 				Events.sellAll();
 				SoundService.PlayLocalSound(SoundService.WaitForChild("UI").WaitForChild("Sell") as Sound);
-				props.after?.();
+				props.afterUse?.();
 			}}
 		>
 			<imagelabel

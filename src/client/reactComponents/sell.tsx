@@ -253,11 +253,7 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 				Size={UDim2.fromScale(1, 1)}
 			/>
 
-			<ExitButton
-				uiName={gameConstants.SELL_UI}
-				uiController={props.uiController}
-				isMenuVisible={visible}
-			/>
+			<ExitButton uiName={gameConstants.SELL_UI} uiController={props.uiController} isMenuVisible={visible} />
 
 			<imagelabel
 				AnchorPoint={new Vector2(0.5, 0.5)}
@@ -402,12 +398,15 @@ export const Sell: React.FC<SellUiProps> = (props) => {
 				size={UDim2.fromScale(0.278, 0.154)}
 				requiresGamepass={false}
 				visible={true}
-				after={() => {
+				afterUse={() => {
 					if (
 						props.tutorialController.tutorialActive &&
 						props.tutorialController.currentStage === SELL_STEP
 					) {
 						Signals.tutorialStepCompleted.Fire(SELL_STEP);
+					}
+					if (props.uiController.currentOpenUi === gameConstants.SELL_UI) {
+						props.uiController.closeCurrentOpenMenu();
 					}
 				}}
 			/>

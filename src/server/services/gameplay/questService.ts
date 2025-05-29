@@ -10,6 +10,7 @@ import { QuestProgress } from "shared/networkTypes";
 import { Players } from "@rbxts/services";
 import { debugWarn } from "shared/util/logUtil";
 import profileTemplate from "server/profileTemplate";
+import Sift from "@rbxts/sift";
 
 @Service({})
 export class QuestService implements OnStart {
@@ -165,7 +166,7 @@ export class QuestService implements OnStart {
 			}
 
 			if (os.time() - lastReset > this.QUEST_RESET_TIME || !keysMatch) {
-				profile.Data.questProgress = table.clone(this.DEFAULT_QUEST_PROGRESS);
+				profile.Data.questProgress = Sift.Dictionary.copyDeep(this.DEFAULT_QUEST_PROGRESS);
 				profile.Data.lastQuestReset = os.time();
 			}
 

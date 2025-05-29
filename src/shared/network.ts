@@ -123,6 +123,7 @@ interface ServerToClientEvents {
 	endTutorial: () => void;
 	claimedTimedReward: () => void;
 	claimedSpontaneousReward: () => void;
+	
 }
 
 interface ClientToServerFunctions {
