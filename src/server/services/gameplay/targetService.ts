@@ -714,70 +714,70 @@ export class TargetService implements OnStart {
 		return [targetInstance, profile.Data.currentMap];
 	}
 
-	private rollTargetUsingWeights(
-		currentMap: keyof typeof mapConfig,
-		addLuck: number,
-		includeTrash: boolean,
-	): [keyof typeof fullTargetConfig, TargetConfig] | undefined {
-		// Retrieve the player's profile
-		// Retrieve the map data based on the player's current map
-		const mapData = mapConfig[currentMap];
-		if (!mapData || !mapData.targetList) {
-			return undefined;
-		}
-
-		// Initialize variables for cumulative weights
-		let cumulativeWeight = 0;
-		const cumulativeMap = new Map<keyof typeof fullTargetConfig, number>();
-
-		// If luck is 0, they are getting trash buddy
-		const cfg = includeTrash ? fullTargetConfig : targetConfig;
-
-		// Adjust weights with scaling
-		for (const [name, targetInfo] of pairs(cfg)) {
-			if (!mapData.targetList.includes(name)) continue;
-
-			// Apply the adjusted weight formula
-			const weight = math.pow(1 / targetInfo.rarity, 1 - addLuck);
-			cumulativeWeight += weight;
-			cumulativeMap.set(name, cumulativeWeight);
-		}
-
-		if (cumulativeMap.size() === 0) {
-			warn("No valid targets for the map:", currentMap);
-			return undefined;
-		}
-
-		// Generate a random roll within the cumulative weight range
-		const roll = this.rng.NextNumber(0, cumulativeWeight);
-
-		// Find the matching target based on the roll
-		let selectedTarget: keyof typeof fullTargetConfig | undefined;
-
-		// Manually convert Map to an array of key-value pairs
-		const mapArray: [string, number][] = [];
-		for (const [key, value] of cumulativeMap) {
-			mapArray.push([key, value]);
-		}
-
-		mapArray.sort((a, b) => {
-			return a[1] < b[1];
-		});
-
-		for (const [name, cumulative] of mapArray) {
-			if (roll <= cumulative) {
-				selectedTarget = name;
-				break; // Stop once the first matching target is found
-			}
-		}
-
-		// If no target is selected, return undefined
-		if (!selectedTarget) {
-			warn("Roll failed to match any target");
-			return undefined;
-		}
-
-		// Return the selected target and its configuration
-		return [selectedTarget, cfg[selectedTarget]];
+private rollTargetUsingWeights(
+	currentMap: keyof typeof mapConfig,
+	addLuck: number,
+	includeTrash: boolean,
+): [keyof typeof fullTargetConfig, TargetConfig] | undefined {
+	// Retrieve the player's profile
+	// Retrieve the map data based on the player's current map
+	const mapData = mapConfig[currentMap];
+	if (!mapData || !mapData.targetList) {
+		return undefined;
 	}
+
+	// Initialize variables for cumulative weights
+	let cumulativeWeight = 0;
+	const cumulativeMap = new Map<keyof typeof fullTargetConfig, number>();
+
+	// If luck is 0, they are getting trash buddy
+	const cfg = includeTrash ? fullTargetConfig : targetConfig;
+
+	// Adjust weights with scaling
+	for (const [name, targetInfo] of pairs(cfg)) {
+		if (!mapData.targetList.includes(name)) continue;
+
+		// Apply the adjusted weight formula
+		const weight = math.pow(1 / targetInfo.rarity, 1 - addLuck);
+		cumulativeWeight += weight;
+		cumulativeMap.set(name, cumulativeWeight);
+	}
+
+	if (cumulativeMap.size() === 0) {
+		warn("No valid targets for the map:", currentMap);
+		return undefined;
+	}
+
+	// Generate a random roll within the cumulative weight range
+	const roll = this.rng.NextNumber(0, cumulativeWeight);
+
+	// Find the matching target based on the roll
+	let selectedTarget: keyof typeof fullTargetConfig | undefined;
+
+	// Manually convert Map to an array of key-value pairs
+	const mapArray: [string, number][] = [];
+	for (const [key, value] of cumulativeMap) {
+		mapArray.push([key, value]);
+	}
+
+	mapArray.sort((a, b) => {
+		return a[1] < b[1];
+	});
+
+	for (const [name, cumulative] of mapArray) {
+		if (roll <= cumulative) {
+			selectedTarget = name;
+			break; // Stop once the first matching target is found
+		}
+	}
+
+	// If no target is selected, return undefined
+	if (!selectedTarget) {
+		warn("Roll failed to match any target");
+		return undefined;
+	}
+
+	// Return the selected target and its configuration
+	return [selectedTarget, cfg[selectedTarget]];
+}
 }

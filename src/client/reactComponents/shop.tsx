@@ -428,7 +428,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 					key={"1"}
 					Position={UDim2.fromScale(0.5, 0.971)}
 					Size={UDim2.fromScale(0.9, 0.11)}
-					Text={props.obtainLocation ?? `$${separateWithCommas(props.price)}`}
+					Text={props.obtainLocation ?? `$${shortenNumber(props.price)}`}
 					TextColor3={Color3.fromRGB(92, 255, 133)}
 					// TextScaled={true}
 					// TextWrapped={true}
@@ -451,7 +451,7 @@ const GenericItemComponent: React.FC<GenericItemProps> = (props) => {
 						key={"1"}
 						Position={UDim2.fromScale(0.5, 0.45)}
 						Size={UDim2.fromScale(0.9, 0.11)}
-						Text={props.obtainLocation ?? `$${separateWithCommas(props.price)}`}
+						Text={props.obtainLocation ?? `$${shortenNumber(props.price)}`}
 						TextColor3={Color3.fromRGB(92, 255, 133)}
 						// TextScaled={true}
 						// TextWrapped={true}

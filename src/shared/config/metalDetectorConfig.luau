@@ -36,7 +36,7 @@ local metalDetectorConfig: { [string]: MetalDetector } = {
 		searchRadius = 42.5,
 		itemImage = "rbxassetid://135924805977158",
 		rarityType = "Common",
-		price = 2000,
+		price = 2_000,
 	},
 	GoldDetector = {
 		strength = 1.5,
@@ -44,7 +44,7 @@ local metalDetectorConfig: { [string]: MetalDetector } = {
 		searchRadius = 40,
 		itemImage = "rbxassetid://124439509844599",
 		rarityType = "Common",
-		price = 5000,
+		price = 5_000,
 	},
 	DiamondDetector = {
 		strength = 1.75,
@@ -52,7 +52,7 @@ local metalDetectorConfig: { [string]: MetalDetector } = {
 		searchRadius = 37.5,
 		itemImage = "rbxassetid://102615131234174",
 		rarityType = "Uncommon",
-		price = 10000,
+		price = 10_000,
 	},
 	AmethystDetector = {
 		strength = 2,
@@ -60,7 +60,7 @@ local metalDetectorConfig: { [string]: MetalDetector } = {
 		searchRadius = 35,
 		itemImage = "rbxassetid://123979343978192",
 		rarityType = "Uncommon",
-		price = 25000,
+		price = 25_000,
 	},
 	RubyDetector = {
 		strength = 2.25,
@@ -68,7 +68,7 @@ local metalDetectorConfig: { [string]: MetalDetector } = {
 		searchRadius = 32.5,
 		itemImage = "rbxassetid://80842349596350",
 		rarityType = "Rare",
-		price = 100000,
+		price = 100_000,
 	},
 	EnchantedDetector = {
 		strength = 2.50,
@@ -76,15 +76,15 @@ local metalDetectorConfig: { [string]: MetalDetector } = {
 		searchRadius = 30,
 		itemImage = "rbxassetid://100950657608323",
 		rarityType = "Rare",
-		price = 250000,
+		price = 250_000,
 	},
 	DemonicDetector = {
 		strength = 2.75,
 		luck = 25,
 		searchRadius = 27.5,
 		itemImage = "rbxassetid://76078468216770",
-		rarityType = "Epic",
-		price = 750000,
+		rarityType = "Rare",
+		price = 750_000,
 	},
 	HeavenlyDetector = {
 		strength = 3,
@@ -92,7 +92,7 @@ local metalDetectorConfig: { [string]: MetalDetector } = {
 		searchRadius = 25,
 		itemImage = "rbxassetid://133401921939429",
 		rarityType = "Epic",
-		price = 2000000,
+		price = 2_000_000,
 	},
 
 	-- New additions:
@@ -119,12 +119,12 @@ local metalDetectorConfig: { [string]: MetalDetector } = {
 
 		notForSale = true,
 	},
-	
+
 	SteampunkDetector = {
 		strength = 2,
 		luck = 15,
 		searchRadius = 33.5,
-		rarityType = "Epic",
+		rarityType = "Rare",
 		itemImage = "rbxassetid://99214897672719",
 		price = 200,
 
@@ -137,8 +137,8 @@ local metalDetectorConfig: { [string]: MetalDetector } = {
 		luck = 35,
 		searchRadius = 22.5,
 		itemImage = "rbxassetid://121233275974009",
-		rarityType = "Legendary",
-		price = 10000000,
+		rarityType = "Epic",
+		price = 10_000_000,
 	},
 	AlienDetector = {
 		strength = 3.50,
@@ -146,23 +146,40 @@ local metalDetectorConfig: { [string]: MetalDetector } = {
 		searchRadius = 20,
 		itemImage = "rbxassetid://70623998291755",
 		rarityType = "Legendary",
-		price = 50000000,
+		price = 50_000_000,
 	},
+
 	MonsterDetector = {
 		strength = 3.75,
 		luck = 45,
 		searchRadius = 17.5,
 		itemImage = "rbxassetid://110685529014774",
-		rarityType = "Mythical",
-		price = 250000000,
+		rarityType = "Legendary",
+		price = 250_000_000,
 	},
 	PureDetector = {
 		strength = 4,
 		luck = 50,
 		searchRadius = 15,
 		itemImage = "rbxassetid://98289595849939",
+		rarityType = "Legendary",
+		price = 1_000_000_000,
+	},
+	CactusDetector = {
+		strength = 4.5,
+		luck = 55,
+		searchRadius = 14,
+		itemImage = "rbxassetid://86188061677221",
+		rarityType = "Mythical",
+		price = 1_500_000_000,
+	},
+	EgyptianDetector = {
+		strength = 5,
+		luck = 57,
+		searchRadius = 13,
+		itemImage = "rbxassetid://112060556629021",
 		rarityType = "Secret",
-		price = 1000000000,
+		price = 2_000_000_000,
 	},
 }
 return {

@@ -232,7 +232,7 @@ export class RewardService implements OnStart {
 			profile.Data.claimedTimedReward = true;
 			this.profileService.setProfile(player, profile);
 
-			this.claimReward(player, { rewardType: "Shovels", itemName: "DemonicShovel" });
+			this.claimReward(player, { rewardType: "Shovels", itemName: "SteampunkShovel" });
 			this.claimReward(player, { rewardType: "Potions", itemName: "L.Luck Potion" });
 			this.claimReward(player, { rewardType: "Potions", itemName: "L.Luck Potion" });
 			Events.claimedTimedReward(player);

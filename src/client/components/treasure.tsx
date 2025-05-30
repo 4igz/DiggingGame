@@ -50,20 +50,6 @@ export class Treasure extends BaseComponent<Attributes, TreasureComponent> {
 				}
 			}, []);
 
-			const parentModel = this.instance?.IsA("Model") ? (this.instance as Model) : undefined;
-
-			if (parentModel) {
-				adornee = parentModel.PrimaryPart ?? parentModel.FindFirstChildWhichIsA("BasePart");
-			} else {
-				adornee = this.instance.IsA("PVInstance")
-					? this.instance
-					: this.instance.FindFirstChildWhichIsA("PVInstance");
-			}
-
-			if (!adornee) {
-				error("No adornee found for treasure display.");
-			}
-
 			const chance = getOneInXChance(name, getMapFromTarget(name) ?? "Grasslands");
 
 			const isTrash = trashConfig[name] !== undefined;
@@ -77,7 +63,7 @@ export class Treasure extends BaseComponent<Attributes, TreasureComponent> {
 			return (
 				<RichBillboardText
 					text={`1 in <font color="${color}"><b>${shortenNumber(chance, false)}</b></font>`}
-					adornee={adornee}
+					adornee={this.instance as Model | Tool}
 					isRichText={true}
 					offsetWorldSpace={new Vector3(0, 1, 0)}
 					font={Enum.Font.GothamMedium}

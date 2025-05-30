@@ -3,7 +3,7 @@ import React, { RefObject } from "@rbxts/react";
 
 interface BillboardGuiProps {
 	text: string;
-	adornee: PVInstance | Attachment | RefObject<PVInstance> | RefObject<Attachment>;
+	adornee?: PVInstance | Attachment | RefObject<PVInstance> | RefObject<Attachment>;
 	bbgSize?: UDim2;
 	isRichText?: boolean;
 	isTextScaled?: boolean;

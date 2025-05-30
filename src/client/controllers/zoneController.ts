@@ -29,6 +29,12 @@ const COLOR_CORRECTION_PROPERTIES_TABLE = {
 		Saturation: 0,
 		TintColor: Color3.fromRGB(202, 241, 255),
 	},
+	Desert: {
+		Brightness: 0,
+		Contrast: 0,
+		Saturation: 0.1,
+		TintColor: Color3.fromRGB(255, 243, 211),
+	},
 	HighSeas: {
 		Brightness: 0,
 		Contrast: 0,
@@ -53,6 +59,11 @@ const WATER_COLOR_PROPERTIES_TABLE = {
 		WaterTransparency: 0.4,
 		WaterColor: Color3.fromRGB(130, 165, 200),
 	},
+	Desert: {
+		WaterReflectance: 0.8,
+		WaterTransparency: 0.4,
+		WaterColor: Color3.fromRGB(133, 163, 200),
+	},
 	HighSeas: {
 		WaterReflectance: 1,
 		WaterTransparency: 0.5,
@@ -76,6 +87,11 @@ const CLOUD_ZONE_PROPERTIES_TABLE = {
 		Density: 0.7,
 		Color: Color3.fromRGB(255, 255, 255),
 	},
+	Desert: {
+		Cover: 0.5,
+		Density: 0.7,
+		Color: Color3.fromRGB(255, 255, 255),
+	},
 	HighSeas: {
 		Cover: 0.65,
 		Density: 0.3,
@@ -83,10 +99,54 @@ const CLOUD_ZONE_PROPERTIES_TABLE = {
 	},
 } as Record<keyof typeof mapConfig, Partial<InstanceProperties<Clouds>>>;
 
+const ATMOSPHERE_ZONE_PROPERTIES_TABLE = {
+	Grasslands: {
+		Density: 0.3,
+		Haze: 0,
+		Glare: 0,
+		Offset: 0,
+		Decay: Color3.fromRGB(92, 60, 13),
+		Color: Color3.fromRGB(199, 170, 107),
+	},
+	Volcano: {
+		Density: 0.3,
+		Haze: 0,
+		Glare: 0,
+		Offset: 0,
+		Decay: Color3.fromRGB(92, 60, 13),
+		Color: Color3.fromRGB(199, 170, 107),
+	},
+	Frozen: {
+		Density: 0.3,
+		Haze: 0,
+		Glare: 0,
+		Offset: 0,
+		Decay: Color3.fromRGB(92, 60, 13),
+		Color: Color3.fromRGB(199, 170, 107),
+	},
+	Desert: {
+		Density: 0.286,
+		Haze: 2.14,
+		Glare: 5.57,
+		Offset: 1,
+		Decay: Color3.fromRGB(149, 145, 116),
+		Color: Color3.fromRGB(199, 152, 111),
+	},
+	HighSeas: {
+		Density: 0.3,
+		Haze: 0,
+		Glare: 0,
+		Offset: 0,
+		Decay: Color3.fromRGB(92, 60, 13),
+		Color: Color3.fromRGB(199, 170, 107),
+	},
+} as Record<keyof typeof mapConfig, Partial<InstanceProperties<Atmosphere>>>;
+
 const AREA_CHANGE_TWEEN_INFO = new TweenInfo(2, Enum.EasingStyle.Quad);
 
 const clouds = Workspace.Terrain.WaitForChild("Clouds") as Clouds;
 const colorCorrection = Lighting.WaitForChild("ZonesCC") as ColorCorrectionEffect;
+const atmosphere = Lighting.WaitForChild("Atmosphere") as Atmosphere;
 
 const areaSounds = SoundService.WaitForChild("Areas") as SoundGroup;
 
@@ -226,6 +286,7 @@ export class ZoneController implements OnStart, OnRender {
 		TweenService.Create(clouds, tweenInfo, CLOUD_ZONE_PROPERTIES_TABLE[zoneName]).Play();
 		TweenService.Create(colorCorrection, tweenInfo, COLOR_CORRECTION_PROPERTIES_TABLE[zoneName]).Play();
 		TweenService.Create(Workspace.Terrain, tweenInfo, WATER_COLOR_PROPERTIES_TABLE[zoneName]).Play();
+		TweenService.Create(atmosphere, tweenInfo, ATMOSPHERE_ZONE_PROPERTIES_TABLE[zoneName]).Play();
 		currentMapName = zoneName;
 		this.playAreaSound(zoneName);
 	}
@@ -241,6 +302,7 @@ export class ZoneController implements OnStart, OnRender {
 		TweenService.Create(clouds, AREA_CHANGE_TWEEN_INFO, CLOUD_ZONE_PROPERTIES_TABLE.HighSeas).Play();
 		TweenService.Create(colorCorrection, AREA_CHANGE_TWEEN_INFO, COLOR_CORRECTION_PROPERTIES_TABLE.HighSeas).Play();
 		TweenService.Create(Workspace.Terrain, AREA_CHANGE_TWEEN_INFO, WATER_COLOR_PROPERTIES_TABLE.HighSeas).Play();
+		TweenService.Create(atmosphere, AREA_CHANGE_TWEEN_INFO, ATMOSPHERE_ZONE_PROPERTIES_TABLE.HighSeas).Play();
 		this.playAreaSound("HighSeas");
 		currentMapName = "";
 	}

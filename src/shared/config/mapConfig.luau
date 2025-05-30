@@ -70,6 +70,25 @@ local mapConfig = {
 		difficulty = "Easy",
 		order = 3,
 	},
+	Desert = {
+		targetList = Sift.Array.concat({
+			"Anubis Mask",
+			"Canopic Jar",
+			"Cat Statue",
+			"Cross",
+			"Crystal Skull",
+			"Eye of Rah",
+			"Golden Tablet",
+			"Horned Bettle",
+			"Scepter",
+			"Sphinx",
+			"UFO",
+			"Vase",
+		}, Object.keys(trashConfig)),
+		recommendedStrength = 100,
+		difficulty = "Medium",
+		order = 4,
+	},
 }
 return {
 	difficulties = difficulties,
