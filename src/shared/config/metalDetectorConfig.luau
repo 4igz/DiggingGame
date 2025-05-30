@@ -119,6 +119,7 @@ local metalDetectorConfig: { [string]: MetalDetector } = {
 
 		notForSale = true,
 	},
+	
 	SteampunkDetector = {
 		strength = 2,
 		luck = 15,

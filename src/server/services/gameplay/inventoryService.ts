@@ -16,6 +16,7 @@ import { PotionConfig, potionConfig, PotionKind } from "shared/config/potionConf
 import { interval } from "shared/util/interval";
 import { gameConstants } from "shared/gameConstants";
 import { GamepassService } from "../backend/gamepassService";
+import { spaceWords } from "shared/util/nameUtil";
 
 const DetectorFolder = ServerStorage.WaitForChild("MetalDetectors") as Folder;
 const ShovelFolder = ServerStorage.WaitForChild("Shovels") as Folder;
@@ -459,7 +460,7 @@ export class InventoryService implements OnStart, OnTick {
 				return;
 			}
 			profile.Data[equippedItemKey] = bestItem;
-			Events.sendActionPopup(player, `Equipped ${bestItem}!`);
+			Events.sendActionPopup(player, `Equipped ${spaceWords(bestItem)}!`);
 			this.giveTools(player, profile);
 		}
 
