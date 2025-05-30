@@ -94,6 +94,7 @@ local gameConstants = {
 		x2Strength = 1097762136,
 		x2Luck = 1098158597,
 		x2Cash = 1098088676,
+		VIP = 1235839849,
 	},
 
 	MAP_THEME_COLORS = {
@@ -168,8 +169,9 @@ local gameConstants = {
 	PACK_FRAME_UI = "StarterPackFrameUi",
 	UPDATE_LOG_UI = "UpdateLogUi",
 	BOTTOM_RIGHT_HUD = "BottomRightHud",
-	FREE_TIMED_REWARD_MENU = "FREE_TIMED_REWARD_MENU",
+	FREE_TIMED_REWARD_MENU = "FreeTimedRewardMenu",
 	SPONTANEOUS_OFFER_MENU = "SpontaneousOfferMenu",
+	VIP_MENU = "VipMenu",
 
 	-- Attributes
 	BOAT_DRIVER_SITTING = "SittingInBoatDriverSeat",

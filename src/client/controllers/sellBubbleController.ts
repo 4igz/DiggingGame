@@ -17,10 +17,6 @@ export class SellBubbleController implements OnStart {
 		Events.soldAllItems.connect((sellCount) => {
 			this.createCashBubbles(math.min(MAX_BUBBLES, math.floor(sellCount / 2)));
 		});
-
-		task.delay(5, () => {
-			this.createCashBubbles(MAX_BUBBLES);
-		});
 	}
 
 	createCashBubbles(amt: number = 1) {

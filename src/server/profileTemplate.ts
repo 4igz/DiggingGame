@@ -19,7 +19,7 @@ if (game.PlaceId === 91664813726836) {
 	PROFILE_STORE_NAME = "DataStore";
 }
 
-ReplicatedStorage.SetAttribute("CurrentStore", PROFILE_STORE_NAME);
+// ReplicatedStorage.SetAttribute("CurrentStore", PROFILE_STORE_NAME);
 
 export const profileTemplate = {
 	// Data
