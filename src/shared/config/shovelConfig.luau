@@ -131,7 +131,7 @@ local shovelConfig: { [string]: Shovel } = {
 		strengthMult = 110,
 		rarityType = "Mythical",
 		itemImage = "rbxassetid://123859103472525",
-		price = 1_500_000_00,
+		price = 1_500_000_000,
 	},
 	EgyptianShovel = {
 		strengthMult = 120,
@@ -140,6 +140,7 @@ local shovelConfig: { [string]: Shovel } = {
 		price = 2_000_000_000,
 	},
 }
+
 return {
 	BASE_SHOVEL_STRENGTH = BASE_SHOVEL_STRENGTH,
 	shovelConfig = shovelConfig,

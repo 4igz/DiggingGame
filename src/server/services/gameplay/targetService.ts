@@ -674,7 +674,7 @@ export class TargetService implements OnStart {
 				...fullTargetConfig["Bag Of Coins"],
 				name: "Bag Of Coins",
 				position: new Vector3(),
-				weight,
+				weight:1.5,
 				digProgress: maxProgress / 3, // Start at 1/3 progress
 				maxProgress,
 				activelyDigging: false,

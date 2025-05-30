@@ -54,6 +54,16 @@ local codes: { [string]: { Reward } } = {
 			rewardAmount = 1337,
 		},
 	},
+	desert = {
+		{
+			rewardType = "Money",
+			rewardAmount = 2000,
+		},
+		{
+			rewardType = "Potions",
+			itemName = "M.Luck Potion",
+		},
+	},
 	aura4 = {
 		{
 			rewardType = "Potions",
