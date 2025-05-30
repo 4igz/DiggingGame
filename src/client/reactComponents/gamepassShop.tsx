@@ -1987,13 +1987,13 @@ export const GamepassShop = (props: GamepassShopProps) => {
 
 					<AnimatedProductButton
 						size={UDim2.fromScale(0.240741, 0.957627)}
-						productId={gameConstants.GAMEPASS_IDS["BiggerBackpack"]}
+						productId={gameConstants.GAMEPASS_IDS["VIP"]}
 						productType={Enum.InfoType.GamePass}
 					>
 						<imagelabel
 							BackgroundTransparency={1}
 							Image={"rbxassetid://130792509691367"}
-							key={"BiggerBackpack"}
+							key={"Vip"}
 							Size={UDim2.fromScale(1, 1)}
 						>
 							<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.862832} />
@@ -2007,9 +2007,9 @@ export const GamepassShop = (props: GamepassShopProps) => {
 								key={"Title"}
 								Position={UDim2.fromScale(0.5, 0.025)}
 								Size={UDim2.fromScale(1, 0.115044)}
-								Text={"Bigger Backpack!"}
+								Text={"VIP"}
 								TextColor3={new Color3(1, 1, 1)}
-								TextSize={px(PRODUCT_NAME_PX)}
+								TextSize={px(30)}
 								// TextScaled={true}
 								ZIndex={105}
 							>
@@ -2019,7 +2019,7 @@ export const GamepassShop = (props: GamepassShopProps) => {
 							<imagelabel
 								AnchorPoint={new Vector2(0.5, 0)}
 								BackgroundTransparency={1}
-								Image={"rbxassetid://126307359783259"}
+								Image={"rbxassetid://91946808805915"}
 								key={"GpIcon"}
 								Position={UDim2.fromScale(0.5, 0.10177)}
 								Size={UDim2.fromScale(0.620513, 0.535398)}
@@ -2028,7 +2028,7 @@ export const GamepassShop = (props: GamepassShopProps) => {
 							<BuyButton
 								position={UDim2.fromScale(0.5, 0.902655)}
 								size={UDim2.fromScale(0.851282, 0.212389)}
-								id={gameConstants.GAMEPASS_IDS["BiggerBackpack"]}
+								id={gameConstants.GAMEPASS_IDS["VIP"]}
 								gamepassController={props.gamepassController}
 								productType={Enum.InfoType.GamePass}
 							/>

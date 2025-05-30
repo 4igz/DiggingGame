@@ -3,6 +3,7 @@
 import { Service, OnStart } from "@flamework/core";
 import {
 	CollectionService,
+	GamePassService,
 	HttpService,
 	PhysicsService,
 	Players,
@@ -533,7 +534,9 @@ export class TargetService implements OnStart {
 		if (!character || !character.Parent) return;
 		const humanoid = character.WaitForChild("Humanoid") as Humanoid;
 		if (!target?.hasCutscene) {
-			humanoid.WalkSpeed = 20;
+			humanoid.WalkSpeed = this.gamepassService.ownsGamepass(player, gameConstants.GAMEPASS_IDS.VIP)
+				? gameConstants.VIP_WALKSPEED
+				: gameConstants.DEFAULT_WALKSPEED;
 		}
 
 		// Equip the metal detector back from their backpack and unequip the shovel

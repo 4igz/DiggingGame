@@ -390,15 +390,9 @@ export class InventoryService implements OnStart, OnTick {
 		]);
 	}
 
+	// useless
 	getInventorySize(player: Player) {
-		const profile = this.profileService.getProfileLoaded(player).expect();
-
-		const ownsBiggerBackpack = this.gamepassService.ownsGamepass(
-			player,
-			gameConstants.GAMEPASS_IDS["BiggerBackpack"],
-		);
-
-		return profile.Data.inventorySize * (ownsBiggerBackpack ? BIGGER_BACKPACK_SIZE_MODIFIER : 1);
+		return 777;
 	}
 
 	onItemBoughtSuccess(player: Player, itemType: ItemType, item: ItemName) {

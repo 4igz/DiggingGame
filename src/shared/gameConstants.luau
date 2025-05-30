@@ -56,6 +56,9 @@ local gameConstants = {
 	DETECTION_MODIFIER = 0.1,
 	LUCK_MODIFIER = 0.025,
 
+	DEFAULT_WALKSPEED = 22,
+	VIP_WALKSPEED = 30,
+
 	STARTER_PACK_DISCOUNTED_PRICE = 1000,
 	MEDIUM_PACK_DISCOUNTED_PRICE = 6000,
 
@@ -89,12 +92,11 @@ local gameConstants = {
 	},
 
 	GAMEPASS_IDS = {
-		BiggerBackpack = 1098304454,
+		VIP = 1098304454,
 		SellEverywhere = 1098278343,
 		x2Strength = 1097762136,
 		x2Luck = 1098158597,
 		x2Cash = 1098088676,
-		VIP = 1235839849,
 	},
 
 	MAP_THEME_COLORS = {

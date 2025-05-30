@@ -8,6 +8,7 @@ import { mapConfig } from "shared/config/mapConfig";
 import { gameConstants } from "shared/gameConstants";
 import { Signals } from "shared/signals";
 import { debugWarn } from "shared/util/logUtil";
+import { GamepassController } from "./gamepassController";
 
 const COLOR_CORRECTION_PROPERTIES_TABLE = {
 	Grasslands: {
@@ -103,7 +104,7 @@ export class ZoneController implements OnStart, OnRender {
 	public isleZoneMap = new Map<string, Zone>();
 	public zonesUpdated = new Signal<() => void>();
 
-	constructor() {}
+	constructor(private readonly gamepassController: GamepassController) {}
 
 	onStart() {
 		CollectionService.GetInstanceAddedSignal(gameConstants.ISLE_ZONE_TAG).Connect((instance) => {
@@ -163,7 +164,9 @@ export class ZoneController implements OnStart, OnRender {
 					const hrp = character.WaitForChild("HumanoidRootPart") as BasePart;
 					hrp.Anchored = false;
 					const humanoid = character.WaitForChild("Humanoid") as Humanoid;
-					humanoid.WalkSpeed = 20;
+					humanoid.WalkSpeed = this.gamepassController.isVip()
+						? gameConstants.VIP_WALKSPEED
+						: gameConstants.DEFAULT_WALKSPEED;
 					spawned = true;
 					task.delay(0.1, () => {
 						character.PivotTo(goal);

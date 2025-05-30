@@ -59,6 +59,10 @@ export class MoneyService implements OnStart {
 			amount *= friendMult;
 		}
 
+		if (canMultiply && this.gamepassService.ownsGamepass(player, gameConstants.GAMEPASS_IDS.VIP)) {
+			amount *= 1.5;
+		}
+
 		const moneyEN = EternityNum.add(EternityNum.fromString(profile.Data.money), EternityNum.fromNumber(amount));
 
 		profile.Data.allTimeMoney += amount; // For leaderboards

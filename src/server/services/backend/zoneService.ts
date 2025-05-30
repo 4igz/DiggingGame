@@ -1,5 +1,5 @@
 import { Service, OnStart } from "@flamework/core";
-import { CollectionService, Players } from "@rbxts/services";
+import { CollectionService, GamePassService, Players } from "@rbxts/services";
 import { Zone } from "@rbxts/zone-plus";
 import { mapConfig } from "shared/config/mapConfig";
 import { gameConstants } from "shared/gameConstants";
@@ -7,6 +7,7 @@ import { ProfileService } from "./profileService";
 import Signal from "@rbxts/goodsignal";
 import { Events, Functions } from "server/network";
 import Object from "@rbxts/object-utils";
+import { GamepassService } from "./gamepassService";
 
 @Service({})
 export class ZoneService implements OnStart {
@@ -14,7 +15,7 @@ export class ZoneService implements OnStart {
 	private spawnedPlayers: Set<Player> = new Set();
 	public changedMap = new Signal<(player: Player, zoneName: keyof typeof mapConfig) => void>();
 
-	constructor(private readonly profileService: ProfileService) {}
+	constructor(private readonly profileService: ProfileService, private readonly gamepassService: GamepassService) {}
 
 	onStart(): void {
 		for (const mapName of Object.keys(mapConfig)) {
@@ -59,7 +60,9 @@ export class ZoneService implements OnStart {
 				}
 			});
 
-			humanoid.WalkSpeed = 20;
+			humanoid.WalkSpeed = this.gamepassService.ownsGamepass(player, gameConstants.GAMEPASS_IDS.VIP)
+				? gameConstants.VIP_WALKSPEED
+				: gameConstants.DEFAULT_WALKSPEED;
 			hrp.Anchored = false;
 		});
 

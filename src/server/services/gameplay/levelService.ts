@@ -107,24 +107,28 @@ export class LevelService implements OnStart {
 		this.playerDataService.setProfile(player, playerProfile);
 	}
 
-	public addExperience(player: Player, amt: number): void {
+	public addExperience(player: Player, addedExperienceAmount: number): void {
 		const playerProfile = this.playerDataService.getProfile(player);
 		if (!playerProfile) return;
 
 		if (player.MembershipType === Enum.MembershipType.Premium) {
-			amt *= 1.1;
+			addedExperienceAmount *= 1.1;
 		}
 
 		if (player.IsInGroup(game.CreatorId)) {
-			amt *= 1.1;
+			addedExperienceAmount *= 1.1;
+		}
+
+		if (this.gamepassService.ownsGamepass(player, gameConstants.GAMEPASS_IDS.VIP)) {
+			addedExperienceAmount *= 1.5;
 		}
 
 		const friendMult = this.friendCountService.getMultiplier(player);
 
-		amt *= friendMult;
+		addedExperienceAmount *= friendMult;
 
 		const data = playerProfile.Data;
-		data.experience += amt;
+		data.experience += addedExperienceAmount;
 
 		while (true) {
 			const currentLevel = data.level;

@@ -145,6 +145,7 @@ interface BuyButtonProps {
 	textSize?: number;
 	gamepassController: GamepassController;
 	active?: boolean;
+	zindex?: number;
 }
 
 export const BuyButton = (props: BuyButtonProps) => {
@@ -186,6 +187,7 @@ export const BuyButton = (props: BuyButtonProps) => {
 					? MarketplaceService.PromptProductPurchase(Players.LocalPlayer, props.id)
 					: MarketplaceService.PromptGamePassPurchase(Players.LocalPlayer, props.id);
 			}}
+			zindex={props.zindex}
 		>
 			<imagelabel
 				key={"ImageButton"}
@@ -213,7 +215,7 @@ export const BuyButton = (props: BuyButtonProps) => {
 					Position={UDim2.fromScale(0.552466, 0.5)}
 					Size={UDim2.fromScale(1, 0.65)}
 					Text={displayText}
-					RichText={false}
+					RichText={true}
 					TextSize={px.ceil(props.textSize ?? 25)}
 					TextColor3={new Color3()}
 					// TextScaled={true}
@@ -230,7 +232,7 @@ export const BuyButton = (props: BuyButtonProps) => {
 						Position={UDim2.fromScale(0.5, 0.45)}
 						Size={UDim2.fromScale(1, 1)}
 						Text={displayText}
-						RichText={false}
+						RichText={true}
 						TextColor3={new Color3(1, 1, 1)}
 						TextSize={px.ceil(props.textSize ?? 25)}
 						// TextScaled={true}

@@ -34,6 +34,7 @@ import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
 import { fullTargetConfig } from "shared/config/targetConfig";
 import { createMotion } from "@rbxts/ripple";
 import { metalDetectorConfig } from "shared/config/metalDetectorConfig";
+import { GamepassController } from "./gamepassController";
 
 const camera = Workspace.CurrentCamera;
 const holeTroveMap = new Map<Trove, [Signal<(size: number) => void>, Sound, BasePart]>();
@@ -124,6 +125,7 @@ export class ShovelController implements OnStart {
 	constructor(
 		private readonly zoneController: ZoneController,
 		private readonly tutorialController: TutorialController,
+		private readonly gamepassController: GamepassController,
 	) {}
 
 	onStart() {
@@ -348,7 +350,9 @@ export class ShovelController implements OnStart {
 							) {
 								humanoid.WalkSpeed = 0;
 							} else {
-								humanoid.WalkSpeed = 20;
+								humanoid.WalkSpeed = this.gamepassController.isVip()
+									? gameConstants.VIP_WALKSPEED
+									: gameConstants.DEFAULT_WALKSPEED;
 							}
 
 							if (this.diggingActive) {
@@ -461,7 +465,9 @@ export class ShovelController implements OnStart {
 									})
 									.catch((err) => {
 										warn(err);
-										humanoid.WalkSpeed = 20;
+										humanoid.WalkSpeed = this.gamepassController.isVip()
+											? gameConstants.VIP_WALKSPEED
+											: gameConstants.DEFAULT_WALKSPEED;
 									});
 							}
 						} else if (inputState === Enum.UserInputState.End) {
@@ -511,7 +517,9 @@ export class ShovelController implements OnStart {
 						digTrack.Stop();
 
 						// Reset speed
-						humanoid.WalkSpeed = 20;
+						humanoid.WalkSpeed = this.gamepassController.isVip()
+							? gameConstants.VIP_WALKSPEED
+							: gameConstants.DEFAULT_WALKSPEED;;
 
 						this.canStartDigging = false;
 						// If we were digging, end it
@@ -1129,7 +1137,9 @@ export class ShovelController implements OnStart {
 									}
 									cutsceneCameraMotion.stop();
 									// existingModel.Destroy();
-									humanoid.WalkSpeed = 20;
+									humanoid.WalkSpeed = this.gamepassController.isVip()
+										? gameConstants.VIP_WALKSPEED
+										: gameConstants.DEFAULT_WALKSPEED;;
 									this.cutsceneActive = false;
 
 									if (wasAutoDigging) {

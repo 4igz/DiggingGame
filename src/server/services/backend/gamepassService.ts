@@ -53,11 +53,6 @@ export class GamepassService implements OnStart {
 			Events.updateOwnedGamepasses(player, profile.Data.ownedGamepasses);
 
 			Events.notifyBought(player, spaceWords(gamepassName), Enum.InfoType.Product);
-
-			if (gamepassName === "BiggerBackpack") {
-				const inventorySize = profile.Data.inventorySize * gameConstants.BIGGER_BACKPACK_SIZE_MODIFIER;
-				Events.updateInventorySize(player, inventorySize);
-			}
 		});
 
 		Functions.getOwnedGamepasses.setCallback((player) => {

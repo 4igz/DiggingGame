@@ -1,16 +1,46 @@
-import React, { useState } from "@rbxts/react";
+import React, { useEffect, useState } from "@rbxts/react";
 import { ExitButton } from "./inventory";
 import { gameConstants } from "shared/gameConstants";
 import UiController from "client/controllers/uiController";
-import { AnimatedButton, BuyButton } from "./buttons";
+import { BuyButton } from "./buttons";
 import { GamepassController } from "client/controllers/gamepassController";
+import { useMotion } from "client/hooks/useMotion";
+import { springs } from "client/utils/springs";
+import { getPlayerPlatform } from "shared/util/crossPlatformUtil";
+import { usePx } from "client/hooks/usePx";
+import { Events } from "client/network";
 
-export const vipMenu = (props: {
+export const VipMenu = (props: {
 	visible: boolean;
 	uiController: UiController;
 	gamepassController: GamepassController;
 }) => {
 	const [visible, setVisible] = useState(false);
+	const [menuPos, posMotion] = useMotion(UDim2.fromScale(0.5, 0.6));
+
+	const px = usePx();
+
+	useEffect(() => {
+		if (visible) {
+			posMotion.spring(UDim2.fromScale(0.5, 0.45), springs.responsive);
+		} else {
+			posMotion.immediate(UDim2.fromScale(0.5, 0.6));
+		}
+	}, [visible]);
+
+	useEffect(() => {
+		setVisible(props.visible);
+	}, [props.visible]);
+
+	useEffect(() => {
+		Events.updateOwnedGamepasses.connect((ownedGps) => {
+			if (ownedGps.get("VIP") === true) {
+				if (props.uiController.currentOpenUi === gameConstants.VIP_MENU) {
+					props.uiController.closeCurrentOpenMenu();
+				}
+			}
+		});
+	}, []);
 
 	return (
 		<imagelabel
@@ -18,14 +48,41 @@ export const vipMenu = (props: {
 			BackgroundTransparency={1}
 			Image={"rbxassetid://89658146022715"}
 			key={"VIP"}
-			Position={UDim2.fromScale(0.5, 0.5)}
+			Position={menuPos}
 			ScaleType={Enum.ScaleType.Slice}
-			Size={UDim2.fromScale(0.5, 0.5)}
+			Size={UDim2.fromScale(0.55, 0.55)}
 			SliceCenter={new Rect(402, 139, 402, 139)}
 			SliceScale={0.7}
 			Visible={visible}
 		>
+			<uiscale key={"MobileScaling"} Scale={getPlayerPlatform() === "Mobile" ? 1.5 : 1.25} />
+
 			<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={0.95} />
+
+			<BuyButton
+				position={UDim2.fromScale(0.491, 0.903)}
+				anchorPoint={new Vector2(0.5, 0.5)}
+				id={gameConstants.GAMEPASS_IDS.VIP}
+				gamepassController={props.gamepassController}
+				productType={Enum.InfoType.GamePass}
+				size={UDim2.fromScale(0.5, 0.15)}
+				active={true}
+				zindex={15}
+			/>
+
+			<imagelabel
+				AnchorPoint={new Vector2(0.5, 0)}
+				AutoLocalize={false}
+				BackgroundTransparency={1}
+				Image={"rbxassetid://131652004317764"}
+				key={"Money Cover"}
+				Position={UDim2.fromScale(0.7, 0.8)}
+				ScaleType={Enum.ScaleType.Fit}
+				Size={UDim2.fromScale(0.179004, 0.3)}
+				ZIndex={100}
+			/>
+
+			<ExitButton uiName={gameConstants.VIP_MENU} isMenuVisible={visible} uiController={props.uiController} />
 
 			<frame
 				AnchorPoint={new Vector2(0.5, 0.5)}
@@ -37,8 +94,6 @@ export const vipMenu = (props: {
 			>
 				<uicorner key={"UICorner"} CornerRadius={new UDim(0.02, 0)} />
 			</frame>
-
-			<uiscale key={"MobileScaling"} Scale={1.25} />
 
 			<uigradient
 				key={"UIGradient"}
@@ -293,7 +348,7 @@ export const vipMenu = (props: {
 							TextXAlignment={Enum.TextXAlignment.Left}
 							ZIndex={10}
 						>
-							<uistroke key={"UIStroke"} Color={Color3.fromRGB(40, 20, 79)} Thickness={2.5} />
+							<uistroke key={"UIStroke"} Color={Color3.fromRGB(40, 20, 79)} Thickness={px(1.5)} />
 
 							<textlabel
 								AnchorPoint={new Vector2(0.5, 0.5)}
@@ -309,7 +364,7 @@ export const vipMenu = (props: {
 								TextXAlignment={Enum.TextXAlignment.Left}
 								ZIndex={10}
 							>
-								<uistroke key={"UIStroke"} Color={Color3.fromRGB(40, 20, 79)} Thickness={2.5} />
+								<uistroke key={"UIStroke"} Color={Color3.fromRGB(40, 20, 79)} Thickness={px(1.5)} />
 							</textlabel>
 						</textlabel>
 					</frame>
@@ -345,7 +400,7 @@ export const vipMenu = (props: {
 							TextXAlignment={Enum.TextXAlignment.Left}
 							ZIndex={10}
 						>
-							<uistroke key={"UIStroke"} Color={Color3.fromRGB(40, 20, 79)} Thickness={2.5} />
+							<uistroke key={"UIStroke"} Color={Color3.fromRGB(40, 20, 79)} Thickness={px(1.5)} />
 
 							<textlabel
 								AnchorPoint={new Vector2(0.5, 0.5)}
@@ -361,7 +416,7 @@ export const vipMenu = (props: {
 								TextXAlignment={Enum.TextXAlignment.Left}
 								ZIndex={10}
 							>
-								<uistroke key={"UIStroke"} Color={Color3.fromRGB(40, 20, 79)} Thickness={2.5} />
+								<uistroke key={"UIStroke"} Color={Color3.fromRGB(40, 20, 79)} Thickness={px(1.5)} />
 							</textlabel>
 						</textlabel>
 
@@ -422,7 +477,7 @@ export const vipMenu = (props: {
 							TextXAlignment={Enum.TextXAlignment.Left}
 							ZIndex={10}
 						>
-							<uistroke key={"UIStroke"} Color={Color3.fromRGB(40, 20, 79)} Thickness={2.5} />
+							<uistroke key={"UIStroke"} Color={Color3.fromRGB(40, 20, 79)} Thickness={px(1.5)} />
 
 							<textlabel
 								AnchorPoint={new Vector2(0.5, 0.5)}
@@ -438,7 +493,7 @@ export const vipMenu = (props: {
 								TextXAlignment={Enum.TextXAlignment.Left}
 								ZIndex={10}
 							>
-								<uistroke key={"UIStroke"} Color={Color3.fromRGB(40, 20, 79)} Thickness={2.5} />
+								<uistroke key={"UIStroke"} Color={Color3.fromRGB(40, 20, 79)} Thickness={px(1.5)} />
 							</textlabel>
 						</textlabel>
 
@@ -514,7 +569,7 @@ export const vipMenu = (props: {
 					TextColor3={Color3.fromRGB(30, 30, 30)}
 					TextScaled={true}
 				>
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(106, 70, 28)} Thickness={3} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(106, 70, 28)} Thickness={px(2)} />
 
 					<uitextsizeconstraint key={"UITextSizeConstraint"} />
 
@@ -531,7 +586,7 @@ export const vipMenu = (props: {
 						TextColor3={new Color3(1, 1, 1)}
 						TextScaled={true}
 					>
-						<uistroke key={"UIStroke"} Color={Color3.fromRGB(106, 70, 28)} Thickness={3} />
+						<uistroke key={"UIStroke"} Color={Color3.fromRGB(106, 70, 28)} Thickness={px(2)} />
 
 						<uitextsizeconstraint key={"UITextSizeConstraint"} />
 					</textlabel>
@@ -585,7 +640,7 @@ export const vipMenu = (props: {
 					TextColor3={new Color3(1, 1, 1)}
 					TextScaled={true}
 				>
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(135, 47, 50)} Thickness={3} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(135, 47, 50)} Thickness={px(1.5)} />
 
 					<uitextsizeconstraint key={"UITextSizeConstraint"} />
 				</textlabel>
@@ -603,7 +658,7 @@ export const vipMenu = (props: {
 					TextColor3={new Color3(1, 1, 1)}
 					TextScaled={true}
 				>
-					<uistroke key={"UIStroke"} Color={Color3.fromRGB(135, 47, 50)} Thickness={3} />
+					<uistroke key={"UIStroke"} Color={Color3.fromRGB(135, 47, 50)} Thickness={px(1.5)} />
 
 					<uitextsizeconstraint key={"UITextSizeConstraint"} />
 				</textlabel>
@@ -620,15 +675,7 @@ export const vipMenu = (props: {
 				/>
 			</imagelabel>
 
-			<BuyButton
-				position={UDim2.fromScale(0.491, 0.903)}
-				anchorPoint={new Vector2(0.5, 0.5)}
-				id={gameConstants.GAMEPASS_IDS.VIP}
-				gamepassController={props.gamepassController}
-				productType={Enum.InfoType.GamePass}
-			/>
-
-			<AnimatedButton backgroundTransparency={1} key={"VIP"} size={UDim2.fromScale(0.44, 0.139)}>
+			{/* <AnimatedButton backgroundTransparency={1} key={"VIP"} size={UDim2.fromScale(0.44, 0.139)}>
 				<imagelabel
 					AnchorPoint={new Vector2(0.5, 0.5)}
 					BackgroundTransparency={1}
@@ -760,9 +807,7 @@ export const vipMenu = (props: {
 
 					<uiaspectratioconstraint key={"UIAspectRatioConstraint"} AspectRatio={4.2} />
 				</frame>
-			</AnimatedButton>
-
-			<ExitButton uiName={gameConstants.VIP_MENU} isMenuVisible={visible} uiController={props.uiController} />
+			</AnimatedButton> */}
 		</imagelabel>
 	);
 };

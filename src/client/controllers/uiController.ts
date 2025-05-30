@@ -56,6 +56,8 @@ import { freeTimedRewardButton } from "client/reactComponents/freeTimedRewardBut
 import { FreeTimedRewardMenu } from "client/reactComponents/freeTimedRewardMenu";
 import { SpontaneousOffer } from "client/reactComponents/spontaneousOffer";
 import { MAX_TIME, MIN_TIME } from "shared/config/spontaneousOfferConfig";
+import { VipMenu } from "client/reactComponents/vipMenu";
+import { VipButton } from "client/reactComponents/vipButton";
 
 const LOW_LAYER = 0;
 const MENU_LAYER = 1;
@@ -601,6 +603,19 @@ export default class UiController implements OnStart, OnInit {
 			true,
 			MENU_LAYER,
 		);
+		this.registerUi(
+			gameConstants.VIP_MENU,
+			React.createElement(VipMenu),
+			{
+				visible: false,
+				uiController: this,
+				gamepassController: this.gamepassController,
+			},
+			undefined,
+			true,
+			MENU_LAYER,
+		);
+		this.registerUi("VipButton", React.createElement(VipButton), { uiController: this });
 
 		// // Hide some stuff from the client that we already have cached.
 		// // By the time we init here, all modules have been loaded already, so we can safely remove them.

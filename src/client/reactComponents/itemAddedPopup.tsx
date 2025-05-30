@@ -22,14 +22,13 @@ export interface TreasurePopupProps {
 }
 
 const MAX_IMAGE_ROTATION = 25;
+const POPUP_TIME = 5;
 
 export const TreasureAddedPopup = (props: TreasurePopupProps) => {
 	const [sizeMotion, setSizeMotion] = useMotion(UDim2.fromScale(0, 0));
 
 	const [spinValue, setSpinValue] = React.useState(0);
 	const [imageRotation, setImageRotation] = useMotion(-MAX_IMAGE_ROTATION);
-
-	const POPUP_TIME = 5;
 
 	useEffect(() => {
 		setSizeMotion.spring(UDim2.fromScale(0.4, 0.05), springs.responsive);
@@ -148,24 +147,26 @@ export const TreasureAddedPopup = (props: TreasurePopupProps) => {
 				TextXAlignment={Enum.TextXAlignment.Center}
 				Text={
 					trashConfig[props.itemName]
-						? `${props.itemName} <font color="rgb(100,125,255)"><b>${string.format(
-								"%.2f",
-								props.itemWeight,
-						  )}kg</b></font> !`
-						: // Trash items don't have rarities (assumed common)
-						  `<font color="rgb(${math.round(RC[props.itemRarity].R * 255)},${math.round(
+						? props.count > 1
+							? `Discovered <b>${
+									props.itemName
+							  }</b> ${`<font color="rgb(255,100,100)"><b>(x${props.count})</b></font>`}`
+							: `Discovered <b>${props.itemName}</b> at <font color="rgb(255,100,100)">${shortenNumber(
+									props.itemWeight,
+							  )}kg</font>`
+						: props.count > 1
+						? `Discovered <font color="rgb(${math.round(RC[props.itemRarity].R * 255)},${math.round(
 								RC[props.itemRarity].G * 255,
-						  )},${math.round(RC[props.itemRarity].B * 255)})">1 in ${shortenNumber(
-								getOneInXChance(props.itemName, props.mapName),
-								false,
-						  )} ${props.itemName}</font> ${
-								props.count <= 1
-									? `at <font color="rgb(100,125,255)"><b>${string.format(
-											"%.2f",
-											props.itemWeight,
-									  )}kg</b></font>!`
-									: `<font color="rgb(100,125,255)"><b>x${props.count}</b></font>`
+						  )},${math.round(RC[props.itemRarity].B * 255)})"><b>${props.itemName}</b></font> ${
+								props.count > 1 ? `<font color="rgb(125,125,255)"><b>(x${props.count})</b></font>` : ""
 						  }`
+						: `Discovered <font color="rgb(${math.round(RC[props.itemRarity].R * 255)},${math.round(
+								RC[props.itemRarity].G * 255,
+						  )},${math.round(RC[props.itemRarity].B * 255)})"><b>${
+								props.itemName
+						  }</b></font> at <font color="rgb(${math.round(RC[props.itemRarity].R * 255)},${math.round(
+								RC[props.itemRarity].G * 255,
+						  )},${math.round(RC[props.itemRarity].B * 255)})">${shortenNumber(props.itemWeight)}kg</font>`
 				}
 				TextColor3={Color3.fromRGB(255, 255, 255)}
 				TextScaled={true}

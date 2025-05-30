@@ -1,9 +1,6 @@
 //!optimize 2
 import { Controller, OnStart } from "@flamework/core";
-import Signal from "@rbxts/goodsignal";
-import Object from "@rbxts/object-utils";
-import { MarketplaceService, SoundService } from "@rbxts/services";
-import Sift from "@rbxts/sift";
+import { SoundService } from "@rbxts/services";
 import { Events, Functions } from "client/network";
 import { gameConstants } from "shared/gameConstants";
 import { Signals } from "shared/signals";
@@ -55,5 +52,9 @@ export class GamepassController implements OnStart {
 		// If we reach here, the gamepass wasn't found
 		warn(`Gamepass ${gamepassRef} not found in gamepasses`);
 		return false;
+	}
+
+	isVip(): boolean {
+		return this.getOwnsGamepass(gameConstants.GAMEPASS_IDS.VIP);
 	}
 }

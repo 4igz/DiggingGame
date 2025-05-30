@@ -232,8 +232,8 @@ export const Sidebar: React.FC<SidebarProps> = (props) => {
 
 		UserInputService.GamepadConnected.Connect(() => {
 			setGamepadEnabled(true);
-		});
 
+		});
 		UserInputService.GamepadDisconnected.Connect(() => {
 			setGamepadEnabled(false);
 		});
