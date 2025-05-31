@@ -60,11 +60,7 @@ const inventoryConfigMap: Record<
 export class InventoryService implements OnStart, OnTick {
 	private potionDrinkers = new Array<Player>();
 
-	constructor(
-		private readonly profileService: ProfileService,
-		private readonly moneyService: MoneyService,
-		private readonly gamepassService: GamepassService,
-	) {}
+	constructor(private readonly profileService: ProfileService, private readonly moneyService: MoneyService) {}
 
 	onStart() {
 		for (const tool of DetectorFolder.GetChildren()) {

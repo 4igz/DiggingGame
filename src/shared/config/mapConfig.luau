@@ -75,7 +75,7 @@ local mapConfig = {
 			"Anubis Mask",
 			"Canopic Jar",
 			"Cat Statue",
-			"Cross",
+			"Ankh",
 			"Crystal Skull",
 			"Eye of Rah",
 			"Golden Tablet",

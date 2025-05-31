@@ -165,15 +165,15 @@ local metalDetectorConfig: { [string]: MetalDetector } = {
 		rarityType = "Legendary",
 		price = 1_000_000_000,
 	},
-	CactusDetector = {
+		CactusDetector = {
 		strength = 4.5,
 		luck = 55,
 		searchRadius = 14,
 		itemImage = "rbxassetid://86188061677221",
 		rarityType = "Mythical",
 		price = 1_500_000_000,
-	},
-	EgyptianDetector = {
+		},
+			EgyptianDetector = {
 		strength = 5,
 		luck = 57,
 		searchRadius = 13,
@@ -182,6 +182,7 @@ local metalDetectorConfig: { [string]: MetalDetector } = {
 		price = 2_000_000_000,
 	},
 }
+
 return {
 	BASE_DETECTOR_STRENGTH = BASE_DETECTOR_STRENGTH,
 	metalDetectorConfig = metalDetectorConfig,
