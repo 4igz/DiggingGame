@@ -3,7 +3,7 @@
 import { Service, OnStart, OnTick } from "@flamework/core";
 import { LoadedProfile, ProfileService } from "../backend/profileService";
 import { Item, ItemName, ItemType, Target, TargetItem } from "shared/networkTypes";
-import { CollectionService, Players, ServerStorage } from "@rbxts/services";
+import { CollectionService, Players, RunService, ServerStorage } from "@rbxts/services";
 import { Events, Functions } from "server/network";
 import { metalDetectorConfig, MetalDetectorModule } from "shared/config/metalDetectorConfig";
 import { shovelConfig, ShovelModule } from "shared/config/shovelConfig";
@@ -128,6 +128,8 @@ export class InventoryService implements OnStart, OnTick {
 					this.giveTools(player, loadedProfile);
 				});
 			});
+
+			
 		});
 
 		Functions.getActivePotions.setCallback((player) => {

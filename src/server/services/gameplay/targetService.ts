@@ -46,9 +46,6 @@ const debugWarn = (message: string) => {
 
 @Service({})
 export class TargetService implements OnStart {
-	// Here we store all active targets in a map to track them.
-	// The key is a unique identifier for the target, and the value is the target itself.
-	// This allows us to track targets on the server with the client having no knowledge of the targets whereabouts.
 	public activeTargets: Array<Target> = new Array();
 	public playerDigCooldown: Map<Player, boolean> = new Map();
 	public playerDiggingTargets: Map<Player, Target> = new Map();
@@ -132,34 +129,36 @@ export class TargetService implements OnStart {
 			}
 		});
 
-		// this.profileService.onProfileLoaded.Connect((player, profile) => {
-		// 	if (RunService.IsStudio()) {
-		// 		// !Temporary: Give player all treasures in the game.
+		// giveall for testing new treasure grips
+		this.profileService.onProfileLoaded.Connect((player, profile) => {
+			const GIVE_ALL_TREASURES = false;
+			if (RunService.IsStudio() && GIVE_ALL_TREASURES) {
+				// !TESTING: Give player all treasures in the game.
 
-		// 		for (const [treasure, cfg] of pairs(fullTargetConfig)) {
-		// 			const targetInstance: Target = {
-		// 				...cfg,
-		// 				name: treasure,
-		// 				position: new Vector3(),
-		// 				weight: 1,
-		// 				digProgress: 2,
-		// 				maxProgress: 2,
-		// 				activelyDigging: false,
-		// 				itemId: HttpService.GenerateGUID(),
+				for (const [treasure, cfg] of pairs(fullTargetConfig)) {
+					const targetInstance: Target = {
+						...cfg,
+						name: treasure,
+						position: new Vector3(),
+						weight: 0.777,
+						digProgress: 1,
+						maxProgress: 1,
+						activelyDigging: false,
+						itemId: HttpService.GenerateGUID(),
 
-		// 				mapName: "",
+						mapName: "",
 
-		// 				base: undefined,
+						base: undefined,
 
-		// 				usedLuckMult: 1,
-		// 				owner: player,
-		// 				usingDigEverywhere: false,
-		// 			};
+						usedLuckMult: 1,
+						owner: player,
+						usingDigEverywhere: false,
+					};
 
-		// 			this.inventoryService.addItemToTargetInventory(player, targetInstance);
-		// 		}
-		// 	}
-		// });
+					this.inventoryService.addItemToTargetInventory(player, targetInstance);
+				}
+			}
+		});
 
 		this.zoneService.changedMap.Connect((player, zoneName) => {
 			const target = this.getPlayerTarget(player);
@@ -674,7 +673,7 @@ export class TargetService implements OnStart {
 				...fullTargetConfig["Bag Of Coins"],
 				name: "Bag Of Coins",
 				position: new Vector3(),
-				weight:1.5,
+				weight: 1.5,
 				digProgress: maxProgress / 3, // Start at 1/3 progress
 				maxProgress,
 				activelyDigging: false,
@@ -714,70 +713,70 @@ export class TargetService implements OnStart {
 		return [targetInstance, profile.Data.currentMap];
 	}
 
-private rollTargetUsingWeights(
-	currentMap: keyof typeof mapConfig,
-	addLuck: number,
-	includeTrash: boolean,
-): [keyof typeof fullTargetConfig, TargetConfig] | undefined {
-	// Retrieve the player's profile
-	// Retrieve the map data based on the player's current map
-	const mapData = mapConfig[currentMap];
-	if (!mapData || !mapData.targetList) {
-		return undefined;
-	}
-
-	// Initialize variables for cumulative weights
-	let cumulativeWeight = 0;
-	const cumulativeMap = new Map<keyof typeof fullTargetConfig, number>();
-
-	// If luck is 0, they are getting trash buddy
-	const cfg = includeTrash ? fullTargetConfig : targetConfig;
-
-	// Adjust weights with scaling
-	for (const [name, targetInfo] of pairs(cfg)) {
-		if (!mapData.targetList.includes(name)) continue;
-
-		// Apply the adjusted weight formula
-		const weight = math.pow(1 / targetInfo.rarity, 1 - addLuck);
-		cumulativeWeight += weight;
-		cumulativeMap.set(name, cumulativeWeight);
-	}
-
-	if (cumulativeMap.size() === 0) {
-		warn("No valid targets for the map:", currentMap);
-		return undefined;
-	}
-
-	// Generate a random roll within the cumulative weight range
-	const roll = this.rng.NextNumber(0, cumulativeWeight);
-
-	// Find the matching target based on the roll
-	let selectedTarget: keyof typeof fullTargetConfig | undefined;
-
-	// Manually convert Map to an array of key-value pairs
-	const mapArray: [string, number][] = [];
-	for (const [key, value] of cumulativeMap) {
-		mapArray.push([key, value]);
-	}
-
-	mapArray.sort((a, b) => {
-		return a[1] < b[1];
-	});
-
-	for (const [name, cumulative] of mapArray) {
-		if (roll <= cumulative) {
-			selectedTarget = name;
-			break; // Stop once the first matching target is found
+	private rollTargetUsingWeights(
+		currentMap: keyof typeof mapConfig,
+		addLuck: number,
+		includeTrash: boolean,
+	): [keyof typeof fullTargetConfig, TargetConfig] | undefined {
+		// Retrieve the player's profile
+		// Retrieve the map data based on the player's current map
+		const mapData = mapConfig[currentMap];
+		if (!mapData || !mapData.targetList) {
+			return undefined;
 		}
-	}
 
-	// If no target is selected, return undefined
-	if (!selectedTarget) {
-		warn("Roll failed to match any target");
-		return undefined;
-	}
+		// Initialize variables for cumulative weights
+		let cumulativeWeight = 0;
+		const cumulativeMap = new Map<keyof typeof fullTargetConfig, number>();
 
-	// Return the selected target and its configuration
-	return [selectedTarget, cfg[selectedTarget]];
-}
+		// If luck is 0, they are getting trash buddy
+		const cfg = includeTrash ? fullTargetConfig : targetConfig;
+
+		// Adjust weights with scaling
+		for (const [name, targetInfo] of pairs(cfg)) {
+			if (!mapData.targetList.includes(name)) continue;
+
+			// Apply the adjusted weight formula
+			const weight = math.pow(1 / targetInfo.rarity, 1 - addLuck);
+			cumulativeWeight += weight;
+			cumulativeMap.set(name, cumulativeWeight);
+		}
+
+		if (cumulativeMap.size() === 0) {
+			warn("No valid targets for the map:", currentMap);
+			return undefined;
+		}
+
+		// Generate a random roll within the cumulative weight range
+		const roll = this.rng.NextNumber(0, cumulativeWeight);
+
+		// Find the matching target based on the roll
+		let selectedTarget: keyof typeof fullTargetConfig | undefined;
+
+		// Manually convert Map to an array of key-value pairs
+		const mapArray: [string, number][] = [];
+		for (const [key, value] of cumulativeMap) {
+			mapArray.push([key, value]);
+		}
+
+		mapArray.sort((a, b) => {
+			return a[1] < b[1];
+		});
+
+		for (const [name, cumulative] of mapArray) {
+			if (roll <= cumulative) {
+				selectedTarget = name;
+				break; // Stop once the first matching target is found
+			}
+		}
+
+		// If no target is selected, return undefined
+		if (!selectedTarget) {
+			warn("Roll failed to match any target");
+			return undefined;
+		}
+
+		// Return the selected target and its configuration
+		return [selectedTarget, cfg[selectedTarget]];
+	}
 }

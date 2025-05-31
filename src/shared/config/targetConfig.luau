@@ -282,7 +282,7 @@ local targetConfig: { [string]: TargetConfig } = {
 	-- Frozen
 	["Icicle"] = {
 		rarity = 1,
-		indexRarity = 900,--sold3k
+		indexRarity = 900, --sold3k
 		rarityType = "Common",
 		baseWeight = NumberRange.new(60, 70),
 		basePrice = 50,
@@ -292,7 +292,7 @@ local targetConfig: { [string]: TargetConfig } = {
 
 	["Sapphire Gem"] = {
 		rarity = 5,
-		indexRarity = 1000,--sold7.63k
+		indexRarity = 1000, --sold7.63k
 		rarityType = "Common",
 		baseWeight = NumberRange.new(60, 70),
 		basePrice = 125,
@@ -429,7 +429,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		description = "Anubis's favorite kind of jar.",
 		-- animationName = "OverheadHold",
 	},
-		["Eye of Rah"] = {
+	["Eye of Rah"] = {
 		rarity = 505,
 		indexRarity = 200000,
 		rarityType = "Common",
@@ -438,7 +438,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://84698743443830",
 		description = "I bought a property in Egypt. What they do is, they give you the property!",
 		-- animationName = "OverheadHold",
-		},
+	},
 	["Ankh"] = { -- a.k.a Cross
 		rarity = 1000,
 		indexRarity = 300000,
@@ -448,7 +448,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		itemImage = "rbxassetid://133362870259766",
 		description = "Life, Vitality, and Eternal Life.",
 		-- animationName = "OverheadHold",
-		},
+	},
 	["Scepter"] = {
 		rarity = 5000,
 		indexRarity = 500000,
@@ -459,7 +459,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		description = "I will fear no evil, for you are with me; your rod and your staff comfort me.",
 		-- animationName = "OverheadHold",
 	},
-		["Cat Statue"] = {
+	["Cat Statue"] = {
 		rarity = 2000,
 		indexRarity = 800000,
 		rarityType = "Uncommon",
@@ -467,7 +467,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		basePrice = 950,
 		itemImage = "rbxassetid://139747276756985",
 		description = "Probably some Egyptian diety.",
-		-- animationName = "OverheadHold",
+		animationName = "OverheadHold",
 	},
 	["Crystal Skull"] = {
 		rarity = 32005,
@@ -477,7 +477,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		basePrice = 1000,
 		itemImage = "rbxassetid://127530593716713",
 		description = "What did they make this for?",
-		-- animationName = "OverheadHold",
+		animationName = "Hold",
 	},
 	["Horned Bettle"] = {
 		rarity = 105012,
@@ -487,7 +487,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		basePrice = 1100,
 		itemImage = "rbxassetid://111050044407767",
 		description = "How did a beetle get horns?",
-		-- animationName = "OverheadHold",
+		animationName = "OverheadHold",
 	},
 	["Anubis Mask"] = {
 		rarity = 5_070_00,
@@ -497,7 +497,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		basePrice = 2200,
 		itemImage = "rbxassetid://121926425897207",
 		description = "Crafted by the god Anubis himself.",
-		-- animationName = "OverheadHold",
+		animationName = "OverheadHold",
 	},
 	["Golden Tablet"] = {
 		rarity = 1_000_024,
@@ -507,7 +507,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		basePrice = 5500,
 		itemImage = "rbxassetid://119373700685960",
 		description = "Unintelligible inscriptions enscribed.",
-		-- animationName = "OverheadHold",
+		animationName = "OverheadHold",
 	},
 	["Sphinx"] = {
 		rarity = 5_000_024,
@@ -517,7 +517,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		basePrice = 7000,
 		itemImage = "rbxassetid://80085764304819",
 		description = "This is a weird looking cat statue",
-		-- animationName = "OverheadHold",
+		animationName = "OverheadHold",
 	},
 	["UFO"] = {
 		rarity = 10_000_000,
@@ -527,7 +527,7 @@ local targetConfig: { [string]: TargetConfig } = {
 		basePrice = 10000,
 		itemImage = "rbxassetid://88738893946307",
 		description = "Have you tried identifying it? How did we get here.",
-		-- animationName = "OverheadHold",
+		animationName = "OverheadHold",
 		hasCutscene = true,
 	},
 }

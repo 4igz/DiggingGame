@@ -101,7 +101,7 @@ const CLOUD_ZONE_PROPERTIES_TABLE = {
 
 const ATMOSPHERE_ZONE_PROPERTIES_TABLE = {
 	Grasslands: {
-		Density: 0.3,
+		Density: 0.225,
 		Haze: 0,
 		Glare: 0,
 		Offset: 0,
@@ -109,12 +109,12 @@ const ATMOSPHERE_ZONE_PROPERTIES_TABLE = {
 		Color: Color3.fromRGB(199, 170, 107),
 	},
 	Volcano: {
-		Density: 0.3,
-		Haze: 0,
-		Glare: 0,
+		Density: 0.4,
+		Haze: 5,
+		Glare: 1,
 		Offset: 0,
 		Decay: Color3.fromRGB(92, 60, 13),
-		Color: Color3.fromRGB(199, 170, 107),
+		Color: Color3.fromRGB(132, 113, 71),
 	},
 	Frozen: {
 		Density: 0.3,

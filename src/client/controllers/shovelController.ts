@@ -519,7 +519,7 @@ export class ShovelController implements OnStart {
 						// Reset speed
 						humanoid.WalkSpeed = this.gamepassController.isVip()
 							? gameConstants.VIP_WALKSPEED
-							: gameConstants.DEFAULT_WALKSPEED;;
+							: gameConstants.DEFAULT_WALKSPEED;
 
 						this.canStartDigging = false;
 						// If we were digging, end it
@@ -986,6 +986,10 @@ export class ShovelController implements OnStart {
 							primaryPart.AssemblyLinearVelocity = randomForce;
 						} else if (hasCutscene && camera !== undefined) {
 							// Makeshift cutscene. Basically just throws higher and sets camera subject to the treasure.
+							if (this.cutsceneActive) {
+								warn("Cutscene is already active we shouldn't be warning here");
+								return;
+							}
 							this.cutsceneActive = true;
 
 							// Remove treasure tag for now
@@ -1139,7 +1143,7 @@ export class ShovelController implements OnStart {
 									// existingModel.Destroy();
 									humanoid.WalkSpeed = this.gamepassController.isVip()
 										? gameConstants.VIP_WALKSPEED
-										: gameConstants.DEFAULT_WALKSPEED;;
+										: gameConstants.DEFAULT_WALKSPEED;
 									this.cutsceneActive = false;
 
 									if (wasAutoDigging) {
