@@ -145,7 +145,9 @@ export class AutoDigging implements OnStart, OnRender {
 		this.beginStuckCheck();
 
 		Functions.getAutoDigToggled.invoke().then((toggle) => {
-			this.setAutoDiggingEnabled(toggle);
+			task.delay(2, () => {
+				this.setAutoDiggingEnabled(toggle, false, true);
+			});
 		});
 	}
 

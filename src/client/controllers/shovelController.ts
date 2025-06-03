@@ -49,6 +49,8 @@ camShake.Start();
 
 const DIG_KEYBINDS = [Enum.KeyCode.ButtonR2, Enum.KeyCode.ButtonL2, Enum.UserInputType.MouseButton1];
 
+const ObjPool = Workspace.WaitForChild("ObjPool");
+
 @Controller({})
 export class ShovelController implements OnStart {
 	public diggingActive = false;
@@ -68,7 +70,7 @@ export class ShovelController implements OnStart {
 			hole.CanCollide = false;
 			hole.BrickColor = new BrickColor("Really black");
 			hole.Material = Enum.Material.SmoothPlastic;
-			hole.Parent = Workspace;
+			hole.Parent = ObjPool;
 			CollectionService.AddTag(hole, "DigCrater");
 			CollectionService.AddTag(hole, "CameraIgnore");
 			return hole;
@@ -83,7 +85,7 @@ export class ShovelController implements OnStart {
 
 			part.Anchored = true;
 			part.CanCollide = false;
-			part.Parent = Workspace;
+			part.Parent = ObjPool;
 			CollectionService.AddTag(part, "DigCrater");
 			CollectionService.AddTag(part, "CameraIgnore");
 			return part as BasePart;
@@ -111,7 +113,7 @@ export class ShovelController implements OnStart {
 			dirtBlock.CollisionGroup = gameConstants.NOCHARACTERCOLLISION_COLGROUP;
 			dirtBlock.Name = "DigBlock";
 			CollectionService.AddTag(dirtBlock, "CameraIgnore");
-			dirtBlock.Parent = Workspace;
+			dirtBlock.Parent = ObjPool;
 			return dirtBlock;
 		})(),
 		100,
@@ -129,6 +131,10 @@ export class ShovelController implements OnStart {
 	) {}
 
 	onStart() {
+		this.holeCenterCache.SetCacheParent(ObjPool);
+		this.holePartCache.SetCacheParent(ObjPool);
+		this.digPartCache.SetCacheParent(ObjPool);
+
 		const DigTargetModelFolder = ReplicatedStorage.WaitForChild("Assets").WaitForChild("TargetModels");
 		const VfxFolder = ReplicatedStorage.WaitForChild("Assets").WaitForChild("VFX");
 		const digVfx = new ObjectPool(() => {
@@ -654,7 +660,7 @@ export class ShovelController implements OnStart {
 
 			const diggingVfx = digVfx.acquire();
 			diggingVfx.PivotTo(new CFrame(target.position));
-			diggingVfx.Parent = Workspace;
+			diggingVfx.Parent = ObjPool;
 
 			const randomRotation = CFrame.Angles(
 				math.rad(math.random(0, 360)),
@@ -681,7 +687,7 @@ export class ShovelController implements OnStart {
 				}
 			}
 
-			model.Parent = Workspace;
+			model.Parent = ObjPool;
 
 			// const h = new Instance("Highlight");
 			// h.Parent = model;
@@ -935,7 +941,7 @@ export class ShovelController implements OnStart {
 							digCompleteVfxClone.PivotTo(
 								new CFrame(existingModel.GetAttribute(gameConstants.TREASURE_MODEL_ORIGIN) as Vector3),
 							);
-							digCompleteVfxClone.Parent = Workspace;
+							digCompleteVfxClone.Parent = ObjPool;
 							digTrove.add(() => {
 								digCompleteVfx.release(digCompleteVfxClone);
 							});
@@ -1011,7 +1017,7 @@ export class ShovelController implements OnStart {
 							followPart.Anchored = true;
 							followPart.CanCollide = false;
 							followPart.CFrame = new CFrame(origin);
-							followPart.Parent = Workspace;
+							followPart.Parent = ObjPool;
 
 							digTrove.add(followPart);
 
@@ -1087,7 +1093,7 @@ export class ShovelController implements OnStart {
 								suspenseCutsceneVfx.release(sVfx);
 							});
 							sVfx.PivotTo(new CFrame(origin).add(new Vector3(0, 2, 0)));
-							sVfx.Parent = Workspace;
+							sVfx.Parent = ObjPool;
 
 							SoundService.PlayLocalSound(digCutsceneSfx);
 
@@ -1098,7 +1104,7 @@ export class ShovelController implements OnStart {
 										if (!this.cutsceneActive) return;
 										const endVfx = endCutsceneVfx.acquire() as PVInstance;
 										endVfx.PivotTo(new CFrame(origin));
-										endVfx.Parent = Workspace;
+										endVfx.Parent = ObjPool;
 										digTrove.add(() => {
 											endCutsceneVfx.release(endVfx);
 										});
@@ -1117,7 +1123,7 @@ export class ShovelController implements OnStart {
 								} else if (this.cutsceneActive) {
 									const endVfx = endCutsceneVfx.acquire() as PVInstance;
 									endVfx.PivotTo(new CFrame(origin));
-									endVfx.Parent = Workspace;
+									endVfx.Parent = ObjPool;
 									digTrove.add(() => {
 										endCutsceneVfx.release(endVfx);
 									});
@@ -1254,7 +1260,7 @@ export class ShovelController implements OnStart {
 					.sub(existingModel.GetExtentsSize().mul(Vector3.yAxis.div(4).add(new Vector3(0, 0.5, 0))))
 					.mul(randomRotation);
 				existingModel.PivotTo(startPos);
-				existingModel.Parent = Workspace;
+				existingModel.Parent = ObjPool;
 				existingModel.SetAttribute(gameConstants.TREASURE_MODEL_ORIGIN, digTarget.position);
 				digModels.set(digTarget.itemId, existingModel);
 				digTroves.set(digTarget.itemId, digTrove);
@@ -1262,7 +1268,7 @@ export class ShovelController implements OnStart {
 
 			const diggingVfx = (existingModel.FindFirstChild("DiggingVfx") ?? digVfx.acquire()) as PVInstance;
 			diggingVfx.PivotTo(new CFrame(digTarget.position));
-			diggingVfx.Parent = Workspace;
+			diggingVfx.Parent = ObjPool;
 
 			// Set dig models to not collide with characters.
 			for (const descendant of existingModel.GetDescendants()) {
